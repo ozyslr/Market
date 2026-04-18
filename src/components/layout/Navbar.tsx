@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import {
   ShoppingBag, Search, User, Globe, Menu, X, ChevronDown,
-  Package, ShieldCheck, Zap, ArrowRight, Star, MapPin,
-  Heart, CreditCard, LogOut, ChevronRight, TrendingUp, Moon, Sun
+  Package, ShieldCheck, Zap, ArrowRight, MapPin,
+  CreditCard, LogOut, ChevronRight, TrendingUp, Moon, Sun,
+  Smartphone, Home, Sparkles, Mountain, Shirt, UtensilsCrossed, BookOpen, Gamepad2
 } from 'lucide-react';
+
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  electronics: <Smartphone size={14} />,
+  home: <Home size={14} />,
+  beauty: <Sparkles size={14} />,
+  'sport-outdoor': <Mountain size={14} />,
+  fashion: <Shirt size={14} />,
+  'food-gourmet': <UtensilsCrossed size={14} />,
+  'books-digital': <BookOpen size={14} />,
+  'toys-games': <Gamepad2 size={14} />,
+};
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -264,7 +276,7 @@ export function Navbar() {
                         "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
                         activeCategory === cat.id ? "bg-accent text-white scale-110" : "bg-brand-primary/5 text-brand-primary/30"
                       )}>
-                        <Star size={14} />
+                        {CATEGORY_ICONS[cat.id] ?? <Package size={14} />}
                       </div>
                       {cat.name}
                     </span>
@@ -284,13 +296,27 @@ export function Navbar() {
                           <ChevronRight size={12} />
                         </h4>
                         <ul className="space-y-3">
-                          {[
-                            'Flagship Collection', 'Merchant Top Picks', 'Export Ready', 
-                            'Mercora Inspected', 'Artisan Editions', 'Sustainability Rank'
-                          ].map(link => (
-                            <li key={link}>
-                              <Link to={`/category/${sub.slug}`} className="text-xs font-bold text-brand-primary/60 hover:text-brand-primary hover:translate-x-1 transition-all inline-block">
-                                {link}
+                          {(CATEGORIES.find(c => c.id === activeCategory)?.subCategories
+                            ?.filter(s => s.id === sub.id) ?? []
+                          ).length === 0 ? null : (
+                            <li>
+                              <Link
+                                to={`/search?category=${sub.id}`}
+                                onClick={() => setIsMegaMenuOpen(false)}
+                                className="text-xs font-bold text-brand-primary/60 hover:text-brand-primary hover:translate-x-1 transition-all inline-block"
+                              >
+                                Browse All
+                              </Link>
+                            </li>
+                          )}
+                          {['Top Sellers', 'New Arrivals', 'Best Value', 'Artisan Pick'].map(label => (
+                            <li key={label}>
+                              <Link
+                                to={`/search?category=${sub.id}&filter=${label.toLowerCase().replace(' ', '-')}`}
+                                onClick={() => setIsMegaMenuOpen(false)}
+                                className="text-xs font-bold text-brand-primary/40 hover:text-brand-primary hover:translate-x-1 transition-all inline-block"
+                              >
+                                {label}
                               </Link>
                             </li>
                           ))}
