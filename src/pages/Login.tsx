@@ -8,7 +8,6 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
 
   const handleSubmit = async (e: FormEvent) => {
@@ -16,17 +15,12 @@ export function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Giriş başarısız')
-      login(data.user)
+      const { signInWithEmailAndPassword } = await import('firebase/auth')
+      const { auth } = await import('@/lib/firebase')
+      await signInWithEmailAndPassword(auth, email, password)
       navigate('/')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu')
+    } catch (err: any) {
+      setError(err.message || 'Giriş başarısız')
     } finally {
       setLoading(false)
     }

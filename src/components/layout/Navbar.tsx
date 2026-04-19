@@ -30,7 +30,6 @@ export function Navbar() {
   const cartTotal = useCartStore((s) => s.totalItems())
   const cartPrice = useCartStore((s) => s.totalPrice())
   const authUser = useAuthStore((s) => s.user)
-  const logout = useAuthStore((s) => s.logout)
   const { darkMode, toggleDarkMode } = useUIStore()
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);

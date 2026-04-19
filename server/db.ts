@@ -83,6 +83,7 @@ db.exec(`
 const migrations = [
   `ALTER TABLE users ADD COLUMN kyc_status TEXT DEFAULT 'unverified'`,
   `ALTER TABLE products ADD COLUMN moderation_status TEXT DEFAULT 'approved'`,
+  `ALTER TABLE orders ADD COLUMN payment_intent_id TEXT`,
 ]
 
 for (const sql of migrations) {

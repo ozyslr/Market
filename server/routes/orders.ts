@@ -21,6 +21,7 @@ const OrderSchema = z.object({
     country: z.string(),
     postcode: z.string(),
   }).optional(),
+  paymentIntentId: z.string().optional(),
 })
 
 router.post('/', authenticate, (req: AuthRequest, res) => {
@@ -30,11 +31,11 @@ router.post('/', authenticate, (req: AuthRequest, res) => {
     return
   }
 
-  const { items, total, address } = parsed.data
+  const { items, total, address, paymentIntentId } = parsed.data
   const id = randomUUID()
   db.prepare(
-    'INSERT INTO orders (id, buyer_id, items, total, status, address) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(id, req.user!.id, JSON.stringify(items), total, 'pending', address ? JSON.stringify(address) : null)
+    'INSERT INTO orders (id, buyer_id, items, total, status, address, payment_intent_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(id, req.user!.id, JSON.stringify(items), total, 'pending', address ? JSON.stringify(address) : null, paymentIntentId || null)
 
   res.status(201).json({ orderId: id })
 })

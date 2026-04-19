@@ -10,7 +10,6 @@ export function RegisterPage() {
   const [role, setRole] = useState<'buyer' | 'seller'>('buyer')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
 
   const handleSubmit = async (e: FormEvent) => {
@@ -18,17 +17,25 @@ export function RegisterPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role }),
+      const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth')
+      const { doc, setDoc } = await import('firebase/firestore')
+      const { auth, db } = await import('@/lib/firebase')
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
+      
+      await updateProfile(user, { displayName: name })
+      
+      await setDoc(doc(db, 'users', user.uid), {
+        name,
+        email,
+        role,
+        createdAt: new Date().toISOString()
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Kayıt başarısız')
-      login(data.user)
+      
       navigate('/')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu')
+    } catch (err: any) {
+      setError(err.message || 'Kayıt başarısız')
     } finally {
       setLoading(false)
     }
