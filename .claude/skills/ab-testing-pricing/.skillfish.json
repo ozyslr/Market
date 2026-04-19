@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "ab-testing-pricing",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/pricing-promotions/ab-testing-pricing",
+  "branch": "main",
+  "sha": "ee8f1e7b6cd28dc691ebb651d5482e3baf7fe9b9",
+  "source": "manual"
+}

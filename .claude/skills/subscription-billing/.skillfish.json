@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "subscription-billing",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/payments-checkout/subscription-billing",
+  "branch": "main",
+  "sha": "80f3057ccfc6f827ed8dd9de136f831af24d51ed",
+  "source": "manual"
+}

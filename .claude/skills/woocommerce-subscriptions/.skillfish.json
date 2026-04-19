@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "woocommerce-subscriptions",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/platform-woocommerce/woocommerce-subscriptions",
+  "branch": "main",
+  "sha": "ae85b698194d0ca46fc36a3acef661c3545caaa6",
+  "source": "manual"
+}

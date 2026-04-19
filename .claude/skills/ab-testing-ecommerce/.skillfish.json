@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "ab-testing-ecommerce",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/data-analytics/ab-testing-ecommerce",
+  "branch": "main",
+  "sha": "4fd02cbc6b07db1b5b603782be2244c8348d7539",
+  "source": "manual"
+}

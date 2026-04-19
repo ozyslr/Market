@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Trash2, Plus, Minus, ShieldCheck, Truck,
   HelpCircle, ChevronRight, Sparkles,
-  ArrowRight, Globe, Lock, Info, ShoppingBag
+  ArrowRight, Globe, Lock, Info, ShoppingBag,
+  Tag, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -11,11 +12,36 @@ import { cn } from '@/lib/utils';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCartStore } from '@/store/cartStore';
+import { useUIStore } from '@/store/uiStore';
 
 export function CartPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { items, updateQuantity: storeUpdateQty, removeItem: storeRemove } = useCartStore();
+  const { items, updateQuantity: storeUpdateQty, removeItem: storeRemove, coupon, applyCoupon, removeCoupon, totalPrice } = useCartStore();
+  const { addToast } = useUIStore();
+  const [couponInput, setCouponInput] = useState('')
+  const [couponLoading, setCouponLoading] = useState(false)
+
+  const handleCoupon = async () => {
+    if (!couponInput.trim()) return
+    setCouponLoading(true)
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponInput.trim(), cart_total: totalPrice() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      applyCoupon({ code: data.code, discount: data.discount, type: data.type, value: data.value })
+      addToast(`"${data.code}" kodu uygulandı — £${data.discount.toFixed(2)} indirim!`, 'success')
+      setCouponInput('')
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Kupon hatası', 'error')
+    } finally {
+      setCouponLoading(false)
+    }
+  }
 
   const updateQuantity = (productId: string, delta: number) => {
     const item = items.find(i => i.productId === productId);
@@ -33,11 +59,12 @@ export function CartPage() {
   }).filter(Boolean) as (typeof MOCK_PRODUCTS[0] & { quantity: number })[];
 
   const subtotal = cartProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+  const discountedSubtotal = coupon ? Math.max(0, subtotal - coupon.discount) : subtotal;
   const currentMarket = MARKETS['UK'];
-  const totals = calculateTotal(subtotal, 12, currentMarket, true);
+  const totals = calculateTotal(discountedSubtotal, 12, currentMarket, true);
 
   return (
-    <div className="min-h-screen bg-brand-secondary/30 pt-32 pb-20 px-4">
+    <div className="min-h-screen bg-brand-secondary/30 pt-8 pb-20 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-12">
           
@@ -189,6 +216,49 @@ export function CartPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-bold text-brand-primary/40 uppercase tracking-widest">Shipping Factor</span>
                     <span className="text-sm font-black text-brand-primary">£{totals.shipping.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Coupon */}
+                <div className="space-y-3 border-t border-brand-primary/5 pt-4 mb-6">
+                  {coupon ? (
+                    <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
+                      <div className="flex items-center gap-2 text-green-700">
+                        <Tag size={14} />
+                        <span className="text-xs font-black uppercase">{coupon.code}</span>
+                        <span className="text-xs font-medium">— £{coupon.discount.toFixed(2)} indirim</span>
+                      </div>
+                      <button onClick={removeCoupon} className="text-green-500 hover:text-red-500 transition-colors">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === 'Enter' && handleCoupon()}
+                        placeholder="KUPON KODU"
+                        className="flex-1 px-4 py-2.5 rounded-xl border border-brand-primary/10 text-xs font-black uppercase tracking-widest outline-none focus:border-accent transition-colors"
+                      />
+                      <button
+                        onClick={handleCoupon}
+                        disabled={couponLoading || !couponInput.trim()}
+                        className="px-4 py-2.5 bg-brand-primary text-white rounded-xl text-xs font-black disabled:opacity-40 hover:bg-accent transition-colors"
+                      >
+                        {couponLoading ? '...' : 'Uygula'}
+                      </button>
+                    </div>
+                  )}
+                  {coupon && (
+                    <div className="flex justify-between text-xs font-bold text-green-700">
+                      <span>İndirim</span>
+                      <span>-£{coupon.discount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm font-black text-brand-primary border-t border-brand-primary/5 pt-3">
+                    <span>Genel Toplam</span>
+                    <span>£{totals.total.toFixed(2)}</span>
                   </div>
                 </div>
 

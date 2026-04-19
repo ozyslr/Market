@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "payout-split-management",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/payments-checkout/payout-split-management",
+  "branch": "main",
+  "sha": "440d6b922e8b1140a9e92690bc9a29c2385defff",
+  "source": "manual"
+}

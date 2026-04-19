@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "catalog-import-export",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/catalog-inventory/catalog-import-export",
+  "branch": "main",
+  "sha": "852dcbe31fbc06110aa5897a2bfbf7ba259fe726",
+  "source": "manual"
+}

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "payment-reconciliation-automation",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/payments-checkout/payment-reconciliation-automation",
+  "branch": "main",
+  "sha": "c0a8ed887e4b923df3df6c521c917e2f3bbfc1d9",
+  "source": "manual"
+}

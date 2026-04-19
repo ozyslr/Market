@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "customer-support-integration",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/customer-crm/customer-support-integration",
+  "branch": "main",
+  "sha": "60a81555911bba6916e9eb7e567e0fa72a25a7da",
+  "source": "manual"
+}

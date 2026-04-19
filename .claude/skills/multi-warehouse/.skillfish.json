@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "multi-warehouse",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/catalog-inventory/multi-warehouse",
+  "branch": "main",
+  "sha": "4b2dac47896fae4483ac9c9b602b58f49546bfcb",
+  "source": "manual"
+}

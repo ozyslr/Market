@@ -5,7 +5,7 @@ import {
   Smartphone, Sofa, Mountain, Shirt, Coffee,
   TrendingUp, ShieldCheck, Lock
 } from 'lucide-react';
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Hero } from '@/components/home/Hero';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { MOCK_PRODUCTS, CATEGORIES } from '@/mockData';
@@ -13,11 +13,20 @@ import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/context/LanguageContext';
+import { fetchProducts } from '@/lib/apiProduct';
+import type { Product } from '@/types';
 
 export function Home() {
   const { t } = useLanguage();
   const dealsRef = useRef<HTMLDivElement>(null);
   const popularRef = useRef<HTMLDivElement>(null);
+  const [apiProducts, setApiProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    fetchProducts({ limit: 40 }).then(p => {
+      if (p.length > 0) setApiProducts(p);
+    });
+  }, []);
 
   const scroll = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
     if (ref.current) {
@@ -26,12 +35,13 @@ export function Home() {
     }
   };
 
-  const discountedProducts = MOCK_PRODUCTS.filter(p => p.oldPrice);
-  const popularProducts = MOCK_PRODUCTS.filter(p => p.rating >= 4.8);
-  const campingProducts = MOCK_PRODUCTS.filter(p => p.categoryId === 'camping');
-  const beautyProducts = MOCK_PRODUCTS.filter(p => p.categoryId === 'beauty');
-  const sportsProducts = MOCK_PRODUCTS.filter(p => p.categoryId === 'sportswear');
-  const livingRoomProducts = MOCK_PRODUCTS.filter(p => p.categoryId === 'living-room');
+  const products = apiProducts.length > 0 ? apiProducts : MOCK_PRODUCTS;
+  const discountedProducts = products.filter(p => p.oldPrice);
+  const popularProducts = products.filter(p => p.rating >= 4.7);
+  const campingProducts = products.filter(p => p.categoryId === 'camping' || p.categoryId === 'sport-outdoor');
+  const beautyProducts = products.filter(p => p.categoryId === 'beauty');
+  const sportsProducts = products.filter(p => p.categoryId === 'sport-outdoor' || p.categoryId === 'sportswear');
+  const livingRoomProducts = products.filter(p => p.categoryId === 'home' || p.categoryId === 'living-room');
 
   const homepageCategories = [
     { name: t('category.camping'), key: 'camping', icon: Mountain, color: 'bg-green-500' },
@@ -63,7 +73,7 @@ export function Home() {
       </section>
 
       {/* Category Shortcuts Bar */}
-      <section className="bg-white border-b border-brand-primary/5 py-4 sticky top-[72px] z-30 hidden md:block overflow-hidden">
+      <section className="bg-white border-b border-brand-primary/5 py-4 sticky top-24 z-30 hidden md:block overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-8 whitespace-nowrap">
           {CATEGORIES.map((cat) => (
             <Link 
@@ -120,7 +130,7 @@ export function Home() {
                   </Link>
                 </div>
                 <div className="space-y-10">
-                  {MOCK_PRODUCTS.slice(4, 7).map((p, i) => (
+                  {products.slice(4, 7).map((p, i) => (
                     <Link key={p.id} to={`/product/${p.slug}`} className="flex items-center justify-between group/item">
                       <div className="flex items-center gap-5">
                         <span className="text-xs font-black text-white/10 italic">0{i+1}</span>
@@ -149,7 +159,7 @@ export function Home() {
                   </Link>
                 </div>
                 <div className="space-y-10">
-                  {MOCK_PRODUCTS.slice(9, 12).map((p, i) => (
+                  {products.slice(9, 12).map((p, i) => (
                     <Link key={p.id} to={`/product/${p.slug}`} className="flex items-center justify-between group/item">
                       <div className="flex items-center gap-5">
                         <span className="text-xs font-black text-white/10 italic">0{i+1}</span>
@@ -411,7 +421,7 @@ export function Home() {
            </div>
            
            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {MOCK_PRODUCTS.slice(0, 24).map(p => (
+              {products.slice(0, 24).map(p => (
                 <div key={p.id} className="group cursor-pointer">
                    <Link to={`/product/${p.slug}`}>
                     <div className="aspect-square bg-brand-secondary/30 rounded-3xl p-4 overflow-hidden mb-4 relative">

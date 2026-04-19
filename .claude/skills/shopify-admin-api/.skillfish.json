@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "shopify-admin-api",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/platform-shopify/shopify-admin-api",
+  "branch": "main",
+  "sha": "f46c14faa519e0fd15d0646d93336817ea609929",
+  "source": "manual"
+}

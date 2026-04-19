@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "accounts-receivable-automation",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/payments-checkout/accounts-receivable-automation",
+  "branch": "main",
+  "sha": "a3860a9b86df8f88512f683f483534cec00be134",
+  "source": "manual"
+}

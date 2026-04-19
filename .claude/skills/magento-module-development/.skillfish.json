@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "magento-module-development",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/platform-magento/magento-module-development",
+  "branch": "main",
+  "sha": "025af06a978486acf8e307a4832f6d77d18801c3",
+  "source": "manual"
+}

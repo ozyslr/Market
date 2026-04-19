@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "paypal-integration",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/payments-checkout/paypal-integration",
+  "branch": "main",
+  "sha": "f368d3eae70144bc6179e488ffad1faa99902230",
+  "source": "manual"
+}

@@ -15,9 +15,11 @@ import { LanguageProvider } from './context/LanguageContext';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { CheckoutPage } from './pages/Checkout';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { ProtectedRoute } from './components/auth/ProtectedRoute'
+import { AdminPage } from '@/pages/Admin';
 import { ToastContainer } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { ScrollToTop } from './components/ui/ScrollToTop';
 
 export default function App() {
   return (
@@ -25,9 +27,10 @@ export default function App() {
       <Router>
         <ErrorBoundary>
           <div className="relative min-h-screen">
+            <ScrollToTop />
             <Navbar />
 
-            <main>
+            <main className="pt-24">
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/product/:slug" element={<ProductDetail />} />
@@ -51,6 +54,9 @@ export default function App() {
                 } />
                 <Route path="/seller/:id" element={<SellerStorePage />} />
                 <Route path="/search" element={<SearchResultsPage />} />
+                <Route path="/admin" element={
+                  <ProtectedRoute requiredRole="admin"><AdminPage /></ProtectedRoute>
+                } />
                 <Route path="*" element={<Home />} />
               </Routes>
             </main>

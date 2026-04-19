@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "inventory-tracking",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/catalog-inventory/inventory-tracking",
+  "branch": "main",
+  "sha": "4e1c2fbba369ce0f662f137f86d83e7d508a1fef",
+  "source": "manual"
+}

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "order-fulfillment-workflow",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/fulfillment-shipping/order-fulfillment-workflow",
+  "branch": "main",
+  "sha": "8134e47a55639df4e620d96ef8d606dccf409076",
+  "source": "manual"
+}

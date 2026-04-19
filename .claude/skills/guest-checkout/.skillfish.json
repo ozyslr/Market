@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "guest-checkout",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/payments-checkout/guest-checkout",
+  "branch": "main",
+  "sha": "a77c0f4b9f3a465cf4650670db0ae325d7897c05",
+  "source": "manual"
+}

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "erp-integration",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/integrations-apis/erp-integration",
+  "branch": "main",
+  "sha": "af9cb6a82745cb237b802a5871b03a5603f37c78",
+  "source": "manual"
+}

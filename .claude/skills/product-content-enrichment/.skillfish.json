@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "product-content-enrichment",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/catalog-inventory/product-content-enrichment",
+  "branch": "main",
+  "sha": "1afef947cb660a46b5b44a5affe0dc8b8f61bee5",
+  "source": "manual"
+}

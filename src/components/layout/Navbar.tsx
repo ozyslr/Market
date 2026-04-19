@@ -193,6 +193,11 @@ export function Navbar() {
                             <Link to="/profile" className="block text-xs font-bold hover:text-accent">Orders</Link>
                             <Link to="/profile" className="block text-xs font-bold hover:text-accent">Global Wallet</Link>
                             <Link to="/seller/dashboard" className="block text-xs font-black text-accent uppercase italic transition-colors">Seller Hub</Link>
+                            {authUser?.role === 'admin' && (
+                              <Link to="/admin" className="block text-xs font-black text-red-500 uppercase italic transition-colors hover:text-red-600">
+                                Admin Panel
+                              </Link>
+                            )}
                          </div>
                       </div>
                    </div>

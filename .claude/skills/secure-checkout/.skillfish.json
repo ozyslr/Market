@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "secure-checkout",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/security-compliance/secure-checkout",
+  "branch": "main",
+  "sha": "1b23b7bef22b8379fbb5e13e9601be0a3deaad0d",
+  "source": "manual"
+}

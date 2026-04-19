@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "shopify-checkout-extensions",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/platform-shopify/shopify-checkout-extensions",
+  "branch": "main",
+  "sha": "f23fc35d4fbf39cdee3da92fd5e6c80629cf6f7a",
+  "source": "manual"
+}

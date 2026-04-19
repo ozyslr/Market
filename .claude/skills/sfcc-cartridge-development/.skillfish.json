@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "sfcc-cartridge-development",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/platform-salesforce-cc/sfcc-cartridge-development",
+  "branch": "main",
+  "sha": "93f48c8fd4bfd5b3e7f9f6a2109d1f8b750af520",
+  "source": "manual"
+}

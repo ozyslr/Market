@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "pci-dss-compliance",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/security-compliance/pci-dss-compliance",
+  "branch": "main",
+  "sha": "506b4447607c855d311c02290e252b32063669c6",
+  "source": "manual"
+}

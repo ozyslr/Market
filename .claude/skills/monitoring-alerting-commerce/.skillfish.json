@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "monitoring-alerting-commerce",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/infrastructure-performance/monitoring-alerting-commerce",
+  "branch": "main",
+  "sha": "7910e20357c637c038e2554833be8c112724ba28",
+  "source": "manual"
+}

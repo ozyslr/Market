@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "stripe-integration",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/payments-checkout/stripe-integration",
+  "branch": "main",
+  "sha": "5d2906fdfdd741f72c06dc95eb1f35a45353b8a7",
+  "source": "manual"
+}

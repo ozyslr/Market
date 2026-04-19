@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "invoice-generation-automation",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/payments-checkout/invoice-generation-automation",
+  "branch": "main",
+  "sha": "a38a56e5e2ed68058182d18080962cc5b017d63e",
+  "source": "manual"
+}

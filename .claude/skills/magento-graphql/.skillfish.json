@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "magento-graphql",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/platform-magento/magento-graphql",
+  "branch": "main",
+  "sha": "98cd2add702787c2f371c7e2722a8cd46482972a",
+  "source": "manual"
+}

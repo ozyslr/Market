@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "shipment-tracking",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/fulfillment-shipping/shipment-tracking",
+  "branch": "main",
+  "sha": "d80a556012cd685edea7744952dc6df16febb01f",
+  "source": "manual"
+}

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "magento-indexing-caching",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/platform-magento/magento-indexing-caching",
+  "branch": "main",
+  "sha": "c4f527a38e2e0347c1fa2519acc51a69ba2f3533",
+  "source": "manual"
+}

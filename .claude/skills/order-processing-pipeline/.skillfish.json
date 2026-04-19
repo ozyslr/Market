@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "order-processing-pipeline",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/payments-checkout/order-processing-pipeline",
+  "branch": "main",
+  "sha": "6559c0c1418ab90bc536fb758ce606ffdc59227a",
+  "source": "manual"
+}

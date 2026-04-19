@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "saleor-development",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/headless-modern/saleor-development",
+  "branch": "main",
+  "sha": "6c754803d4b1cc590160ae32f15672a1da764376",
+  "source": "manual"
+}

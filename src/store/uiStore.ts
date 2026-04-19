@@ -15,6 +15,14 @@ interface UIStore {
   removeToast: (id: string) => void
 }
 
+const initDarkMode = (dark: boolean) => {
+  if (dark) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+}
+
 export const useUIStore = create<UIStore>()(
   persist(
     (set) => ({
@@ -23,11 +31,7 @@ export const useUIStore = create<UIStore>()(
       toggleDarkMode: () =>
         set((state) => {
           const next = !state.darkMode
-          if (next) {
-            document.documentElement.classList.add('dark')
-          } else {
-            document.documentElement.classList.remove('dark')
-          }
+          initDarkMode(next)
           return { darkMode: next }
         }),
       addToast: (message, type = 'success') => {
@@ -45,6 +49,9 @@ export const useUIStore = create<UIStore>()(
     {
       name: 'mercora-ui',
       partialize: (state) => ({ darkMode: state.darkMode }),
+      onRehydrateStorage: () => (state) => {
+        if (state) initDarkMode(state.darkMode)
+      },
     }
   )
 )

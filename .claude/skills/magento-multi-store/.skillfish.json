@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "magento-multi-store",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/platform-magento/magento-multi-store",
+  "branch": "main",
+  "sha": "49b28ac581f0f8ac302dc381fe04d21bf4f9fe05",
+  "source": "manual"
+}

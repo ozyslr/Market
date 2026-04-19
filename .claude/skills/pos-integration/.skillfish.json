@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "pos-integration",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/integrations-apis/pos-integration",
+  "branch": "main",
+  "sha": "667d372279c393e77fc7de01e0251eec2d917670",
+  "source": "manual"
+}

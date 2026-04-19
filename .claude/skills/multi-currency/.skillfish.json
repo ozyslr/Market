@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "multi-currency",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/payments-checkout/multi-currency",
+  "branch": "main",
+  "sha": "ebd2cfd78d35ac08201dffe440ce2a9fc864a0ee",
+  "source": "manual"
+}

@@ -55,7 +55,7 @@ export function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-secondary/30 px-4 pt-32">
+      <div className="min-h-screen flex items-center justify-center bg-brand-secondary/30 px-4 pt-8">
         <div className="text-center">
           <h2 className="text-2xl font-black uppercase tracking-tight text-brand-primary mb-4">Sepetiniz boş</h2>
           <Link to="/" className="bg-brand-primary text-white font-black uppercase text-xs tracking-widest px-8 py-4 rounded-2xl hover:bg-accent transition-all">
@@ -67,7 +67,7 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-secondary/30 pt-32 pb-20 px-4">
+    <div className="min-h-screen bg-brand-secondary/30 pt-8 pb-20 px-4">
       <div className="max-w-5xl mx-auto">
         <Link to="/cart" className="inline-flex items-center gap-2 text-sm font-bold text-brand-primary/50 hover:text-brand-primary mb-8 transition-colors">
           <ChevronLeft size={16} /> Sepete Dön

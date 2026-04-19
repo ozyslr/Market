@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(npx tsc:*)",
+      "Bash(wc -l \"o:/site/Simgola/public/locales\"/*.json)",
+      "Bash(powershell.exe -Command \"\\(Get-Content ''o:\\\\site\\\\Simgola\\\\components\\\\views\\\\RedesignView.tsx'' -Raw\\) -replace \"\"t\\\\\\(''studio\\\\.\"\", \"\"t\\(''studio_tools.\"\" | Set-Content ''o:\\\\site\\\\Simgola\\\\components\\\\views\\\\RedesignView.tsx'' -NoNewline\")",
+      "Bash(xargs grep -l \"help\\\\|support\\\\|contact\" -i)",
+      "Bash(npm install)",
+      "Bash(ls /o/site/Simgola/functions/*.env)",
+      "Bash(git add package.json package-lock.json)",
+      "Bash(git commit:*)",
+      "Bash(git add services/authService.ts components/views/AuthView.tsx components/auth/AuthFooter.tsx public/locales/tr/translation.json public/locales/en/translation.json)",
+      "Bash(git push origin main)",
+      "Bash(git add -A)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\(''O:/site/Simgola/android/app/google-services.json''\\)\\); cl=d[''client''][0]; print\\(''Package:'', cl[''client_info''][''android_client_info''][''package_name'']\\); print\\(''OAuth clients:'', [c.get\\(''client_type''\\) for c in cl.get\\(''oauth_client'',[]\\)]\\); print\\(''SHA1 certs:'', [c.get\\(''certificate_hash''\\) for c in cl[''client_info''].get\\(''android_client_info'',{}\\).get\\(''certificate_hashes'',[]\\)]\\)\")",
+      "Bash(git -C /o/site/Simgola diff HEAD~5..HEAD -- *.tsx *.ts)",
+      "Bash(claude install:*)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(npx skillfish:*)",
+      "Bash(npm install *)"
+    ]
+  }
+}

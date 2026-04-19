@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -12,7 +12,12 @@ import { MOCK_PRODUCTS } from '@/mockData';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
-import { ProductCard } from '@/components/commerce/ProductCard';
+import { ProductCard } from '@/components/commerce/ProductCard'
+import { ReviewForm } from '@/components/commerce/ReviewForm'
+import { ReviewList } from '@/components/commerce/ReviewList';
+import { useUIStore } from '@/store/uiStore'
+import { fetchProduct } from '@/lib/apiProduct'
+import type { Product } from '@/types'
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
@@ -30,19 +35,57 @@ const MARKET_DATA = [
 export function ProductDetail() {
   const { t } = useLanguage();
   const { slug } = useParams<{ slug: string }>();
-  const product = MOCK_PRODUCTS.find(p => p.slug === slug);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews'>('details');
+  const [reviews, setReviews] = useState<{ id: string; user_name: string; rating: number; comment: string | null; created_at: string }[]>([])
 
-  // Breadcrumbs: Simplified for marketplace feel
+  const { addToast } = useUIStore()
+
+  useEffect(() => {
+    if (!slug) return
+    setLoading(true)
+    fetchProduct(slug).then(p => {
+      if (p) {
+        setProduct(p)
+      } else {
+        // fallback to mock
+        const mock = MOCK_PRODUCTS.find(m => m.slug === slug) ?? null
+        setProduct(mock)
+      }
+      setLoading(false)
+    })
+  }, [slug])
+
   const currentMarket = MARKETS['UK'];
   const tax = calculateTotal(product?.price || 0, 12, currentMarket, product?.originCountry === 'UK');
 
-  if (!product) return null; // Logic in actual app includes 404
+  const loadReviews = useCallback(async () => {
+    if (!product?.id) return
+    try {
+      const res = await fetch(`/api/reviews/${product.id}`)
+      if (res.ok) setReviews(await res.json())
+    } catch {
+      addToast('Yorumlar yüklenemedi', 'error')
+    }
+  }, [product?.id, addToast])
+
+  useEffect(() => {
+    loadReviews()
+  }, [loadReviews])
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+
+  if (!product) return null;
 
   return (
-    <div className="bg-[#f2f4f7] min-h-screen pt-24 pb-20">
+    <div className="bg-[#f2f4f7] min-h-screen pb-20">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6">
         
         {/* Breadcrumbs - High Visibility */}
@@ -483,6 +526,20 @@ export function ProductDetail() {
         </section>
 
       </div>
+
+      <section className="max-w-[1600px] mx-auto px-6 pb-20">
+        <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary mb-8">
+          Müşteri Yorumları ({reviews.length})
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
+          <div className="lg:col-span-3">
+            <ReviewList reviews={reviews} />
+          </div>
+          <div className="lg:col-span-2">
+            <ReviewForm productId={product.id} onSuccess={loadReviews} />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

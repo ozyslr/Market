@@ -18,6 +18,10 @@ interface CartStore {
   clearCart: () => void
   totalItems: () => number
   totalPrice: () => number
+  coupon: { code: string; discount: number; type: 'percentage' | 'fixed'; value: number } | null
+  applyCoupon: (coupon: NonNullable<CartStore['coupon']>) => void
+  removeCoupon: () => void
+  grandTotal: () => number
 }
 
 export const useCartStore = create<CartStore>()(
@@ -52,6 +56,13 @@ export const useCartStore = create<CartStore>()(
       totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
       totalPrice: () =>
         get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      coupon: null,
+      applyCoupon: (coupon) => set({ coupon }),
+      removeCoupon: () => set({ coupon: null }),
+      grandTotal: () => {
+        const base = get().totalPrice()
+        return get().coupon ? Math.max(0, base - get().coupon!.discount) : base
+      },
     }),
     { name: 'mercora-cart' }
   )

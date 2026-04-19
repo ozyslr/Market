@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "buy-now-pay-later",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/payments-checkout/buy-now-pay-later",
+  "branch": "main",
+  "sha": "414cff350d77ba897a3dd3006934410f085204ad",
+  "source": "manual"
+}

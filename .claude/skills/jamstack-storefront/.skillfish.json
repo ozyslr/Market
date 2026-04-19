@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "jamstack-storefront",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/headless-modern/jamstack-storefront",
+  "branch": "main",
+  "sha": "3a87f8046cf4188caa76156bb4942f98b14ecc7a",
+  "source": "manual"
+}

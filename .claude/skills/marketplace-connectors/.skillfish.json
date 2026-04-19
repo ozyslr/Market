@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "marketplace-connectors",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/integrations-apis/marketplace-connectors",
+  "branch": "main",
+  "sha": "0ceff684b70cb45b290088186abaa4a9c0745e28",
+  "source": "manual"
+}

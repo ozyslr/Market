@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "email-service-integration",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/integrations-apis/email-service-integration",
+  "branch": "main",
+  "sha": "582682f306728c8aa1add6f2d079d276c0c66986",
+  "source": "manual"
+}

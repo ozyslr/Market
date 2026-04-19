@@ -48,6 +48,37 @@ db.exec(`
     address TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS coupons (
+    id TEXT PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('percentage','fixed')),
+    value REAL NOT NULL,
+    min_order REAL DEFAULT 0,
+    usage_limit INTEGER DEFAULT NULL,
+    used_count INTEGER DEFAULT 0,
+    expires_at TEXT DEFAULT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS reviews (
+    id TEXT PRIMARY KEY,
+    product_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    rating INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(product_id, user_id)
+  );
 `)
+
+const migrations = [
+  `ALTER TABLE users ADD COLUMN kyc_status TEXT DEFAULT 'unverified'`,
+  `ALTER TABLE products ADD COLUMN moderation_status TEXT DEFAULT 'approved'`,
+]
+
+for (const sql of migrations) {
+  try { db.exec(sql) } catch { /* column already exists */ }
+}
 
 export default db

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "load-testing-commerce",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/infrastructure-performance/load-testing-commerce",
+  "branch": "main",
+  "sha": "b916b94e9d8250bcda203b4e8f01052fc7aab2e4",
+  "source": "manual"
+}

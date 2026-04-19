@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "medusa-development",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/headless-modern/medusa-development",
+  "branch": "main",
+  "sha": "8a8ee1dd745a5e47d9cc0b941e28160b0bac15d9",
+  "source": "manual"
+}
