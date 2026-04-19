@@ -18,6 +18,8 @@ import { CheckoutPage } from './pages/Checkout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { AdminPage } from '@/pages/Admin';
 import WishlistPage from '@/pages/Wishlist';
+import ComparePage from '@/pages/Compare';
+import { CompareBar } from '@/components/commerce/CompareBar';
 import { ToastContainer } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { ScrollToTop } from './components/ui/ScrollToTop';
