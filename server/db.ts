@@ -70,6 +70,14 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now')),
     UNIQUE(product_id, user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS wishlists (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, product_id)
+  );
 `)
 
 const migrations = [

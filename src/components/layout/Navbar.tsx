@@ -185,7 +185,7 @@ export function Navbar() {
                       <div className="pt-4 border-t border-brand-primary/5 grid grid-cols-2 gap-8">
                          <div className="space-y-3">
                             <h4 className="text-[10px] font-black uppercase text-brand-primary/30 tracking-[0.2em] mb-4">My Lists</h4>
-                            <Link to="/profile" className="block text-xs font-bold hover:text-accent">Watchlist</Link>
+                            <Link to="/wishlist" className="block text-xs font-bold hover:text-accent">Favourites</Link>
                             <Link to="/profile" className="block text-xs font-bold hover:text-accent">Saved Items</Link>
                          </div>
                          <div className="space-y-3">
@@ -293,53 +293,18 @@ export function Navbar() {
               {/* Center: Subcategories */}
               <div className="col-span-3 py-10 px-12 overflow-y-auto custom-scrollbar">
                 {activeCategory ? (
-                  <div className="grid grid-cols-3 gap-12">
+                  <div className="grid grid-cols-3 gap-3">
                     {CATEGORIES.find(c => c.id === activeCategory)?.subCategories?.map(sub => (
-                      <div key={sub.id} className="space-y-5">
-                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-accent pb-3 border-b border-brand-primary/5 flex items-center justify-between">
-                          {sub.name}
-                          <ChevronRight size={12} />
-                        </h4>
-                        <ul className="space-y-3">
-                          {(CATEGORIES.find(c => c.id === activeCategory)?.subCategories
-                            ?.filter(s => s.id === sub.id) ?? []
-                          ).length === 0 ? null : (
-                            <li>
-                              <Link
-                                to={`/search?category=${sub.id}`}
-                                onClick={() => setIsMegaMenuOpen(false)}
-                                className="text-xs font-bold text-brand-primary/60 hover:text-brand-primary hover:translate-x-1 transition-all inline-block"
-                              >
-                                Browse All
-                              </Link>
-                            </li>
-                          )}
-                          {['Top Sellers', 'New Arrivals', 'Best Value', 'Artisan Pick'].map(label => (
-                            <li key={label}>
-                              <Link
-                                to={`/search?category=${sub.id}&filter=${label.toLowerCase().replace(' ', '-')}`}
-                                onClick={() => setIsMegaMenuOpen(false)}
-                                className="text-xs font-bold text-brand-primary/40 hover:text-brand-primary hover:translate-x-1 transition-all inline-block"
-                              >
-                                {label}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      <Link
+                        key={sub.id}
+                        to={`/search?category=${sub.id}`}
+                        onClick={() => setIsMegaMenuOpen(false)}
+                        className="flex items-center justify-between px-5 py-4 rounded-2xl hover:bg-brand-secondary transition-all group border border-transparent hover:border-brand-primary/5"
+                      >
+                        <span className="text-sm font-bold text-brand-primary/70 group-hover:text-brand-primary transition-colors">{sub.name}</span>
+                        <ChevronRight size={14} className="text-accent opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                      </Link>
                     ))}
-                    {/* Featured Item in Category */}
-                    <div className="col-span-3 mt-12 bg-gradient-to-r from-brand-secondary/20 to-transparent p-8 rounded-[2.5rem] border border-brand-primary/5 flex items-center justify-between">
-                      <div>
-                        <span className="text-[10px] font-black uppercase text-accent tracking-[0.3em]">Featured Artisan</span>
-                        <h5 className="text-3xl font-display font-black mt-2">AuraAudio Premium</h5>
-                        <p className="text-sm text-brand-primary/40 mt-2 max-w-lg">The gold standard in artisan audio engineering. Discover the Spring collections.</p>
-                        <button className="mt-6 px-8 py-3 bg-brand-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-accent transition-all">Explore Brand</button>
-                      </div>
-                      <div className="w-48 h-48 bg-white rounded-3xl shadow-2xl rotate-6 p-4">
-                        <img src="https://placehold.co/300x300/0d47a1/ffffff?text=Audio" alt="Featured" className="w-full h-full object-cover rounded-2xl" />
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center text-center">

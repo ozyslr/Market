@@ -17,6 +17,7 @@ import { RegisterPage } from './pages/Register';
 import { CheckoutPage } from './pages/Checkout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { AdminPage } from '@/pages/Admin';
+import WishlistPage from '@/pages/Wishlist';
 import { ToastContainer } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { ScrollToTop } from './components/ui/ScrollToTop';
@@ -54,6 +55,7 @@ export default function App() {
                 } />
                 <Route path="/seller/:id" element={<SellerStorePage />} />
                 <Route path="/search" element={<SearchResultsPage />} />
+                <Route path="/wishlist" element={<WishlistPage />} />
                 <Route path="/admin" element={
                   <ProtectedRoute requiredRole="admin"><AdminPage /></ProtectedRoute>
                 } />
