@@ -1,17 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  LayoutDashboard, Package, ShoppingCart, BarChart3, Globe2, 
-  Settings, Bell, Search, TrendingUp, Info, AlertTriangle, 
-  ChevronRight, ArrowUpRight, DollarSign, Users, Sparkles, ShieldCheck,
-  Upload, FileText, CheckCircle2, X
+import {
+  LayoutDashboard, Package, ShoppingCart, BarChart3, Globe2,
+  Settings, TrendingUp, AlertTriangle,
+  ChevronRight, ArrowUpRight, Sparkles, ShieldCheck,
+  Upload, FileText, CheckCircle2, PoundSterling, Hash, ShoppingBag
 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
+
+interface Analytics {
+  totalRevenue: number
+  totalOrders: number
+  totalItems: number
+  topProducts: { id: string; title: string; revenue: number; qty: number; image: string }[]
+  revenueByDay: { date: string; revenue: number }[]
+}
 
 export function SellerDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'bulk'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'bulk' | 'revenue'>('overview');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const token = useAuthStore(s => s.user?.token);
+
+  useEffect(() => {
+    if (activeTab !== 'revenue' || !token) return;
+    setAnalyticsLoading(true);
+    fetch('/api/orders/seller/analytics', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setAnalytics(data) })
+      .finally(() => setAnalyticsLoading(false));
+  }, [activeTab, token]);
 
   const simulateUpload = () => {
     setIsUploading(true);
@@ -54,7 +76,7 @@ export function SellerDashboard() {
             <button
               key={i}
               onClick={() => {
-                if (item.id === 'overview' || item.id === 'bulk') {
+                if (item.id === 'overview' || item.id === 'bulk' || item.id === 'revenue') {
                   setActiveTab(item.id as any);
                 }
               }}
@@ -194,6 +216,99 @@ export function SellerDashboard() {
                     </table>
                   </div>
                 </div>
+              </motion.div>
+            ) : activeTab === 'revenue' ? (
+              <motion.div
+                key="revenue"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-8"
+              >
+                <div className="mb-8">
+                  <h1 className="text-4xl font-display font-bold mb-2">Revenue Analytics</h1>
+                  <p className="text-brand-primary/40 font-medium">Satış performansınız ve gelir dağılımı</p>
+                </div>
+
+                {analyticsLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : analytics ? (
+                  <>
+                    {/* KPI Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {[
+                        { icon: <PoundSterling size={22} />, label: 'Toplam Gelir', value: `£${analytics.totalRevenue.toLocaleString('en-GB', { minimumFractionDigits: 2 })}`, color: 'text-green-500', bg: 'bg-green-500/10' },
+                        { icon: <ShoppingBag size={22} />, label: 'Toplam Sipariş', value: analytics.totalOrders.toString(), color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                        { icon: <Hash size={22} />, label: 'Satılan Ürün', value: analytics.totalItems.toString(), color: 'text-accent', bg: 'bg-accent/10' },
+                      ].map((kpi, i) => (
+                        <div key={i} className="bg-white p-8 rounded-[2rem] border border-brand-primary/5 shadow-sm">
+                          <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center mb-4', kpi.bg, kpi.color)}>
+                            {kpi.icon}
+                          </div>
+                          <p className="text-xs font-bold uppercase tracking-widest text-brand-primary/40 mb-1">{kpi.label}</p>
+                          <h3 className="text-3xl font-display font-bold">{kpi.value}</h3>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Revenue Chart */}
+                    {analytics.revenueByDay.length > 0 && (
+                      <div className="bg-white rounded-[2rem] border border-brand-primary/5 p-8 shadow-sm">
+                        <h2 className="text-xl font-display font-bold mb-6">Günlük Gelir</h2>
+                        <ResponsiveContainer width="100%" height={280}>
+                          <AreaChart data={analytics.revenueByDay}>
+                            <defs>
+                              <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#f27d26" stopOpacity={0.15} />
+                                <stop offset="95%" stopColor="#f27d26" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+                            <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                            <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `£${v}`} />
+                            <Tooltip formatter={(v: number) => [`£${v.toFixed(2)}`, 'Gelir']} />
+                            <Area type="monotone" dataKey="revenue" stroke="#f27d26" strokeWidth={2} fill="url(#revenueGrad)" />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+
+                    {/* Top Products */}
+                    {analytics.topProducts.length > 0 && (
+                      <div className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm overflow-hidden">
+                        <div className="p-8 border-b border-brand-primary/5">
+                          <h2 className="text-xl font-display font-bold">En Çok Satan Ürünler</h2>
+                        </div>
+                        <div className="divide-y divide-brand-primary/5">
+                          {analytics.topProducts.map((p, i) => (
+                            <div key={p.id} className="flex items-center gap-4 px-8 py-4">
+                              <span className="text-2xl font-black text-brand-primary/20 w-6">#{i + 1}</span>
+                              <img src={p.image} alt={p.title} className="w-12 h-12 rounded-xl object-cover bg-brand-secondary/20" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold truncate">{p.title}</p>
+                                <p className="text-xs text-brand-primary/40">{p.qty} adet satıldı</p>
+                              </div>
+                              <span className="text-lg font-black text-accent">£{p.revenue.toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {analytics.totalOrders === 0 && (
+                      <div className="text-center py-16 text-brand-primary/30">
+                        <BarChart3 size={48} className="mx-auto mb-4 opacity-20" />
+                        <p className="font-bold">Henüz sipariş yok. İlk satışınızı bekliyoruz!</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-16 text-brand-primary/30">
+                    <p className="font-bold">Analytics verisi yüklenemedi.</p>
+                  </div>
+                )}
               </motion.div>
             ) : (
               <motion.div

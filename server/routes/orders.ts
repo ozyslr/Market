@@ -75,6 +75,73 @@ router.get('/seller', authenticate, (req: AuthRequest, res) => {
   res.json(sellerOrders)
 })
 
+router.get('/seller/analytics', authenticate, (req: AuthRequest, res) => {
+  if (req.user!.role !== 'seller' && req.user!.role !== 'admin') {
+    res.status(403).json({ error: 'Yetkiniz yok' }); return
+  }
+
+  const sellerProducts = db.prepare('SELECT id, title, price, images FROM products WHERE seller_id = ?').all(req.user!.id) as { id: string; title: string; price: number; images: string }[]
+  const productIds = new Set(sellerProducts.map(p => p.id))
+  const productMap = Object.fromEntries(sellerProducts.map(p => [p.id, p]))
+
+  if (productIds.size === 0) {
+    res.json({ totalRevenue: 0, totalOrders: 0, totalItems: 0, topProducts: [], revenueByDay: [] }); return
+  }
+
+  const allOrders = db.prepare('SELECT * FROM orders ORDER BY created_at ASC').all() as {
+    id: string; items: string; total: number; status: string; created_at: string
+  }[]
+
+  let totalRevenue = 0
+  let totalOrders = 0
+  let totalItems = 0
+  const productSales: Record<string, { title: string; revenue: number; qty: number; image: string }> = {}
+  const revenueByDay: Record<string, number> = {}
+
+  for (const order of allOrders) {
+    const items = JSON.parse(order.items) as { productId: string; price: number; quantity: number; title: string }[]
+    const sellerItems = items.filter(i => productIds.has(i.productId))
+    if (sellerItems.length === 0) continue
+
+    totalOrders++
+    const day = order.created_at.slice(0, 10)
+    let orderRevenue = 0
+
+    for (const item of sellerItems) {
+      const rev = item.price * item.quantity
+      totalRevenue += rev
+      totalItems += item.quantity
+      orderRevenue += rev
+      if (!productSales[item.productId]) {
+        const prod = productMap[item.productId]
+        let img = ''
+        try { img = JSON.parse(prod?.images ?? '[]')[0] ?? '' } catch { img = '' }
+        productSales[item.productId] = { title: item.title, revenue: 0, qty: 0, image: img }
+      }
+      productSales[item.productId].revenue += rev
+      productSales[item.productId].qty += item.quantity
+    }
+    revenueByDay[day] = (revenueByDay[day] ?? 0) + orderRevenue
+  }
+
+  const topProducts = Object.entries(productSales)
+    .map(([id, data]) => ({ id, ...data, revenue: parseFloat(data.revenue.toFixed(2)) }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5)
+
+  const revenueByDayArr = Object.entries(revenueByDay)
+    .map(([date, revenue]) => ({ date, revenue: parseFloat(revenue.toFixed(2)) }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+
+  res.json({
+    totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+    totalOrders,
+    totalItems,
+    topProducts,
+    revenueByDay: revenueByDayArr,
+  })
+})
+
 router.patch('/:id/status', authenticate, (req: AuthRequest, res) => {
   const { status } = req.body
   const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
