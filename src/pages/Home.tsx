@@ -55,11 +55,11 @@ export function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f2f4f7]">
+    <div className="min-h-screen bg-brand-secondary">
       <Hero />
 
       {/* Category Icons Bar (Hepsiburada Style Circles) */}
-      <section className="bg-white py-10 px-4">
+      <section className="bg-white py-5 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-6 overflow-x-auto no-scrollbar pb-2">
           {homepageCategories.map((cat, i) => (
             <Link key={i} to={`/search?category=${cat.key}`} className="flex flex-col items-center gap-3 shrink-0 group">
@@ -89,13 +89,13 @@ export function Home() {
       </section>
 
       {/* Main Content Hub */}
-      <main className="max-w-[1700px] mx-auto px-4 md:px-6 py-8 space-y-20">
+      <main className="max-w-[1700px] mx-auto px-4 md:px-6 py-6 space-y-10">
         
         {/* Commercial Opportunity Board (Technical Dashboard Mood) */}
-        <section className="bg-brand-primary text-white py-16 px-8 rounded-[4rem] relative overflow-hidden">
+        <section className="bg-brand-primary text-white py-10 px-6 rounded-[3rem] relative overflow-hidden">
           <Globe size={400} className="absolute -top-20 -right-20 text-white/5 pointer-events-none" />
           <div className="relative z-10">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <span className="px-3 py-1 bg-accent text-white text-[10px] font-black uppercase tracking-widest rounded-full">{t('market.opportunity')}</span>
@@ -121,7 +121,7 @@ export function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Ticker Column 1: Scarcity */}
               <div className="bg-white/5 border border-white/5 rounded-[3.5rem] p-10 group hover:bg-white/10 transition-all border-l-4 border-l-red-500 backdrop-blur-3xl">
-                <div className="flex items-center justify-between mb-12">
+                <div className="flex items-center justify-between mb-6">
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-white/40 italic flex items-center gap-2">
                     <Zap size={14} className="text-red-500" /> {t('market.scarcity')}
                   </h3>
@@ -150,7 +150,7 @@ export function Home() {
 
               {/* Ticker Column 2: Rising Demand */}
               <div className="bg-white/5 border border-white/5 rounded-[3.5rem] p-10 group hover:bg-white/10 transition-all border-l-4 border-l-green-500 backdrop-blur-3xl">
-                <div className="flex items-center justify-between mb-12">
+                <div className="flex items-center justify-between mb-6">
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-white/40 italic flex items-center gap-2">
                     <TrendingUp size={14} className="text-green-500" /> {t('market.trending')}
                   </h3>
@@ -178,7 +178,7 @@ export function Home() {
               </div>
 
               {/* Column 3: Logistics Integrity */}
-              <div className="bg-accent rounded-[3.5rem] p-12 text-white relative overflow-hidden group shadow-2xl shadow-accent/20">
+              <div className="bg-accent rounded-[3.5rem] p-8 text-white relative overflow-hidden group shadow-2xl shadow-accent/20">
                 <Shield size={300} className="absolute -bottom-20 -right-20 text-white/10 pointer-events-none group-hover:rotate-12 transition-transform duration-1000" />
                 <div className="relative z-10 h-full flex flex-col pt-4">
                   <div className="flex items-center gap-3 mb-8">
@@ -215,7 +215,7 @@ export function Home() {
         <section className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 border border-brand-primary/5 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
           
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
             <div>
               <div className="flex items-center gap-2 text-red-500 mb-2">
                 <Flame size={20} fill="currentColor" />
@@ -376,7 +376,7 @@ export function Home() {
             </div>
           </div>
 
-          <div className="bg-[#fff1f2] rounded-[2.5rem] p-8 border border-pink-100 flex flex-col group">
+          <div className="bg-pink-50 dark:bg-pink-950/20 rounded-[2.5rem] p-8 border border-pink-100 dark:border-pink-900/20 flex flex-col group">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-2xl font-display font-black uppercase italic text-pink-950">{t('category.makeup')}</h3>
               <Link to="/search?category=beauty" className="text-[10px] font-black uppercase tracking-widest text-pink-600">{t('global.see_all')}</Link>
@@ -394,7 +394,7 @@ export function Home() {
             </div>
           </div>
 
-          <div className="bg-[#f0f9ff] rounded-[2.5rem] p-8 border border-blue-100 flex flex-col group">
+          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-[2.5rem] p-8 border border-blue-100 dark:border-blue-900/20 flex flex-col group">
              <div className="flex items-center justify-between mb-8 text-blue-900">
                 <h3 className="text-2xl font-display font-black uppercase italic">{t('category.sportswear')}</h3>
                 <Link to="/search?category=sportswear" className="text-[10px] font-black uppercase tracking-widest text-blue-600">{t('global.see_all')}</Link>
@@ -446,7 +446,7 @@ export function Home() {
         </section>
 
         {/* Home & Living Highlight */}
-        <section className="bg-gradient-to-r from-[#e0f1f1] to-white rounded-[3rem] p-8 md:p-16 border border-cyan-100 flex flex-col md:flex-row items-center gap-12 overflow-hidden relative">
+        <section className="bg-gradient-to-r from-cyan-50 dark:from-cyan-950/20 to-white dark:to-surface rounded-[3rem] p-8 md:p-12 border border-cyan-100 dark:border-cyan-900/20 flex flex-col md:flex-row items-center gap-12 overflow-hidden relative">
            <div className="relative z-10 flex-1">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-600 mb-4 block">New Living Collection</span>
               <h2 className="text-5xl font-display font-black tracking-tighter text-brand-primary uppercase italic mb-8">Living Room <br /> <span className="text-cyan-500">Artifacts</span></h2>
@@ -475,7 +475,7 @@ export function Home() {
         </section>
 
         {/* Global Roadmap Grid */}
-        <section className="py-20 text-center space-y-24">
+        <section className="py-8 text-center space-y-10">
            <div>
              <h2 className="text-5xl font-display font-black tracking-tighter text-brand-primary mb-6 uppercase italic">Built for Global Commerce</h2>
              <p className="text-brand-primary/40 max-w-2xl mx-auto font-medium">Why the world's finest artisans choose Mercora over legacy platforms.</p>
@@ -536,7 +536,7 @@ export function Home() {
       </main>
 
       {/* Modern High-End Footer */}
-      <footer className="bg-brand-primary text-white py-24 px-6 relative overflow-hidden">
+      <footer className="bg-brand-primary text-white py-16 px-6 relative overflow-hidden">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 relative z-10">
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center gap-2 mb-8">
@@ -581,7 +581,7 @@ export function Home() {
           </div>
         </div>
         
-        <div className="max-w-7xl mx-auto mt-24 pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 text-[10px] font-black uppercase tracking-widest text-white/20">
+        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 text-[10px] font-black uppercase tracking-widest text-white/20">
           <p>© 2026 Mercora Global. ALL RIGHTS RESERVED.</p>
           <div className="flex gap-8">
             <span className="hover:text-white transition-colors cursor-pointer">Privacy</span>
