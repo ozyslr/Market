@@ -58,6 +58,7 @@ export default function App() {
                 <Route path="/seller/:id" element={<SellerStorePage />} />
                 <Route path="/search" element={<SearchResultsPage />} />
                 <Route path="/wishlist" element={<WishlistPage />} />
+                <Route path="/compare" element={<ComparePage />} />
                 <Route path="/admin" element={
                   <ProtectedRoute requiredRole="admin"><AdminPage /></ProtectedRoute>
                 } />
@@ -67,6 +68,7 @@ export default function App() {
 
             <Footer />
             <ShoppingAssistant />
+            <CompareBar />
             <ToastContainer />
           </div>
         </ErrorBoundary>

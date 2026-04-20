@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia',
+  apiVersion: '2026-03-25.dahlia',
 });
 
 // Middleware to check authentication (dummy for now until we move to Firebase Auth properly on the backend or we just pass the user ID from the frontend)
