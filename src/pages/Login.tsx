@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Zap } from 'lucide-react'
-import { useAuthStore } from '@/store/authStore'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
@@ -15,12 +16,12 @@ export function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const { signInWithEmailAndPassword } = await import('firebase/auth')
-      const { auth } = await import('@/lib/firebase')
       await signInWithEmailAndPassword(auth, email, password)
+      // onAuthStateChanged in authStore handles backend sync + setUser automatically
       navigate('/')
     } catch (err: any) {
-      setError(err.message || 'Giriş başarısız')
+      const msg = err.code === 'auth/invalid-credential' ? 'E-posta veya şifre hatalı' : (err.message || 'Giriş başarısız')
+      setError(msg)
     } finally {
       setLoading(false)
     }

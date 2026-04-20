@@ -71,4 +71,33 @@ router.post('/login', async (req, res) => {
   res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, token } })
 })
 
+// Firebase Auth sync — called after Firebase sign-in/register on frontend
+router.post('/firebase-sync', async (req, res) => {
+  const { firebaseUid, email, name, role = 'buyer' } = req.body
+  if (!firebaseUid || !email) {
+    res.status(400).json({ error: 'firebaseUid and email required' })
+    return
+  }
+
+  let user = db.prepare('SELECT * FROM users WHERE firebase_uid = ? OR email = ?').get(firebaseUid, email) as {
+    id: string; name: string; email: string; role: string
+  } | undefined
+
+  if (!user) {
+    const id = randomUUID()
+    const password_hash = await bcrypt.hash(randomUUID(), 4)
+    const displayName = name || email.split('@')[0]
+    db.prepare(
+      'INSERT INTO users (id, name, email, password_hash, role, firebase_uid) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(id, displayName, email, password_hash, role, firebaseUid)
+    user = db.prepare('SELECT * FROM users WHERE id = ?').get(id) as typeof user
+  } else {
+    db.prepare('UPDATE users SET firebase_uid = ? WHERE id = ?').run(firebaseUid, (user as any).id)
+  }
+
+  if (!user) { res.status(500).json({ error: 'User sync failed' }); return }
+  const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' })
+  res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, token } })
+})
+
 export default router

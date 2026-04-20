@@ -1,13 +1,13 @@
 import { create } from 'zustand'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
-import { auth, db } from '../lib/firebase'
+import { auth } from '../lib/firebase'
 
 export interface AuthUser {
   id: string
   name: string
   email: string
   role: 'buyer' | 'seller' | 'admin'
+  token: string
 }
 
 interface AuthStore {
@@ -29,35 +29,30 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   isAuthenticated: () => get().user !== null,
 }))
 
-// Initialize auth listener
+// Firebase auth listener — syncs with backend to get custom JWT + role
 onAuthStateChanged(auth, async (firebaseUser) => {
   if (firebaseUser) {
     try {
-      const userDocRef = doc(db, 'users', firebaseUser.uid);
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        useAuthStore.getState().setUser({
-          id: firebaseUser.uid,
-          name: data.name || firebaseUser.displayName || 'User',
-          email: firebaseUser.email || '',
-          role: data.role || 'buyer'
-        });
+      const res = await fetch('/api/auth/firebase-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firebaseUid: firebaseUser.uid,
+          email: firebaseUser.email,
+          name: firebaseUser.displayName,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        useAuthStore.getState().setUser(data.user)
       } else {
-        // Fallback for missing user document
-        useAuthStore.getState().setUser({
-          id: firebaseUser.uid,
-          name: firebaseUser.displayName || 'User',
-          email: firebaseUser.email || '',
-          role: 'buyer'
-        });
+        useAuthStore.getState().setUser(null)
       }
-    } catch (err) {
-      console.error("Error fetching user data", err);
-      useAuthStore.getState().setUser(null);
+    } catch {
+      useAuthStore.getState().setUser(null)
     }
   } else {
-    useAuthStore.getState().setUser(null);
+    useAuthStore.getState().setUser(null)
   }
-  useAuthStore.setState({ loading: false });
+  useAuthStore.setState({ loading: false })
 })

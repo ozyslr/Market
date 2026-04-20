@@ -84,6 +84,7 @@ const migrations = [
   `ALTER TABLE users ADD COLUMN kyc_status TEXT DEFAULT 'unverified'`,
   `ALTER TABLE products ADD COLUMN moderation_status TEXT DEFAULT 'approved'`,
   `ALTER TABLE orders ADD COLUMN payment_intent_id TEXT`,
+  `ALTER TABLE users ADD COLUMN firebase_uid TEXT`,
 ]
 
 for (const sql of migrations) {

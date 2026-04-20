@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Zap } from 'lucide-react'
-import { useAuthStore } from '@/store/authStore'
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
+import { doc, setDoc } from 'firebase/firestore'
+import { auth, db as firestoreDb } from '@/lib/firebase'
 
 export function RegisterPage() {
   const [name, setName] = useState('')
@@ -17,25 +19,18 @@ export function RegisterPage() {
     setLoading(true)
     setError('')
     try {
-      const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth')
-      const { doc, setDoc } = await import('firebase/firestore')
-      const { auth, db } = await import('@/lib/firebase')
-      
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-      const user = userCredential.user
-      
-      await updateProfile(user, { displayName: name })
-      
-      await setDoc(doc(db, 'users', user.uid), {
-        name,
-        email,
-        role,
-        createdAt: new Date().toISOString()
+      const cred = await createUserWithEmailAndPassword(auth, email, password)
+      await updateProfile(cred.user, { displayName: name })
+
+      // Write role to Firestore so onAuthStateChanged picks it up
+      await setDoc(doc(firestoreDb, 'users', cred.user.uid), {
+        name, email, role, createdAt: new Date().toISOString(),
       })
-      
+
+      // firebase-sync in authStore listener will handle backend user creation
       navigate('/')
     } catch (err: any) {
-      setError(err.message || 'Kayıt başarısız')
+      setError(err.message || 'Kayit basarisiz')
     } finally {
       setLoading(false)
     }
