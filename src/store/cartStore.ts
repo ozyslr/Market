@@ -8,13 +8,15 @@ export interface CartItem {
   quantity: number
   image: string
   sellerId: string
+  variantId?: string
+  variantLabel?: string
 }
 
 interface CartStore {
   items: CartItem[]
   addItem: (item: CartItem) => void
-  removeItem: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
+  removeItem: (productId: string, variantId?: string) => void
+  updateQuantity: (productId: string, quantity: number, variantId?: string) => void
   clearCart: () => void
   totalItems: () => number
   totalPrice: () => number
@@ -30,11 +32,13 @@ export const useCartStore = create<CartStore>()(
       items: [],
       addItem: (item) =>
         set((state) => {
-          const existing = state.items.find((i) => i.productId === item.productId)
+          const existing = state.items.find(
+            (i) => i.productId === item.productId && i.variantId === item.variantId
+          )
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.productId === item.productId
+                i.productId === item.productId && i.variantId === item.variantId
                   ? { ...i, quantity: i.quantity + item.quantity }
                   : i
               ),
@@ -42,14 +46,14 @@ export const useCartStore = create<CartStore>()(
           }
           return { items: [...state.items, item] }
         }),
-      removeItem: (productId) =>
+      removeItem: (productId, variantId?: string) =>
         set((state) => ({
-          items: state.items.filter((i) => i.productId !== productId),
+          items: state.items.filter((i) => !(i.productId === productId && i.variantId === variantId)),
         })),
-      updateQuantity: (productId, quantity) =>
+      updateQuantity: (productId, quantity, variantId?: string) =>
         set((state) => ({
           items: state.items.map((i) =>
-            i.productId === productId ? { ...i, quantity } : i
+            i.productId === productId && i.variantId === variantId ? { ...i, quantity } : i
           ),
         })),
       clearCart: () => set({ items: [] }),

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Star, Truck, ShieldCheck, ChevronRight, ShoppingCart, 
@@ -16,8 +16,11 @@ import { ProductCard } from '@/components/commerce/ProductCard'
 import { ReviewForm } from '@/components/commerce/ReviewForm'
 import { ReviewList } from '@/components/commerce/ReviewList';
 import { useUIStore } from '@/store/uiStore'
+import { useCartStore } from '@/store/cartStore'
 import { fetchProduct } from '@/lib/apiProduct'
 import type { Product } from '@/types'
+import { ProductSeo } from '@/components/seo/ProductSeo'
+import { VariantPicker } from '@/components/product/VariantPicker'
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
@@ -42,10 +45,16 @@ export function ProductDetail() {
   const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews'>('details');
   const [reviews, setReviews] = useState<{ id: string; user_name: string; rating: number; comment: string | null; created_at: string }[]>([])
 
+  const [selectedVariant, setSelectedVariant] = useState<{ id: string; label: string; price: number; stock: number } | null>(null)
+
   const { addToast } = useUIStore()
+  const navigate = useNavigate()
+  const { addItem } = useCartStore()
+  const productWithVariants = product as (Product & { variants?: { id: string; label: string; size?: string | null; color?: string | null; price: number; stock: number }[] }) | null
 
   useEffect(() => {
     if (!slug) return
+    window.scrollTo(0, 0)
     setLoading(true)
     fetchProduct(slug).then(p => {
       if (p) {
@@ -85,6 +94,8 @@ export function ProductDetail() {
   if (!product) return null;
 
   return (
+    <>
+    <ProductSeo product={product} />
     <div className="bg-[#f2f4f7] min-h-screen pb-20">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6">
         
@@ -167,6 +178,19 @@ export function ProductDetail() {
                   </div>
                 </div>
 
+                {productWithVariants?.variants && productWithVariants.variants.length > 0 && (
+                  <div className="mb-6">
+                    <VariantPicker
+                      variants={productWithVariants.variants}
+                      selectedId={selectedVariant?.id ?? null}
+                      onSelect={v => setSelectedVariant(v)}
+                    />
+                    {selectedVariant && (
+                      <p className="mt-3 text-sm font-bold text-brand-primary/60">Seçilen: {selectedVariant.label}</p>
+                    )}
+                  </div>
+                )}
+
                 <div className="p-8 bg-brand-secondary/30 rounded-[2.5rem] border border-brand-primary/5 relative mb-8">
                    <div className="absolute top-6 right-8 bg-accent text-white px-2 py-1 rounded text-[10px] font-black uppercase leading-none shadow-lg shadow-accent/20">-{Math.round(((product.oldPrice || product.price) - product.price) / (product.oldPrice || product.price) * 100)}%</div>
                    <div className="flex items-baseline gap-4 mb-4">
@@ -224,11 +248,15 @@ export function ProductDetail() {
                         <span className="w-10 text-center font-black text-sm">{quantity}</span>
                         <button onClick={() => setQuantity(quantity + 1)} className="flex-1 h-full flex items-center justify-center hover:bg-white rounded-xl transition-all text-brand-primary/40 hover:text-brand-primary">+</button>
                       </div>
-                      <button className="flex-1 h-14 bg-accent text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-brand-primary transition-all shadow-xl shadow-accent/20 flex items-center justify-center gap-3 active:scale-95">
+                      <button
+                        onClick={() => { addItem({ productId: product.id, title: product.title, price: selectedVariant?.price ?? product.price, quantity, image: product.images[0] ?? '', sellerId: product.sellerId, variantId: selectedVariant?.id, variantLabel: selectedVariant?.label }); addToast('Ürün sepete eklendi', 'success') }}
+                        className="flex-1 h-14 bg-accent text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-brand-primary transition-all shadow-xl shadow-accent/20 flex items-center justify-center gap-3 active:scale-95">
                         <ShoppingCart size={18} /> {t('product.add_cart')}
                       </button>
                    </div>
-                   <button className="w-full h-14 bg-brand-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-xl shadow-brand-primary/10 flex items-center justify-center gap-3 group active:scale-95">
+                   <button
+                     onClick={() => { addItem({ productId: product.id, title: product.title, price: selectedVariant?.price ?? product.price, quantity, image: product.images[0] ?? '', sellerId: product.sellerId, variantId: selectedVariant?.id, variantLabel: selectedVariant?.label }); navigate('/checkout') }}
+                     className="w-full h-14 bg-brand-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-xl shadow-brand-primary/10 flex items-center justify-center gap-3 group active:scale-95">
                      {t('product.buy_now')} <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
                    </button>
                 </div>
@@ -541,5 +569,6 @@ export function ProductDetail() {
         </div>
       </section>
     </div>
+    </>
   );
 }

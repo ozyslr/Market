@@ -36,9 +36,19 @@ router.get('/seller/mine', authenticate, (req: AuthRequest, res) => {
 })
 
 router.get('/:slug', (req, res) => {
-  const product = db.prepare('SELECT * FROM products WHERE slug = ?').get(req.params.slug)
+  const product = db.prepare('SELECT * FROM products WHERE slug = ?').get(req.params.slug) as { id: string; images: string } | undefined
   if (!product) { res.status(404).json({ error: 'Ürün bulunamadı' }); return }
-  res.json(product)
+  const variants = db.prepare('SELECT * FROM variants WHERE product_id = ? ORDER BY price').all(product.id)
+  res.json({ ...product, images: JSON.parse(product.images || '[]'), variants })
+})
+
+const VariantInput = z.object({
+  label: z.string().min(1),
+  sku: z.string().optional(),
+  size: z.string().optional(),
+  color: z.string().optional(),
+  price: z.number().positive(),
+  stock: z.number().int().min(0),
 })
 
 const ProductSchema = z.object({
@@ -53,6 +63,7 @@ const ProductSchema = z.object({
   origin_country: z.string().optional(),
   hs_code: z.string().optional(),
   images: z.array(z.string()).default([]),
+  variants: z.array(VariantInput).optional(),
 })
 
 router.post('/', authenticate, (req: AuthRequest, res) => {
@@ -67,7 +78,7 @@ router.post('/', authenticate, (req: AuthRequest, res) => {
     return
   }
 
-  const { title, images, ...rest } = parsed.data
+  const { title, images, variants, ...rest } = parsed.data
   const id = randomUUID()
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + id.slice(0, 8)
 
@@ -77,6 +88,13 @@ router.post('/', authenticate, (req: AuthRequest, res) => {
   `).run(id, req.user!.id, title, slug, rest.description ?? null, rest.price, rest.old_price ?? null,
     rest.currency, rest.stock, rest.category_id ?? null, rest.brand ?? null,
     rest.origin_country ?? null, rest.hs_code ?? null, JSON.stringify(images))
+
+  if (variants && variants.length > 0) {
+    const insertVariant = db.prepare('INSERT INTO variants (id, product_id, label, sku, size, color, price, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    for (const v of variants) {
+      insertVariant.run(randomUUID(), id, v.label, v.sku ?? null, v.size ?? null, v.color ?? null, v.price, v.stock)
+    }
+  }
 
   res.status(201).json({ id, slug })
 })
@@ -91,19 +109,27 @@ router.put('/:id', authenticate, (req: AuthRequest, res) => {
   const parsed = ProductSchema.partial().safeParse(req.body)
   if (!parsed.success) { res.status(400).json({ error: parsed.error.issues[0].message }); return }
 
-  const { images, ...rest } = parsed.data
+  const { images, variants, ...rest } = parsed.data
   const updates = Object.entries({ ...rest, images: images ? JSON.stringify(images) : undefined })
     .filter(([, v]) => v !== undefined)
     .map(([k]) => `${k} = ?`)
     .join(', ')
 
-  if (!updates) { res.json({ message: 'Değişiklik yok' }); return }
+  if (updates) {
+    const values = Object.entries({ ...rest, images: images ? JSON.stringify(images) : undefined })
+      .filter(([, v]) => v !== undefined)
+      .map(([, v]) => v)
+    db.prepare(`UPDATE products SET ${updates} WHERE id = ?`).run(...values, req.params.id)
+  }
 
-  const values = Object.entries({ ...rest, images: images ? JSON.stringify(images) : undefined })
-    .filter(([, v]) => v !== undefined)
-    .map(([, v]) => v)
+  if (variants !== undefined) {
+    db.prepare('DELETE FROM variants WHERE product_id = ?').run(req.params.id)
+    const insertVariant = db.prepare('INSERT INTO variants (id, product_id, label, sku, size, color, price, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    for (const v of variants) {
+      insertVariant.run(randomUUID(), req.params.id, v.label, v.sku ?? null, v.size ?? null, v.color ?? null, v.price, v.stock)
+    }
+  }
 
-  db.prepare(`UPDATE products SET ${updates} WHERE id = ?`).run(...values, req.params.id)
   res.json({ message: 'Güncellendi' })
 })
 
