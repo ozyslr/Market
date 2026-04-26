@@ -1,16 +1,137 @@
-import React from 'react';
-import { 
-  Package, Heart, CreditCard, MapPin, Settings, 
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Package, Heart, CreditCard, MapPin, Settings,
   HelpCircle, ChevronRight, Star, Clock, ShoppingBag,
   TrendingUp, Wallet, ShieldCheck, Zap, ArrowRight
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { MOCK_USER, MOCK_PRODUCTS } from '@/mockData';
+import { MOCK_PRODUCTS } from '@/mockData';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
+import { useUIStore } from '@/store/uiStore';
+
+interface SavedAddress {
+  id: string
+  full_name: string
+  line1: string
+  line2?: string | null
+  city: string
+  postcode: string
+  country: string
+  phone?: string | null
+  is_default: number
+}
+
+function AddressManager({ token }: { token: string }) {
+  const [addresses, setAddresses] = useState<SavedAddress[]>([])
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ full_name: '', line1: '', line2: '', city: '', postcode: '', country: 'GB', phone: '' })
+  const { addToast } = useUIStore()
+
+  const authHeaders = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+
+  const load = useCallback(async () => {
+    const r = await fetch('/api/addresses', { headers: authHeaders })
+    if (r.ok) setAddresses(await r.json())
+  }, [token])
+
+  useEffect(() => { load() }, [load])
+
+  const handleAdd = async () => {
+    const r = await fetch('/api/addresses', { method: 'POST', headers: authHeaders, body: JSON.stringify({ ...form, is_default: addresses.length === 0 }) })
+    if (r.ok) {
+      setShowForm(false)
+      setForm({ full_name: '', line1: '', line2: '', city: '', postcode: '', country: 'GB', phone: '' })
+      load()
+      addToast('Adres eklendi', 'success')
+    } else {
+      const d = await r.json()
+      addToast(d.error || 'Hata', 'error')
+    }
+  }
+
+  const handleSetDefault = async (id: string) => {
+    await fetch(`/api/addresses/${id}/default`, { method: 'PATCH', headers: authHeaders })
+    load()
+  }
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/addresses/${id}`, { method: 'DELETE', headers: authHeaders })
+    load()
+  }
+
+  return (
+    <div className="mt-10">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-black text-brand-primary uppercase tracking-tight">Kayıtlı Adresler</h2>
+        <button onClick={() => setShowForm(v => !v)} className="px-4 py-2 bg-brand-primary text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-accent transition-all">
+          {showForm ? 'İptal' : '+ Adres Ekle'}
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="bg-white border border-brand-primary/10 rounded-2xl p-6 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {(['full_name', 'line1', 'line2', 'city', 'postcode', 'phone'] as const).map(field => (
+            <input key={field} placeholder={field.replace('_', ' ')} value={form[field]}
+              onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
+              className="border border-brand-primary/10 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-accent/20" />
+          ))}
+          <button onClick={handleAdd} className="md:col-span-2 py-3 bg-accent text-white rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all">
+            Kaydet
+          </button>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {addresses.map(addr => (
+          <div key={addr.id} className={`p-5 rounded-2xl border flex items-start justify-between gap-4 ${addr.is_default ? 'border-accent bg-accent/5' : 'border-brand-primary/10 bg-white'}`}>
+            <div>
+              <p className="font-bold text-sm text-brand-primary">{addr.full_name}</p>
+              <p className="text-xs text-brand-primary/60">{addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}</p>
+              <p className="text-xs text-brand-primary/60">{addr.city}, {addr.postcode}, {addr.country}</p>
+              {addr.is_default === 1 && <span className="inline-block mt-1 px-2 py-0.5 bg-accent text-white text-[9px] font-black uppercase rounded-full tracking-widest">Varsayılan</span>}
+            </div>
+            <div className="flex flex-col gap-2 shrink-0">
+              {addr.is_default !== 1 && (
+                <button onClick={() => handleSetDefault(addr.id)} className="text-[10px] font-black uppercase text-accent hover:underline">Varsayılan Yap</button>
+              )}
+              <button onClick={() => handleDelete(addr.id)} className="text-[10px] font-black uppercase text-red-400 hover:underline">Sil</button>
+            </div>
+          </div>
+        ))}
+        {addresses.length === 0 && !showForm && <p className="text-sm text-brand-primary/40 text-center py-8">Henüz kayıtlı adres yok.</p>}
+      </div>
+    </div>
+  )
+}
+
+interface ApiOrder {
+  id: string;
+  total: number;
+  status: string;
+  created_at: string;
+  items: Array<{ productId: string; title: string; quantity: number; price: number }>;
+}
 
 export function UserProfilePage() {
-  const user = MOCK_USER;
+  const authUser = useAuthStore(s => s.user);
+  const [orders, setOrders] = useState<ApiOrder[]>([]);
+
+  useEffect(() => {
+    if (!authUser?.token) return;
+    fetch('/api/orders/my', { headers: { Authorization: `Bearer ${authUser.token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: any[]) => setOrders(data.map(o => ({
+        ...o,
+        items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items ?? []),
+      }))))
+      .catch(() => {});
+  }, [authUser?.token]);
+
+  const spentTotal = orders.reduce((sum, o) => sum + o.total, 0);
+  const displayName = authUser?.name ?? 'Kullanıcı';
+  const displayCountry = (authUser as any)?.country ?? 'UK';
 
   return (
     <div className="min-h-screen bg-brand-secondary/30 pt-32 pb-20 px-4">
@@ -21,7 +142,7 @@ export function UserProfilePage() {
             <div className="relative group">
               <div className="w-24 h-24 rounded-[2rem] bg-brand-primary overflow-hidden border-4 border-white shadow-2xl">
                 <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`} 
                   alt="Profile" 
                   className="w-full h-full object-cover"
                 />
@@ -33,23 +154,23 @@ export function UserProfilePage() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-4xl font-display font-black tracking-tighter text-brand-primary">
-                  {user.name}
+                  {displayName}
                 </h1>
                 <span className="px-3 py-1 bg-brand-primary text-white text-[10px] font-black uppercase tracking-widest rounded-full">
                   Prime Member
                 </span>
               </div>
               <p className="text-brand-primary/60 font-medium mt-1">
-                Artisan Curator since {new Date(user.lastLogin).getFullYear()} • {user.country}
+                Artisan Curator since {new Date().getFullYear()} • {displayCountry}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: 'Total Spent', value: `$${user.spentTotal.toLocaleString()}`, icon: Wallet, color: 'text-green-500' },
-              { label: 'Active Orders', value: user.orders.length, icon: Package, color: 'text-blue-500' },
-              { label: 'Saved Items', value: user.savedItems.length, icon: Heart, color: 'text-red-500' },
+              { label: 'Total Spent', value: `£${spentTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: Wallet, color: 'text-green-500' },
+              { label: 'Active Orders', value: orders.length, icon: Package, color: 'text-blue-500' },
+              { label: 'Saved Items', value: 0, icon: Heart, color: 'text-red-500' },
               { label: 'Reward Points', value: '4,250', icon: Star, color: 'text-accent' }
             ].map((stat, i) => (
               <div key={i} className="bg-white p-4 rounded-3xl shadow-sm border border-brand-primary/5 hover:shadow-xl transition-all group">
@@ -76,7 +197,12 @@ export function UserProfilePage() {
               </div>
 
               <div className="space-y-4">
-                {user.orders.map((order) => (
+                {orders.length === 0 ? (
+                  <div className="text-center py-12 text-brand-primary/40">
+                    <Package size={40} className="mx-auto mb-4 opacity-30" />
+                    <p className="font-bold text-sm">Henüz sipariş yok</p>
+                  </div>
+                ) : orders.map((order) => (
                   <div key={order.id} className="p-6 rounded-[2rem] border border-brand-primary/5 hover:border-accent/20 transition-all group">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                       <div className="flex items-center gap-4">
@@ -85,19 +211,16 @@ export function UserProfilePage() {
                         </div>
                         <div>
                           <p className="text-sm font-black text-brand-primary">Order #{order.id.split('-')[0].toUpperCase()}</p>
-                          <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
+                          <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">Placed on {new Date(order.created_at).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <p className="text-sm font-black text-brand-primary">${order.total}</p>
+                          <p className="text-sm font-black text-brand-primary">£{order.total.toFixed(2)}</p>
                           <p className="text-[10px] font-bold text-green-500 uppercase tracking-widest">{order.status}</p>
                         </div>
-                        <span className={cn(
-                          "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest",
-                          order.market === 'UK' ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-600"
-                        )}>
-                          {order.market} Fulfillment
+                        <span className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600">
+                          UK Fulfillment
                         </span>
                       </div>
                     </div>
@@ -106,17 +229,16 @@ export function UserProfilePage() {
                       {order.items.map((item, idx) => {
                         const product = MOCK_PRODUCTS.find(p => p.id === item.productId);
                         return (
-                          <div key={idx} className="flex-shrink-0 w-24 h-24 rounded-2xl bg-brand-secondary/50 p-2 relative group-hover:bg-white transition-colors border border-transparent group-hover:border-brand-primary/5">
-                             <img 
-                               src={product?.images[0]} 
-                               alt={product?.title} 
-                               className="w-full h-full object-contain mix-blend-multiply"
-                             />
-                             {item.quantity > 1 && (
-                               <span className="absolute -top-2 -right-2 w-6 h-6 bg-brand-primary text-white rounded-full text-[10px] font-bold flex items-center justify-center">
-                                 {item.quantity}
-                               </span>
-                             )}
+                          <div key={idx} className="shrink-0 w-24 h-24 rounded-2xl bg-brand-secondary/50 p-2 relative group-hover:bg-white transition-colors border border-transparent group-hover:border-brand-primary/5">
+                            {product?.images[0]
+                              ? <img src={product.images[0]} alt={item.title} className="w-full h-full object-contain mix-blend-multiply" />
+                              : <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-brand-primary/30 text-center px-1">{item.title}</div>
+                            }
+                            {item.quantity > 1 && (
+                              <span className="absolute -top-2 -right-2 w-6 h-6 bg-brand-primary text-white rounded-full text-[10px] font-bold flex items-center justify-center">
+                                {item.quantity}
+                              </span>
+                            )}
                           </div>
                         );
                       })}
@@ -256,6 +378,9 @@ export function UserProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Address Management */}
+        {authUser && <AddressManager token={authUser.token} />}
 
         {/* Saved for Later Carousel */}
         <div className="mt-20">

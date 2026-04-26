@@ -18,11 +18,14 @@ interface Address {
   postcode: string
 }
 
-function CheckoutForm({ clientSecret, address, setAddress, totals }: { 
-  clientSecret: string, 
-  address: Address, 
+interface SavedAddr { id: string; full_name: string; line1: string; city: string; postcode: string; country: string; is_default: number }
+
+function CheckoutForm({ clientSecret, address, setAddress, totals, couponDiscount }: {
+  clientSecret: string,
+  address: Address,
   setAddress: React.Dispatch<React.SetStateAction<Address>>,
-  totals: any 
+  totals: any,
+  couponDiscount: number
 }) {
   const stripe = useStripe()
   const elements = useElements()
@@ -32,6 +35,25 @@ function CheckoutForm({ clientSecret, address, setAddress, totals }: {
   const addToast = useUIStore((s) => s.addToast)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [guestName, setGuestName] = useState('')
+  const [guestEmail, setGuestEmail] = useState('')
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddr[]>([])
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!user?.token) return
+    fetch('/api/addresses', { headers: { Authorization: `Bearer ${user.token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then((addrs: SavedAddr[]) => {
+        setSavedAddresses(addrs)
+        const def = addrs.find(a => a.is_default === 1)
+        if (def) {
+          setSelectedAddressId(def.id)
+          setAddress({ line1: def.line1, city: def.city, country: def.country, postcode: def.postcode })
+        }
+      })
+      .catch(() => {})
+  }, [user?.token])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -40,7 +62,10 @@ function CheckoutForm({ clientSecret, address, setAddress, totals }: {
       return
     }
 
-    if (!user) { navigate('/login'); return }
+    if (!user && (!guestName.trim() || !guestEmail.trim())) {
+      setMessage('Misafir olarak devam etmek için isim ve e-posta gereklidir.')
+      return
+    }
     if (items.length === 0) return
 
     setLoading(true)
@@ -48,14 +73,16 @@ function CheckoutForm({ clientSecret, address, setAddress, totals }: {
 
     try {
       const paymentIntentId = clientSecret.split('_secret')[0]
-      // Create the order in our backend first (pending payment)
-      const orderRes = await fetch('/api/orders', {
+      const orderEndpoint = user ? '/api/orders' : '/api/orders/guest'
+      const orderHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (user) orderHeaders.Authorization = `Bearer ${user.token}`
+      const orderBody = user
+        ? { items, total: Math.max(0, totals.total - couponDiscount), address, status: 'pending', paymentIntentId }
+        : { items, total: Math.max(0, totals.total - couponDiscount), address, status: 'pending', paymentIntentId, guestName, guestEmail }
+      const orderRes = await fetch(orderEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user.token}`,
-        },
-        body: JSON.stringify({ items, total: totals.total, address, status: 'pending', paymentIntentId }),
+        headers: orderHeaders,
+        body: JSON.stringify(orderBody),
       })
       
       const orderData = await orderRes.json()
@@ -90,7 +117,7 @@ function CheckoutForm({ clientSecret, address, setAddress, totals }: {
         // Successful payment, we can optionally update order status here or rely on webhooks
         clearCart()
         addToast(`Ödeme başarılı! Siparişiniz alındı. #${orderData.orderId?.slice(0, 8)}`, 'success')
-        navigate('/profile')
+        navigate(user ? '/profile' : '/')
       }
     } catch (err: unknown) {
       addToast(err instanceof Error ? err.message : 'Bir hata oluştu', 'error')
@@ -101,6 +128,33 @@ function CheckoutForm({ clientSecret, address, setAddress, totals }: {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {savedAddresses.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs font-black uppercase tracking-widest text-brand-primary/50 mb-3">Kayıtlı Adresler</p>
+          <div className="space-y-2">
+            {savedAddresses.map(addr => (
+              <button key={addr.id} type="button" onClick={() => {
+                setSelectedAddressId(addr.id)
+                setAddress({ line1: addr.line1, city: addr.city, country: addr.country, postcode: addr.postcode })
+              }} className={`w-full text-left p-4 rounded-2xl border text-sm transition-all ${selectedAddressId === addr.id ? 'border-accent bg-accent/5 font-bold' : 'border-brand-primary/10 hover:border-accent/40'}`}>
+                {addr.full_name} — {addr.line1}, {addr.city}, {addr.postcode}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {!user && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">İsim</label>
+            <input type="text" value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Adınız" required className="w-full border border-brand-primary/10 rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-primary/20 bg-brand-secondary/20" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">E-posta</label>
+            <input type="email" value={guestEmail} onChange={e => setGuestEmail(e.target.value)} placeholder="email@ornek.com" required className="w-full border border-brand-primary/10 rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-primary/20 bg-brand-secondary/20" />
+          </div>
+        </div>
+      )}
       <div>
         <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">
           Adres Satırı
@@ -174,7 +228,7 @@ function CheckoutForm({ clientSecret, address, setAddress, totals }: {
         disabled={loading || !stripe || !elements}
         className="w-full bg-brand-primary text-white font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:bg-accent transition-all shadow-xl shadow-brand-primary/20 disabled:opacity-50 disabled:cursor-not-allowed mt-8"
       >
-        {loading ? 'İşleniyor...' : `Siparişi Onayla (£${totals.total.toFixed(2)})`}
+        {loading ? 'İşleniyor...' : `Siparişi Onayla (£${Math.max(0, totals.total - couponDiscount).toFixed(2)})`}
       </button>
     </form>
   )
@@ -186,6 +240,31 @@ export function CheckoutPage() {
 
   const [address, setAddress] = useState<Address>({ line1: '', city: '', country: 'GB', postcode: '' })
   const [clientSecret, setClientSecret] = useState<string>('')
+  const [couponCode, setCouponCode] = useState('')
+  const [couponDiscount, setCouponDiscount] = useState(0)
+  const [couponMsg, setCouponMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [couponLoading, setCouponLoading] = useState(false)
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponMsg(null);
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode.trim(), subtotal }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setCouponMsg({ text: data.error ?? 'Geçersiz kupon', ok: false }); return; }
+      setCouponDiscount(data.discount ?? 0);
+      setCouponMsg({ text: `Kupon uygulandı! £${(data.discount ?? 0).toFixed(2)} indirim`, ok: true });
+    } catch {
+      setCouponMsg({ text: 'Bağlantı hatası', ok: false });
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   const subtotal = totalPrice()
   const market = MARKETS['UK']
@@ -193,13 +272,12 @@ export function CheckoutPage() {
 
   useEffect(() => {
     // Fetch the client secret when the checkout page loads
-    if (items.length > 0 && user) {
+    if (items.length > 0) {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (user) headers.Authorization = `Bearer ${user.token}`
       fetch('/api/payments/create-intent', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user.token}`,
-        },
+        headers,
         body: JSON.stringify({ amount: totals.total, currency: 'gbp' }),
       })
         .then((res) => res.json())
@@ -238,7 +316,7 @@ export function CheckoutPage() {
               
               {clientSecret ? (
                 <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
-                  <CheckoutForm clientSecret={clientSecret} address={address} setAddress={setAddress} totals={totals} />
+                  <CheckoutForm clientSecret={clientSecret} address={address} setAddress={setAddress} totals={totals} couponDiscount={couponDiscount} />
                 </Elements>
               ) : (
                 <div className="text-center py-8 text-brand-primary/60 font-medium animate-pulse">
@@ -274,9 +352,38 @@ export function CheckoutPage() {
                 <div className="flex justify-between text-brand-primary/40 font-bold uppercase tracking-widest">
                   <span>KDV</span><span>£{totals.vat.toFixed(2)}</span>
                 </div>
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-green-600 font-bold uppercase tracking-widest">
+                    <span>Kupon İndirimi</span><span>-£{couponDiscount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-brand-primary font-black text-sm pt-3 border-t border-brand-primary/5">
-                  <span>Toplam</span><span>£{totals.total.toFixed(2)}</span>
+                  <span>Toplam</span><span>£{Math.max(0, totals.total - couponDiscount).toFixed(2)}</span>
                 </div>
+              </div>
+
+              {/* Coupon Input */}
+              <div className="mt-4 pt-4 border-t border-brand-primary/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">Kupon Kodu</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponMsg(null); }}
+                    placeholder="KODU GİR"
+                    className="flex-1 border border-brand-primary/10 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 bg-brand-secondary/20 uppercase tracking-widest"
+                  />
+                  <button
+                    onClick={applyCoupon}
+                    disabled={couponLoading || !couponCode.trim() || couponDiscount > 0}
+                    className="px-3 py-2 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-accent transition-all disabled:opacity-40"
+                  >
+                    {couponLoading ? '...' : 'Uygula'}
+                  </button>
+                </div>
+                {couponMsg && (
+                  <p className={`text-[10px] font-bold mt-2 ${couponMsg.ok ? 'text-green-600' : 'text-red-500'}`}>{couponMsg.text}</p>
+                )}
               </div>
 
               <div className="mt-6 flex items-center gap-3 text-xs text-brand-primary/40 font-bold">
