@@ -1,6 +1,6 @@
+import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
-import dotenv from 'dotenv'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import authRoutes from './routes/auth.js'
@@ -13,8 +13,10 @@ import adminRoutes from './routes/admin.js'
 import wishlistRoutes from './routes/wishlist.js'
 import paymentRoutes from './routes/payments.js'
 import webhookRoutes from './routes/webhooks.js'
+import sellersRoutes from './routes/sellers.js'
+import addressesRoutes from './routes/addresses.js'
 
-dotenv.config()
+
 
 const app = express()
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001
@@ -39,6 +41,9 @@ app.use('/api/reviews', reviewRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/wishlist', wishlistRoutes)
 app.use('/api/payments', paymentRoutes)
+
+app.use('/api/sellers', sellersRoutes)
+app.use('/api/addresses', addressesRoutes)
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
 
