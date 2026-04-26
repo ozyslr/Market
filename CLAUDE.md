@@ -3,6 +3,17 @@
 
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
+## 0. Mercora Stack & Project Config
+
+**Frontend:** React 19 · TypeScript · Vite · Tailwind CSS 4 · Zustand (persist) · motion/react
+**Backend:** Express.js · better-sqlite3 · JWT (jsonwebtoken) · bcryptjs · Zod
+**Conventions:**
+- API routes: `/api/<resource>` → `server/routes/<resource>.ts`
+- Stores: `src/store/<name>Store.ts` (Zustand + persist)
+- Pages: `src/pages/<Name>.tsx` (PascalCase, named export)
+- Agent roles: see `AGENTS.md`
+- Coding standards: see `.claude/rules.md`
+
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
 ## 1. Think Before Coding
