@@ -16,16 +16,18 @@ import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { CheckoutPage } from './pages/Checkout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
-import { AdminPage } from '@/pages/Admin';
+import { AdminPanel } from '@/pages/Admin';
 import WishlistPage from '@/pages/Wishlist';
 import ComparePage from '@/pages/Compare';
 import { CompareBar } from '@/components/commerce/CompareBar';
 import { ToastContainer } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { ScrollToTop } from './components/ui/ScrollToTop';
+import { HelmetProvider } from 'react-helmet-async';
 
 export default function App() {
   return (
+    <HelmetProvider>
     <LanguageProvider>
       <Router>
         <ErrorBoundary>
@@ -33,7 +35,7 @@ export default function App() {
             <ScrollToTop />
             <Navbar />
 
-            <main className="pt-24">
+            <main className="pt-36">
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/product/:slug" element={<ProductDetail />} />
@@ -60,7 +62,7 @@ export default function App() {
                 <Route path="/wishlist" element={<WishlistPage />} />
                 <Route path="/compare" element={<ComparePage />} />
                 <Route path="/admin" element={
-                  <ProtectedRoute requiredRole="admin"><AdminPage /></ProtectedRoute>
+                  <ProtectedRoute requiredRole="admin"><AdminPanel /></ProtectedRoute>
                 } />
                 <Route path="*" element={<Home />} />
               </Routes>
@@ -74,5 +76,6 @@ export default function App() {
         </ErrorBoundary>
       </Router>
     </LanguageProvider>
+    </HelmetProvider>
   );
 }

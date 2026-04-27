@@ -52,6 +52,14 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [darkMode]);
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
       {/* Global Status Ticker (Topmost Bar) */}
@@ -140,7 +148,7 @@ export function Navbar() {
                 <ChevronDown size={14} className="opacity-40" />
                 
                 {/* Language Dropdown */}
-                <div className="absolute top-[calc(100%+12px)] right-0 w-40 bg-white shadow-2xl rounded-2xl border border-brand-primary/5 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all -translate-y-2 group-hover:translate-y-0 text-brand-primary z-[60]">
+                <div className="absolute top-full right-0 w-40 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all text-brand-primary z-[60]"><div className="bg-white shadow-2xl rounded-2xl border border-brand-primary/5 p-4">
                    <button 
                      onClick={() => setLang('en')}
                      className={cn("w-full text-left px-3 py-2 rounded-xl text-xs font-bold hover:bg-brand-secondary transition-colors", lang === 'en' ? "text-accent" : "")}
@@ -153,6 +161,7 @@ export function Navbar() {
                    >
                      Türkçe - TR
                    </button>
+                </div>
                 </div>
              </div>
 
@@ -177,7 +186,7 @@ export function Navbar() {
                    <User size={22} className={isScrolled ? "text-brand-primary" : "text-white"} />
                 </div>
                 {/* Account Dropdown Overlay */}
-                <div className="absolute top-[calc(100%+12px)] right-0 w-80 bg-white shadow-2xl rounded-[2rem] border border-brand-primary/5 p-8 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all -translate-y-4 group-hover:translate-y-0 text-brand-primary cursor-auto overflow-hidden pointer-events-none group-hover:pointer-events-auto">
+                <div className="absolute top-full right-0 w-80 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all text-brand-primary cursor-auto pointer-events-none group-hover:pointer-events-auto z-50"><div className="bg-white shadow-2xl rounded-[2rem] border border-brand-primary/5 p-8 overflow-hidden">
                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-accent" />
                    <div className="space-y-6">
                       <Link to="/profile" className="block w-full py-4 bg-accent text-white rounded-xl font-black uppercase tracking-widest text-xs text-center shadow-xl shadow-accent/20 hover:bg-brand-primary transition-all">Sign In / Register</Link>
@@ -200,7 +209,7 @@ export function Navbar() {
                          </div>
                       </div>
                    </div>
-                </div>
+                </div></div>
              </div>
 
              <Link to="/cart" className="relative group p-2 hover:bg-brand-primary/5 rounded-lg flex items-center gap-3">
@@ -239,7 +248,7 @@ export function Navbar() {
               {[
                 t('nav.deals'), 'Best Prices', 'Imported Goods', 'Mercora Prime', t('home.best_sellers'), 'Gift Finder', 'Brands'
               ].map((item, i) => (
-                <Link key={i} to="/" className="text-[10px] font-black uppercase tracking-widest hover:text-accent transition-all hidden md:block opacity-60 hover:opacity-100">
+                <Link key={i} to={`/search?q=${encodeURIComponent(String(item))}`} className="text-[10px] font-black uppercase tracking-widest hover:text-accent transition-all hidden md:block opacity-60 hover:opacity-100">
                   {item}
                 </Link>
               ))}
