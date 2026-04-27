@@ -21,6 +21,7 @@ interface Stats {
 interface AdminUser { id: string; name: string; email: string; role: string; kyc_status: string; banned: number; created_at: string }
 interface Product { id: string; title: string; price: number; seller_name: string; moderation_status: string; created_at: string; images: string }
 interface Order { id: string; buyer_id: string; total: number; status: string; created_at: string; items: { title: string; quantity: number }[] }
+interface AdminSeller { id: string; store_name: string; slug: string; owner_name: string; owner_email: string; status: string; commission_rate: number; rating: number; product_count: number; order_count: number; total_revenue: number; created_at: string }
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -58,7 +59,7 @@ export function AdminPanel() {
   const [tab, setTab] = useState<Tab>('overview')
   const [stats, setStats] = useState<Stats | null>(null)
   const [users, setUsers] = useState<AdminUser[]>([])
-  const [sellers, setSellers] = useState<AdminUser[]>([])
+  const [sellers, setSellers] = useState<AdminSeller[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
@@ -88,10 +89,16 @@ export function AdminPanel() {
 
   const fetchSellers = useCallback(async () => {
     setLoading(true)
-    const r = await fetch('/api/admin/users?role=seller', { headers: authHeaders })
-    if (r.ok) { const d = await r.json(); setSellers(d.users ?? d) }
+    const r = await fetch('/api/admin/sellers', { headers: authHeaders })
+    if (r.ok) setSellers(await r.json())
     setLoading(false)
   }, [user?.token])
+
+  const patchSeller = async (id: string, body: object) => {
+    await fetch(`/api/admin/sellers/${id}`, { method: 'PATCH', headers: authHeaders, body: JSON.stringify(body) })
+    addToast('Satıcı güncellendi', 'success')
+    fetchSellers()
+  }
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
@@ -377,7 +384,7 @@ export function AdminPanel() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-lg font-black text-gray-900">Satıcı Yönetimi</h1>
-                <p className="text-xs text-gray-400">{sellers.length} satıcı kayıtlı</p>
+                <p className="text-xs text-gray-400">{sellers.length} mağaza kayıtlı</p>
               </div>
               <button onClick={fetchSellers} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50">
                 <RefreshCw size={14} /> Yenile
@@ -387,41 +394,50 @@ export function AdminPanel() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    {['Satıcı', 'E-posta', 'KYC', 'Durum', 'Kayıt', 'İşlemler'].map(h => (
+                    {['Mağaza', 'Sahip', 'Ürün / Sipariş', 'GMV', 'Kom.', 'Durum', 'İşlemler'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {loading ? <tr><td colSpan={6} className="py-12 text-center text-gray-400 text-sm">Yükleniyor...</td></tr>
-                  : sellers.length === 0 ? <tr><td colSpan={6} className="py-12 text-center text-gray-400 text-sm">Satıcı bulunamadı</td></tr>
-                  : sellers.map(s => (
-                    <tr key={s.id} className={`hover:bg-gray-50 transition-colors ${s.banned ? 'opacity-50' : ''}`}>
-                      <td className="px-4 py-3 font-bold text-sm text-gray-900">{s.name}</td>
-                      <td className="px-4 py-3 text-xs text-gray-400">{s.email}</td>
+                  {loading
+                    ? <tr><td colSpan={7} className="py-12 text-center text-gray-400 text-sm">Yükleniyor...</td></tr>
+                    : sellers.length === 0
+                      ? <tr><td colSpan={7} className="py-12 text-center text-gray-400 text-sm">Henüz mağaza yok</td></tr>
+                      : sellers.map(s => (
+                    <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
-                        <select value={s.kyc_status} onChange={e => patchUser(s.id, { kyc_status: e.target.value })}
-                          className={`text-xs font-bold border rounded-lg px-2 py-1 focus:outline-none ${STATUS_COLORS[s.kyc_status] || 'bg-gray-100'}`}>
-                          <option value="unverified">Doğrulanmamış</option>
-                          <option value="pending">Bekliyor</option>
-                          <option value="verified">Doğrulandı</option>
-                          <option value="rejected">Reddedildi</option>
-                        </select>
+                        <p className="font-black text-sm text-gray-900">{s.store_name}</p>
+                        <p className="text-[10px] text-gray-400 font-mono">/{s.slug}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${s.banned ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                          {s.banned ? 'Banlı' : 'Aktif'}
-                        </span>
+                        <p className="text-xs font-bold text-gray-700">{s.owner_name}</p>
+                        <p className="text-[10px] text-gray-400">{s.owner_email}</p>
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-400">{s.created_at.slice(0, 10)}</td>
+                      <td className="px-4 py-3 text-xs text-gray-600 font-bold">{s.product_count} / {s.order_count}</td>
+                      <td className="px-4 py-3 text-xs font-black text-gray-900">£{Number(s.total_revenue).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-xs text-gray-500">%{Math.round(s.commission_rate * 100)}</td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => patchUser(s.id, { banned: !s.banned })} title={s.banned ? 'Banı Kaldır' : 'Banla'} className="p-1.5 rounded-lg hover:bg-gray-100">
-                            <Ban size={14} className={s.banned ? 'text-green-500' : 'text-orange-500'} />
-                          </button>
-                          <button onClick={() => setConfirmDelete(`user:${s.id}`)} title="Sil" className="p-1.5 rounded-lg hover:bg-red-50">
-                            <Trash2 size={14} className="text-red-500" />
-                          </button>
+                        <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest ${
+                          s.status === 'active' ? 'bg-green-100 text-green-700' :
+                          s.status === 'suspended' ? 'bg-red-100 text-red-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        }`}>{s.status}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          {s.status !== 'active' && (
+                            <button onClick={() => patchSeller(s.id, { status: 'active' })}
+                              className="px-2.5 py-1 bg-green-600 hover:bg-green-500 text-white text-[10px] font-black uppercase rounded-lg transition-colors">
+                              Onayla
+                            </button>
+                          )}
+                          {s.status !== 'suspended' && (
+                            <button onClick={() => patchSeller(s.id, { status: 'suspended' })}
+                              className="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-[10px] font-black uppercase rounded-lg transition-colors">
+                              Askıya Al
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
