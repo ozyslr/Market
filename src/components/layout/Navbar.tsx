@@ -198,7 +198,7 @@ export function Navbar() {
                          </div>
                          <div className="space-y-3">
                             <h4 className="text-[10px] font-black uppercase text-brand-primary/30 tracking-[0.2em] mb-4">Account</h4>
-                            <Link to="/profile" className="block text-xs font-bold hover:text-accent">Orders</Link>
+                            <Link to="/orders" className="block text-xs font-bold hover:text-accent">Orders</Link>
                             <Link to="/profile" className="block text-xs font-bold hover:text-accent">Global Wallet</Link>
                             <Link to="/seller/dashboard" className="block text-xs font-black text-accent uppercase italic transition-colors">Seller Hub</Link>
                             {authUser?.role === 'admin' && (

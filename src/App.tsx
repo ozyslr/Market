@@ -15,6 +15,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { CheckoutPage } from './pages/Checkout';
+import { OrdersPage } from './pages/Orders';
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { AdminPanel } from '@/pages/Admin';
 import WishlistPage from '@/pages/Wishlist';
@@ -47,6 +48,9 @@ export default function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/profile" element={
                   <ProtectedRoute><UserProfilePage /></ProtectedRoute>
+                } />
+                <Route path="/orders" element={
+                  <ProtectedRoute><OrdersPage /></ProtectedRoute>
                 } />
                 <Route path="/seller/dashboard" element={
                   <ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>
