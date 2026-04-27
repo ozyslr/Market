@@ -16,6 +16,7 @@ import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { CheckoutPage } from './pages/Checkout';
 import { OrdersPage } from './pages/Orders';
+import { SellerOnboardPage } from './pages/SellerOnboard';
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { AdminPanel } from '@/pages/Admin';
 import WishlistPage from '@/pages/Wishlist';
@@ -60,6 +61,9 @@ export default function App() {
                 } />
                 <Route path="/seller/orders" element={
                   <ProtectedRoute requiredRole="seller"><SellerOrdersPage /></ProtectedRoute>
+                } />
+                <Route path="/seller/onboard" element={
+                  <ProtectedRoute requiredRole="seller"><SellerOnboardPage /></ProtectedRoute>
                 } />
                 <Route path="/seller/:id" element={<SellerStorePage />} />
                 <Route path="/search" element={<SearchResultsPage />} />
