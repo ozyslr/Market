@@ -5,7 +5,7 @@ import {
   TrendingUp, Wallet, ShieldCheck, Zap, ArrowRight
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MOCK_PRODUCTS } from '@/mockData';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
@@ -116,7 +116,9 @@ interface ApiOrder {
 
 export function UserProfilePage() {
   const authUser = useAuthStore(s => s.user);
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<ApiOrder[]>([]);
+  const [activeSection, setActiveSection] = useState<'profile' | 'orders' | 'wishlist' | 'reviews' | 'addresses'>('profile');
 
   useEffect(() => {
     if (!authUser?.token) return;
@@ -188,7 +190,7 @@ export function UserProfilePage() {
           {/* Main Content */}
           <div className="lg:col-span-8 space-y-8">
             {/* Recent Orders Section */}
-            <section className="bg-white rounded-[3rem] p-8 shadow-sm border border-brand-primary/5">
+            {activeSection === 'orders' && <section className="bg-white rounded-[3rem] p-8 shadow-sm border border-brand-primary/5">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl font-display font-black tracking-tight">Recent Global Orders</h2>
                 <Link to="/orders" className="text-xs font-black uppercase tracking-widest text-accent hover:gap-3 flex items-center gap-2 transition-all">
@@ -255,10 +257,10 @@ export function UserProfilePage() {
                   </div>
                 ))}
               </div>
-            </section>
+            </section>}
 
             {/* Personalized Recommendations (Strategic Insight) */}
-            <section className="bg-brand-primary rounded-[3.5rem] p-10 text-white overflow-hidden relative">
+            {activeSection === 'profile' && <section className="bg-brand-primary rounded-[3.5rem] p-10 text-white overflow-hidden relative">
               <Zap size={150} className="absolute -top-12 -right-12 text-white/5 rotate-12" />
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="max-w-md">
@@ -291,40 +293,90 @@ export function UserProfilePage() {
                   ))}
                 </div>
               </div>
-            </section>
+            </section>}
+
+            {/* Wishlist Section */}
+            {activeSection === 'wishlist' && (
+              <div>
+                <h2 className="text-2xl font-display font-black tracking-tight mb-6">Favorilerim</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {MOCK_PRODUCTS.slice(3, 7).map((product) => (
+                    <div key={product.id} className="bg-white rounded-[2rem] p-6 border border-brand-primary/5 hover:border-accent group transition-all">
+                      <div className="relative aspect-square bg-brand-secondary/50 rounded-2xl p-4 mb-4 overflow-hidden">
+                        <img src={product.images[0]} alt={product.title} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
+                        <button className="absolute top-2 right-2 w-8 h-8 bg-white text-red-500 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
+                          <Heart size={16} fill="currentColor" />
+                        </button>
+                      </div>
+                      <h4 className="font-bold text-brand-primary truncate">{product.title}</h4>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-lg font-black text-brand-primary">£{product.price}</p>
+                        <button className="text-[10px] font-black uppercase tracking-widest text-accent hover:opacity-70">Sepete Ekle</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Addresses Section */}
+            {activeSection === 'addresses' && authUser && <AddressManager token={authUser.token} />}
+
+            {/* Reviews Section */}
+            {activeSection === 'reviews' && (
+              <div className="text-center py-20">
+                <p className="text-4xl mb-4">⭐</p>
+                <p className="font-black text-brand-primary/30 uppercase text-sm tracking-widest">Henüz değerlendirme yok</p>
+                <p className="text-brand-primary/20 text-xs mt-2">Satın aldığınız ürünleri değerlendirin</p>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
           <div className="lg:col-span-4 space-y-8">
-            {/* Quick Links Menu */}
-            <div className="bg-white rounded-[3rem] p-8 shadow-sm border border-brand-primary/5 overflow-hidden">
-               <h3 className="text-lg font-display font-black mb-6 px-2">Account Control</h3>
-               <nav className="space-y-1">
-                 {[
-                   { label: 'Prime Benefits', icon: Zap, detail: 'Exclusive Deals' },
-                   { label: 'Payments & Balance', icon: CreditCard, detail: 'View Transactions' },
-                   { label: 'Fulfillment Hubs', icon: MapPin, detail: 'Manage Addresses' },
-                   { label: 'Security & Shields', icon: ShieldCheck, detail: 'Multi-Auth Enabled' },
-                   { label: 'Artisan Support', icon: HelpCircle, detail: '24/7 Priority' }
-                 ].map((nav, i) => (
-                   <button key={i} className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-brand-secondary/50 group transition-all">
-                     <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-xl bg-brand-secondary flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-all">
-                         <nav.icon size={18} />
-                       </div>
-                       <div className="text-left">
-                         <p className="text-sm font-bold text-brand-primary">{nav.label}</p>
-                         <p className="text-[10px] text-brand-primary/40 font-medium">{nav.detail}</p>
-                       </div>
-                     </div>
-                     <ChevronRight size={16} className="text-brand-primary/20 group-hover:text-accent group-hover:translate-x-1 transition-all" />
-                   </button>
-                 ))}
-               </nav>
+            {/* Account Navigation */}
+            <div className="bg-white border border-brand-primary/10 rounded-2xl overflow-hidden">
+              <div className="p-5 bg-linear-to-br from-brand-primary to-brand-primary/80 text-white">
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center font-black text-lg mb-2">
+                  {displayName[0]?.toUpperCase() ?? 'U'}
+                </div>
+                <p className="font-black text-sm">{displayName}</p>
+                <p className="text-white/60 text-[10px]">{authUser?.email}</p>
+              </div>
+              <nav className="py-2">
+                {[
+                  { key: 'profile' as const, label: 'Profilim', icon: '👤' },
+                  { key: 'orders' as const, label: 'Siparişlerim', icon: '📦' },
+                  { key: 'wishlist' as const, label: 'Favorilerim', icon: '❤️' },
+                  { key: 'reviews' as const, label: 'Değerlendirmelerim', icon: '⭐' },
+                  { key: 'addresses' as const, label: 'Adreslerim', icon: '📍' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    onClick={() => setActiveSection(item.key)}
+                    className={`w-full flex items-center gap-3 px-5 py-3 text-sm font-semibold transition-colors text-left ${
+                      activeSection === item.key
+                        ? 'bg-accent/10 text-accent border-r-2 border-accent'
+                        : 'text-brand-primary hover:bg-brand-secondary'
+                    }`}
+                  >
+                    <span>{item.icon}</span>
+                    {item.label}
+                  </button>
+                ))}
+                <div className="border-t border-brand-primary/5 mt-2 pt-2">
+                  <button
+                    onClick={() => { useAuthStore.getState().logout(); navigate('/') }}
+                    className="w-full flex items-center gap-3 px-5 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors text-left"
+                  >
+                    <span>🚪</span> Çıkış Yap
+                  </button>
+                </div>
+              </nav>
             </div>
 
             {/* Mercora Card / Financials */}
-            <div className="bg-gradient-to-br from-brand-primary to-[#0a0a0a] rounded-[3rem] p-8 text-white relative overflow-hidden group">
+            {activeSection === 'profile' && <div className="bg-linear-to-br from-brand-primary to-[#0a0a0a] rounded-[3rem] p-8 text-white relative overflow-hidden group">
                <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-[80px] -mr-32 -mt-32 group-hover:bg-accent/20 transition-all duration-1000" />
                <div className="relative z-10">
                  <div className="flex items-center justify-between mb-12">
@@ -355,10 +407,10 @@ export function UserProfilePage() {
                     </button>
                  </div>
                </div>
-            </div>
+            </div>}
 
             {/* Artisan Spotlight / Community */}
-            <div className="bg-accent rounded-[3rem] p-8 text-white group overflow-hidden relative">
+            {activeSection === 'profile' && <div className="bg-accent rounded-[3rem] p-8 text-white group overflow-hidden relative">
                <div className="relative z-10">
                  <Star size={24} className="text-white fill-white mb-4" />
                  <h4 className="text-xl font-display font-black leading-tight mb-4">You've reached <br /> "Diamond Patron" status</h4>
@@ -375,43 +427,10 @@ export function UserProfilePage() {
                    <span>10,000 pts to Legacy</span>
                  </div>
                </div>
-            </div>
+            </div>}
           </div>
         </div>
 
-        {/* Address Management */}
-        {authUser && <AddressManager token={authUser.token} />}
-
-        {/* Saved for Later Carousel */}
-        <div className="mt-20">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-display font-black tracking-tighter text-brand-primary uppercase italic">Saved from Global Markets</h2>
-            <Link to="/saved" className="text-xs font-black uppercase tracking-widest text-accent hover:gap-3 flex items-center gap-2 transition-all">
-              Manage Wishlist <ChevronRight size={14} />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {MOCK_PRODUCTS.slice(3, 7).map((product) => (
-              <div key={product.id} className="bg-white rounded-[2.5rem] p-6 border border-brand-primary/5 hover:border-accent group transition-all">
-                <div className="relative aspect-square bg-brand-secondary/50 rounded-2xl p-4 mb-4 overflow-hidden">
-                  <img 
-                    src={product.images[0]} 
-                    alt={product.title} 
-                    className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" 
-                  />
-                  <button className="absolute top-2 right-2 w-8 h-8 bg-white text-red-500 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-                    <Heart size={16} fill="currentColor" />
-                  </button>
-                </div>
-                <h4 className="font-bold text-brand-primary truncate">{product.title}</h4>
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-lg font-black text-brand-primary">${product.price}</p>
-                  <button className="text-[10px] font-black uppercase tracking-widest text-accent hover:opacity-70">Add to Cart</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
