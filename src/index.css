@@ -10,20 +10,28 @@
   --color-brand-primary: var(--brand-primary);
   --color-brand-secondary: var(--brand-secondary);
   --color-surface: var(--surface);
-  --color-accent: #f27d26;
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
 }
 
 @layer base {
   :root {
-    --brand-primary: #141414;
-    --brand-secondary: #f5f2ed;
+    --brand-primary: #111827;
+    --brand-secondary: #F8F8FA;
     --surface: #ffffff;
+    --accent: #6D28D9;
+    --accent-hover: #7C3AED;
+    --accent-soft: #EDE9FE;
   }
 
   :root.dark {
     --brand-primary: #e8e4dd;
     --brand-secondary: #111111;
     --surface: #1e1e1e;
+    --accent: #7C3AED;
+    --accent-hover: #8B5CF6;
+    --accent-soft: #2E1065;
     color-scheme: dark;
   }
 

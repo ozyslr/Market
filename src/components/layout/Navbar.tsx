@@ -63,7 +63,7 @@ export function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
       {/* Global Status Ticker (Topmost Bar) */}
-      <div className="bg-brand-primary text-[9px] text-white/40 h-8 flex items-center overflow-hidden border-b border-white/5">
+      <div className="bg-[#4C1D95] text-[9px] text-white/40 h-8 flex items-center overflow-hidden border-b border-white/5">
         <div className="max-w-[1700px] mx-auto px-4 lg:px-8 w-full flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
@@ -88,8 +88,8 @@ export function Navbar() {
 
       {/* Top Header Section (Amazon Style Search Centric) */}
       <div className={cn(
-        "transition-all duration-300 border-b border-white/5",
-        isScrolled ? "bg-white shadow-xl py-3" : "bg-brand-primary text-white py-4"
+        "transition-all duration-300 border-b",
+        isScrolled ? "bg-white shadow-xl py-3 border-gray-100" : "bg-white shadow-sm py-4 border-gray-100"
       )}>
         <div className="max-w-[1700px] mx-auto px-4 lg:px-8 flex items-center gap-8">
           
@@ -98,21 +98,15 @@ export function Navbar() {
             <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white rotate-3 group-hover:rotate-0 transition-transform shadow-lg shadow-accent/20">
               <Zap size={24} fill="currentColor" />
             </div>
-            <span className={cn(
-              "font-display font-bold text-3xl tracking-tighter uppercase italic",
-              isScrolled ? "text-brand-primary" : "text-white"
-            )}>Mercora</span>
+            <span className="font-display font-bold text-3xl tracking-tighter uppercase italic text-accent">Mercora</span>
           </Link>
 
           {/* Location Hub */}
-          <button className={cn(
-            "hidden xl:flex items-center gap-2 text-left hover:border-white/20 p-2 rounded-lg transition-all shrink-0",
-            isScrolled ? "text-brand-primary/60" : "text-white/60"
-          )}>
+          <button className="hidden xl:flex items-center gap-2 text-left p-2 rounded-lg transition-all shrink-0 text-brand-primary/60 hover:text-accent">
             <MapPin size={18} />
             <div className="text-[10px] uppercase font-black tracking-widest leading-none">
               {t('nav.deliver_to')}: <br />
-              <span className={cn("text-xs font-black", isScrolled ? "text-brand-primary" : "text-white")}>{MOCK_USER.country} Hub</span>
+              <span className="text-xs font-black text-brand-primary">{MOCK_USER.country} Hub</span>
             </div>
           </button>
 
@@ -129,9 +123,7 @@ export function Navbar() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={cn(
                   "w-full h-full md:pl-32 pl-4 pr-14 rounded-2xl text-sm font-black transition-all outline-none border",
-                  isScrolled 
-                    ? "bg-brand-secondary/20 border-brand-primary/5 focus:bg-white focus:ring-4 focus:ring-accent/10 focus:border-accent"
-                    : "bg-white/10 border-white/10 text-white placeholder:text-white/40 focus:bg-white focus:text-brand-primary focus:border-accent"
+                  "bg-brand-secondary border-brand-primary/10 focus:bg-white focus:ring-4 focus:ring-accent/10 focus:border-accent"
                 )}
               />
               <button type="submit" className="absolute right-0 h-full px-5 bg-accent rounded-r-2xl text-white hover:bg-brand-primary transition-all flex items-center justify-center shadow-lg shadow-accent/20">
@@ -143,8 +135,8 @@ export function Navbar() {
           {/* User & Global Hub */}
           <div className="flex items-center gap-6 lg:gap-8 shrink-0">
              <div className="hidden lg:flex relative group items-center gap-1 cursor-pointer p-2 rounded-lg transition-all border border-transparent hover:border-white/10">
-                <Globe size={18} className={isScrolled ? "text-brand-primary/60" : "text-white/60"} />
-                <span className={cn("text-xs font-black uppercase tracking-widest", isScrolled ? "text-brand-primary" : "text-white")}>{lang}</span>
+                <Globe size={18} className="text-brand-primary/60" />
+                <span className="text-xs font-black uppercase tracking-widest text-brand-primary">{lang}</span>
                 <ChevronDown size={14} className="opacity-40" />
                 
                 {/* Language Dropdown */}
@@ -172,18 +164,18 @@ export function Navbar() {
                title={darkMode ? 'Light mode' : 'Dark mode'}
              >
                {darkMode
-                 ? <Sun size={20} className={isScrolled ? 'text-brand-primary' : 'text-white'} />
-                 : <Moon size={20} className={isScrolled ? 'text-brand-primary' : 'text-white'} />
+                 ? <Sun size={20} className="text-brand-primary" />
+                 : <Moon size={20} className="text-brand-primary" />
                }
              </button>
 
              <div className="relative group p-2 rounded-lg transition-all border border-transparent hover:border-white/10 cursor-pointer">
                 <div className="flex items-center gap-3">
                    <div className="hidden xl:block text-right">
-                      <p className={cn("text-[9px] font-black uppercase opacity-40", isScrolled ? "" : "text-white")}>{t('nav.hello')}</p>
-                      <p className={cn("text-xs font-black flex items-center", isScrolled ? "text-brand-primary" : "text-white uppercase italic tracking-tighter")}>{t('nav.account')} <ChevronDown size={14} className="ml-1 opacity-20" /></p>
+                      <p className="text-[9px] font-black uppercase opacity-40 text-brand-primary">{t('nav.hello')}</p>
+                      <p className="text-xs font-black flex items-center text-brand-primary">{t('nav.account')} <ChevronDown size={14} className="ml-1 opacity-20" /></p>
                    </div>
-                   <User size={22} className={isScrolled ? "text-brand-primary" : "text-white"} />
+                   <User size={22} className="text-brand-primary" />
                 </div>
                 {/* Account Dropdown Overlay */}
                 <div className="absolute top-full right-0 w-80 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all text-brand-primary cursor-auto pointer-events-none group-hover:pointer-events-auto z-50"><div className="bg-white shadow-2xl rounded-[2rem] border border-brand-primary/5 p-8 overflow-hidden">
@@ -214,18 +206,18 @@ export function Navbar() {
 
              <Link to="/cart" className="relative group p-2 hover:bg-brand-primary/5 rounded-lg flex items-center gap-3">
                 <div className="hidden xl:flex flex-col items-end leading-none mr-2">
-                   <p className={cn("text-[9px] font-black uppercase tracking-widest text-accent mb-1")}>Global Wallet</p>
-                   <p className={cn("text-xs font-black", isScrolled ? "text-brand-primary" : "text-white")}>£{cartPrice.toFixed(2)}</p>
+                   <p className="text-[9px] font-black uppercase tracking-widest text-accent mb-1">Global Wallet</p>
+                   <p className="text-xs font-black text-brand-primary">£{cartPrice.toFixed(2)}</p>
                 </div>
                 <div className="relative">
-                   <ShoppingBag size={26} className={isScrolled ? "text-brand-primary" : "text-white"} />
+                   <ShoppingBag size={26} className="text-brand-primary" />
                    {cartTotal > 0 && (
-                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-white rounded-full text-[10px] font-black flex items-center justify-center shadow-lg border-2 border-brand-primary">{cartTotal}</span>
+                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-white rounded-full text-[10px] font-black flex items-center justify-center shadow-lg border-2 border-white">{cartTotal}</span>
                    )}
                 </div>
                 <div className="hidden lg:block leading-none">
-                   <p className={cn("text-[9px] font-black uppercase opacity-40", isScrolled ? "" : "text-white")}>{t('nav.cart')}</p>
-                   <p className={cn("text-xs font-black mt-1", isScrolled ? "text-brand-primary" : "text-white")}>£{cartPrice.toFixed(2)}</p>
+                   <p className="text-[9px] font-black uppercase opacity-40 text-brand-primary">{t('nav.cart')}</p>
+                   <p className="text-xs font-black mt-1 text-brand-primary">£{cartPrice.toFixed(2)}</p>
                 </div>
              </Link>
           </div>
@@ -233,28 +225,25 @@ export function Navbar() {
       </div>
 
       {/* Secondary Ribbon (Hepsiburada Style Categories) */}
-      <div className={cn(
-        "transition-all duration-300 py-2.5",
-        isScrolled ? "bg-white border-b border-brand-primary/5 text-brand-primary" : "bg-brand-primary/95 text-white/80"
-      )}>
+      <div className="bg-accent py-2.5 text-white/90">
         <div className="max-w-[1700px] mx-auto px-4 lg:px-8 flex items-center justify-between">
            <div className="flex items-center gap-8 overflow-x-auto no-scrollbar whitespace-nowrap">
-              <button 
+              <button
                 onMouseEnter={() => setIsMegaMenuOpen(true)}
-                className="flex items-center gap-2 text-xs font-black uppercase tracking-widest hover:text-accent transition-colors shrink-0"
+                className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-white hover:text-white/80 transition-colors shrink-0"
               >
                 <Menu size={18} /> {t('nav.all_categories')}
               </button>
               {[
                 t('nav.deals'), 'Best Prices', 'Imported Goods', 'Mercora Prime', t('home.best_sellers'), 'Gift Finder', 'Brands'
               ].map((item, i) => (
-                <Link key={i} to={`/search?q=${encodeURIComponent(String(item))}`} className="text-[10px] font-black uppercase tracking-widest hover:text-accent transition-all hidden md:block opacity-60 hover:opacity-100">
+                <Link key={i} to={`/search?q=${encodeURIComponent(String(item))}`} className="text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-white transition-all hidden md:block">
                   {item}
                 </Link>
               ))}
            </div>
            <div className="hidden xl:flex items-center gap-6">
-              <Link to="/seller/dashboard" className="text-[10px] font-black uppercase tracking-widest text-accent flex items-center gap-2 group">
+              <Link to="/seller/dashboard" className="text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-2 group">
                  <Zap size={14} className="group-hover:animate-pulse" /> {t('nav.sell')}
               </Link>
            </div>
@@ -352,7 +341,7 @@ export function Navbar() {
             exit={{ opacity: 0, x: -100 }}
             className="fixed inset-0 z-[60] bg-white h-screen w-[80%] shadow-2xl md:hidden flex flex-col"
           >
-            <div className="p-6 bg-brand-primary text-white flex items-center justify-between">
+            <div className="p-6 bg-accent text-white flex items-center justify-between">
               <span className="font-display font-black text-2xl uppercase italic">Mercora</span>
               <button onClick={() => setIsMenuOpen(false)}><X size={24} /></button>
             </div>
