@@ -39,6 +39,7 @@ function CheckoutForm({ clientSecret, address, setAddress, totals, couponDiscoun
   const [guestEmail, setGuestEmail] = useState('')
   const [savedAddresses, setSavedAddresses] = useState<SavedAddr[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank' | 'installment'>('card')
 
   useEffect(() => {
     if (!user?.token) return
@@ -58,7 +59,7 @@ function CheckoutForm({ clientSecret, address, setAddress, totals, couponDiscoun
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
-    if (!stripe || !elements) {
+    if (paymentMethod === 'card' && (!stripe || !elements)) {
       return
     }
 
@@ -72,10 +73,24 @@ function CheckoutForm({ clientSecret, address, setAddress, totals, couponDiscoun
     setMessage(null)
 
     try {
-      const paymentIntentId = clientSecret.split('_secret')[0]
       const orderEndpoint = user ? '/api/orders' : '/api/orders/guest'
       const orderHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
       if (user) orderHeaders.Authorization = `Bearer ${user.token}`
+
+      if (paymentMethod !== 'card') {
+        const orderBody = user
+          ? { items, total: Math.max(0, totals.total - couponDiscount), address, status: 'pending_payment' }
+          : { items, total: Math.max(0, totals.total - couponDiscount), address, status: 'pending_payment', guestName, guestEmail }
+        const orderRes = await fetch(orderEndpoint, { method: 'POST', headers: orderHeaders, body: JSON.stringify(orderBody) })
+        const orderData = await orderRes.json()
+        if (!orderRes.ok) throw new Error(orderData.error || 'Sipariş oluşturulamadı')
+        clearCart()
+        addToast(`Siparişiniz alındı! ${paymentMethod === 'bank' ? 'Havale sonrası onaylanacak.' : 'Taksit bilgileriniz doğrulanacak.'}`, 'success')
+        navigate(user ? '/orders' : '/')
+        return
+      }
+
+      const paymentIntentId = clientSecret.split('_secret')[0]
       const orderBody = user
         ? { items, total: Math.max(0, totals.total - couponDiscount), address, status: 'pending', paymentIntentId }
         : { items, total: Math.max(0, totals.total - couponDiscount), address, status: 'pending', paymentIntentId, guestName, guestEmail }
@@ -84,13 +99,12 @@ function CheckoutForm({ clientSecret, address, setAddress, totals, couponDiscoun
         headers: orderHeaders,
         body: JSON.stringify(orderBody),
       })
-      
+
       const orderData = await orderRes.json()
       if (!orderRes.ok) throw new Error(orderData.error || 'Sipariş oluşturulamadı')
 
-      // Confirm the payment with Stripe
-      const { error } = await stripe.confirmPayment({
-        elements,
+      const { error } = await stripe!.confirmPayment({
+        elements: elements!,
         confirmParams: {
           return_url: `${window.location.origin}/profile`,
           payment_method_data: {
@@ -104,7 +118,7 @@ function CheckoutForm({ clientSecret, address, setAddress, totals, couponDiscoun
             }
           }
         },
-        redirect: 'if_required', // Handle redirect manually for single page apps if possible, but redirect is fine.
+        redirect: 'if_required',
       })
 
       if (error) {
@@ -114,7 +128,6 @@ function CheckoutForm({ clientSecret, address, setAddress, totals, couponDiscoun
           setMessage("Beklenmeyen bir hata oluştu.")
         }
       } else {
-        // Successful payment, we can optionally update order status here or rely on webhooks
         clearCart()
         addToast(`Ödeme başarılı! Siparişiniz alındı. #${orderData.orderId?.slice(0, 8)}`, 'success')
         navigate(user ? '/profile' : '/')
@@ -218,14 +231,69 @@ function CheckoutForm({ clientSecret, address, setAddress, totals, couponDiscoun
         <h2 className="text-xl font-black uppercase tracking-tight text-brand-primary mb-6">
           Ödeme Bilgileri
         </h2>
-        <PaymentElement />
+
+        {/* Payment Method Selector */}
+        <div className="mb-6">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/50 mb-3">Ödeme Yöntemi</h3>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { key: 'card' as const, icon: '💳', label: 'Kredi / Banka Kartı' },
+              { key: 'bank' as const, icon: '🏦', label: 'Havale / EFT' },
+              { key: 'installment' as const, icon: '📅', label: 'Taksit' },
+            ].map(m => (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => setPaymentMethod(m.key)}
+                className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                  paymentMethod === m.key
+                    ? 'border-accent bg-accent/5'
+                    : 'border-brand-primary/10 hover:border-brand-primary/30'
+                }`}
+              >
+                <span className="text-2xl">{m.icon}</span>
+                <span className={`text-[10px] font-black text-center leading-tight ${paymentMethod === m.key ? 'text-accent' : 'text-brand-primary/60'}`}>
+                  {m.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {paymentMethod === 'card' && <PaymentElement />}
+
+        {paymentMethod === 'bank' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+            <p className="font-black text-blue-800 mb-3">Havale Bilgileri</p>
+            <div className="space-y-2 text-sm text-blue-700">
+              <p><strong>Banka:</strong> Barclays UK</p>
+              <p><strong>Hesap Adı:</strong> Mercora Ltd</p>
+              <p><strong>Sort Code:</strong> 20-00-00</p>
+              <p><strong>Hesap No:</strong> 12345678</p>
+            </div>
+            <p className="text-[10px] text-blue-500 mt-3">Açıklama kısmına sipariş numaranızı yazın. Ödeme onaylandıktan sonra siparişiniz işleme alınır (1-2 iş günü).</p>
+          </div>
+        )}
+
+        {paymentMethod === 'installment' && (
+          <div className="space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/50 mb-2">Taksit Seçenekleri</p>
+            {[2, 3, 6, 12].map(n => (
+              <div key={n} className="flex items-center justify-between border border-brand-primary/10 rounded-xl px-4 py-3">
+                <span className="font-bold text-sm">{n} Taksit</span>
+                <span className="text-xs text-brand-primary/40">Kartınıza göre değişir</span>
+              </div>
+            ))}
+            <p className="text-[10px] text-brand-primary/40 mt-2">Taksit için kredi kartı seçin ve ödeme ekranında taksit tercih edin.</p>
+          </div>
+        )}
       </div>
 
       {message && <div className="text-red-500 text-sm mt-4">{message}</div>}
 
       <button
         type="submit"
-        disabled={loading || !stripe || !elements}
+        disabled={loading || (paymentMethod === 'card' && (!stripe || !elements))}
         className="w-full bg-brand-primary text-white font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:bg-accent transition-all shadow-xl shadow-brand-primary/20 disabled:opacity-50 disabled:cursor-not-allowed mt-8"
       >
         {loading ? 'İşleniyor...' : `Siparişi Onayla (£${Math.max(0, totals.total - couponDiscount).toFixed(2)})`}
