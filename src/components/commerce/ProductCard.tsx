@@ -19,7 +19,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <motion.div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group bg-white rounded-3xl overflow-hidden border border-brand-primary/5 hover:border-accent/30 transition-all duration-500 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col h-full"
+      className="group bg-white rounded-3xl overflow-hidden border border-brand-primary/5 hover:border-accent/40 transition-all duration-500 shadow-sm hover:shadow-2xl hover:shadow-accent/10 hover:-translate-y-2 flex flex-col h-full"
     >
       {/* Image Section */}
       <Link to={`/product/${product.slug}`} className="relative aspect-square overflow-hidden bg-brand-secondary/30">
@@ -66,8 +66,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               exit={{ opacity: 0, y: 10 }}
               className="absolute bottom-4 left-4 right-4 flex gap-2"
             >
-              <button className="flex-1 py-3 bg-brand-primary text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-accent transition-colors">
-                <ShoppingCart size={14} /> Buy Now
+              <button className="flex-1 py-3 bg-accent text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-accent-hover transition-colors shadow-lg shadow-accent/30">
+                <ShoppingCart size={14} /> Sepete Ekle
               </button>
             </motion.div>
           )}

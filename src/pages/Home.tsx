@@ -44,21 +44,21 @@ export function Home() {
   const livingRoomProducts = products.filter(p => p.categoryId === 'home' || p.categoryId === 'living-room');
 
   const homepageCategories = [
-    { name: t('category.camping'), key: 'camping', icon: Mountain, color: 'bg-green-500' },
-    { name: 'Electronics', key: 'electronics', icon: Zap, color: 'bg-blue-500' },
-    { name: t('category.sportswear'), key: 'sportswear', icon: Shirt, color: 'bg-pink-500' },
-    { name: t('category.living_room'), key: 'living-room', icon: Sofa, color: 'bg-orange-500' },
-    { name: t('category.makeup'), key: 'makeup', icon: Sparkles, color: 'bg-purple-500' },
-    { name: t('category.kitchen'), key: 'kitchen', icon: Coffee, color: 'bg-cyan-500' },
-    { name: 'Accessories', key: 'accessories', icon: Heart, color: 'bg-amber-500' },
-    { name: 'Fitness', key: 'fitness', icon: Trophy, color: 'bg-blue-900' },
+    { name: t('category.camping'), key: 'camping', icon: Mountain, color: 'bg-violet-500' },
+    { name: 'Electronics', key: 'electronics', icon: Zap, color: 'bg-purple-700' },
+    { name: t('category.sportswear'), key: 'sportswear', icon: Shirt, color: 'bg-fuchsia-500' },
+    { name: t('category.living_room'), key: 'living-room', icon: Sofa, color: 'bg-purple-500' },
+    { name: t('category.makeup'), key: 'makeup', icon: Sparkles, color: 'bg-violet-400' },
+    { name: t('category.kitchen'), key: 'kitchen', icon: Coffee, color: 'bg-indigo-500' },
+    { name: 'Accessories', key: 'accessories', icon: Heart, color: 'bg-purple-400' },
+    { name: 'Fitness', key: 'fitness', icon: Trophy, color: 'bg-indigo-700' },
   ];
 
   const [heroSlide, setHeroSlide] = useState(0)
   const heroSlides = [
-    { bg: 'from-amber-500 to-orange-600', title: 'Yeni Sezon Ürünler', subtitle: "En iyi fiyatlar Mercora'da", badge: 'YENİ', cta: 'Keşfet' },
-    { bg: 'from-blue-600 to-purple-700', title: 'Elektronik Fırsatları', subtitle: "Teknoloji ürünlerde %40'a varan indirim", badge: 'FIRSAT', cta: 'Alışveriş Yap' },
-    { bg: 'from-emerald-500 to-teal-600', title: 'Ev & Yaşam', subtitle: 'Evinizi güzelleştirin', badge: 'TREND', cta: 'İncele' },
+    { bg: 'from-violet-600 to-purple-900', title: 'Yeni Sezon Ürünler', subtitle: "En iyi fiyatlar Mercora'da", badge: 'YENİ', cta: 'Keşfet' },
+    { bg: 'from-purple-700 to-indigo-900', title: 'Elektronik Fırsatları', subtitle: "Teknoloji ürünlerde %40'a varan indirim", badge: 'FIRSAT', cta: 'Alışveriş Yap' },
+    { bg: 'from-fuchsia-600 to-purple-800', title: 'Ev & Yaşam', subtitle: 'Evinizi güzelleştirin', badge: 'TREND', cta: 'İncele' },
   ]
   const heroCategoryLinks = [
     { name: 'Elektronik', icon: '📱', href: '/search?category=electronics' },
@@ -149,11 +149,11 @@ export function Home() {
       {/* Promo Banner Row */}
       <section className="max-w-screen-xl mx-auto px-4 pb-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Link to="/search?sort=discount" className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 hover:bg-orange-100 transition-colors">
+          <Link to="/search?sort=discount" className="flex items-center gap-3 bg-accent-soft border border-accent/20 rounded-xl px-4 py-3 hover:bg-accent/10 transition-colors group">
             <span className="text-2xl">🏷️</span>
             <div>
-              <p className="font-black text-xs uppercase tracking-widest text-orange-700">Günün Fırsatları</p>
-              <p className="text-[10px] text-orange-600">%70'e varan indirim</p>
+              <p className="font-black text-xs uppercase tracking-widest text-accent">Günün Fırsatları</p>
+              <p className="text-[10px] text-accent/70">%70'e varan indirim</p>
             </div>
           </Link>
           <Link to="/search" className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 hover:bg-green-100 transition-colors">
@@ -163,11 +163,11 @@ export function Home() {
               <p className="text-[10px] text-green-600">£50 üzeri tüm siparişlerde</p>
             </div>
           </Link>
-          <Link to="/search" className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-xl px-4 py-3 hover:bg-purple-100 transition-colors">
+          <Link to="/search" className="flex items-center gap-3 bg-accent-soft border border-accent/20 rounded-xl px-4 py-3 hover:bg-accent/10 transition-colors group">
             <span className="text-2xl">✨</span>
             <div>
-              <p className="font-black text-xs uppercase tracking-widest text-purple-700">Yeni Gelenler</p>
-              <p className="text-[10px] text-purple-600">Bu hafta eklenen ürünler</p>
+              <p className="font-black text-xs uppercase tracking-widest text-accent">Yeni Gelenler</p>
+              <p className="text-[10px] text-accent/70">Bu hafta eklenen ürünler</p>
             </div>
           </Link>
         </div>
