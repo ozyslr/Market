@@ -26,6 +26,14 @@ export function OrdersPage() {
   const navigate = useNavigate()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredOrders = orders.filter(o => {
+    const matchesStatus = statusFilter === 'all' || o.status === statusFilter
+    const matchesSearch = !searchQuery || o.id.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesStatus && matchesSearch
+  })
 
   useEffect(() => {
     if (!user) { navigate('/login'); return }
@@ -43,9 +51,47 @@ export function OrdersPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-6">
         <ShoppingBag className="text-accent" size={28} />
         <h1 className="text-3xl font-black uppercase tracking-tight text-brand-primary">Siparişlerim</h1>
+      </div>
+
+      {/* Search */}
+      <div className="mb-4">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Sipariş numarasıyla ara..."
+          className="w-full border border-brand-primary/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+        />
+      </div>
+
+      {/* Status Tabs */}
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+        {[
+          { key: 'all', label: 'Tümü' },
+          { key: 'pending', label: 'Beklemede' },
+          { key: 'processing', label: 'Hazırlanıyor' },
+          { key: 'shipped', label: 'Kargoda' },
+          { key: 'delivered', label: 'Teslim Edildi' },
+          { key: 'cancelled', label: 'İptal Edildi' },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setStatusFilter(tab.key)}
+            className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${
+              statusFilter === tab.key
+                ? 'bg-brand-primary text-white'
+                : 'bg-white border border-brand-primary/10 text-brand-primary/60 hover:border-accent hover:text-accent'
+            }`}
+          >
+            {tab.label}
+            {tab.key !== 'all' && (
+              <span className="ml-1 opacity-60">({orders.filter(o => o.status === tab.key).length})</span>
+            )}
+          </button>
+        ))}
       </div>
 
       {orders.length === 0 ? (
@@ -56,9 +102,13 @@ export function OrdersPage() {
             Alışverişe Başla
           </Link>
         </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-brand-primary/30 font-black uppercase text-sm tracking-widest">Bu filtreye uygun sipariş bulunamadı</p>
+        </div>
       ) : (
         <div className="space-y-4">
-          {orders.map(order => {
+          {filteredOrders.map(order => {
             const items: OrderItem[] = (() => { try { return JSON.parse(order.items) } catch { return [] } })()
             return (
               <div key={order.id} className="bg-white border border-brand-primary/10 rounded-2xl p-6">
