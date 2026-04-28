@@ -54,8 +54,125 @@ export function Home() {
     { name: 'Fitness', key: 'fitness', icon: Trophy, color: 'bg-blue-900' },
   ];
 
+  const [heroSlide, setHeroSlide] = useState(0)
+  const heroSlides = [
+    { bg: 'from-amber-500 to-orange-600', title: 'Yeni Sezon Ürünler', subtitle: "En iyi fiyatlar Mercora'da", badge: 'YENİ', cta: 'Keşfet' },
+    { bg: 'from-blue-600 to-purple-700', title: 'Elektronik Fırsatları', subtitle: "Teknoloji ürünlerde %40'a varan indirim", badge: 'FIRSAT', cta: 'Alışveriş Yap' },
+    { bg: 'from-emerald-500 to-teal-600', title: 'Ev & Yaşam', subtitle: 'Evinizi güzelleştirin', badge: 'TREND', cta: 'İncele' },
+  ]
+  const heroCategoryLinks = [
+    { name: 'Elektronik', icon: '📱', href: '/search?category=electronics' },
+    { name: 'Moda', icon: '👗', href: '/search?category=fashion' },
+    { name: 'Ev & Yaşam', icon: '🏠', href: '/search?category=home' },
+    { name: 'Spor', icon: '⚽', href: '/search?category=sports' },
+    { name: 'Kozmetik', icon: '💄', href: '/search?category=beauty' },
+    { name: 'Kitap', icon: '📚', href: '/search?category=books' },
+    { name: 'Oyuncak', icon: '🧸', href: '/search?category=toys' },
+    { name: 'Otomotiv', icon: '🚗', href: '/search?category=auto' },
+    { name: 'Pet Shop', icon: '🐾', href: '/search?category=pets' },
+    { name: 'Süpermarket', icon: '🛒', href: '/search?category=grocery' },
+    { name: 'Anne & Bebek', icon: '👶', href: '/search?category=baby' },
+    { name: 'Hobi', icon: '🎨', href: '/search?category=hobby' },
+  ]
+
+  useEffect(() => {
+    const t = setInterval(() => setHeroSlide(s => (s + 1) % heroSlides.length), 4000)
+    return () => clearInterval(t)
+  }, [])
+
   return (
     <div className="min-h-screen bg-brand-secondary">
+
+      {/* Hero Section — Category Sidebar + Carousel */}
+      <section className="max-w-screen-xl mx-auto px-4 pt-6 pb-4">
+        <div className="flex gap-0 rounded-2xl overflow-hidden border border-brand-primary/5 shadow-sm">
+          {/* Left Category Sidebar */}
+          <div className="hidden lg:flex flex-col w-52 shrink-0 bg-white border-r border-brand-primary/5">
+            {heroCategoryLinks.map((cat) => (
+              <Link
+                key={cat.name}
+                to={cat.href}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-brand-primary hover:bg-brand-secondary hover:text-accent transition-colors group"
+              >
+                <span className="text-base leading-none">{cat.icon}</span>
+                <span className="truncate">{cat.name}</span>
+                <span className="ml-auto text-brand-primary/20 group-hover:text-accent transition-colors">›</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Hero Carousel */}
+          <div className="relative flex-1 h-64 lg:h-80 overflow-hidden">
+            {heroSlides.map((slide, i) => (
+              <div
+                key={i}
+                className={`absolute inset-0 bg-gradient-to-br ${slide.bg} flex flex-col justify-center px-10 transition-opacity duration-700 ${i === heroSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+              >
+                <span className="inline-block bg-white/20 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-3 w-fit">
+                  {slide.badge}
+                </span>
+                <h2 className="text-3xl lg:text-4xl font-black text-white mb-2 leading-tight">{slide.title}</h2>
+                <p className="text-white/80 text-sm mb-6">{slide.subtitle}</p>
+                <Link
+                  to="/search"
+                  className="bg-white text-brand-primary font-black text-xs uppercase tracking-widest px-6 py-2.5 rounded-full hover:bg-brand-secondary transition-colors w-fit"
+                >
+                  {slide.cta} →
+                </Link>
+              </div>
+            ))}
+
+            {/* Navigation Dots */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+              {heroSlides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setHeroSlide(i)}
+                  className={`h-2 rounded-full transition-all ${i === heroSlide ? 'bg-white w-6' : 'bg-white/40 w-2'}`}
+                />
+              ))}
+            </div>
+
+            {/* Prev/Next Arrows */}
+            <button
+              onClick={() => setHeroSlide(s => (s - 1 + heroSlides.length) % heroSlides.length)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white font-bold transition-colors"
+            >‹</button>
+            <button
+              onClick={() => setHeroSlide(s => (s + 1) % heroSlides.length)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white font-bold transition-colors"
+            >›</button>
+          </div>
+        </div>
+      </section>
+
+      {/* Promo Banner Row */}
+      <section className="max-w-screen-xl mx-auto px-4 pb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Link to="/search?sort=discount" className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 hover:bg-orange-100 transition-colors">
+            <span className="text-2xl">🏷️</span>
+            <div>
+              <p className="font-black text-xs uppercase tracking-widest text-orange-700">Günün Fırsatları</p>
+              <p className="text-[10px] text-orange-600">%70'e varan indirim</p>
+            </div>
+          </Link>
+          <Link to="/search" className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 hover:bg-green-100 transition-colors">
+            <span className="text-2xl">🚚</span>
+            <div>
+              <p className="font-black text-xs uppercase tracking-widest text-green-700">Ücretsiz Kargo</p>
+              <p className="text-[10px] text-green-600">£50 üzeri tüm siparişlerde</p>
+            </div>
+          </Link>
+          <Link to="/search" className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-xl px-4 py-3 hover:bg-purple-100 transition-colors">
+            <span className="text-2xl">✨</span>
+            <div>
+              <p className="font-black text-xs uppercase tracking-widest text-purple-700">Yeni Gelenler</p>
+              <p className="text-[10px] text-purple-600">Bu hafta eklenen ürünler</p>
+            </div>
+          </Link>
+        </div>
+      </section>
+
       <Hero />
 
       {/* Category Icons Bar (Hepsiburada Style Circles) */}
