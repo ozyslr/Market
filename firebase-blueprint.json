@@ -1,0 +1,148 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account and profile data",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["buyer", "seller", "admin", "moderator"] },
+        "country": { "type": "string" },
+        "currency": { "type": "string" },
+        "spentTotal": { "type": "number" },
+        "lastLogin": { "type": "string" },
+        "savedItems": { "type": "array", "items": { "type": "string" } },
+        "preferences": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "Seller": {
+      "title": "Seller Store",
+      "description": "Merchant store information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "storeName": { "type": "string" },
+        "slug": { "type": "string" },
+        "rating": { "type": "number" },
+        "reviewsCount": { "type": "number" },
+        "followersCount": { "type": "number" },
+        "origin": { "type": "string" },
+        "joinedDate": { "type": "string" },
+        "isVerified": { "type": "boolean" },
+        "kycStatus": { "type": "string", "enum": ["pending", "verified", "rejected"] },
+        "commissionRate": { "type": "number" },
+        "bannerUrl": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "fulfillmentHealth": {
+          "type": "object",
+          "properties": {
+            "shipSpeed": { "type": "string" },
+            "compliance": { "type": "string" }
+          }
+        }
+      },
+      "required": ["id", "userId", "storeName", "slug"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Product listed in the marketplace",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "description": { "type": "string" },
+        "brand": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "price": { "type": "number" },
+        "stock": { "type": "number" },
+        "images": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["id", "sellerId", "title", "categoryId", "price"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "processing", "shipped", "delivered", "cancelled"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "buyerId", "total", "status"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Product or seller review",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "userId": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "rating", "comment"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "icon": { "type": "string" }
+      },
+      "required": ["id", "name", "slug"]
+    }
+  },
+  "firestore": {
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Product categories"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/sellers/{sellerId}": {
+      "schema": "Seller",
+      "description": "Seller stores"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Marketplace products"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer orders"
+    },
+    "/products/{productId}/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Product reviews"
+    },
+    "/activity_logs/{logId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "botId": { "type": "string" },
+          "productId": { "type": "string" },
+          "category": { "type": "string" },
+          "timestamp": { "type": "string" }
+        }
+      },
+      "description": "Log of system and bot actions"
+    }
+  }
+}

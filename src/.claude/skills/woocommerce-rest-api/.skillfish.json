@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "woocommerce-rest-api",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/platform-woocommerce/woocommerce-rest-api",
+  "branch": "main",
+  "sha": "9b304cf7e32bfedd8153b515b1841b80183bac53",
+  "source": "manual"
+}
