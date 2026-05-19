@@ -60,6 +60,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <>
       <motion.div
         ref={cardRef}
+        data-testid="product-card"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => { setIsHovered(false); setImgIdx(0); }}
         className="group bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border border-brand-primary/5 dark:border-white/5 hover:border-brand-primary/20 dark:hover:border-white/20 transition-all duration-300 shadow-sm hover:shadow-lg flex flex-col h-full relative"
@@ -80,6 +81,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {/* Quick Add overlay button (Desktop mostly) */}
             <div className="absolute inset-x-0 bottom-0 p-3 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10 hidden md:block">
               <button
+                data-testid="add-to-cart"
                 onClick={(e) => { e.preventDefault(); handleAddToCart(); }}
                 className="w-full py-2.5 bg-violet-600 text-white text-xs font-bold rounded-lg shadow-lg hover:bg-black hover:text-white transition-colors"
                 style={{ fontFamily: 'Inter, sans-serif' }}

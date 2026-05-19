@@ -36,6 +36,7 @@ import { AdminSettings } from './AdminSettings';
 import { AdminFinance } from './AdminFinance';
 import { AdminCampaigns } from './AdminCampaigns';
 import { AdminReports } from './AdminReports';
+import { AdminAnalytics } from './AdminAnalytics';
 import { AdminSupport } from './AdminSupport';
 import { AdminChat } from './AdminChat';
 
@@ -230,6 +231,7 @@ export function AdminDashboard() {
           <SidebarItem id="payments" label="Ödeme Sistemleri" icon={CreditCard} active={activeTab === 'payments'} onClick={setActiveTab} />
           <SidebarItem id="finance" label="Finans Takibi" icon={CreditCard} active={activeTab === 'finance'} onClick={setActiveTab} />
           <SidebarItem id="reports" label="Satış Raporları" icon={BarChart3} active={activeTab === 'reports'} onClick={setActiveTab} />
+          <SidebarItem id="analytics" label="Analitik" icon={Activity} active={activeTab === 'analytics'} onClick={setActiveTab} />
           <SidebarItem id="reviews" label="Ürün Değerlendirme" icon={Star} active={activeTab === 'reviews'} onClick={setActiveTab} />
           <SidebarItem id="livechat" label="Sohbet" icon={MessageCircle} active={activeTab === 'livechat'} onClick={setActiveTab} />
           <SidebarItem id="support" label="Destek Biletleri" icon={MessageSquare} active={activeTab === 'support'} onClick={setActiveTab} />
@@ -324,6 +326,8 @@ export function AdminDashboard() {
               <AdminCampaigns />
            ) : activeTab === 'reports' ? (
               <AdminReports />
+           ) : activeTab === 'analytics' ? (
+              <AdminAnalytics />
            ) : activeTab === 'support' ? (
               <AdminSupport />
            ) : activeTab === 'livechat' ? (

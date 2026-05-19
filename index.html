@@ -5,11 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mercora — Alışverişin Yeni Adresi</title>
     <meta name="description" content="Mercora'da binlerce ürünü keşfedin. Moda, elektronik, ev & yaşam ve daha fazlası. Güvenli alışveriş, hızlı teslimat." />
+
+    <!-- Preconnect to third-party origins -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" />
+    <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+    <link rel="preconnect" href="https://js.stripe.com" />
+    <link rel="preconnect" href="https://o45000000000000000000.ingest.de.sentry.io" />
+
+    <!-- DNS prefetch for critical origins -->
+    <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+    <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
+    <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
+    <link rel="dns-prefetch" href="https://js.stripe.com" />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="theme-color" content="#7c3aed" />
+
+    <!-- Performance: set explicit font-display for web fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" as="style" />
   </head>
   <body>
     <div id="root"></div>

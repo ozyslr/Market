@@ -23,6 +23,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getRecentViewedIds } from '@/services/behaviorService';
 import { getAllRecommendations, RecommendationGroup } from '@/services/recommendationService';
 import { ProductRecommendations } from '@/components/commerce/ProductRecommendations';
+import { CampaignBanner } from '@/components/marketing/CampaignBanner';
 
 const CountdownTimer = ({ hours = 5, minutes = 42, seconds = 18, endTime }: { hours?: number; minutes?: number; seconds?: number; endTime?: string }) => {
   const getInitial = () => {
@@ -299,6 +300,7 @@ export function Home() {
            {/* Hero section takes 75% on large screens */}
            <div className="w-full lg:w-3/4">
               <Hero />
+              <CampaignBanner className="mt-4" />
            </div>
            
            {/* Deals section takes 25% on large screens */}
