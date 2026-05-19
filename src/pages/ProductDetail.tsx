@@ -63,7 +63,7 @@ function SellerAnswerForm({ onAnswer }: { onAnswer: (ans: string) => void }) {
 }
 
 export function ProductDetail() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { selectedLocation, setIsLocationModalOpen, location } = useLocationStore();
   const { user, firebaseUser } = useAuth();
   const { addItem } = useCart();
@@ -253,6 +253,7 @@ export function ProductDetail() {
         description={product.description}
         image={product.images[0]}
         type="product"
+        lang={lang}
         jsonLd={productSchema({
           name: product.title,
           description: product.description,

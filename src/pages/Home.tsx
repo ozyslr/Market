@@ -120,7 +120,7 @@ const ProductRow = ({ title, products, showViewAll = true }: { title: string; pr
 };
 
 export function Home() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { user, firebaseUser } = useAuth();
   const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
   const [categories, setCategories] = useState<Category[]>(CATEGORIES);
@@ -221,9 +221,10 @@ export function Home() {
 
   return (
     <div className="min-h-screen bg-brand-secondary dark:bg-brand-secondary transition-colors duration-300">
-      <SEO 
-        title={t('nav.home_page')} 
+      <SEO
+        title={t('nav.home_page')}
         description="Mercora - The next-generation global commerce ecosystem connecting artisans to the world."
+        lang={lang}
       />
       
       {/* Trendyol Style Quick Categories (Stories) */}

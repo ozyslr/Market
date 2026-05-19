@@ -8,6 +8,8 @@ import { ProductCard } from '@/components/commerce/ProductCard';
 import { Breadcrumb, BreadcrumbItem } from '@/components/common/Breadcrumb';
 import { SEO } from '@/components/common/SEO';
 import { breadcrumbSchema } from '@/components/seo/schemas';
+import { Skeleton, ProductCardSkeleton, ProductGridSkeleton } from '@/components/ui/Skeleton';
+import { useLanguage } from '@/context/LanguageContext';
 import { cn } from '@/lib/utils';
 
 const SORT_OPTIONS = [
@@ -19,6 +21,7 @@ const SORT_OPTIONS = [
 ];
 
 export function CategoryPage() {
+  const { lang } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -89,6 +92,7 @@ export function CategoryPage() {
         title={category?.name || 'Kategori'}
         description={`${category?.name || 'Kategori'} sayfası — Mercora'da ${category?.name || 'kategori'} ürünlerini keşfedin.`}
         canonical={`/category/${id}`}
+        lang={lang}
         jsonLd={
           breadcrumbSchema([
             { name: 'Ana Sayfa', url: '/' },
@@ -113,7 +117,7 @@ export function CategoryPage() {
         <div className="relative h-full max-w-[1700px] mx-auto px-4 lg:px-8 flex flex-col justify-center gap-2">
           <Breadcrumb items={breadcrumbItems} light />
           {loading ? (
-            <div className="h-8 w-48 bg-white/20 rounded-lg animate-pulse" />
+            <Skeleton className="h-8 w-48" />
           ) : (
             <h1 className="text-2xl md:text-4xl font-display font-black uppercase italic text-white tracking-tight leading-none">
               {category?.name}
@@ -200,11 +204,7 @@ export function CategoryPage() {
       {/* Products Grid */}
       <div className="max-w-[1700px] mx-auto px-4 lg:px-8 pb-16">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-            {[...Array(10)].map((_, i) => (
-              <div key={i} className="aspect-[3/4] bg-brand-secondary/30 dark:bg-zinc-800 rounded-xl animate-pulse" />
-            ))}
-          </div>
+          <ProductGridSkeleton count={10} />
         ) : sortedProducts.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}

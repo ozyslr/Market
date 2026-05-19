@@ -11,7 +11,11 @@ interface SEOProps {
   image?: string;
   name?: string;
   jsonLd?: Record<string, unknown>;
+  /** Active language code (en, tr, de, ar) — enables hreflang alternates */
+  lang?: string;
 }
+
+const LANGUAGES = ['tr', 'en', 'de', 'ar'];
 
 export const SEO: React.FC<SEOProps> = ({
   title,
@@ -21,10 +25,23 @@ export const SEO: React.FC<SEOProps> = ({
   image,
   name = 'Mercora',
   jsonLd,
+  lang = 'tr',
 }) => {
   const fullTitle = title ? `${title} | ${name}` : name;
   const siteDescription = description || 'Global Artisan Marketplace';
-  const canonicalUrl = canonical || (typeof window !== 'undefined' ? window.location.href : 'https://mercora.com');
+  const canonicalUrl = canonical
+    ? `https://mercora.com${canonical.startsWith('/') ? canonical : `/${canonical}`}`
+    : typeof window !== 'undefined'
+      ? window.location.href
+      : 'https://mercora.com';
+
+  // Build hreflang alternate links
+  const hreflangLinks = canonical
+    ? LANGUAGES.map((l) => ({
+        lang: l,
+        href: canonicalUrl.replace('mercora.com', `mercora.com/${l === 'tr' ? '' : l}`),
+      }))
+    : [];
 
   return (
     <>
@@ -47,6 +64,12 @@ export const SEO: React.FC<SEOProps> = ({
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={fullTitle} />
         <meta name="twitter:description" content={siteDescription} />
+
+        {/* Hreflang alternates */}
+        {hreflangLinks.map(({ lang: l, href }) => (
+          <link key={l} rel="alternate" hrefLang={l} href={href} />
+        ))}
+        <link rel="alternate" hrefLang="x-default" href={hreflangLinks.find(l => l.lang === 'en')?.href || canonicalUrl} />
       </Helmet>
 
       {/* Default Organization + Website schemas */}
