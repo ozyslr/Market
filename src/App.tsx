@@ -1,7 +1,11 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Sentry } from './lib/sentry';
+import { initAnalytics, getConsent, trackEvent } from './lib/analytics';
 import { Navbar } from './components/layout/Navbar';
+import { SkipToContent } from './components/common/SkipToContent';
+import { CookieConsent } from './components/common/CookieConsent';
 import SellerLayout from './components/layout/SellerLayout';
 import { CartPage } from './pages/Cart';
 import { Home } from './pages/Home';
@@ -17,6 +21,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminSellerView } from './pages/AdminSellerView';
 import { SellOnMercora } from './pages/SellOnMercora';
 import { ShoppingAssistant } from './components/ai/ShoppingAssistant';
+import { LiveChatWidget } from './components/chat/LiveChatWidget';
 import { Footer } from './components/layout/Footer';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -36,21 +41,36 @@ import { NotificationProvider } from './context/NotificationContext';
 import { SellerSettings } from './pages/SellerSettings';
 import { SellerImportCenter } from './pages/SellerImportCenter';
 import { SellerFinance } from './pages/SellerFinance';
+import { SellerPricing } from './pages/SellerPricing';
+import { SellerCertificates } from './pages/SellerCertificates';
+import { ProductVerification } from './pages/ProductVerification';
 import { ModeratorDashboard } from './pages/ModeratorDashboard';
 import { CollectionPage } from './pages/CollectionPage';
 import { AdminCategories } from './pages/AdminCategories';
 import { UserSupport } from './pages/UserSupport';
+import { VisualSearch } from './pages/VisualSearch';
 
 function MainLayout() {
+  // Auto-init analytics if consent was previously granted
+  useEffect(() => {
+    if (getConsent() === 'granted') {
+      initAnalytics();
+    }
+    trackEvent('page_view', { page_title: document.title, page_location: window.location.href });
+  }, []);
+
   return (
     <div className="relative min-h-screen transition-colors duration-300">
+      <SkipToContent />
       <Navbar />
-      <main className="pt-[144px] md:pt-[156px]">
+      <main id="main-content" className="pt-[144px] md:pt-[156px]" tabIndex={-1}>
         <Outlet />
       </main>
       <Footer />
       <ShoppingAssistant />
       <BotSalesEngine />
+      <LiveChatWidget />
+      <CookieConsent />
     </div>
   );
 }
@@ -78,6 +98,8 @@ export default function App() {
                     <Route path="finance" element={<SellerFinance />} />
                     <Route path="settings" element={<SellerSettings />} />
                     <Route path="import"   element={<SellerImportCenter />} />
+                    <Route path="pricing"  element={<SellerPricing />} />
+                    <Route path="certificates" element={<SellerCertificates />} />
                   </Route>
                   {/* All other routes — with Navbar/Footer */}
                   <Route element={<MainLayout />}>
@@ -98,6 +120,8 @@ export default function App() {
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/orders/:orderId" element={<OrderTracking />} />
                     <Route path="/support" element={<UserSupport />} />
+                    <Route path="/visual-search" element={<VisualSearch />} />
+                    <Route path="/verify" element={<ProductVerification />} />
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>

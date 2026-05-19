@@ -1,20 +1,22 @@
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Truck, CreditCard, ChevronRight, CheckCircle2, Loader2, MapPin, Search, Plus, Check, Download } from 'lucide-react';
+import { ShieldCheck, Truck, CreditCard, ChevronRight, CheckCircle2, Loader2, MapPin, Search, Plus, Check, Download, Building2 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MOCK_PRODUCTS } from '@/mockData';
-import { createOrder } from '@/services/orderService';
+import { createOrder, getOrderById } from '@/services/orderService';
 import { decreaseProductStock } from '@/services/productService';
 import { addAddress } from '@/services/userService';
 import { sendOrderConfirmationEmail } from '@/services/emailService';
 import { InvoiceModal } from '@/components/commerce/InvoiceModal';
-import type { Order } from '@/types/order';
+import { PaymentMethodSelector } from '@/components/checkout/PaymentMethodSelector';
+import { IyzicoPayment } from '@/components/checkout/IyzicoPayment';
+import { ManualPayment } from '@/components/checkout/ManualPayment';
+import type { Order, PaymentMethod, ShippingAddress } from '@/types/order';
 import { validateCoupon, incrementCouponUsage, calcDiscount } from '@/services/couponService';
-import type { ShippingAddress } from '@/types/order';
 import type { Address, Coupon } from '@/types';
 import { cn } from '@/lib/utils';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
@@ -116,9 +118,11 @@ export function CheckoutPage() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('stripe');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isMock, setIsMock] = useState(false);
   const [isFetchingIntent, setIsFetchingIntent] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const [confirmedOrderId, setConfirmedOrderId] = useState<string | null>(null);
   const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
@@ -128,6 +132,37 @@ export function CheckoutPage() {
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [saveAddress, setSaveAddress] = useState(false);
+
+  // ─── iyzico callback handler (redirected back from iyzico payment page) ─────
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const iyzicoStatus = searchParams.get('iyzico_status');
+    if (iyzicoStatus) {
+      const orderId = searchParams.get('orderId') || '';
+      if (iyzicoStatus === 'success' && orderId) {
+        // Fetch order and show confirmation
+        getOrderById(orderId).then(order => {
+          if (order) {
+            setConfirmedOrderId(order.id);
+            setConfirmedOrder(order);
+            setStep(3);
+            clearCart();
+          }
+        });
+      } else if (iyzicoStatus === 'success') {
+        setStep(3);
+        clearCart();
+      } else {
+        // Payment failed or error
+        const reason = searchParams.get('reason') || 'Ödeme başarısız oldu';
+        setPaymentError(reason);
+      }
+      // Clean up URL params
+      const url = new URL(window.location.href);
+      url.search = '';
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [postcodeLookupLoading, setPostcodeLookupLoading] = useState(false);
@@ -257,6 +292,7 @@ export function CheckoutPage() {
         tax: totals.vat,
         total: totals.total,
         currency,
+        paymentMethod: 'stripe',
         status: 'paid',
         paymentStatus: 'succeeded',
         stripePaymentIntentId: paymentIntentId,
@@ -466,7 +502,7 @@ export function CheckoutPage() {
             )}
 
             {/* Step 2: Payment */}
-            {step === 2 && clientSecret && (
+            {step === 2 && (
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-[2.5rem] p-8 border border-[#F8F8FA] shadow-sm">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center">
@@ -474,32 +510,150 @@ export function CheckoutPage() {
                   </div>
                   <h2 className="text-2xl font-display font-black uppercase tracking-tight text-[#1A1033]">Secure Payment</h2>
                 </div>
-                <div className="bg-[#F8F8FA] p-6 rounded-2xl mb-8 border border-[#1A1033]/5 relative overflow-hidden">
+
+                {/* Escrow notice */}
+                <div className="bg-[#F8F8FA] p-6 rounded-2xl mb-6 border border-[#1A1033]/5 relative overflow-hidden">
                   <ShieldCheck className="absolute -right-4 -bottom-4 text-accent/5 size-32" />
                   <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-2">Escrow Protection</p>
                   <p className="text-sm font-medium text-[#1A1033]/60 relative z-10">Your funds are held securely until the artifact is delivered and verified by you.</p>
                 </div>
 
-                {stripePromise && elementsOptions ? (
-                  <Elements stripe={stripePromise} options={elementsOptions}>
-                    <PaymentForm
-                      total={totals.total}
-                      currency={currency}
-                      isMock={false}
-                      shippingAddress={address}
-                      onSuccess={handlePaymentSuccess}
-                      onBack={() => setStep(1)}
-                    />
-                  </Elements>
-                ) : (
-                  <PaymentForm
+                {/* Payment Method Selector */}
+                <div className="mb-6">
+                  <PaymentMethodSelector
+                    selected={paymentMethod}
+                    onChange={setPaymentMethod}
+                    region={user?.country || 'UK'}
+                  />
+                </div>
+
+                {/* Stripe Payment */}
+                {paymentMethod === 'stripe' && clientSecret && (
+                  <>
+                    {stripePromise && elementsOptions ? (
+                      <Elements stripe={stripePromise} options={elementsOptions}>
+                        <PaymentForm
+                          total={totals.total}
+                          currency={currency}
+                          isMock={false}
+                          shippingAddress={address}
+                          onSuccess={handlePaymentSuccess}
+                          onBack={() => setStep(1)}
+                        />
+                      </Elements>
+                    ) : (
+                      <PaymentForm
+                        total={totals.total}
+                        currency={currency}
+                        isMock={true}
+                        shippingAddress={address}
+                        onSuccess={handlePaymentSuccess}
+                        onBack={() => setStep(1)}
+                      />
+                    )}
+                  </>
+                )}
+
+                {/* Stripe: need to init payment intent first */}
+                {paymentMethod === 'stripe' && !clientSecret && (
+                  <div className="text-center py-8">
+                    <button
+                      type="button"
+                      onClick={proceedToPayment}
+                      disabled={isFetchingIntent}
+                      className="py-4 px-8 bg-accent text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 mx-auto disabled:opacity-60"
+                    >
+                      {isFetchingIntent
+                        ? <><Loader2 size={16} className="animate-spin" /> Hazırlanıyor...</>
+                        : <>Ödemeye Hazırlan <ChevronRight size={18} /></>}
+                    </button>
+                  </div>
+                )}
+
+                {/* iyzico Payment */}
+                {paymentMethod === 'iyzico' && firebaseUser && (
+                  <IyzicoPayment
                     total={totals.total}
                     currency={currency}
-                    isMock={true}
-                    shippingAddress={address}
-                    onSuccess={handlePaymentSuccess}
+                    orderId={`pending_${Date.now()}`}
+                    userId={firebaseUser.uid}
+                    userEmail={firebaseUser.email || ''}
+                    userName={address.fullName}
+                    buyerPhone={address.phone}
+                    region={user?.country || 'UK'}
+                    shippingAddress={{
+                      fullName: address.fullName,
+                      line1: address.line1,
+                      city: address.city,
+                      country: address.country,
+                    }}
+                    onSuccess={() => {}}
                     onBack={() => setStep(1)}
+                    onError={(msg) => setPaymentError(msg)}
                   />
+                )}
+
+                {/* Manual EFT/Havale Payment */}
+                {paymentMethod === 'manual' && (
+                  <ManualPayment
+                    total={totals.total}
+                    currency={currency}
+                    onConfirm={async () => {
+                      if (firebaseUser) {
+                        const orderItems = cartProducts.map(p => ({
+                          productId: p.id,
+                          sellerId: p.sellerId,
+                          name: p.title,
+                          image: p.images[0],
+                          price: p.price,
+                          quantity: p.quantity,
+                          subtotal: p.price * p.quantity,
+                        }));
+                        const order = await createOrder({
+                          userId: firebaseUser.uid,
+                          userEmail: firebaseUser.email ?? '',
+                          items: orderItems,
+                          sellerIds: [...new Set(orderItems.map(i => i.sellerId))],
+                          subtotal: totals.subtotal,
+                          shipping: totals.shipping,
+                          tax: totals.vat,
+                          total: totals.total,
+                          currency,
+                          paymentMethod: 'manual',
+                          status: 'pending',
+                          paymentStatus: 'pending',
+                          stripePaymentIntentId: '',
+                          shippingAddress: address,
+                        });
+                        setConfirmedOrderId(order.id);
+                        setConfirmedOrder(order);
+                        await decreaseProductStock(cartProducts.map(p => ({ productId: p.id, quantity: p.quantity })));
+                        if (appliedCoupon) await incrementCouponUsage(appliedCoupon.id);
+                        if (saveAddress && !selectedAddressId) {
+                          await addAddress(firebaseUser.uid, {
+                            label: address.city || 'Ev',
+                            fullName: address.fullName,
+                            line1: address.line1,
+                            line2: address.line2,
+                            city: address.city,
+                            state: address.state,
+                            postalCode: address.postalCode,
+                            country: address.country,
+                            phone: address.phone,
+                          });
+                        }
+                        sendOrderConfirmationEmail(order);
+                      }
+                      clearCart();
+                      setStep(3);
+                    }}
+                    onBack={() => setStep(1)}
+                    onError={(msg) => setPaymentError(msg)}
+                  />
+                )}
+
+                {paymentError && (
+                  <p className="mt-4 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl">{paymentError}</p>
                 )}
               </motion.div>
             )}

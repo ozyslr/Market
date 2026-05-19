@@ -1,3 +1,5 @@
+export type PaymentMethod = 'stripe' | 'iyzico' | 'paytr' | 'manual';
+
 export type OrderStatus = 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded' | 'return_requested' | 'returned';
 export type PaymentStatus = 'pending' | 'succeeded' | 'failed';
 
@@ -35,7 +37,10 @@ export interface Order {
   currency: string;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  installment?: number;
   stripePaymentIntentId: string;
+  iyzicoPaymentToken?: string;
   shippingAddress: ShippingAddress;
   trackingNumber?: string;
   carrier?: string;

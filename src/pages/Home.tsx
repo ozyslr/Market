@@ -21,6 +21,8 @@ import { getHomepageSections, DEFAULT_SECTIONS } from '@/services/cmsService';
 import { getFeaturedProducts } from '@/services/featuredService';
 import { useAuth } from '@/context/AuthContext';
 import { getRecentViewedIds } from '@/services/behaviorService';
+import { getAllRecommendations, RecommendationGroup } from '@/services/recommendationService';
+import { ProductRecommendations } from '@/components/commerce/ProductRecommendations';
 
 const CountdownTimer = ({ hours = 5, minutes = 42, seconds = 18, endTime }: { hours?: number; minutes?: number; seconds?: number; endTime?: string }) => {
   const getInitial = () => {
@@ -129,6 +131,8 @@ export function Home() {
   const [loading, setLoading] = useState(true);
   const [featuredFromFirestore, setFeaturedFromFirestore] = useState<Product[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<typeof MOCK_PRODUCTS>([]);
+  const [recommendationGroups, setRecommendationGroups] = useState<RecommendationGroup[]>([]);
+  const [recsLoading, setRecsLoading] = useState(false);
 
   useEffect(() => {
     getFeaturedProducts().then(prods => {
@@ -147,6 +151,20 @@ export function Home() {
       setRecentlyViewed(prods);
     });
   }, [firebaseUser?.uid]);
+
+  useEffect(() => {
+    async function loadRecs() {
+      if (!products.length) return;
+      setRecsLoading(true);
+      const groups = await getAllRecommendations({
+        userId: firebaseUser?.uid,
+        viewedProductIds: recentlyViewed.map(p => p.id),
+      });
+      if (groups.length > 0) setRecommendationGroups(groups);
+      setRecsLoading(false);
+    }
+    loadRecs();
+  }, [firebaseUser?.uid, products.length]);
 
   useEffect(() => {
     async function loadData() {
@@ -497,6 +515,9 @@ export function Home() {
             title="Senin İçin Seçtiklerimiz"
             products={MOCK_PRODUCTS.slice(0, 20)}
          />
+
+         {/* AI Recommendations */}
+         <ProductRecommendations groups={recommendationGroups} loading={recsLoading} />
 
         {/* Son Gezilen */}
         {recentlyViewed.length > 0 && (

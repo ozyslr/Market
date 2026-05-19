@@ -1,5 +1,15 @@
 export type ProviderKey = 'stripe' | 'iyzico' | 'paytr' | 'sipay' | 'manual';
 
+export interface InstallmentOption {
+  binNumber: string;
+  price: number;
+  totalPrice: number;
+  installmentNumber: number;
+  installmentRate: number;
+  merchantCommissionRate: number;
+  merchantCommissionAmount: number;
+}
+
 export interface PaymentProvider {
   id: string;
   key: ProviderKey;

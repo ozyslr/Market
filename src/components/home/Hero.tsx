@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, Globe, Zap, Sparkles, Play, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { useLanguage } from '@/context/LanguageContext';
 
 const SLIDES = [
@@ -90,10 +91,12 @@ export function Hero() {
           className="absolute inset-0"
         >
           <Link to={`/search?category=${SLIDES[current].category}`} className="block w-full h-full">
-            <img 
-              src={SLIDES[current].image} 
-              className="absolute inset-0 w-full h-full object-cover md:object-fill" 
-              alt={SLIDES[current].title} 
+            <OptimizedImage
+              src={SLIDES[current].image}
+              className="absolute inset-0 w-full h-full object-cover md:object-fill"
+              alt={SLIDES[current].title}
+              containerClassName="absolute inset-0 w-full h-full"
+              lazy={false}
               referrerPolicy="no-referrer"
             />
             {/* Dark overlay for contrast if text is visible, but in TR e-commerce, the image ITSELF contains the campaign text usually.

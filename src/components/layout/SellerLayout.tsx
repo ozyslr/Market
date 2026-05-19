@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, ShoppingBag, BarChart3, Settings, LogOut,
-  Store, Home, FileUp, Loader2, Clock, XCircle, AlertTriangle,
+  Store, Home, FileUp, Loader2, Clock, XCircle, AlertTriangle, TrendingUp, ShieldCheck,
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -17,6 +17,8 @@ const navItems = [
   { path: '/seller/finance',    icon: BarChart3,       label: 'Finans' },
   { path: '/seller/settings',   icon: Settings,        label: 'Mağaza Ayarları' },
   { path: '/seller/import',     icon: FileUp,          label: 'Import Center'   },
+  { path: '/seller/pricing',    icon: TrendingUp,      label: 'Fiyatlandırma'   },
+  { path: '/seller/certificates', icon: ShieldCheck,    label: 'Sertifikalar'    },
 ];
 
 type KycStatus = 'loading' | 'none' | 'pending' | 'verified' | 'rejected';
@@ -135,7 +137,7 @@ export default function SellerLayout() {
 
   return (
     <div className="flex h-screen bg-zinc-950 text-white overflow-hidden">
-      <aside className="w-[240px] flex-shrink-0 flex flex-col bg-zinc-900 border-r border-zinc-800">
+      <aside role="navigation" aria-label="Satıcı paneli navigasyonu" className="w-[240px] flex-shrink-0 flex flex-col bg-zinc-900 border-r border-zinc-800">
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
           <div className="flex items-center gap-2">
             <Store size={18} className="text-emerald-400" />
@@ -174,7 +176,7 @@ export default function SellerLayout() {
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">
+      <main id="seller-main-content" className="flex-1 overflow-auto" tabIndex={-1}>
         <Outlet />
       </main>
     </div>

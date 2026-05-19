@@ -193,6 +193,7 @@ export interface Product {
   returnPolicy?: string;
   relatedProductIds?: string[];
   frequentlyBoughtTogetherIds?: string[];
+  model3dUrl?: string;
   reviews?: Review[];
   createdAt?: string;
 }

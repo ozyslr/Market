@@ -11,26 +11,25 @@ import {
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
-// --- MOCK DATA ---
-const REVENUE_DATA = [
-  { name: 'Mon', value: 1200 },
-  { name: 'Tue', value: 2500 },
-  { name: 'Wed', value: 1800 },
-  { name: 'Thu', value: 4200 },
-  { name: 'Fri', value: 3100 },
-  { name: 'Sat', value: 5400 },
-  { name: 'Sun', value: 6800 },
-];
-
+// Inline sparkline data for KPI card decoration
 const SPARKLINE_DATA = [
-  { v: 10 }, { v: 25 }, { v: 15 }, { v: 45 }, { v: 30 }, { v: 60 }, { v: 50 }, { v: 75 }, { v: 65 }
+  { v: 10 }, { v: 25 }, { v: 15 }, { v: 45 }, { v: 30 }, { v: 60 }, { v: 50 }, { v: 75 }, { v: 65 },
 ];
 
-const SELLER_PRODUCTS = [
-  { id: '#SKU-99201', name: 'Aura Studio Monitor', status: 'Active', stock: 124, price: '£599.00', growth: '+12.5%' },
-  { id: '#SKU-99202', name: 'Ethereal Soundscape Pro', status: 'Processing', stock: 0, price: '£249.99', growth: '+8.2%' },
-  { id: '#SKU-99203', name: 'Midnight Audio Interface', status: 'Active', stock: 48, price: '£399.00', growth: '-2.4%' },
-];
+// ─── Helpers ──────────────────────────────────────────────────────────────
+
+function formatCurrency(amount: number): string {
+  return amount.toLocaleString('tr-TR', {
+    style: 'currency', currency: 'TRY', minimumFractionDigits: 0, maximumFractionDigits: 0,
+  });
+}
+
+function formatTrend(value: number): { label: string; isPositive: boolean } {
+  return {
+    label: `${value >= 0 ? '+' : ''}${value}%`,
+    isPositive: value >= 0,
+  };
+}
 
 // --- COMPONENTS ---
 
@@ -66,6 +65,7 @@ const KPICard = ({ label, value, growth, icon: Icon, color, bg }: any) => (
 
 import { useAuth } from '@/context/AuthContext';
 import { getOrdersBySeller } from '@/services/orderService';
+import { getSellerAnalytics, SellerAnalytics } from '@/services/sellerAnalyticsService';
 import { Order } from '@/types/order';
 
 export function SellerDashboard() {
@@ -77,11 +77,23 @@ export function SellerDashboard() {
   const [financePeriod, setFinancePeriod] = useState<'30' | '90' | 'all'>('30');
   const { user } = useAuth();
 
+  const [analytics, setAnalytics] = useState<SellerAnalytics | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+
   useEffect(() => {
     if (!user) return;
     setFinanceLoading(true);
     getOrdersBySeller(user.uid).then(orders => { setSellerOrders(orders); setFinanceLoading(false); }).catch(() => setFinanceLoading(false));
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.id) { setAnalyticsLoading(false); return; }
+    setAnalyticsLoading(true);
+    getSellerAnalytics(user.id)
+      .then(setAnalytics)
+      .catch(() => setAnalytics(null))
+      .finally(() => setAnalyticsLoading(false));
+  }, [user?.id]);
 
   const simulateUpload = () => {
     setIsUploading(true);
@@ -98,6 +110,17 @@ export function SellerDashboard() {
     }, 100);
   };
 
+
+  if (analyticsLoading && !analytics) {
+    return (
+      <div className="flex-1 h-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <div className="flex flex-col items-center gap-6">
+          <div className="w-12 h-12 border-4 border-[#F9423A] border-t-transparent rounded-full animate-spin" />
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary/30 animate-pulse">Analytics Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 h-full overflow-y-auto no-scrollbar bg-zinc-50 dark:bg-zinc-950 text-[#1A1033] relative">
@@ -142,10 +165,38 @@ export function SellerDashboard() {
                 >
                   {/* KPI Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <KPICard label="Haftalık Ciro" value="124.500 ₺" growth="+14.5%" icon={DollarSign} color="#F9423A" bg="bg-gradient-to-tr from-[#F9423A] to-orange-500" />
-                    <KPICard label="Toplam Sipariş" value="142" growth="+8.2%" icon={ShoppingCart} color="#10B981" bg="bg-gradient-to-tr from-[#10B981] to-emerald-400" />
-                    <KPICard label="Dönüşüm Oranı" value="%4.82" growth="-1.2%" icon={Activity} color="#3B82F6" bg="bg-gradient-to-tr from-[#3B82F6] to-blue-400" />
-                    <KPICard label="Mağaza Puanı" value="9.8" growth="+0.5%" icon={ShieldCheck} color="#F59E0B" bg="bg-gradient-to-tr from-[#F59E0B] to-orange-400" />
+                    <KPICard
+                      label="Haftalık Ciro"
+                      value={analytics ? `${formatCurrency(analytics.weeklyRevenue)}` : '---'}
+                      growth={analytics ? formatTrend(analytics.revenueTrend).label : '+0%'}
+                      icon={DollarSign}
+                      color="#F9423A"
+                      bg="bg-gradient-to-tr from-[#F9423A] to-orange-500"
+                    />
+                    <KPICard
+                      label="Toplam Sipariş"
+                      value={analytics ? String(analytics.totalOrders) : '---'}
+                      growth={analytics ? formatTrend(analytics.orderTrend).label : '+0%'}
+                      icon={ShoppingCart}
+                      color="#10B981"
+                      bg="bg-gradient-to-tr from-[#10B981] to-emerald-400"
+                    />
+                    <KPICard
+                      label="Dönüşüm Oranı"
+                      value={analytics ? `%${analytics.conversionRate}` : '---'}
+                      growth={analytics ? formatTrend(analytics.conversionTrend).label : '+0%'}
+                      icon={Activity}
+                      color="#3B82F6"
+                      bg="bg-gradient-to-tr from-[#3B82F6] to-blue-400"
+                    />
+                    <KPICard
+                      label="Toplam Görüntülenme"
+                      value={analytics ? String(analytics.totalViews) : '---'}
+                      growth={analytics ? formatTrend(analytics.viewsTrend).label : '+0%'}
+                      icon={BarChart3}
+                      color="#F59E0B"
+                      bg="bg-gradient-to-tr from-[#F59E0B] to-orange-400"
+                    />
                   </div>
 
                   {/* Main Analytics Section */}
@@ -164,7 +215,7 @@ export function SellerDashboard() {
                        </div>
                        <div className="h-[420px] w-full">
                           <ResponsiveContainer width="100%" height="100%">
-                             <AreaChart data={REVENUE_DATA}>
+                             <AreaChart data={analytics?.dailyRevenue ?? []}>
                                 <defs>
                                   <linearGradient id="purpleG" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#F9423A" stopOpacity={0.15}/>
@@ -172,7 +223,7 @@ export function SellerDashboard() {
                                   </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1A1033" strokeOpacity={0.03} />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#1A1033', opacity: 0.3, fontWeight: 800 }} dy={10} />
+                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#1A1033', opacity: 0.3, fontWeight: 800 }} dy={10} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#1A1033', opacity: 0.3, fontWeight: 800 }} />
                                 <Tooltip 
                                   contentStyle={{ backgroundColor: '#1A1033', borderRadius: '24px', border: 'none', padding: '20px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
@@ -186,25 +237,26 @@ export function SellerDashboard() {
 
                     <div className="lg:col-span-4 flex flex-col gap-10">
                        <div className="bg-[#1A1033] rounded-[3.5rem] p-12 text-white relative overflow-hidden group">
-                          <Globe size={300} className="absolute -bottom-20 -right-20 text-white/5 opacity-40 group-hover:scale-125 transition-transform duration-1000 pointer-events-none" />
-                          <h3 className="text-2xl font-display font-black uppercase italic mb-10 relative z-10">Bölgesel Dağılım</h3>
+                          <Smartphone size={300} className="absolute -bottom-20 -right-20 text-white/5 opacity-40 group-hover:scale-125 transition-transform duration-1000 pointer-events-none" />
+                          <h3 className="text-2xl font-display font-black uppercase italic mb-10 relative z-10">Cihaz Dağılımı</h3>
                           <div className="space-y-10 relative z-10">
-                             {[
-                               { name: 'Marmara Bölgesi', val: 94, status: 'Zirve' },
-                               { name: 'Ege Bölgesi', val: 88, status: 'Optimum' },
-                               { name: 'İç Anadolu', val: 45, status: 'Gelişen' },
-                             ].map((node, i) => (
-                               <div key={i} className="space-y-4">
+                             {(analytics?.deviceBreakdown ?? [
+                               { name: 'Mobil', percentage: 58, color: '#F9423A' },
+                               { name: 'Masaüstü', percentage: 32, color: '#3B82F6' },
+                               { name: 'Tablet', percentage: 10, color: '#10B981' },
+                             ]).map((device, i) => (
+                               <div key={device.name} className="space-y-4">
                                   <div className="flex justify-between items-baseline text-[11px] font-black uppercase tracking-widest text-white/40">
-                                     <span>{node.name}</span>
-                                     <span className="text-white">{node.status}</span>
+                                     <span>{device.name}</span>
+                                     <span className="text-white">{device.percentage}%</span>
                                   </div>
                                   <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                                     <motion.div 
+                                     <motion.div
                                        initial={{ width: 0 }}
-                                       animate={{ width: `${node.val}%` }}
+                                       animate={{ width: `${device.percentage}%` }}
                                        transition={{ duration: 1.5, delay: i * 0.2 }}
-                                       className={cn("h-full rounded-full", node.val > 0 ? "bg-[#F9423A]" : "bg-white/10")} 
+                                       className="h-full rounded-full"
+                                       style={{ backgroundColor: device.color }}
                                      />
                                   </div>
                                </div>
@@ -221,6 +273,54 @@ export function SellerDashboard() {
                        </div>
                     </div>
                   </div>
+
+                  {/* En Çok Satan Ürünler */}
+                  {analytics && analytics.topProducts.length > 0 && (
+                    <div className="bg-white rounded-[4rem] p-12 border border-brand-primary/5 dark:border-white/5 shadow-sm">
+                      <div className="flex items-center justify-between mb-10">
+                        <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">
+                          En Çok Satan Ürünler
+                        </h3>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/30">
+                          Bu Hafta
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-brand-primary/5">
+                              <th className="pb-4 text-left text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Ürün</th>
+                              <th className="pb-4 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Görüntülenme</th>
+                              <th className="pb-4 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Satış</th>
+                              <th className="pb-4 text-right text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Gelir</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {analytics.topProducts.slice(0, 5).map((p, i) => (
+                              <tr key={p.id} className="border-b border-brand-primary/5 last:border-0">
+                                <td className="py-5">
+                                  <div className="flex items-center gap-4">
+                                    <span className="text-[11px] font-black text-brand-primary/20 w-6">{String(i + 1).padStart(2, '0')}</span>
+                                    <div>
+                                      <p className="text-sm font-bold text-brand-primary">{p.name}</p>
+                                      <p className="text-[11px] text-brand-primary/40 font-medium">{formatCurrency(p.price)}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-5 text-center text-sm font-bold text-brand-primary/60">{p.views}</td>
+                                <td className="py-5 text-center">
+                                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-black">
+                                    {p.sales} adet
+                                  </span>
+                                </td>
+                                <td className="py-5 text-right text-sm font-black text-brand-primary">{formatCurrency(p.revenue)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Market Intelligence Row */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">

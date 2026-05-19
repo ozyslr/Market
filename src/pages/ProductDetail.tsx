@@ -8,7 +8,7 @@ import {
   Undo2, CheckCircle2, AlertCircle, MessageCircle,
   ThumbsUp, BarChart, ExternalLink, Package, ArrowRight,
   Facebook, Twitter, Navigation,
-  TrendingUp, Eye, Tag, Ticket, Copy, HelpCircle, BellRing
+  TrendingUp, Eye, Tag, Ticket, Copy, HelpCircle, BellRing, Smartphone,
 } from 'lucide-react';
 import { MOCK_PRODUCTS } from '@/mockData';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getProductBySlug } from '@/services/productService';
 import { addReview, getReviewsByProduct, checkUserReview } from '@/services/reviewService';
 import { Product, Review, Campaign, Coupon, ProductQuestion, ProductVariant } from '@/types';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { getQuestions, askQuestion, answerQuestion } from '@/services/productQuestionService';
 import { getActiveCampaigns, calcCampaignDiscount } from '@/services/campaignService';
 import { getCoupons } from '@/services/couponService';
@@ -30,6 +31,10 @@ import { useCart } from '@/context/CartContext';
 import { trackPrice, untrackPrice, isTracking } from '@/services/priceTrackService';
 import { trackEvent } from '@/services/behaviorService';
 import { productSchema, breadcrumbSchema } from '@/components/seo/schemas';
+import { getContentBasedRecommendations, getCollaborativeRecommendations } from '@/services/recommendationService';
+import { RecommendationStrip } from '@/components/commerce/ProductRecommendations';
+import { ARViewer } from '@/components/commerce/ARViewer';
+import { AuthenticityBadge } from '@/components/commerce/AuthenticityBadge';
 
 // Mock data for the chart
 const MARKET_DATA = [
@@ -93,6 +98,9 @@ export function ProductDetail() {
   const [submittingQ, setSubmittingQ] = useState(false);
   const [tracking, setTracking] = useState(false);
   const [trackLoading, setTrackLoading] = useState(false);
+  const [recSimilar, setRecSimilar] = useState<Product[]>([]);
+  const [recAlsoBought, setRecAlsoBought] = useState<Product[]>([]);
+  const [arOpen, setArOpen] = useState(false);
 
   useEffect(() => {
     if (product?.id) setViewers(Math.floor(Math.random() * 14) + 2);
@@ -157,6 +165,12 @@ export function ProductDetail() {
 
   useEffect(() => {
     if (product?.id) getQuestions(product.id).then(setQuestions);
+  }, [product?.id]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    getContentBasedRecommendations(product, 10).then(setRecSimilar);
+    getCollaborativeRecommendations(product.id, 6).then(setRecAlsoBought);
   }, [product?.id]);
 
   async function handleSubmitReview(e: React.FormEvent, productId: string) {
@@ -289,15 +303,21 @@ export function ProductDetail() {
                 {/* Gallery */}
                 <div className="space-y-6">
                   <div className="aspect-square bg-white rounded-3xl overflow-hidden border border-brand-primary/5 p-8 relative flex items-center justify-center">
-                    <motion.img 
+                    <motion.div
                       key={activeImage}
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      src={product.images[activeImage]} 
-                      className="w-full h-full object-contain mix-blend-multiply" 
-                      alt="" 
-                      referrerPolicy="no-referrer" 
-                    />
+                      className="w-full h-full"
+                    >
+                      <OptimizedImage
+                        src={product.images[activeImage]}
+                        className="w-full h-full object-contain mix-blend-multiply"
+                        alt={product.title}
+                        containerClassName="w-full h-full"
+                        lazy={false}
+                        referrerPolicy="no-referrer"
+                      />
+                    </motion.div>
                     {(product?.images.length ?? 0) > 1 && (
                       <>
                         <button
@@ -315,6 +335,15 @@ export function ProductDetail() {
                       </>
                     )}
                     <div className="absolute top-6 right-6 flex flex-col gap-3">
+                      {product.model3dUrl && (
+                        <button
+                          onClick={() => setArOpen(true)}
+                          className="p-3 bg-gradient-to-br from-purple-500 to-blue-500 shadow-xl rounded-full text-white hover:from-purple-400 hover:to-blue-400 transition-all border border-white/20"
+                          title="3D / AR ile görüntüle"
+                        >
+                          <Smartphone size={20} />
+                        </button>
+                      )}
                       <button className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5">
                         <Heart size={20} />
                       </button>
@@ -360,7 +389,7 @@ export function ProductDetail() {
                           activeImage === i ? "border-accent shadow-lg" : "border-transparent opacity-60 hover:opacity-100"
                         )}
                       >
-                        <img src={img} alt="" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                        <OptimizedImage src={img} alt={product.title} className="w-full h-full object-contain" containerClassName="w-full h-full" referrerPolicy="no-referrer" />
                       </button>
                     ))}
                   </div>
@@ -399,6 +428,17 @@ export function ProductDetail() {
                          )}
                        </div>
                      )}
+                     <div className="mb-3">
+                       <AuthenticityBadge
+                         productId={product.id}
+                         productTitle={product.title}
+                         productImage={product.images[0]}
+                         sellerId={product.sellerId}
+                         brand={product.brand}
+                         originCountry={product.originCountry}
+                         compact
+                       />
+                     </div>
                      <h1 className="text-2xl md:text-3xl font-display font-black tracking-tight text-brand-primary mt-2 leading-[1.2]">{product.title}</h1>
                      <div className="flex items-center gap-4 mt-4">
                         <div className="flex items-center gap-1">
@@ -679,13 +719,13 @@ export function ProductDetail() {
                 <div className="flex flex-col xl:flex-row items-center gap-8">
                   <div className="flex flex-wrap items-center justify-center gap-4">
                     <div className="w-24 h-24 md:w-32 md:h-32 p-2 border border-brand-primary/5 rounded-2xl bg-white shrink-0">
-                      <img src={product.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt="" />
+                      <img src={product.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={product.title} />
                     </div>
                     <span className="text-xl md:text-2xl font-black text-brand-primary/20">+</span>
                     {boughtTogether.map((p, i) => (
                       <React.Fragment key={p.id}>
                         <div className="w-24 h-24 md:w-32 md:h-32 p-2 border border-brand-primary/5 rounded-2xl bg-white shrink-0 group relative cursor-pointer">
-                          <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt="" />
+                          <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={p.title} />
                           <div className="absolute inset-0 bg-accent/90 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center text-white text-[9px] md:text-[10px] font-black uppercase text-center p-2">
                              {p.title}
                           </div>
@@ -991,7 +1031,24 @@ export function ProductDetail() {
             </div>
 
             {/* Recommendations Blocks */}
-            <ProductCarousel title={t('product.you_might_also_like')} products={categoriesProducts} />
+            {recSimilar.length > 0 && (
+              <div className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm p-6 md:p-8">
+                <RecommendationStrip
+                  title="Benzer Ürünler"
+                  products={recSimilar}
+                  source="content_based"
+                />
+              </div>
+            )}
+            {recAlsoBought.length > 0 && (
+              <div className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm p-6 md:p-8">
+                <RecommendationStrip
+                  title="Bunu Alanlar Bunları da Aldı"
+                  products={recAlsoBought}
+                  source="collaborative"
+                />
+              </div>
+            )}
             <ProductCarousel title={t('product.everyone_looking')} products={MOCK_PRODUCTS.filter(p => p.featured).slice(0, 10)} />
           </div>
 
@@ -1005,7 +1062,7 @@ export function ProductDetail() {
                    <h4 className="text-2xl font-display font-black mt-2 mb-6 uppercase italic text-white leading-none">{product.brand}</h4>
                    <div className="flex items-center gap-4 mb-8">
                       <div className="w-14 h-14 bg-white/10 rounded-2xl p-1 border border-white/20 backdrop-blur">
-                         <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${product.brand}`} className="w-full h-full object-cover rounded-xl" alt="" />
+                         <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${product.brand}`} className="w-full h-full object-cover rounded-xl" alt={product.brand} />
                       </div>
                       <div>
                          <div className="flex items-center gap-1">
@@ -1047,7 +1104,7 @@ export function ProductDetail() {
                      {sellerProducts.slice(0, 3).map(p => (
                        <Link key={p.id} to={`/product/${p.slug}`} className="flex gap-4 group">
                           <div className="w-16 h-16 bg-brand-secondary/50 rounded-xl p-2 shrink-0 group-hover:bg-accent/5 transition-all">
-                             <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt="" />
+                             <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={p.title} />
                           </div>
                           <div className="min-w-0">
                              <h5 className="text-[11px] font-bold text-brand-primary line-clamp-1 group-hover:text-accent transition-colors">{p.title}</h5>
@@ -1121,6 +1178,15 @@ export function ProductDetail() {
         </section>
 
       </div>
+        {/* AR Viewer Modal */}
+        {product.model3dUrl && (
+          <ARViewer
+            modelUrl={product.model3dUrl}
+            productTitle={product.title}
+            open={arOpen}
+            onClose={() => setArOpen(false)}
+          />
+        )}
     </div>
   );
 }

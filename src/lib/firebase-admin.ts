@@ -1,9 +1,11 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
 const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
 
 let adminDb: FirebaseFirestore.Firestore | null = null;
+let adminAuth: ReturnType<typeof getAuth> | null = null;
 
 if (serviceAccountBase64) {
   try {
@@ -17,6 +19,7 @@ if (serviceAccountBase64) {
       });
     }
     adminDb = getFirestore();
+    adminAuth = getAuth();
     console.log('Firebase Admin initialized successfully.');
   } catch (error) {
     console.error('Firebase Admin init failed:', error);
@@ -27,4 +30,4 @@ if (serviceAccountBase64) {
   );
 }
 
-export { adminDb };
+export { adminDb, adminAuth };

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Product } from '@/types';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { useLanguage } from '@/context/LanguageContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -69,10 +70,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           onMouseMove={handleImageMouseMove}
         >
           <Link to={`/product/${product.slug}`} className="block w-full h-full relative">
-            <img
+            <OptimizedImage
               src={product.images[imgIdx]}
               alt={product.title}
-              className="w-full h-full object-cover transition-opacity duration-150"
+              className="w-full h-full object-cover"
+              containerClassName="w-full h-full"
               referrerPolicy="no-referrer"
             />
             {/* Quick Add overlay button (Desktop mostly) */}
@@ -243,7 +245,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                           i === quickViewImgIdx ? 'border-accent' : 'border-transparent hover:border-gray-300'
                         )}
                       >
-                        <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <OptimizedImage src={img} alt={product.title} className="w-full h-full object-cover" containerClassName="w-full h-full" referrerPolicy="no-referrer" />
                       </button>
                     ))}
                   </div>

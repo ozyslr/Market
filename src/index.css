@@ -36,6 +36,46 @@
   html, body {
     @apply font-sans bg-brand-secondary text-brand-primary antialiased transition-colors duration-300;
   }
+
+  /* WCAG 2.4.7: Visible focus indicator — global */
+  /* Uses !important to override Tailwind's outline-none utility throughout the codebase */
+  *:focus-visible {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Remove focus outline for pointer interactions only — matches Tailwind's outline-none */
+  *:focus:not(:focus-visible) {
+    outline: none !important;
+  }
+
+  /* WCAG 2.3.1: Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* WCAG 1.4.4: Ensure text can be resized — prevent zoom blocking */
+  input, select, textarea, button {
+    font-size: inherit;
+  }
+
+  /* Screen-reader only utility */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
 }
 
 @layer components {

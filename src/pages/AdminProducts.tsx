@@ -210,7 +210,7 @@ export function AdminProducts() {
                   </td>
                   <td className="py-3">
                     <div className="flex items-center gap-3">
-                      {product.images?.[0] && <img src={product.images[0]} className="w-10 h-10 rounded-xl object-cover" referrerPolicy="no-referrer" alt="" />}
+                      {product.images?.[0] && <img src={product.images[0]} className="w-10 h-10 rounded-xl object-cover" referrerPolicy="no-referrer" alt={product.title} />}
                       <div>
                         <p className="font-bold text-[#1A1033] text-xs line-clamp-1">{product.title}</p>
                         <p className="text-[10px] text-[#1A1033]/40">{product.brand}</p>

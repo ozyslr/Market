@@ -1,7 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { X, Plus, Trash2, Upload } from 'lucide-react';
+import { X, Plus, Trash2, Upload, Sparkles, ImageIcon, Loader2 } from 'lucide-react';
 import { CategorySelect } from './CategorySelect';
 import { uploadImage } from '../../lib/storage';
+import {
+  generateProductDescription,
+  generateMetaDescription,
+  generateProductImage,
+  suggestTags,
+} from '../../services/aiContentService';
 
 export interface ProductFormData {
   title: string;
@@ -52,6 +58,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
   const [tagInput, setTagInput] = useState('');
   const [specKey, setSpecKey] = useState('');
   const [specVal, setSpecVal] = useState('');
+  const [aiLoading, setAiLoading] = useState<'desc' | 'meta' | 'image' | 'tags' | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function update<K extends keyof ProductFormData>(key: K, val: ProductFormData[K]) {
@@ -135,7 +142,35 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Kategori & Etiketler</h3>
             <CategorySelect value={form.categoryId} onChange={id => update('categoryId', id)} />
             <div className="mt-3">
-              <label className="block text-xs text-zinc-400 mb-1">Etiketler</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs text-zinc-400">Etiketler</label>
+                <button
+                  onClick={async () => {
+                    setAiLoading('tags');
+                    const tags = await suggestTags({
+                      title: form.title,
+                      brand: form.brand,
+                      categoryId: form.categoryId,
+                      description: form.description || form.title,
+                    });
+                    if (tags.length > 0) {
+                      const existing = new Set(form.tags);
+                      const newTags = tags.filter(t => !existing.has(t));
+                      update('tags', [...form.tags, ...newTags]);
+                    }
+                    setAiLoading(null);
+                  }}
+                  disabled={aiLoading === 'tags' || !form.title}
+                  className="flex items-center gap-1 text-[10px] text-purple-400 hover:text-purple-300 disabled:opacity-40"
+                >
+                  {aiLoading === 'tags' ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={12} />
+                  )}
+                  AI Öner
+                </button>
+              </div>
               <div className="flex gap-2">
                 <input value={tagInput} onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
@@ -158,11 +193,33 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
 
           {/* 3 — Görseller */}
           <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Görseller</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Görseller</h3>
+              <button
+                onClick={async () => {
+                  setAiLoading('image');
+                  const imagePrompt = `${form.title}, ${form.brand}, ${form.tags.slice(0, 3).join(', ')}, ürün görseli, profesyonel fotoğraf, beyaz arka plan, yüksek kalite`;
+                  const dataUrl = await generateProductImage(imagePrompt);
+                  if (dataUrl) {
+                    update('images', [...form.images, dataUrl]);
+                  }
+                  setAiLoading(null);
+                }}
+                disabled={aiLoading === 'image' || !form.title}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-all"
+              >
+                {aiLoading === 'image' ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <ImageIcon size={14} />
+                )}
+                AI Görsel Oluştur
+              </button>
+            </div>
             <div className="grid grid-cols-3 gap-3 mb-3">
               {form.images.map((url, i) => (
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-zinc-800">
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <img src={url} alt="Ürün görseli" className="w-full h-full object-cover" />
                   <button onClick={() => update('images', form.images.filter((_, j) => j !== i))}
                     className="absolute top-1 right-1 bg-red-600/80 hover:bg-red-600 rounded-full p-1">
                     <Trash2 size={10} className="text-white" />
@@ -215,13 +272,35 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
 
           {/* 5 — Açıklamalar */}
           <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Açıklamalar</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Açıklamalar</h3>
+              <button
+                onClick={async () => {
+                  setAiLoading('desc');
+                  const result = await generateProductDescription(form);
+                  if (result) {
+                    if (!form.description) update('description', result.description);
+                    if (!form.longDescription) update('longDescription', result.longDescription);
+                  }
+                  setAiLoading(null);
+                }}
+                disabled={aiLoading === 'desc' || !form.title}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-all"
+              >
+                {aiLoading === 'desc' ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Sparkles size={14} />
+                )}
+                AI ile Oluştur
+              </button>
+            </div>
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Kısa Açıklama *</label>
                 <textarea rows={3} value={form.description} onChange={e => update('description', e.target.value)}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
-                  placeholder="Ürün özeti" />
+                  placeholder="Ürün özeti (AI ile oluşturmak için 'AI ile Oluştur' butonunu kullanın)" />
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Detaylı Açıklama</label>
@@ -259,7 +338,26 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
 
           {/* 7 — SEO */}
           <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">SEO</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">SEO</h3>
+              <button
+                onClick={async () => {
+                  setAiLoading('meta');
+                  const meta = await generateMetaDescription(form);
+                  if (meta) update('metaDescription', meta);
+                  setAiLoading(null);
+                }}
+                disabled={aiLoading === 'meta' || !form.title}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-all"
+              >
+                {aiLoading === 'meta' ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Sparkles size={14} />
+                )}
+                AI Meta Oluştur
+              </button>
+            </div>
             <div>
               <label className="block text-xs text-zinc-400 mb-1">
                 Meta Açıklama

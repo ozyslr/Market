@@ -172,7 +172,7 @@ export function CartPage() {
                     {MOCK_PRODUCTS.slice(4, 6).map(product => (
                       <div key={product.id} className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 flex gap-6 items-center group cursor-pointer hover:bg-white/20 transition-all">
                         <div className="w-20 h-20 bg-white/10 rounded-xl overflow-hidden p-2 shrink-0">
-                          <img src={product.images[0]} referrerPolicy="no-referrer" className="w-full h-full object-contain brightness-110" alt="" />
+                          <img src={product.images[0]} referrerPolicy="no-referrer" className="w-full h-full object-contain brightness-110" alt={product.title} />
                         </div>
                         <div>
                           <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">{product.brand}</p>

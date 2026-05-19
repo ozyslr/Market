@@ -37,6 +37,7 @@ import { AdminFinance } from './AdminFinance';
 import { AdminCampaigns } from './AdminCampaigns';
 import { AdminReports } from './AdminReports';
 import { AdminSupport } from './AdminSupport';
+import { AdminChat } from './AdminChat';
 
 // --- MOCK DATA ---
 const SALES_PERFORMANCE = [
@@ -230,7 +231,8 @@ export function AdminDashboard() {
           <SidebarItem id="finance" label="Finans Takibi" icon={CreditCard} active={activeTab === 'finance'} onClick={setActiveTab} />
           <SidebarItem id="reports" label="Satış Raporları" icon={BarChart3} active={activeTab === 'reports'} onClick={setActiveTab} />
           <SidebarItem id="reviews" label="Ürün Değerlendirme" icon={Star} active={activeTab === 'reviews'} onClick={setActiveTab} />
-          <SidebarItem id="support" label="Canlı Destek" icon={MessageSquare} active={activeTab === 'support'} onClick={setActiveTab} />
+          <SidebarItem id="livechat" label="Sohbet" icon={MessageCircle} active={activeTab === 'livechat'} onClick={setActiveTab} />
+          <SidebarItem id="support" label="Destek Biletleri" icon={MessageSquare} active={activeTab === 'support'} onClick={setActiveTab} />
           <SidebarItem id="languages" label="Dil Yönetimi" icon={Languages} active={activeTab === 'languages'} onClick={setActiveTab} />
           <SidebarItem id="settings" label="Site Ayarları" icon={Settings} active={activeTab === 'settings'} onClick={setActiveTab} />
           <SidebarItem id="integrations" label="Entegrasyonlar" icon={Share2} active={activeTab === 'integrations'} onClick={setActiveTab} />
@@ -240,7 +242,7 @@ export function AdminDashboard() {
         <div className="p-8">
            <div className="bg-white/5 rounded-[2rem] p-4 flex items-center gap-4 border border-white/5">
               <div className="w-10 h-10 rounded-full border-2 border-[#F9423A] p-0.5">
-                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" className="w-full h-full rounded-full bg-white/10" alt="" />
+                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" className="w-full h-full rounded-full bg-white/10" alt="Admin avatarı" />
               </div>
               <div className="flex-1 min-w-0">
                  <p className="text-[11px] font-black text-white truncate">Oğuz Özyaşar</p>
@@ -324,6 +326,8 @@ export function AdminDashboard() {
               <AdminReports />
            ) : activeTab === 'support' ? (
               <AdminSupport />
+           ) : activeTab === 'livechat' ? (
+              <AdminChat />
            ) : (
              <>
                {/* Top KPIs Row - Premium Cards */}
@@ -559,7 +563,7 @@ export function AdminDashboard() {
                          <div key={product.id} className="flex items-center justify-between group cursor-pointer hover:translate-x-2 transition-transform duration-300">
                             <div className="flex items-center gap-5">
                                <div className="w-16 h-16 bg-[#F8F8FA] rounded-[1.5rem] flex items-center justify-center relative overflow-hidden shadow-sm">
-                                  <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" referrerPolicy="no-referrer" />
+                                  <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={product.name || 'Product'} referrerPolicy="no-referrer" />
                                   <div className="absolute top-0 right-0 w-6 h-6 bg-[#1A1033] rotate-45 translate-x-3 -translate-y-3" />
                                   <span className="absolute top-1 left-2 text-[10px] font-black text-[#1A1033]">{product.id}</span>
                                </div>

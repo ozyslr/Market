@@ -9,7 +9,7 @@ export function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="bg-white dark:bg-zinc-950 text-brand-primary dark:text-white pt-16 pb-8 border-t border-brand-primary/5">
+    <footer role="contentinfo" className="bg-white dark:bg-zinc-950 text-brand-primary dark:text-white pt-16 pb-8 border-t border-brand-primary/5">
       <div className="max-w-[1700px] mx-auto px-4 md:px-6">
         
         {/* Top Benefits Bar */}

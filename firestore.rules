@@ -136,5 +136,53 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow read: if isAdmin();
     }
+
+    // Carts (user owns their cart doc)
+    match /carts/{userId} {
+      allow get, create, update: if isSignedIn() && userId == userId();
+      allow delete: if isSignedIn() && userId == userId();
+    }
+
+    // Cart reminders (server-side only via Admin SDK — no client access)
+    match /cart_reminders/{reminderId} {
+      allow read, write: if false;
+    }
+
+    // Mail (Firebase Trigger Email — server-side only)
+    match /mail/{mailId} {
+      allow create: if isSignedIn(); // extension writes, but user can trigger
+      allow read, write: if false;
+    }
+
+    // Events (analytics)
+    match /events/{eventId} {
+      allow create: if isSignedIn();
+      allow read: if isAdmin();
+    }
+
+    // Chat Sessions (live support)
+    match /chat_sessions/{sessionId} {
+      allow read: if isSignedIn() && (resource.data.userId == userId() || isAdmin());
+      allow create: if isSignedIn() && incoming().userId == userId();
+      allow update: if isSignedIn() && (
+        (resource.data.userId == userId() && incoming().userId == resource.data.userId) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+
+      // Chat Messages (subcollection)
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && (
+          get(/databases/$(database)/documents/chat_sessions/$(sessionId)).data.userId == userId() ||
+          isAdmin()
+        );
+        allow create: if isSignedIn() && (
+          (get(/databases/$(database)/documents/chat_sessions/$(sessionId)).data.userId == userId() && incoming().role == 'user') ||
+          (isAdmin() && incoming().role == 'admin')
+        );
+        allow update: if isAdmin();
+        allow delete: if false;
+      }
+    }
   }
 }

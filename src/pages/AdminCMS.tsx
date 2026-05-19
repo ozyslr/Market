@@ -213,7 +213,7 @@ function HomepageSectionsEditor() {
                         {slide.enabled ? <ToggleRight size={18} className="text-accent" /> : <ToggleLeft size={18} />}
                         {slide.enabled ? 'Aktif' : 'Pasif'}
                       </button>
-                      {slide.image && <img src={slide.image} className="h-8 w-14 object-cover rounded-lg" referrerPolicy="no-referrer" alt="" />}
+                      {slide.image && <img src={slide.image} className="h-8 w-14 object-cover rounded-lg" referrerPolicy="no-referrer" alt={slide.title || 'Slide'} />}
                       <button onClick={() => deleteSlide(section.id, slide.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                         <Trash2 size={14} />
                       </button>
@@ -422,7 +422,7 @@ export function AdminCMS() {
                   {/* Ana kategori kartı */}
                   <div className="p-6 relative group">
                     <div className="h-32 rounded-2xl overflow-hidden mb-4 relative">
-                      <img src={cat.image} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                      <img src={cat.image} className="w-full h-full object-cover" alt={cat.name} referrerPolicy="no-referrer" />
                       <div className="absolute inset-0 bg-black/20" />
                     </div>
                     <div className="flex items-start justify-between gap-2">
