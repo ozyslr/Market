@@ -17,7 +17,6 @@ import { useLocationStore } from '@/context/LocationContext';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { SEO } from '@/components/common/SEO';
-import { Helmet } from 'react-helmet-async';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { getProductBySlug } from '@/services/productService';
@@ -30,6 +29,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { trackPrice, untrackPrice, isTracking } from '@/services/priceTrackService';
 import { trackEvent } from '@/services/behaviorService';
+import { productSchema, breadcrumbSchema } from '@/components/seo/schemas';
 
 // Mock data for the chart
 const MARKET_DATA = [
@@ -253,35 +253,20 @@ export function ProductDetail() {
         description={product.description}
         image={product.images[0]}
         type="product"
-      />
-      <Helmet>
-        <script type="application/ld+json">{JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'Product',
+        jsonLd={productSchema({
           name: product.title,
-          image: product.images,
           description: product.description,
-          brand: { '@type': 'Brand', name: product.brand },
+          image: product.images,
           sku: product.id,
-          offers: {
-            '@type': 'Offer',
-            priceCurrency: product.currency ?? 'TRY',
-            price: product.price.toFixed(2),
-            availability: product.stock > 0
-              ? 'https://schema.org/InStock'
-              : 'https://schema.org/OutOfStock',
-            url: `https://mercora.com/product/${product.slug}`,
-          },
-          ...(product.rating && product.reviewsCount ? {
-            aggregateRating: {
-              '@type': 'AggregateRating',
-              ratingValue: product.rating,
-              reviewCount: product.reviewsCount,
-              bestRating: 5,
-            },
-          } : {}),
-        })}</script>
-      </Helmet>
+          brand: product.brand || undefined,
+          price: product.price,
+          currency: product.currency ?? 'TRY',
+          availability: product.stock > 0 ? 'InStock' : 'OutOfStock',
+          ratingValue: product.rating || undefined,
+          reviewCount: product.reviewsCount || undefined,
+          url: `/product/${product.slug}`,
+        })}
+      />
       <div className="max-w-[1400px] mx-auto px-4 md:px-6">
         
         {/* Breadcrumbs */}

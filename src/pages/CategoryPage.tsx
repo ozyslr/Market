@@ -6,6 +6,8 @@ import { Category, Product } from '@/types';
 import { getCategories, getProducts } from '@/services/productService';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { Breadcrumb, BreadcrumbItem } from '@/components/common/Breadcrumb';
+import { SEO } from '@/components/common/SEO';
+import { breadcrumbSchema } from '@/components/seo/schemas';
 import { cn } from '@/lib/utils';
 
 const SORT_OPTIONS = [
@@ -83,7 +85,18 @@ export function CategoryPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
-      {/* Hero Banner */}
+      <SEO
+        title={category?.name || 'Kategori'}
+        description={`${category?.name || 'Kategori'} sayfası — Mercora'da ${category?.name || 'kategori'} ürünlerini keşfedin.`}
+        canonical={`/category/${id}`}
+        jsonLd={
+          breadcrumbSchema([
+            { name: 'Ana Sayfa', url: '/' },
+            ...(parentCategory ? [{ name: parentCategory.name, url: `/category/${parentCategory.id}` }] : []),
+            { name: category?.name || 'Kategori', url: `/category/${id}` },
+          ])
+        }
+      />
       <div className={cn(
         'relative overflow-hidden',
         heroBg ? 'h-32 md:h-44' : 'h-20 md:h-28 bg-gradient-to-r from-brand-primary to-zinc-700'

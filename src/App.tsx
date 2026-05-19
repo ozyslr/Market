@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import { Sentry } from './lib/sentry';
 import { Navbar } from './components/layout/Navbar';
 import SellerLayout from './components/layout/SellerLayout';
 import { CartPage } from './pages/Cart';
@@ -56,6 +57,7 @@ function MainLayout() {
 
 export default function App() {
   return (
+    <Sentry.ErrorBoundary fallback={<p>Bir hata oluştu. Lütfen sayfayı yenileyin.</p>}>
     <HelmetProvider>
       <ThemeProvider>
         <AuthProvider>
@@ -109,5 +111,6 @@ export default function App() {
         </AuthProvider>
       </ThemeProvider>
     </HelmetProvider>
+    </Sentry.ErrorBoundary>
   );
 }

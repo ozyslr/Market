@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /seller/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /wishlist/
+Disallow: /profile/
+Disallow: /orders/
+
+Sitemap: https://mercora.com/sitemap.xml
