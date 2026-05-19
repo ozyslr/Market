@@ -1,5 +1,5 @@
 import {
-  collection, query, where, orderBy, limit,
+  collection, query, where, limit,
   getDocs, addDoc, updateDoc, doc, writeBatch, serverTimestamp
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
@@ -50,7 +50,6 @@ export async function getUserNotifications(userId: string, maxCount = 20): Promi
     const q = query(
       collection(db, 'notifications'),
       where('userId', '==', userId),
-      orderBy('createdAt', 'desc'),
       limit(maxCount),
     );
     const snap = await getDocs(q);
@@ -58,7 +57,7 @@ export async function getUserNotifications(userId: string, maxCount = 20): Promi
       id: d.id,
       ...(d.data() as Omit<Notification, 'id'>),
       createdAt: d.data().createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
-    }));
+    })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch (error) {
     handleFirestoreError(error, OperationType.GET, 'notifications');
     return [];

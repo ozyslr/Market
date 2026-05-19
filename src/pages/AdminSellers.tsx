@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { getSellers, updateSeller } from '@/services/userService';
+import { createNotification } from '@/services/notificationService';
 import { getProducts } from '@/services/productService';
 import { Seller, Product } from '@/types';
 import {
@@ -85,8 +87,25 @@ export function AdminSellers() {
     update(seller.id, { status: next });
   };
 
-  const setKyc = (seller: Seller, status: 'verified' | 'rejected') => {
-    update(seller.id, { kycStatus: status, isVerified: status === 'verified' });
+  const setKyc = async (seller: Seller, status: 'verified' | 'rejected') => {
+    await update(seller.id, { kycStatus: status, isVerified: status === 'verified' });
+    if (status === 'verified') {
+      await createNotification(
+        seller.userId,
+        'moderation',
+        'Başvurunuz Onaylandı',
+        'Tebrikler! Satıcı başvurunuz onaylandı. Artık ürün ekleyebilir ve satış yapabilirsiniz.',
+        '/seller/dashboard',
+      );
+    } else {
+      await createNotification(
+        seller.userId,
+        'moderation',
+        'Başvurunuz Reddedildi',
+        'Üzgünüz, satıcı başvurunuz onaylanmadı. Bilgilerinizi güncelleyerek tekrar başvurabilirsiniz.',
+        '/sell',
+      );
+    }
   };
 
   const pendingKycCount = sellers.filter(s => s.kycStatus === 'pending').length;
@@ -221,6 +240,13 @@ export function AdminSellers() {
                       >
                         <Package size={14} />
                       </button>
+                      <Link
+                        to={`/admin/seller/${seller.id}`}
+                        className="p-1.5 rounded-lg bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-accent hover:text-white transition-all"
+                        title="Satıcı Paneli Görünümü"
+                      >
+                        <ChevronRight size={14} />
+                      </Link>
                     </div>
                   </td>
                 </tr>

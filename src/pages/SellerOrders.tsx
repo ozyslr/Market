@@ -3,13 +3,15 @@ import {
   Package, Truck, CheckCircle, Clock, AlertTriangle,
   Search, Filter, MoreVertical, MapPin, Globe,
   ArrowRight, Download, BarChart2, MessageSquare,
-  ShieldCheck, ExternalLink, RefreshCw, Zap
+  ShieldCheck, ExternalLink, RefreshCw, Zap, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { getOrdersBySeller } from '@/services/orderService';
+import { getOrdersBySeller, updateOrderStatus } from '@/services/orderService';
 import { Order } from '@/types/order';
+
+const CARRIERS = ['PTT', 'Yurtiçi', 'Aras', 'MNG', 'Sürat', 'UPS', 'DHL'];
 
 export function SellerOrdersPage() {
   const { firebaseUser } = useAuth();
@@ -17,6 +19,10 @@ export function SellerOrdersPage() {
   const [search, setSearch] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shipTarget, setShipTarget] = useState<Order | null>(null);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [carrier, setCarrier] = useState('PTT');
+  const [shipping, setShipping] = useState(false);
 
   useEffect(() => {
     if (!firebaseUser) { setLoading(false); return; }
@@ -25,6 +31,35 @@ export function SellerOrdersPage() {
       setLoading(false);
     });
   }, [firebaseUser]);
+
+  const now = Date.now();
+  const pendingCount   = orders.filter(o => o.status === 'pending' || o.status === 'processing').length;
+  const shippedCount   = orders.filter(o => o.status === 'shipped').length;
+  const attentionCount = orders.filter(o => o.status === 'return_requested' || o.status === 'refunded').length;
+  const revenue24h     = orders
+    .filter(o => new Date(o.createdAt).getTime() > now - 86_400_000)
+    .reduce((sum, o) => sum + o.total, 0);
+
+  const handleShip = async () => {
+    if (!shipTarget) return;
+    setShipping(true);
+    try {
+      await updateOrderStatus(shipTarget.id, 'shipped', {
+        trackingNumber: trackingNumber.trim() || undefined,
+        carrier,
+        shippedAt: new Date().toISOString(),
+      });
+      setOrders(prev => prev.map(o =>
+        o.id === shipTarget.id
+          ? { ...o, status: 'shipped', trackingNumber, carrier, shippedAt: new Date().toISOString() }
+          : o
+      ));
+      setShipTarget(null);
+      setTrackingNumber('');
+    } finally {
+      setShipping(false);
+    }
+  };
 
   const filteredOrders = orders.filter(o => {
     const buyer = o.shippingAddress?.fullName || o.userEmail;
@@ -64,10 +99,10 @@ export function SellerOrdersPage() {
         {/* Real-time Order Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
            {[
-             { label: 'Pending Dispatch', value: '12', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50' },
-             { label: 'In Transit', value: '48', icon: Truck, color: 'text-blue-500', bg: 'bg-blue-50' },
-             { label: 'Awaiting Compliance', value: '3', icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-50' },
-             { label: 'Revenue (24h)', value: '$4,280', icon: BarChart2, color: 'text-green-500', bg: 'bg-green-50' }
+             { label: 'Bekleyen Gönderim', value: String(pendingCount),   icon: Clock,       color: 'text-orange-500', bg: 'bg-orange-50' },
+             { label: 'Kargoda',           value: String(shippedCount),   icon: Truck,       color: 'text-blue-500',   bg: 'bg-blue-50'   },
+             { label: 'İade / İnceleme',   value: String(attentionCount), icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-50'    },
+             { label: '24s Ciro',          value: `${revenue24h.toLocaleString('tr-TR')} ₺`, icon: BarChart2, color: 'text-green-500', bg: 'bg-green-50' }
            ].map((stat, i) => (
              <motion.div 
                key={i} 
@@ -193,6 +228,14 @@ export function SellerOrdersPage() {
                          </td>
                          <td className="px-10 py-6">
                             <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                               {(order.status === 'pending' || order.status === 'processing') && (
+                                 <button
+                                   onClick={() => { setShipTarget(order); setCarrier('PTT'); setTrackingNumber(''); }}
+                                   className="px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
+                                 >
+                                   Kargoya Ver
+                                 </button>
+                               )}
                                <button className="px-4 py-2 border border-brand-primary/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-all">
                                   Details
                                </button>
@@ -276,6 +319,55 @@ export function SellerOrdersPage() {
            </div>
         </div>
       </div>
+
+      {/* Ship Modal */}
+      {shipTarget && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl space-y-5">
+            <h3 className="text-xl font-display font-black text-brand-primary uppercase italic">Kargo Bilgileri</h3>
+            <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
+              Sipariş #{shipTarget.id.slice(-6).toUpperCase()}
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">Kargo Firması</label>
+              <select
+                value={carrier}
+                onChange={e => setCarrier(e.target.value)}
+                className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10"
+              >
+                {CARRIERS.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">Takip Numarası (opsiyonel)</label>
+              <input
+                value={trackingNumber}
+                onChange={e => setTrackingNumber(e.target.value)}
+                placeholder="örn. TR1234567890"
+                className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10 placeholder:text-brand-primary/20"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setShipTarget(null)}
+                className="flex-1 py-3 bg-brand-secondary text-brand-primary rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-secondary/70 transition-all"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleShip}
+                disabled={shipping}
+                className="flex-1 py-3 bg-accent text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-accent/20 hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {shipping ? <><Loader2 size={14} className="animate-spin" /> Kaydediliyor…</> : 'Kargoya Ver'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

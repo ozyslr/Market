@@ -38,6 +38,7 @@ export interface Order {
   stripePaymentIntentId: string;
   shippingAddress: ShippingAddress;
   trackingNumber?: string;
+  carrier?: string;
   createdAt: string;
   updatedAt: string;
   paidAt?: string;

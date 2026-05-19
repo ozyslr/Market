@@ -302,6 +302,22 @@ const initialTranslations: Record<string, Record<string, string>> = {
     'profile.activeOrders': 'Active Orders',
     'profile.savedItems': 'Saved Items',
     'profile.rewardPoints': 'Reward Points',
+    'seller.guard.applicationRequired': 'Seller Application Required',
+    'seller.guard.applicationRequiredDesc': 'You need to apply and get admin approval to access the seller panel.',
+    'seller.guard.applyNow': 'Apply as Seller',
+    'seller.guard.pending': 'Application Under Review',
+    'seller.guard.pendingDesc': 'Your application is being reviewed by our admin team. You can access the seller panel after approval.',
+    'seller.guard.rejected': 'Application Rejected',
+    'seller.guard.rejectedDesc': 'Your application was not approved. You can reapply with updated information.',
+    'seller.guard.reapply': 'Reapply',
+    'seller.guard.goHome': 'Go to Home',
+    'seller.orders.pendingDispatch': 'Pending Dispatch',
+    'seller.orders.inTransit': 'In Transit',
+    'seller.orders.ship': 'Ship Order',
+    'seller.orders.trackingNumber': 'Tracking Number',
+    'seller.orders.carrier': 'Carrier',
+    'seller.orders.shippedAt': 'Shipped At',
+    'seller.orders.noOrders': 'No orders yet.',
   },
   tr: {
     'nav.deals': "Günün Fırsatları",
@@ -581,6 +597,22 @@ const initialTranslations: Record<string, Record<string, string>> = {
     'profile.activeOrders': 'Aktif Siparişler',
     'profile.savedItems': 'Kaydedilenler',
     'profile.rewardPoints': 'Puan',
+    'seller.guard.applicationRequired': 'Satıcı Başvurusu Gerekli',
+    'seller.guard.applicationRequiredDesc': 'Satıcı paneline erişmek için önce başvuru yapmanız ve admin onayı almanız gerekiyor.',
+    'seller.guard.applyNow': 'Satıcı Başvurusu Yap',
+    'seller.guard.pending': 'Başvurunuz İnceleniyor',
+    'seller.guard.pendingDesc': 'Başvurunuz admin ekibimiz tarafından incelenmektedir. Onay sonrası satıcı panelinize erişebileceksiniz.',
+    'seller.guard.rejected': 'Başvurunuz Reddedildi',
+    'seller.guard.rejectedDesc': 'Başvurunuz onaylanmadı. Bilgilerinizi güncelleyerek yeniden başvurabilirsiniz.',
+    'seller.guard.reapply': 'Yeniden Başvur',
+    'seller.guard.goHome': 'Ana Sayfaya Dön',
+    'seller.orders.pendingDispatch': 'Bekleyen Gönderim',
+    'seller.orders.inTransit': 'Kargoda',
+    'seller.orders.ship': 'Kargoya Ver',
+    'seller.orders.trackingNumber': 'Takip Numarası',
+    'seller.orders.carrier': 'Kargo Firması',
+    'seller.orders.shippedAt': 'Kargoya Verildi',
+    'seller.orders.noOrders': 'Henüz sipariş bulunmuyor.',
   },
   de: {
     'nav.deals': "Tagesangebote",
@@ -1219,7 +1251,7 @@ const initialTranslations: Record<string, Record<string, string>> = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Language>('en');
+  const [lang, setLang] = useState<Language>('tr');
   const [availableLanguages, setAvailableLanguages] = useState<LanguagePack[]>(initialAvailableLanguages);
   const [translations, setTranslations] = useState<Record<string, Record<string, string>>>(initialTranslations);
 

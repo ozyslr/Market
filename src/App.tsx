@@ -13,6 +13,7 @@ import { SearchResultsPage } from './pages/SearchResults';
 import { CategoryPage } from './pages/CategoryPage';
 import { UserProfilePage } from './pages/UserProfile';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminSellerView } from './pages/AdminSellerView';
 import { SellOnMercora } from './pages/SellOnMercora';
 import { ShoppingAssistant } from './components/ai/ShoppingAssistant';
 import { Footer } from './components/layout/Footer';
@@ -32,6 +33,7 @@ import { WishlistProvider } from './context/WishlistContext';
 import { FollowsProvider } from './context/FollowsContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { SellerSettings } from './pages/SellerSettings';
+import { SellerImportCenter } from './pages/SellerImportCenter';
 import { SellerFinance } from './pages/SellerFinance';
 import { ModeratorDashboard } from './pages/ModeratorDashboard';
 import { CollectionPage } from './pages/CollectionPage';
@@ -73,6 +75,7 @@ export default function App() {
                     <Route path="orders" element={<SellerOrdersPage />} />
                     <Route path="finance" element={<SellerFinance />} />
                     <Route path="settings" element={<SellerSettings />} />
+                    <Route path="import"   element={<SellerImportCenter />} />
                   </Route>
                   {/* All other routes — with Navbar/Footer */}
                   <Route element={<MainLayout />}>
@@ -88,6 +91,7 @@ export default function App() {
                     <Route path="/profile" element={<UserProfilePage />} />
                     <Route path="/admin" element={<AdminDashboard />} />
                     <Route path="/admin/categories" element={<AdminCategories />} />
+                    <Route path="/admin/seller/:sellerId" element={<AdminSellerView />} />
                     <Route path="/sell" element={<SellOnMercora />} />
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/orders/:orderId" element={<OrderTracking />} />

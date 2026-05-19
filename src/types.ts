@@ -63,6 +63,9 @@ export interface Seller {
   bannerUrl?: string;
   logoUrl?: string;
   description?: string;
+  returnPolicy?: string;
+  shippingNote?: string;
+  estimatedDeliveryDays?: number;
   fulfillmentHealth?: {
     shipSpeed: string;
     compliance: string;

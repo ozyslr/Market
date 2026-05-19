@@ -14,6 +14,17 @@ const STEPS = [
   { key: 'delivered', labelKey: 'order.delivered',  icon: MapPin },
 ];
 
+function getCarrierUrl(carrier: string, trackingNo: string): string {
+  const map: Record<string, string> = {
+    PTT:      `https://gonderitakip.ptt.gov.tr/Track/Verify?q=${trackingNo}`,
+    Yurtiçi: `https://www.yurticikargo.com/tr/online-islemler/gonderi-sorgula?code=${trackingNo}`,
+    Aras:    `https://kargotakip.araskargo.com.tr/mainpage.aspx?code=${trackingNo}`,
+    MNG:     `https://www.mngkargo.com.tr/gonderi-sorgulama?trackNo=${trackingNo}`,
+    Sürat:   `https://www.suratkargo.com.tr/KargoTakip/index?trackingNo=${trackingNo}`,
+  };
+  return map[carrier] ?? `https://www.google.com/search?q=${encodeURIComponent(carrier + ' ' + trackingNo)}`;
+}
+
 function stepIndex(status: string): number {
   const map: Record<string, number> = {
     pending: 0, confirmed: 1, preparing: 2,
@@ -107,6 +118,45 @@ export function OrderTracking() {
           </div>
         )}
       </div>
+
+      {/* Tracking info */}
+      {(order.trackingNumber || order.carrier) && (
+        <div className="bg-white rounded-[3rem] p-8 border border-[#F8F8FA] shadow-sm mb-6">
+          <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30 mb-5">Kargo Bilgileri</h2>
+          <div className="space-y-2">
+            {order.carrier && (
+              <div className="flex justify-between">
+                <span className="text-xs text-[#1A1033]/40 font-bold">Kargo Firması</span>
+                <span className="text-xs font-black text-[#1A1033]">{order.carrier}</span>
+              </div>
+            )}
+            {order.trackingNumber && (
+              <div className="flex justify-between">
+                <span className="text-xs text-[#1A1033]/40 font-bold">Takip Numarası</span>
+                <span className="text-xs font-black font-mono text-[#1A1033]">{order.trackingNumber}</span>
+              </div>
+            )}
+            {order.shippedAt && (
+              <div className="flex justify-between">
+                <span className="text-xs text-[#1A1033]/40 font-bold">Kargoya Verildi</span>
+                <span className="text-xs font-black text-[#1A1033]">
+                  {new Date(order.shippedAt).toLocaleDateString('tr-TR')}
+                </span>
+              </div>
+            )}
+            {order.trackingNumber && (
+              <a
+                href={getCarrierUrl(order.carrier ?? '', order.trackingNumber)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-2 text-[10px] font-black text-accent hover:underline uppercase tracking-widest"
+              >
+                Kargo Takip Sayfasına Git →
+              </a>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Order items */}
       <div className="bg-white rounded-[3rem] p-8 border border-[#F8F8FA] shadow-sm">

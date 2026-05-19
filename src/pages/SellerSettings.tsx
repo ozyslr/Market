@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, query, collection, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { Seller } from '@/types';
@@ -42,35 +42,50 @@ export function SellerSettings() {
   });
 
   useEffect(() => {
-    if (!user?.uid) return;
-    const q = query(collection(db, 'sellers'), where('userId', '==', user.uid));
-    getDocs(q)
+    if (!user?.id) return;
+    getDoc(doc(db, 'sellers', user.id))
       .then(snap => {
-        if (!snap.empty) {
-          const data = snap.docs[0].data() as Seller;
-          const id = snap.docs[0].id;
-          setSeller({ ...data, id });
+        if (snap.exists()) {
+          const data = snap.data() as Seller;
+          setSeller({ ...data, id: snap.id });
           setForm(prev => ({
             ...prev,
             storeName: data.storeName || '',
             description: data.description || '',
             logoUrl: data.logoUrl || '',
             bannerUrl: data.bannerUrl || '',
+            returnPolicy: data.returnPolicy || '',
+            shippingNote: (data as any).shippingNote || '',
+            estimatedDeliveryDays: data.estimatedDeliveryDays ?? 3,
           }));
+        } else {
+          // Satıcı kaydı henüz oluşturulmamış — boş profil yarat
+          setDoc(doc(db, 'sellers', user.id), {
+            userId: user.id,
+            storeName: '',
+            description: '',
+            logoUrl: '',
+            bannerUrl: '',
+            createdAt: serverTimestamp(),
+          }).then(() => setSeller({ id: user.id, userId: user.id, storeName: '' } as any));
         }
       })
+      .catch(() => {/* sessiz hata — loading false yapılacak */})
       .finally(() => setLoading(false));
-  }, [user?.uid]);
+  }, [user?.id]);
 
   const handleSave = async () => {
-    if (!seller?.id) return;
+    if (!user?.id) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'sellers', seller.id), {
+      await updateDoc(doc(db, 'sellers', user.id), {
         storeName: form.storeName,
         description: form.description,
         logoUrl: form.logoUrl,
         bannerUrl: form.bannerUrl,
+        returnPolicy: form.returnPolicy,
+        shippingNote: form.shippingNote,
+        estimatedDeliveryDays: form.estimatedDeliveryDays,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
