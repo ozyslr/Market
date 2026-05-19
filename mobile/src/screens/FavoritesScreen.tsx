@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, StyleSheet, SafeAreaView, ActivityIndicator,
   TouchableOpacity, Image,
 } from 'react-native';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 import { Product } from '../types';
@@ -18,19 +18,13 @@ export function FavoritesScreen({ navigation }: Props) {
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [savedIds, setSavedIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    const q = query(
-      collection(db, 'users'),
-      where('__name__', '==', user.id),
-    );
-    getDocs(q).then(async snap => {
-      if (snap.empty) { setLoading(false); return; }
-      const data = snap.docs[0].data();
+    getDoc(doc(db, 'users', user.id)).then(async snap => {
+      if (!snap.exists()) { setLoading(false); return; }
+      const data = snap.data();
       const ids: string[] = data.savedItems || data.favorites || [];
-      setSavedIds(ids);
       if (ids.length === 0) { setLoading(false); return; }
 
       // Fetch products for saved IDs

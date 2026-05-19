@@ -55,7 +55,19 @@ export function SearchScreen({ route, navigation }: Props) {
       );
       setResults(filtered);
     } catch {
-      setResults([]);
+      // Fallback: try without composite index
+      try {
+        const snap = await getDocs(collection(db, 'products'));
+        const all = snap.docs.filter(d => d.data().isActive === true).map(d => ({ id: d.id, ...d.data() }) as Product);
+        const q = term.toLowerCase();
+        setResults(all.filter(p =>
+          p.title.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q) ||
+          p.categoryId?.toLowerCase().includes(q),
+        ));
+      } catch {
+        setResults([]);
+      }
     } finally {
       setLoading(false);
     }
