@@ -37,7 +37,11 @@
       "Bash(ls \"O:/AI/E-tic 2026/.env\"*)",
       "Bash(ls \"O:/AI/E-tic 2026/\"*.json)",
       "Bash(npx vercel:*)",
-      "Bash(node -e ':*)"
+      "Bash(node -e ':*)",
+      "Bash(npx @react-native-community/cli --version)",
+      "Bash(npx expo:*)",
+      "Bash(ls O:\\\\AI\\\\E-tic 2026:*)",
+      "Bash(npx firebase:*)"
     ]
   }
 }
