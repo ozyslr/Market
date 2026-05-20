@@ -24,6 +24,7 @@ import { getRecentViewedIds } from '@/services/behaviorService';
 import { getAllRecommendations, RecommendationGroup } from '@/services/recommendationService';
 import { ProductRecommendations } from '@/components/commerce/ProductRecommendations';
 import { CampaignBanner } from '@/components/marketing/CampaignBanner';
+import { ProductGridSkeleton } from '@/components/ui/Skeleton';
 
 const CountdownTimer = ({ hours = 5, minutes = 42, seconds = 18, endTime }: { hours?: number; minutes?: number; seconds?: number; endTime?: string }) => {
   const getInitial = () => {
@@ -276,11 +277,12 @@ export function Home() {
                       <div className="relative">
                          <div className="w-[64px] h-[64px] md:w-[80px] md:h-[80px] rounded-full p-[3px] bg-gradient-to-tr from-accent via-[#FF8A00] to-yellow-400">
                             <div className="w-full h-full rounded-full overflow-hidden border-2 border-white dark:border-zinc-900 bg-white">
-                               <img 
-                                 src={menu.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${menu.id}`} 
-                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
-                                 alt={menu.name} 
-                                 referrerPolicy="no-referrer" 
+                               <img
+                                 src={menu.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${menu.id}`}
+                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                 alt={menu.name}
+                                 referrerPolicy="no-referrer"
+                                 loading="lazy"
                                />
                             </div>
                          </div>
@@ -373,13 +375,17 @@ export function Home() {
         </div>
       </section>
 
-      <main className="max-w-[1700px] mx-auto px-4 md:px-6 space-y-16 pb-20">
+      <section className="max-w-[1700px] mx-auto px-4 md:px-6 space-y-16 pb-20" aria-label="Ürün listesi">
         
         {/* Swipable Popular Products Section */}
-        <ProductRow 
-           title="Popüler ürünlerden seçtik" 
-           products={popularProducts.slice(0, 20)} 
-        />
+        {loading ? (
+          <ProductGridSkeleton count={8} />
+        ) : (
+          <ProductRow
+             title="Popüler ürünlerden seçtik"
+             products={popularProducts.slice(0, 20)}
+          />
+        )}
 
         {/* Banner Grid Sections */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -407,7 +413,7 @@ export function Home() {
              }
            ].map((banner, i) => (
              <Link key={i} to={banner.to} className="group relative aspect-[14/6] rounded-[2.5rem] overflow-hidden shadow-2xl transition-all hover:-translate-y-2 border border-brand-primary/5">
-                <img src={banner.img} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt={banner.title} referrerPolicy="no-referrer" />
+                <img src={banner.img} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt={banner.title} referrerPolicy="no-referrer" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/60 via-brand-primary/20 to-transparent p-10 flex flex-col justify-center">
                    <span className="text-accent text-[8px] font-black uppercase tracking-[0.4em] mb-2 drop-shadow-lg">{banner.subtitle}</span>
                    <h3 className="text-white text-3xl font-display font-black uppercase italic leading-none drop-shadow-2xl">{banner.title}</h3>
@@ -453,10 +459,14 @@ export function Home() {
         />
 
         {/* Electronics Spotlight Swipable Section */}
-        <ProductRow 
-           title="Elektronik Fırsatları" 
-           products={electronicsProducts.slice(0, 20)} 
-        />
+        {loading ? (
+          <ProductGridSkeleton count={6} />
+        ) : (
+          <ProductRow
+             title="Elektronik Fırsatları"
+             products={electronicsProducts.slice(0, 20)}
+          />
+        )}
 
         {/* Spotlight Promotion Banners */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -466,7 +476,7 @@ export function Home() {
                  <h2 className="text-2xl font-display font-black text-brand-primary dark:text-white uppercase italic tracking-tighter mb-6 leading-tight">{t('hero.deals_every_day') || 'YENİ SEZON BEBEK MODASI'}</h2>
                  <button className="px-6 py-3 bg-accent text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-accent-dark transition-all shadow-lg">{t('global.discover') || 'KEŞFET'}</button>
               </div>
-              <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=300" className="absolute -bottom-10 -right-10 w-48 rotate-12 group-hover:rotate-0 transition-transform duration-700 opacity-40 group-hover:opacity-100" referrerPolicy="no-referrer" />
+              <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=300" className="absolute -bottom-10 -right-10 w-48 rotate-12 group-hover:rotate-0 transition-transform duration-700 opacity-40 group-hover:opacity-100" referrerPolicy="no-referrer" alt="" aria-hidden="true" loading="lazy" />
            </section>
            <section className="bg-brand-secondary/50 dark:bg-zinc-800/20 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800 relative group overflow-hidden">
                <div className="relative z-10">
@@ -504,7 +514,7 @@ export function Home() {
                ].map((brand, idx) => (
                  <div key={idx} className="flex flex-col items-center gap-3 shrink-0 group cursor-pointer w-[70px] md:w-[90px]">
                     <div className="w-[70px] h-[70px] md:w-[90px] md:h-[90px] rounded-full overflow-hidden border border-brand-primary/10 dark:border-white/10 p-2 bg-white group-hover:border-[#F9423A] transition-colors shadow-sm">
-                       <img src={brand.logo} alt={brand.name} className="w-full h-full object-cover rounded-full mix-blend-multiply" referrerPolicy="no-referrer" />
+                       <img src={brand.logo} alt={brand.name} className="w-full h-full object-cover rounded-full mix-blend-multiply" referrerPolicy="no-referrer" loading="lazy" />
                     </div>
                     <span className="text-[10px] md:text-xs font-bold text-center text-brand-primary dark:text-white group-hover:text-[#F9423A] transition-colors truncate w-full">{brand.name}</span>
                  </div>
@@ -540,6 +550,7 @@ export function Home() {
                       src={product.images[0]}
                       alt={product.title}
                       referrerPolicy="no-referrer"
+                      loading="lazy"
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>

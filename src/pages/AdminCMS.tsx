@@ -213,7 +213,7 @@ function HomepageSectionsEditor() {
                         {slide.enabled ? <ToggleRight size={18} className="text-accent" /> : <ToggleLeft size={18} />}
                         {slide.enabled ? 'Aktif' : 'Pasif'}
                       </button>
-                      {slide.image && <img src={slide.image} className="h-8 w-14 object-cover rounded-lg" referrerPolicy="no-referrer" alt={slide.title || 'Slide'} />}
+                      {slide.image && <img src={slide.image} className="h-8 w-14 object-cover rounded-lg" referrerPolicy="no-referrer" alt={slide.title || 'Slide'} loading="lazy" />}
                       <button onClick={() => deleteSlide(section.id, slide.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                         <Trash2 size={14} />
                       </button>
@@ -422,7 +422,7 @@ export function AdminCMS() {
                   {/* Ana kategori kartı */}
                   <div className="p-6 relative group">
                     <div className="h-32 rounded-2xl overflow-hidden mb-4 relative">
-                      <img src={cat.image} className="w-full h-full object-cover" alt={cat.name} referrerPolicy="no-referrer" />
+                      <img src={cat.image} className="w-full h-full object-cover" alt={cat.name} referrerPolicy="no-referrer" loading="lazy" />
                       <div className="absolute inset-0 bg-black/20" />
                     </div>
                     <div className="flex items-start justify-between gap-2">
@@ -581,7 +581,7 @@ export function AdminCMS() {
                   <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">Görsel</label>
                   <div className="flex gap-3 items-start">
                     {(imagePreview || imageUrl) && (
-                      <img src={imagePreview || imageUrl} alt="Önizleme" className="w-16 h-16 object-cover rounded-xl border border-[#1A1033]/10 shrink-0" referrerPolicy="no-referrer" />
+                      <img src={imagePreview || imageUrl} alt="Önizleme" className="w-16 h-16 object-cover rounded-xl border border-[#1A1033]/10 shrink-0" referrerPolicy="no-referrer" loading="lazy" />
                     )}
                     <div className="flex-1 space-y-2">
                       <input
@@ -608,7 +608,7 @@ export function AdminCMS() {
                   <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">Banner Görseli (Sayfa Üst Bandı)</label>
                   <div className="flex gap-3 items-center">
                     {bannerUrl && (
-                      <img src={bannerUrl} alt="Banner Önizleme" className="w-20 h-10 object-cover rounded-lg border border-[#1A1033]/10 shrink-0" referrerPolicy="no-referrer" />
+                      <img src={bannerUrl} alt="Banner Önizleme" className="w-20 h-10 object-cover rounded-lg border border-[#1A1033]/10 shrink-0" referrerPolicy="no-referrer" loading="lazy" />
                     )}
                     <input
                       type="url"

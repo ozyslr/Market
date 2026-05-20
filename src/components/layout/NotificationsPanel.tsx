@@ -24,6 +24,8 @@ export function NotificationsPanel({ show, onToggle, onClose }: NotificationsPan
         onClick={onToggle}
         className="relative p-2 rounded-lg hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors text-brand-primary dark:text-white"
         aria-label="Bildirimler"
+        aria-expanded={show}
+        aria-haspopup="true"
       >
         <Bell size={20} />
         {unreadCount > 0 && (

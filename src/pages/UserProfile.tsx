@@ -81,6 +81,7 @@ const OrderCard: React.FC<{ order: Order; expanded?: boolean }> = ({ order, expa
                 <img
                   src={item.image || product?.images[0]}
                   alt={item.name || product?.title}
+                  loading="lazy"
                   className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal"
                   referrerPolicy="no-referrer"
                 />
@@ -148,7 +149,7 @@ export function UserProfilePage() {
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               <div className="w-20 h-20 rounded-2xl bg-brand-secondary dark:bg-zinc-800 overflow-hidden border-2 border-white dark:border-zinc-700 shadow-lg">
-                <img src={avatarSrc} alt={user.name} className="w-full h-full object-cover" />
+                <img src={avatarSrc} alt={user.name} className="w-full h-full object-cover" loading="lazy" />
               </div>
               <button
                 onClick={() => changeTab('settings')}
@@ -275,7 +276,7 @@ export function UserProfilePage() {
                         whileHover={{ scale: 1.05 }}
                         className="w-24 h-24 bg-white/10 backdrop-blur rounded-2xl border border-white/10 p-2.5"
                       >
-                        <img src={p.images[0]} alt={p.title} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                        <img src={p.images[0]} alt={p.title} className="w-full h-full object-contain" referrerPolicy="no-referrer" loading="lazy" />
                       </motion.div>
                     </Link>
                   ))}

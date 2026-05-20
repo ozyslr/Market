@@ -110,6 +110,7 @@ export function ProductVerification() {
                     src={result.certificate.productImage}
                     alt={result.certificate.productTitle}
                     className="w-20 h-20 object-contain bg-brand-secondary/30 rounded-2xl p-2 border border-brand-primary/5"
+                    loading="lazy"
                   />
                   <div>
                     <h3 className="text-lg font-black text-brand-primary dark:text-white uppercase">{result.certificate.productTitle}</h3>

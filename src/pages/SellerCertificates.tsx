@@ -168,6 +168,7 @@ export function SellerCertificates() {
                         src={cert.productImage}
                         alt={cert.productTitle}
                         className="w-16 h-16 object-contain rounded-xl bg-zinc-800 p-2 shrink-0"
+                        loading="lazy"
                       />
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-white truncate">{cert.productTitle}</h3>
@@ -244,7 +245,7 @@ export function SellerCertificates() {
                           : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                       }`}
                     >
-                      <img src={p.images[0]} alt={p.title} className="w-8 h-8 object-contain rounded" />
+                      <img src={p.images[0]} alt={p.title} className="w-8 h-8 object-contain rounded" loading="lazy" />
                       <div className="text-left min-w-0">
                         <p className="truncate">{p.title}</p>
                         <p className="text-[10px] text-zinc-500">{p.brand} · {p.originCountry}</p>

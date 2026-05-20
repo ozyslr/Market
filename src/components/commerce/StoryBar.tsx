@@ -53,9 +53,10 @@ export function StoryBar() {
                 <div className="relative">
                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-full p-1 border-2 border-brand-primary/10 group-hover:border-accent transition-all duration-500">
                     <div className="w-full h-full rounded-full overflow-hidden bg-brand-secondary">
-                      <img 
-                        src={storyImages[cat.id] || `https://picsum.photos/seed/${cat.id}/150/150`} 
+                      <img
+                        src={storyImages[cat.id] || `https://picsum.photos/seed/${cat.id}/150/150`}
                         alt={cat.name}
+                        loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         referrerPolicy="no-referrer"
                       />

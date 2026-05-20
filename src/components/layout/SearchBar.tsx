@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { MOCK_PRODUCTS } from '@/mockData';
 import { useLanguage } from '@/context/LanguageContext';
-import { searchProducts } from '@/services/searchService';
+import { searchSuggestions, searchProductsLegacy as searchProducts } from '@/services/searchService';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 export function SearchBar() {
@@ -134,7 +134,7 @@ export function SearchBar() {
       >
         <Camera size={18} strokeWidth={2} />
       </Link>
-      <button type="submit" className="absolute right-0 h-full px-6 bg-accent rounded-r-xl text-white hover:bg-accent-dark transition-all flex items-center justify-center shadow-lg shadow-accent/20">
+      <button type="submit" className="absolute right-0 h-full px-6 bg-accent rounded-r-xl text-white hover:bg-accent-dark transition-all flex items-center justify-center shadow-lg shadow-accent/20" aria-label={t('nav.search') || 'Ara'}>
         <Search size={22} strokeWidth={3} />
       </button>
     </form>

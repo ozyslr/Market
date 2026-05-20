@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { useLanguage } from '@/context/LanguageContext';
 import { SEO } from '@/components/common/SEO';
+import { SearchResultsSkeleton } from '@/components/ui/Skeleton';
 
 function normalizeTR(s: string): string {
   return s
@@ -51,8 +52,14 @@ export function SearchResultsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [categoryFilterAttrs, setCategoryFilterAttrs] = useState<FilterAttribute[]>([]);
+  const [searchLoading, setSearchLoading] = useState(true);
 
-  useEffect(() => { getCategories().then(setAllCategories); }, []);
+  useEffect(() => {
+    getCategories().then(setAllCategories);
+    // Simulate brief loading for MOCK_PRODUCTS filtering
+    const timer = setTimeout(() => setSearchLoading(false), 300);
+    return () => clearTimeout(timer);
+  }, [query, categoryId, tag, origin, delivery, sortBy, priceMin, priceMax, minRating]);
 
   useEffect(() => {
     if (!categoryId) { setCategoryFilterAttrs([]); return; }
@@ -285,27 +292,31 @@ export function SearchResultsPage() {
               onRemove={removeFilter}
               onClearAll={clearAllFilters}
             />
-            <div className={cn(
-               "grid gap-4 sm:gap-10",
-               viewMode === 'grid' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
-            )}>
-              {results.length > 0 ? (
-                results.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))
-              ) : (
-                <div className="col-span-full py-40 flex flex-col items-center justify-center text-center">
-                  <div className="w-24 h-24 bg-brand-secondary rounded-full flex items-center justify-center mb-8 animate-bounce">
-                    <SearchIcon size={40} className="text-brand-primary/10" />
+            {searchLoading ? (
+              <SearchResultsSkeleton />
+            ) : (
+              <div className={cn(
+                 "grid gap-4 sm:gap-10",
+                 viewMode === 'grid' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
+              )}>
+                {results.length > 0 ? (
+                  results.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))
+                ) : (
+                  <div className="col-span-full py-40 flex flex-col items-center justify-center text-center">
+                    <div className="w-24 h-24 bg-brand-secondary rounded-full flex items-center justify-center mb-8 animate-bounce">
+                      <SearchIcon size={40} className="text-brand-primary/10" />
+                    </div>
+                    <h3 className="text-3xl font-display font-black text-brand-primary opacity-20 uppercase italic">The global archives are silent.</h3>
+                    <p className="text-brand-primary/40 mt-4 max-w-sm">No artifacts matched your query. Try searching for broader artisan categories or use the AI Assistant.</p>
                   </div>
-                  <h3 className="text-3xl font-display font-black text-brand-primary opacity-20 uppercase italic">The global archives are silent.</h3>
-                  <p className="text-brand-primary/40 mt-4 max-w-sm">No artifacts matched your query. Try searching for broader artisan categories or use the AI Assistant.</p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Pagination / Load More */}
-            {results.length > 0 && (
+            {!searchLoading && results.length > 0 && (
               <div className="mt-20 flex flex-col items-center gap-6">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/20">Archiving artifacts 1 - {results.length} of {results.length}</p>
                 <button className="px-12 py-5 bg-white border border-brand-primary/5 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.3em] hover:bg-brand-primary hover:text-white transition-all shadow-xl shadow-brand-primary/5">

@@ -21,7 +21,7 @@ export function MobileTabBar({ onOpenMenu }: MobileTabBarProps) {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-brand-primary/5 sm:hidden z-[2000] pb-safe">
+    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-brand-primary/5 sm:hidden z-[2000] pb-safe" role="navigation" aria-label="Mobil alt navigasyon">
       <div className="flex items-center justify-around h-16">
         {items.map((item, i) =>
           item.path === '#' ? (

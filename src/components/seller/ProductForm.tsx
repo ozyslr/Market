@@ -219,7 +219,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             <div className="grid grid-cols-3 gap-3 mb-3">
               {form.images.map((url, i) => (
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-zinc-800">
-                  <img src={url} alt="Ürün görseli" className="w-full h-full object-cover" />
+                  <img src={url} alt="Ürün görseli" className="w-full h-full object-cover" loading="lazy" />
                   <button onClick={() => update('images', form.images.filter((_, j) => j !== i))}
                     className="absolute top-1 right-1 bg-red-600/80 hover:bg-red-600 rounded-full p-1">
                     <Trash2 size={10} className="text-white" />

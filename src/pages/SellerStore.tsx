@@ -82,14 +82,14 @@ export function SellerStorePage() {
     <div className="min-h-screen bg-brand-secondary/30 pb-20">
       {/* Hero Banner */}
       <div className="relative h-96 w-full overflow-hidden">
-        <img src={seller.banner} alt="Banner" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+        <img src={seller.banner} alt={seller.name + ' banner'} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-secondary/80 to-transparent" />
         
         <div className="absolute bottom-12 left-0 right-0">
           <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div className="flex items-center gap-6">
               <div className="w-32 h-32 bg-white rounded-[2.5rem] shadow-2xl p-6 ring-8 ring-white/10 overflow-hidden">
-                <img src={seller.avatar} alt="Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                <img src={seller.avatar} alt={seller.name + ' logo'} className="w-full h-full object-contain" referrerPolicy="no-referrer" loading="lazy" />
               </div>
               <div>
                 <div className="flex items-center gap-3">
@@ -364,7 +364,7 @@ export function SellerStorePage() {
                        <div className="flex items-center justify-between mb-6">
                          <div className="flex items-center gap-4">
                            <div className="w-12 h-12 rounded-2xl bg-brand-secondary overflow-hidden">
-                             <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${r}`} className="w-full h-full" />
+                             <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${r}`} className="w-full h-full" alt="Kullanıcı avatarı" loading="lazy" />
                            </div>
                            <div>
                              <p className="font-bold text-brand-primary">Verified Curator</p>

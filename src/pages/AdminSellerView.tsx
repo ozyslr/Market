@@ -89,7 +89,7 @@ export function AdminSellerView() {
         {/* Seller header */}
         <div className="bg-zinc-900 rounded-2xl p-6 mb-6 flex items-start gap-5">
           {seller.logoUrl ? (
-            <img src={seller.logoUrl} alt={seller.storeName} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
+            <img src={seller.logoUrl} alt={seller.storeName} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" loading="lazy" />
           ) : (
             <div className="w-16 h-16 rounded-xl bg-zinc-800 flex items-center justify-center flex-shrink-0">
               <Package size={24} className="text-zinc-500" />
@@ -174,7 +174,7 @@ export function AdminSellerView() {
               {products.slice(0, 20).map(p => (
                 <div key={p.id} className="bg-zinc-900 rounded-xl p-4 flex gap-3 items-center">
                   {p.images?.[0] ? (
-                    <img src={p.images[0]} alt={p.title} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                    <img src={p.images[0]} alt={p.title} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" loading="lazy" />
                   ) : (
                     <div className="w-12 h-12 rounded-lg bg-zinc-800 flex items-center justify-center flex-shrink-0">
                       <Package size={16} className="text-zinc-600" />

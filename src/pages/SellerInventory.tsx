@@ -470,10 +470,11 @@ export function SellerInventoryPage() {
                              <td className="px-8 py-6">
                                <div className="flex items-center gap-4">
                                  <div className="w-14 h-14 bg-brand-secondary rounded-2xl p-2 flex-shrink-0">
-                                   <img 
-                                     src={product.images[0]} 
-                                     alt={product.title} 
-                                     className="w-full h-full object-contain mix-blend-multiply" 
+                                   <img
+                                     src={product.images[0]}
+                                     alt={product.title}
+                                     loading="lazy"
+                                     className="w-full h-full object-contain mix-blend-multiply"
                                      referrerPolicy="no-referrer"
                                    />
                                  </div>
@@ -733,7 +734,7 @@ export function SellerInventoryPage() {
                  <div className="absolute top-8 left-8">
                    <span className="px-3 py-1 bg-white border border-brand-primary/5 text-brand-primary/40 text-[9px] font-black uppercase tracking-widest rounded-full">Artifact Render</span>
                  </div>
-                 <img src={viewingProduct.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={viewingProduct.title} />
+                 <img src={viewingProduct.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={viewingProduct.title} loading="lazy" />
               </div>
 
               <div className="flex-1 p-12 overflow-y-auto no-scrollbar">

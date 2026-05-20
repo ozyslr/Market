@@ -42,6 +42,7 @@ export function MobileMenu({ isOpen, onClose, categories, onOpenAuth }: MobileMe
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed top-0 left-0 bottom-0 w-full max-w-[320px] bg-white dark:bg-zinc-950 z-[10001] shadow-2xl flex flex-col"
+            onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
           >
             <div className="p-6 bg-brand-primary text-white flex items-center justify-between">
               <Link to="/" onClick={onClose} className="flex items-center gap-2">

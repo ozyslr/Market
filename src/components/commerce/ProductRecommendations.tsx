@@ -147,6 +147,7 @@ export function RecommendationStrip({ title, products, source = 'content_based' 
                   src={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'}
                   alt={product.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
                 />
               </div>
               <div className="p-3 space-y-1">

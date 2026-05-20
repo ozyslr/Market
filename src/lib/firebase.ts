@@ -43,21 +43,44 @@ export interface FirestoreErrorInfo {
   path: string | null;
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+/**
+ * Custom error class that preserves the original Firestore error info
+ * for internal handling while allowing sanitized messages for clients.
+ */
+export class FirestoreError extends Error {
+  public readonly info: FirestoreErrorInfo;
+  public readonly userId?: string | null;
+  public readonly email?: string | null;
+
+  constructor(info: FirestoreErrorInfo, userId?: string | null, email?: string | null) {
+    // In production, expose only a generic message to clients
+    const message = process.env.NODE_ENV === 'production'
+      ? 'An unexpected error occurred. Please try again.'
+      : JSON.stringify(info);
+    super(message);
+    this.name = 'FirestoreError';
+    this.info = info;
+    this.userId = userId;
+    this.email = email;
+  }
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): never {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     operationType,
     path
   }
-  // Log full details server-side for debugging, but only throw minimal info
-  if (process.env.NODE_ENV !== 'production') {
-    console.error('Firestore Error (dev):', {
-      ...errInfo,
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-    });
-  } else {
-    console.error('Firestore Error:', errInfo);
-  }
-  throw new Error(JSON.stringify(errInfo));
+  const userId = auth.currentUser?.uid ?? null;
+  const email = auth.currentUser?.email ?? null;
+
+  // Always log full details server-side for debugging
+  console.error('Firestore Error:', {
+    ...errInfo,
+    userId,
+    email,
+  });
+
+  // Throw a custom error: generic message in production, detailed in dev
+  throw new FirestoreError(errInfo, userId, email);
 }

@@ -65,6 +65,11 @@ export function MegaMenu({ isOpen, onClose, categories, activeCategory, setActiv
           className="absolute top-full left-0 right-0 bg-white dark:bg-zinc-950 border-t border-brand-primary/10 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.3)] p-0 overflow-hidden z-[1000]"
           onMouseEnter={() => {}} // keep open
           onMouseLeave={onClose}
+          onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
+          role="menu"
+          aria-label="Kategori menüsü"
+          onFocus={() => {}}
+          onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) onClose(); }}
         >
           <div className="max-w-[1700px] mx-auto flex min-h-[550px]">
             {/* Left: Category Sidebar */}
@@ -76,6 +81,7 @@ export function MegaMenu({ isOpen, onClose, categories, activeCategory, setActiv
                   <button
                     key={cat.id}
                     onMouseEnter={() => setActiveCategory(cat.id)}
+                    onFocus={() => setActiveCategory(cat.id)}
                     className={cn(
                       "w-full text-left px-8 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between group",
                       activeCategory === cat.id
@@ -138,7 +144,7 @@ export function MegaMenu({ isOpen, onClose, categories, activeCategory, setActiv
                   </div>
                   {categories.find(c => c.id === activeCategory)?.image && (
                     <Link to={`/category/${activeCategory}`} onClick={onClose} className="mt-8 rounded-3xl overflow-hidden relative group h-[200px] cursor-pointer block border border-brand-primary/10 shadow-sm">
-                      <img src={categories.find(c => c.id === activeCategory)?.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="Category Promotion" referrerPolicy="no-referrer" />
+                      <img src={categories.find(c => c.id === activeCategory)?.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={categories.find(c => c.id === activeCategory)?.name || 'Category Promotion'} referrerPolicy="no-referrer" loading="lazy" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-8">
                         <span className="text-accent text-[10px] font-black uppercase tracking-widest mb-1 shadow-sm">{t('home.new_arrivals') || 'New Collection'}</span>
                         <h3 className="text-white text-2xl font-display font-black uppercase italic tracking-tight">
@@ -197,8 +203,9 @@ export function MegaMenu({ isOpen, onClose, categories, activeCategory, setActiv
                     <img
                       src={categories.find(c => c.id === activeCategory)?.image || 'https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&q=80&w=600'}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      alt="Category Promo"
+                      alt={categories.find(c => c.id === activeCategory)?.name || 'Category Promo'}
                       referrerPolicy="no-referrer"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-brand-primary/90 via-brand-primary/40 to-transparent p-6 flex flex-col justify-end text-white">
                       <span className="text-[9px] font-black uppercase tracking-[0.4em] text-accent mb-1">{t('mega.regional_deal')}</span>

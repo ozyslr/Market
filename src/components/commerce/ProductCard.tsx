@@ -215,6 +215,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     alt={product.title}
                     className="max-w-full max-h-[300px] md:max-h-[360px] object-contain transition-opacity duration-100"
                     referrerPolicy="no-referrer"
+                    loading="lazy"
                   />
                   {/* Prev / Next arrows */}
                   {product.images.length > 1 && (

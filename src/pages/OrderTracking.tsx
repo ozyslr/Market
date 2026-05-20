@@ -165,7 +165,7 @@ export function OrderTracking() {
           {order.items?.map((item, i) => (
             <div key={i} className="flex items-center justify-between py-2 border-b border-[#F8F8FA] last:border-0">
               <div className="flex items-center gap-3">
-                {item.image && <img src={item.image} alt={item.title} className="w-10 h-10 rounded-xl object-cover" referrerPolicy="no-referrer" />}
+                {item.image && <img src={item.image} alt={item.title} className="w-10 h-10 rounded-xl object-cover" referrerPolicy="no-referrer" loading="lazy" />}
                 <div>
                   <p className="text-xs font-bold text-[#1A1033] line-clamp-1">{item.title}</p>
                   <p className="text-[10px] text-[#1A1033]/40">x{item.quantity}</p>

@@ -71,6 +71,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[420px] bg-white dark:bg-zinc-950 z-[12001] shadow-2xl rounded-[2.5rem] overflow-hidden border border-brand-primary/5 dark:border-white/5"
+            onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
           >
             <div className="relative bg-gradient-to-br from-brand-primary to-zinc-800 p-8 pb-6 text-white overflow-hidden">
               <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent/20 rounded-full blur-[40px]" />

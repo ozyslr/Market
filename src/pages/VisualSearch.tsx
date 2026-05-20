@@ -201,6 +201,7 @@ export function VisualSearch() {
                     src={previewUrl}
                     alt="Yüklenen görsel"
                     className="w-40 h-40 object-cover rounded-[2rem] shadow-2xl border-4 border-white dark:border-zinc-800"
+                    loading="lazy"
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-purple-600/40 to-transparent rounded-[2rem]" />
@@ -240,6 +241,7 @@ export function VisualSearch() {
                   src={previewUrl}
                   alt="Yüklenen görsel"
                   className="w-32 h-32 object-cover rounded-2xl shadow-lg mb-8 border border-brand-primary/10"
+                  loading="lazy"
                 />
               )}
               <button
@@ -265,7 +267,7 @@ export function VisualSearch() {
                   <div className="flex flex-col md:flex-row items-start gap-6">
                     {previewUrl && (
                       <div className="w-24 h-24 rounded-2xl overflow-hidden border border-brand-primary/10 shrink-0">
-                        <img src={previewUrl} alt="Aranan görsel" className="w-full h-full object-cover" />
+                        <img src={previewUrl} alt="Aranan görsel" className="w-full h-full object-cover" loading="lazy" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">

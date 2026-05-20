@@ -83,7 +83,7 @@ function ModerationQueue() {
                 : 'border-transparent bg-white hover:border-purple-200 hover:bg-purple-50/30'
             )}
           >
-            <img src={p.images[0]} alt={p.title} className="w-12 h-12 rounded-xl object-cover shrink-0" referrerPolicy="no-referrer" />
+            <img src={p.images[0]} alt={p.title} className="w-12 h-12 rounded-xl object-cover shrink-0" referrerPolicy="no-referrer" loading="lazy" />
             <div className="min-w-0">
               <p className="font-bold text-[#1A1033] text-xs line-clamp-1">{p.title}</p>
               <p className="text-[10px] text-[#1A1033]/40">{p.brand} · {p.price.toLocaleString('tr-TR')} ₺</p>
@@ -96,7 +96,7 @@ function ModerationQueue() {
       {selected ? (
         <div className="flex-1 bg-white rounded-4xl p-8 overflow-y-auto shadow-sm border border-[#F8F8FA]">
           <div className="flex gap-6 mb-6">
-            <img src={selected.images[0]} alt={selected.title} className="w-40 h-40 rounded-2xl object-cover shrink-0" referrerPolicy="no-referrer" />
+            <img src={selected.images[0]} alt={selected.title} className="w-40 h-40 rounded-2xl object-cover shrink-0" referrerPolicy="no-referrer" loading="lazy" />
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-purple-500 mb-1">{selected.brand}</p>
               <h3 className="text-xl font-display font-black text-[#1A1033] mb-2">{selected.title}</h3>
@@ -113,7 +113,7 @@ function ModerationQueue() {
           {selected.images.length > 1 && (
             <div className="flex gap-2 mb-6 flex-wrap">
               {selected.images.map((img, i) => (
-                <img key={i} src={img} alt={selected.title} className="w-16 h-16 rounded-xl object-cover" referrerPolicy="no-referrer" />
+                <img key={i} src={img} alt={selected.title} className="w-16 h-16 rounded-xl object-cover" referrerPolicy="no-referrer" loading="lazy" />
               ))}
             </div>
           )}

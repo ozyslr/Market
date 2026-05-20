@@ -171,7 +171,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
         <button onClick={() => toggleCard('profile')}
           className="w-full flex items-center justify-between p-5 text-left">
           <div className="flex items-center gap-3">
-            <img src={avatarSrc} className="w-11 h-11 rounded-full object-cover" alt="avatar" />
+            <img src={avatarSrc} className="w-11 h-11 rounded-full object-cover" alt={user?.name || 'Profil fotoğrafı'} loading="lazy" />
             <div>
               <p className="font-bold text-sm text-[#1A1033] dark:text-white">{user?.name}</p>
               <p className="text-[10px] text-zinc-400">{user?.email}</p>
@@ -186,7 +186,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
               <form onSubmit={handleSaveProfile} className="px-5 pb-5 space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <img src={avatarSrc} className="w-16 h-16 rounded-full object-cover" alt="avatar" />
+                    <img src={avatarSrc} className="w-16 h-16 rounded-full object-cover" alt={user?.name || 'Profil fotoğrafı'} loading="lazy" />
                     <button type="button" onClick={() => fileInputRef.current?.click()}
                       className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#1A1033] dark:bg-zinc-700 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-900">
                       <Camera size={10} className="text-white" />

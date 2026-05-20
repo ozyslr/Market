@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getOrdersBySeller, updateOrderStatus } from '@/services/orderService';
 import { getReturnRequests, updateReturnStatus, ReturnRequest } from '@/services/returnService';
 import { Order } from '@/types/order';
+import { TableRowSkeleton } from '@/components/ui/Skeleton';
 
 const CARRIERS = ['PTT', 'Yurtiçi', 'Aras', 'MNG', 'Sürat', 'UPS', 'DHL'];
 
@@ -197,9 +198,9 @@ export function SellerOrdersPage() {
                  </thead>
                  <tbody className="divide-y divide-brand-primary/5">
                     {loading ? (
-                      <tr><td colSpan={6} className="px-10 py-16 text-center">
-                        <div className="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                      </td></tr>
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRowSkeleton key={i} cols={6} />
+                      ))
                     ) : filteredOrders.length === 0 ? (
                       <tr><td colSpan={6} className="px-10 py-16 text-center">
                         <Package size={36} className="mx-auto text-brand-primary/10 mb-3" />

@@ -4,6 +4,7 @@ import { approveProduct, rejectProduct } from '@/services/moderationService';
 import { Product, ProductStatus } from '@/types';
 import { Search, Star, Flame, Zap, Sparkles, Loader2, CheckSquare, Square, CheckCircle, XCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TableRowSkeleton } from '@/components/ui/Skeleton';
 
 const FLAGS = [
   { key: 'featured' as const, label: 'Öne Çıkan', icon: Star, color: 'text-yellow-500' },
@@ -117,7 +118,15 @@ export function AdminProducts() {
     setSelected(new Set());
   };
 
-  if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
+  if (loading) return (
+    <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm">
+      <div className="space-y-0">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <TableRowSkeleton key={i} cols={8} />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm">
@@ -210,7 +219,7 @@ export function AdminProducts() {
                   </td>
                   <td className="py-3">
                     <div className="flex items-center gap-3">
-                      {product.images?.[0] && <img src={product.images[0]} className="w-10 h-10 rounded-xl object-cover" referrerPolicy="no-referrer" alt={product.title} />}
+                      {product.images?.[0] && <img src={product.images[0]} className="w-10 h-10 rounded-xl object-cover" referrerPolicy="no-referrer" alt={product.title} loading="lazy" />}
                       <div>
                         <p className="font-bold text-[#1A1033] text-xs line-clamp-1">{product.title}</p>
                         <p className="text-[10px] text-[#1A1033]/40">{product.brand}</p>

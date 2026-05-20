@@ -47,7 +47,7 @@ export function AdminSettings() {
 
         {settings.logoUrl && (
           <div className="p-3 bg-[#F8F8FA] rounded-xl inline-block">
-            <img src={settings.logoUrl} alt="Logo önizleme" className="h-10 object-contain" referrerPolicy="no-referrer" />
+            <img src={settings.logoUrl} alt="Logo önizleme" className="h-10 object-contain" referrerPolicy="no-referrer" loading="lazy" />
           </div>
         )}
 

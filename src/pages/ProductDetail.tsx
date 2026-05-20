@@ -35,6 +35,7 @@ import { getContentBasedRecommendations, getCollaborativeRecommendations } from 
 import { RecommendationStrip } from '@/components/commerce/ProductRecommendations';
 import { ARViewer } from '@/components/commerce/ARViewer';
 import { AuthenticityBadge } from '@/components/commerce/AuthenticityBadge';
+import { ProductDetailSkeleton } from '@/components/ui/Skeleton';
 
 // Mock data for the chart
 const MARKET_DATA = [
@@ -230,10 +231,9 @@ export function ProductDetail() {
 
   if (loading) {
     return (
-       <div className="min-h-screen bg-brand-secondary flex flex-col items-center justify-center gap-6">
-          <Sparkles size={48} className="text-accent animate-pulse" />
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-primary/20">Syncing Artifact Data...</p>
-       </div>
+      <div className="min-h-screen bg-[#f2f4f7] dark:bg-zinc-950 transition-colors duration-300">
+        <ProductDetailSkeleton />
+      </div>
     );
   }
 
@@ -719,13 +719,13 @@ export function ProductDetail() {
                 <div className="flex flex-col xl:flex-row items-center gap-8">
                   <div className="flex flex-wrap items-center justify-center gap-4">
                     <div className="w-24 h-24 md:w-32 md:h-32 p-2 border border-brand-primary/5 rounded-2xl bg-white shrink-0">
-                      <img src={product.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={product.title} />
+                      <img src={product.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={product.title} loading="lazy" />
                     </div>
                     <span className="text-xl md:text-2xl font-black text-brand-primary/20">+</span>
                     {boughtTogether.map((p, i) => (
                       <React.Fragment key={p.id}>
                         <div className="w-24 h-24 md:w-32 md:h-32 p-2 border border-brand-primary/5 rounded-2xl bg-white shrink-0 group relative cursor-pointer">
-                          <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={p.title} />
+                          <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={p.title} loading="lazy" />
                           <div className="absolute inset-0 bg-accent/90 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center text-white text-[9px] md:text-[10px] font-black uppercase text-center p-2">
                              {p.title}
                           </div>
@@ -1062,7 +1062,7 @@ export function ProductDetail() {
                    <h4 className="text-2xl font-display font-black mt-2 mb-6 uppercase italic text-white leading-none">{product.brand}</h4>
                    <div className="flex items-center gap-4 mb-8">
                       <div className="w-14 h-14 bg-white/10 rounded-2xl p-1 border border-white/20 backdrop-blur">
-                         <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${product.brand}`} className="w-full h-full object-cover rounded-xl" alt={product.brand} />
+                         <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${product.brand}`} className="w-full h-full object-cover rounded-xl" alt={product.brand} loading="lazy" />
                       </div>
                       <div>
                          <div className="flex items-center gap-1">
@@ -1104,7 +1104,7 @@ export function ProductDetail() {
                      {sellerProducts.slice(0, 3).map(p => (
                        <Link key={p.id} to={`/product/${p.slug}`} className="flex gap-4 group">
                           <div className="w-16 h-16 bg-brand-secondary/50 rounded-xl p-2 shrink-0 group-hover:bg-accent/5 transition-all">
-                             <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={p.title} />
+                             <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={p.title} loading="lazy" />
                           </div>
                           <div className="min-w-0">
                              <h5 className="text-[11px] font-bold text-brand-primary line-clamp-1 group-hover:text-accent transition-colors">{p.title}</h5>

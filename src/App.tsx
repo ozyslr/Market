@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom
 import { HelmetProvider as HelmetProviderOrig } from 'react-helmet-async';
 import { Sentry } from './lib/sentry';
 import { initAnalytics, getConsent, trackEvent } from './lib/analytics';
+import { AnalyticsTracker } from './components/common/AnalyticsTracker';
 import { Navbar } from './components/layout/Navbar';
 import { SkipToContent } from './components/common/SkipToContent';
 import { CookieConsent } from './components/common/CookieConsent';
@@ -44,6 +45,7 @@ import { FollowsProvider } from './context/FollowsContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { SellerSettings } from './pages/SellerSettings';
 import { SellerImportCenter } from './pages/SellerImportCenter';
+import SellerAnalytics from './pages/SellerAnalytics';
 import { SellerApplication } from './pages/SellerApplication';
 import { SellerFinance } from './pages/SellerFinance';
 import { SellerPricing } from './pages/SellerPricing';
@@ -68,7 +70,7 @@ function MainLayout() {
     <div className="relative min-h-screen transition-colors duration-300">
       <SkipToContent />
       <Navbar />
-      <main id="main-content" className="pt-[144px] md:pt-[156px]" tabIndex={-1}>
+      <main id="main-content" role="main" className="pt-[144px] md:pt-[156px]" tabIndex={-1}>
         <Outlet />
       </main>
       <Footer />
@@ -94,6 +96,7 @@ export default function App() {
             <LocationProvider>
               <Router>
                 <ScrollToTop />
+                <AnalyticsTracker />
                 <Routes>
                   {/* Seller panel — full-screen, no Navbar/Footer */}
                   <Route path="/seller" element={<SellerLayout />}>
@@ -104,6 +107,7 @@ export default function App() {
                     <Route path="settings" element={<SellerSettings />} />
                     <Route path="import"   element={<SellerImportCenter />} />
                     <Route path="pricing"  element={<SellerPricing />} />
+                    <Route path="analytics" element={<SellerAnalytics />} />
                     <Route path="certificates" element={<SellerCertificates />} />
                   </Route>
                   {/* All other routes — with Navbar/Footer */}

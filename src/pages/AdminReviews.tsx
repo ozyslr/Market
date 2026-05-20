@@ -49,7 +49,7 @@ export function AdminReviews() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
-                    {review.userAvatar && <img src={review.userAvatar} className="w-8 h-8 rounded-full object-cover" referrerPolicy="no-referrer" alt={review.userName} />}
+                    {review.userAvatar && <img src={review.userAvatar} className="w-8 h-8 rounded-full object-cover" referrerPolicy="no-referrer" alt={review.userName} loading="lazy" />}
                     <div>
                       <p className="text-xs font-black text-[#1A1033]">{review.userName}</p>
                       <div className="flex items-center gap-0.5">

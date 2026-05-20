@@ -170,7 +170,7 @@ export function SellerSettings() {
             {form.logoUrl && (
               <div>
                 <p className="text-[10px] font-black uppercase text-[#1A1033]/40 mb-2">Logo Önizleme</p>
-                <img src={form.logoUrl} alt="logo preview" className="w-16 h-16 rounded-xl object-cover border border-[#F8F8FA]" referrerPolicy="no-referrer" />
+                <img src={form.logoUrl} alt={form.storeName + ' logo'} className="w-16 h-16 rounded-xl object-cover border border-[#F8F8FA]" referrerPolicy="no-referrer" loading="lazy" />
               </div>
             )}
           </>

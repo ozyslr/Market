@@ -244,7 +244,7 @@ export function AdminDashboard() {
         <div className="p-8">
            <div className="bg-white/5 rounded-[2rem] p-4 flex items-center gap-4 border border-white/5">
               <div className="w-10 h-10 rounded-full border-2 border-[#F9423A] p-0.5">
-                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" className="w-full h-full rounded-full bg-white/10" alt="Admin avatarı" />
+                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" className="w-full h-full rounded-full bg-white/10" alt="Admin avatarı" loading="lazy" />
               </div>
               <div className="flex-1 min-w-0">
                  <p className="text-[11px] font-black text-white truncate">Oğuz Özyaşar</p>
@@ -567,7 +567,7 @@ export function AdminDashboard() {
                          <div key={product.id} className="flex items-center justify-between group cursor-pointer hover:translate-x-2 transition-transform duration-300">
                             <div className="flex items-center gap-5">
                                <div className="w-16 h-16 bg-[#F8F8FA] rounded-[1.5rem] flex items-center justify-center relative overflow-hidden shadow-sm">
-                                  <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={product.name || 'Product'} referrerPolicy="no-referrer" />
+                                  <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={product.name || 'Product'} referrerPolicy="no-referrer" loading="lazy" />
                                   <div className="absolute top-0 right-0 w-6 h-6 bg-[#1A1033] rotate-45 translate-x-3 -translate-y-3" />
                                   <span className="absolute top-1 left-2 text-[10px] font-black text-[#1A1033]">{product.id}</span>
                                </div>

@@ -111,11 +111,14 @@ export function Footer() {
           <div className="flex gap-4">
             <span className="text-xs font-bold text-brand-primary/50 dark:text-white/50">Bizi Takip Edin:</span>
              <div className="flex gap-4">
-               {[Instagram, Twitter, Facebook, Youtube].map((Icon, i) => (
-                 <a href="#" key={i} className="text-brand-primary/40 hover:text-mercora-red dark:text-white/40 dark:hover:text-mercora-red transition-colors">
+               {[Instagram, Twitter, Facebook, Youtube].map((Icon, i) => {
+                 const names = ['Instagram', 'Twitter', 'Facebook', 'Youtube'];
+                 return (
+                 <a href="#" key={i} className="text-brand-primary/40 hover:text-mercora-red dark:text-white/40 dark:hover:text-mercora-red transition-colors" aria-label={names[i]}>
                    <Icon size={18} />
                  </a>
-               ))}
+               );
+               })}
              </div>
           </div>
           

@@ -699,7 +699,7 @@ export function CheckoutPage() {
                       <div className="space-y-2">
                         {confirmedOrder.items.map((item, i) => (
                           <div key={i} className="flex items-center gap-3">
-                            <img src={item.image} alt={item.name} referrerPolicy="no-referrer"
+                            <img src={item.image} alt={item.name} referrerPolicy="no-referrer" loading="lazy"
                               className="w-10 h-10 rounded-xl object-contain bg-[#F8F8FA] p-1 shrink-0" />
                             <span className="flex-1 text-[11px] font-bold text-[#1A1033] line-clamp-1">{item.name}</span>
                             <span className="text-[11px] font-black text-[#1A1033]/50">×{item.quantity}</span>

@@ -417,7 +417,7 @@ export function AdminSellers() {
                 const badge = { approved: 'bg-green-100 text-green-700', pending: 'bg-yellow-100 text-yellow-700', rejected: 'bg-red-100 text-red-600', draft: 'bg-gray-100 text-gray-500' }[st] ?? 'bg-gray-100 text-gray-500';
                 return (
                   <div key={p.id} className="flex items-center gap-3 p-3 bg-[#F8F8FA] rounded-2xl">
-                    <img src={p.images[0]} alt={p.title} className="w-10 h-10 rounded-xl object-cover shrink-0" referrerPolicy="no-referrer" />
+                    <img src={p.images[0]} alt={p.title} className="w-10 h-10 rounded-xl object-cover shrink-0" referrerPolicy="no-referrer" loading="lazy" />
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-[#1A1033] text-xs line-clamp-1">{p.title}</p>
                       <p className="text-[10px] text-[#1A1033]/40">{p.price.toLocaleString('tr-TR')} ₺ · Stok: {p.stock}</p>

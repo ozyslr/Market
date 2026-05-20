@@ -41,6 +41,8 @@ export function Navbar() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -62,7 +64,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+    <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300" aria-label="Ana navigasyon">
       <TopTicker />
 
       {/* Main Header */}
@@ -132,27 +134,50 @@ export function Navbar() {
             </button>
 
             {/* Language Dropdown */}
-            <div className="relative group p-2 rounded-xl cursor-pointer hidden sm:flex items-center justify-center text-brand-primary dark:text-white hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors">
-              <Globe size={20} className="group-hover:text-accent transition-colors" />
-              <span className="absolute -top-1 -right-1 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-lg shadow-accent/20 uppercase">{lang}</span>
-              <div className="absolute top-[calc(100%)] right-0 w-48 bg-white dark:bg-zinc-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] rounded-2xl border border-brand-primary/10 p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all group-hover:translate-y-0 z-[10000]">
-                <div className="px-3 py-2 border-b border-brand-primary/5 dark:border-white/5 mb-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40">Dil / Language</span>
+            <div
+              className="relative group p-2 rounded-xl cursor-pointer hidden sm:flex items-center justify-center text-brand-primary dark:text-white hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors"
+              onMouseEnter={() => setIsLangMenuOpen(true)}
+              onMouseLeave={() => setIsLangMenuOpen(false)}
+              onFocus={() => setIsLangMenuOpen(true)}
+              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsLangMenuOpen(false); }}
+            >
+              <button
+                onClick={() => setIsLangMenuOpen(p => !p)}
+                className="flex items-center justify-center"
+                aria-label={t('nav.language') || 'Dil seç'}
+                aria-expanded={isLangMenuOpen}
+                aria-haspopup="true"
+              >
+                <Globe size={20} className="group-hover:text-accent transition-colors" />
+                <span className="absolute -top-1 -right-1 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-lg shadow-accent/20 uppercase">{lang}</span>
+              </button>
+              {isLangMenuOpen && (
+                <div
+                  className="absolute top-[calc(100%)] right-0 w-48 bg-white dark:bg-zinc-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] rounded-2xl border border-brand-primary/10 p-2 z-[10000]"
+                  role="menu"
+                  aria-label={t('nav.language') || 'Dil seç'}
+                  onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setIsLangMenuOpen(false); } }}
+                >
+                  <div className="px-3 py-2 border-b border-brand-primary/5 dark:border-white/5 mb-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40">{t('nav.language') || 'Dil / Language'}</span>
+                  </div>
+                  {availableLanguages && availableLanguages.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => { setLang(l.code as any); setIsLangMenuOpen(false); }}
+                      onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setIsLangMenuOpen(false); } }}
+                      role="menuitem"
+                      className={cn("w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-between group/lang", lang === l.code ? "bg-accent/10 text-accent" : "hover:bg-brand-secondary dark:hover:bg-zinc-900 text-brand-primary dark:text-white")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{l.flag}</span>
+                        <span>{l.name}</span>
+                      </div>
+                      {lang === l.code && <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>}
+                    </button>
+                  ))}
                 </div>
-                {availableLanguages && availableLanguages.map((l) => (
-                  <button
-                    key={l.code}
-                    onClick={() => setLang(l.code as any)}
-                    className={cn("w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-between group/lang", lang === l.code ? "bg-accent/10 text-accent" : "hover:bg-brand-secondary dark:hover:bg-zinc-900 text-brand-primary dark:text-white")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{l.flag}</span>
-                      <span>{l.name}</span>
-                    </div>
-                    {lang === l.code && <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>}
-                  </button>
-                ))}
-              </div>
+              )}
             </div>
 
             {/* Favorites */}
@@ -162,8 +187,20 @@ export function Navbar() {
             </Link>
 
             {/* Account Dropdown */}
-            <div className="relative group p-2 rounded-lg transition-all hover:text-mercora-red cursor-pointer hidden sm:flex text-brand-primary dark:text-white items-center gap-2">
-              <Link to="/profile" className="flex items-center gap-2" aria-label={t('nav.my_account') || 'Hesabım'}>
+            <div
+              className="relative p-2 rounded-lg transition-all hover:text-mercora-red cursor-pointer hidden sm:flex text-brand-primary dark:text-white items-center gap-2"
+              onMouseEnter={() => setIsAccountMenuOpen(true)}
+              onMouseLeave={() => setIsAccountMenuOpen(false)}
+              onFocus={() => setIsAccountMenuOpen(true)}
+              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsAccountMenuOpen(false); }}
+            >
+              <button
+                onClick={() => setIsAccountMenuOpen(p => !p)}
+                className="flex items-center gap-2"
+                aria-label={t('nav.my_account') || 'Hesabım'}
+                aria-expanded={isAccountMenuOpen}
+                aria-haspopup="true"
+              >
                 <User size={20} className="group-hover:-translate-y-1 transition-transform" />
                 <div className="hidden xl:flex flex-col">
                   {user ? (
@@ -171,14 +208,20 @@ export function Navbar() {
                   ) : null}
                   <span className="text-xs font-bold leading-none mt-0.5">Hesabım</span>
                 </div>
-              </Link>
-              <div className="absolute top-[calc(100%)] right-0 w-[460px] bg-white dark:bg-zinc-950 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] rounded-[2.5rem] border border-brand-primary/10 p-8 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all group-hover:translate-y-0 text-brand-primary dark:text-white cursor-auto z-[10000] pointer-events-none group-hover:pointer-events-auto">
+              </button>
+              {isAccountMenuOpen && (
+                <div
+                  className="absolute top-[calc(100%)] right-0 w-[460px] bg-white dark:bg-zinc-950 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] rounded-[2.5rem] border border-brand-primary/10 p-8 text-brand-primary dark:text-white cursor-auto z-[10000]"
+                  role="menu"
+                  aria-label="Hesap menüsü"
+                  onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setIsAccountMenuOpen(false); } }}
+                >
                 {user ? (
                   <div className="flex flex-col gap-6">
                     <Link to="/profile" className="flex items-center gap-5 p-5 bg-gradient-to-br from-brand-secondary/50 to-white dark:from-zinc-900 dark:to-zinc-950 border border-brand-primary/5 dark:border-white/5 rounded-3xl relative overflow-hidden hover:opacity-90 transition-opacity cursor-pointer">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-[40px] -mr-16 -mt-16" />
                       {user.photoURL ? (
-                        <img src={user.photoURL} alt={user.name} className="w-16 h-16 rounded-3xl object-cover shadow-[0_10px_20px_-10px_rgba(249,66,58,0.5)] relative z-10 shrink-0" referrerPolicy="no-referrer" />
+                        <img src={user.photoURL} alt={user.name} className="w-16 h-16 rounded-3xl object-cover shadow-[0_10px_20px_-10px_rgba(249,66,58,0.5)] relative z-10 shrink-0" referrerPolicy="no-referrer" loading="lazy" />
                       ) : (
                         <div className="w-16 h-16 bg-gradient-to-tr from-mercora-red to-yellow-500 rounded-3xl flex items-center justify-center text-white font-display font-black text-2xl shadow-[0_10px_20px_-10px_rgba(249,66,58,0.5)] relative z-10 shrink-0">
                           {user.name.charAt(0)}
@@ -314,9 +357,10 @@ export function Navbar() {
                   </div>
                 )}
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Notifications */}
+          {/* Notifications */}
             <NotificationsPanel
               show={showNotifPanel}
               onToggle={() => setShowNotifPanel(p => !p)}
@@ -365,7 +409,7 @@ export function Navbar() {
       </div>
 
       {/* Secondary Category Ribbon */}
-      <div className={cn(
+      <div role="navigation" aria-label="Kategori hızlı erişim" className={cn(
         "transition-all duration-300 py-2.5 hidden sm:block",
         "bg-white dark:bg-zinc-900 border-b border-brand-primary/10 text-brand-primary dark:text-white/80"
       )}>
@@ -373,7 +417,12 @@ export function Navbar() {
           <div className="flex items-center gap-8 overflow-x-auto no-scrollbar whitespace-nowrap">
             <button
               onMouseEnter={() => setIsMegaMenuOpen(true)}
+              onFocus={() => setIsMegaMenuOpen(true)}
+              onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); setIsMegaMenuOpen(false); } }}
               className="flex items-center gap-2 text-xs font-black uppercase tracking-widest hover:text-accent transition-colors shrink-0 z-[1000]"
+              aria-label={t('nav.all_categories')}
+              aria-expanded={isMegaMenuOpen}
+              aria-haspopup="true"
             >
               <Menu size={18} /> {t('nav.all_categories')}
             </button>

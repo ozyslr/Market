@@ -37,7 +37,7 @@ function setStoredConsent(status: ConsentStatus) {
 /** Get all configured IDs from env vars */
 function getIds() {
   return {
-    ga: import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined,
+    ga: import.meta.env.VITE_GA4_MEASUREMENT_ID || import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined,
     meta: import.meta.env.VITE_META_PIXEL_ID as string | undefined,
     tiktok: import.meta.env.VITE_TIKTOK_PIXEL_ID as string | undefined,
   };
@@ -157,6 +157,8 @@ export type AnalyticsParams = Record<string, any>;
 
 /** Track event across all active analytics providers */
 export function trackEvent(eventName: string, params?: AnalyticsParams): void {
+  if (consentStatus !== 'granted') return;
+
   const ids = getIds();
 
   // GA4
@@ -176,7 +178,163 @@ export function trackEvent(eventName: string, params?: AnalyticsParams): void {
   }
 }
 
-/** Track a product view */
+/** Track a page view (for SPA route changes) */
+export function trackPageView(url?: string): void {
+  trackEvent('page_view', {
+    page_title: document.title,
+    page_location: url || window.location.href,
+    page_path: url ? new URL(url, window.location.origin).pathname : window.location.pathname,
+  });
+
+  // GA4 config page_view for accurate path tracking
+  if (window.gtag) {
+    window.gtag('config', getIds().ga, {
+      page_path: url ? new URL(url, window.location.origin).pathname : window.location.pathname,
+    });
+  }
+}
+
+/** Track a product detail view */
+export function trackProductView(product: {
+  id: string;
+  name?: string;
+  title?: string;
+  price: number;
+  currency?: string;
+  category?: string;
+  brand?: string;
+  variant?: string;
+}): void {
+  trackEvent('view_item', {
+    content_type: 'product',
+    content_ids: [product.id],
+    contents: [{ id: product.id, item_price: product.price }],
+    currency: product.currency || 'TRY',
+    value: product.price,
+    items: [{
+      item_id: product.id,
+      item_name: product.name || product.title,
+      price: product.price,
+      item_category: product.category,
+      item_brand: product.brand,
+      item_variant: product.variant,
+    }],
+  });
+}
+
+/** Track add to cart */
+export function trackAddToCart(
+  product: { id: string; name?: string; title?: string; price: number; currency?: string; category?: string; brand?: string },
+  quantity: number = 1
+): void {
+  trackEvent('add_to_cart', {
+    content_type: 'product',
+    content_ids: [product.id],
+    contents: [{ id: product.id, quantity, item_price: product.price }],
+    currency: product.currency || 'TRY',
+    value: product.price * quantity,
+    items: [{
+      item_id: product.id,
+      item_name: product.name || product.title,
+      price: product.price,
+      quantity,
+      item_category: product.category,
+      item_brand: product.brand,
+    }],
+  });
+}
+
+/** Track remove from cart */
+export function trackRemoveFromCart(
+  product: { id: string; name?: string; title?: string; price: number; currency?: string; category?: string; brand?: string },
+  quantity: number = 1
+): void {
+  trackEvent('remove_from_cart', {
+    content_type: 'product',
+    content_ids: [product.id],
+    contents: [{ id: product.id, quantity, item_price: product.price }],
+    currency: product.currency || 'TRY',
+    value: product.price * quantity,
+    items: [{
+      item_id: product.id,
+      item_name: product.name || product.title,
+      price: product.price,
+      quantity,
+      item_category: product.category,
+      item_brand: product.brand,
+    }],
+  });
+}
+
+/** Track checkout flow steps */
+export function trackCheckout(steps?: { step?: number; option?: string; payment_type?: string; currency?: string; value?: number }): void {
+  trackEvent('begin_checkout', {
+    currency: steps?.currency || 'TRY',
+    value: steps?.value,
+    checkout_step: steps?.step || 1,
+    checkout_option: steps?.option,
+    payment_type: steps?.payment_type,
+  });
+}
+
+/** Track completed purchase */
+export function trackPurchase(
+  order: { id: string; total: number; currency?: string; shipping?: number; tax?: number; coupon?: string },
+  products: Array<{ id: string; name?: string; title?: string; price: number; quantity: number; category?: string; brand?: string; variant?: string }>
+): void {
+  trackEvent('purchase', {
+    transaction_id: order.id,
+    value: order.total,
+    currency: order.currency || 'TRY',
+    shipping: order.shipping,
+    tax: order.tax,
+    coupon: order.coupon,
+    items: products.map(p => ({
+      item_id: p.id,
+      item_name: p.name || p.title,
+      price: p.price,
+      quantity: p.quantity,
+      item_category: p.category,
+      item_brand: p.brand,
+      item_variant: p.variant,
+    })),
+    content_type: 'product',
+  });
+}
+
+/** Track search */
+export function trackSearch(term: string, results?: number): void {
+  const params: AnalyticsParams = { search_term: term };
+  if (results !== undefined) {
+    params.search_results_count = results;
+  }
+  trackEvent('search', params);
+}
+
+/** Identify user (for logged-in users) */
+export function identifyUser(userId: string, traits?: Record<string, string | number | boolean | undefined>): void {
+  const ids = getIds();
+
+  // GA4 — set user ID
+  if (ids.ga && window.gtag) {
+    window.gtag('set', 'user_properties', {
+      user_id: userId,
+      ...traits,
+    });
+    window.gtag('config', ids.ga, { user_id: userId });
+  }
+
+  // Meta Pixel — set user data (hashed, no PII)
+  if (ids.meta && window.fbq) {
+    window.fbq('init', ids.meta, {
+      external_id: userId,
+      ...(traits?.email ? { em: traits.email } : {}),
+      ...(traits?.phone ? { ph: traits.phone } : {}),
+    });
+  }
+}
+
+/** Track pre-built view content (legacy compat) */
 export function trackViewContent(productId: string, productName: string, price: number, currency: string): void {
   trackEvent('view_item', {
     content_type: 'product',
@@ -188,35 +346,7 @@ export function trackViewContent(productId: string, productName: string, price: 
   });
 }
 
-/** Track add to cart */
-export function trackAddToCart(productId: string, productName: string, price: number, quantity: number, currency: string): void {
-  trackEvent('add_to_cart', {
-    content_type: 'product',
-    content_ids: [productId],
-    contents: [{ id: productId, quantity, item_price: price }],
-    currency,
-    value: price * quantity,
-    items: [{ item_id: productId, item_name: productName, price, quantity }],
-  });
-}
-
-/** Track purchase/checkout */
-export function trackPurchase(orderId: string, total: number, currency: string, items: Array<{ id: string; name: string; price: number; quantity: number }>): void {
-  trackEvent('purchase', {
-    transaction_id: orderId,
-    value: total,
-    currency,
-    items: items.map(i => ({ item_id: i.id, item_name: i.name, price: i.price, quantity: i.quantity })),
-    content_type: 'product',
-  });
-}
-
-/** Track search */
-export function trackSearch(query: string): void {
-  trackEvent('search', { search_term: query });
-}
-
-/** Track begin checkout */
+/** Track begin checkout (legacy compat) */
 export function trackBeginCheckout(total: number, currency: string): void {
   trackEvent('begin_checkout', { value: total, currency });
 }

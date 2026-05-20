@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { getAllOrders, updateOrderStatus } from '@/services/orderService';
 import { Order, OrderStatus } from '@/types/order';
 import { cn } from '@/lib/utils';
+import { TableRowSkeleton } from '@/components/ui/Skeleton';
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
   pending:          'bg-orange-50 text-orange-600',
@@ -77,8 +78,10 @@ export function AdminOrders() {
         </div>
 
         {loading ? (
-          <div className="p-24 text-center">
-            <div className="w-8 h-8 border-2 border-[#1A1033] border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="p-8">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <TableRowSkeleton key={i} cols={7} />
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-24 text-center">
