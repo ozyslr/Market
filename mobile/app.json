@@ -19,14 +19,27 @@
       "adaptiveIcon": {
         "backgroundColor": "#1A1033"
       },
-      "package": "com.mercora.app"
+      "package": "com.mercora.app",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
     "extra": {
-      "firebaseConfigFile": "../firebase-applet-config.json"
-    }
+      "firebaseConfigFile": "../firebase-applet-config.json",
+      "eas": {
+        "projectId": "market-ecommerce-app"
+      }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#F9423A"
+        }
+      ]
+    ]
   }
 }

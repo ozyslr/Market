@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { MainTabs } from './MainTabs';
+import { navigationRef } from './rootNavigation';
 import { ProductDetailScreen } from '../screens/ProductDetailScreen';
 import { AuthScreen } from '../screens/AuthScreen';
 import { SearchScreen } from '../screens/SearchScreen';
@@ -37,7 +38,7 @@ export function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
