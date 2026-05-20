@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Helmet as HelmetOrig } from 'react-helmet-async';
 import { SlidersHorizontal, X, Package, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Product } from '@/types';
@@ -9,6 +9,9 @@ import { ProductCard } from '@/components/commerce/ProductCard';
 import { Breadcrumb, BreadcrumbItem } from '@/components/common/Breadcrumb';
 import { FilterPanel, ActiveFilters } from '@/components/commerce/FilterPanel';
 import { cn } from '@/lib/utils';
+
+// React 19 class component type compat
+const Helmet = HelmetOrig as any;
 
 // ---------------------------------------------------------------------------
 // Collection config

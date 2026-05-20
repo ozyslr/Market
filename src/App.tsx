@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider as HelmetProviderOrig } from 'react-helmet-async';
 import { Sentry } from './lib/sentry';
 import { initAnalytics, getConsent, trackEvent } from './lib/analytics';
 import { Navbar } from './components/layout/Navbar';
@@ -8,6 +8,10 @@ import { SkipToContent } from './components/common/SkipToContent';
 import { CookieConsent } from './components/common/CookieConsent';
 import SellerLayout from './components/layout/SellerLayout';
 import { CartPage } from './pages/Cart';
+
+// React 19 class component type compat
+const HelmetProvider = HelmetProviderOrig as any;
+const SentryErrorBoundary = Sentry.ErrorBoundary as any;
 import { Home } from './pages/Home';
 import { ProductDetail } from './pages/ProductDetail';
 import { SellerDashboard } from './pages/SellerDashboard';
@@ -78,7 +82,7 @@ function MainLayout() {
 
 export default function App() {
   return (
-    <Sentry.ErrorBoundary fallback={<p>Bir hata oluştu. Lütfen sayfayı yenileyin.</p>}>
+    <SentryErrorBoundary fallback={<p>Bir hata oluştu. Lütfen sayfayı yenileyin.</p>}>
     <HelmetProvider>
       <ThemeProvider>
         <AuthProvider>
@@ -137,6 +141,6 @@ export default function App() {
         </AuthProvider>
       </ThemeProvider>
     </HelmetProvider>
-    </Sentry.ErrorBoundary>
+    </SentryErrorBoundary>
   );
 }

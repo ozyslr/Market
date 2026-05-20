@@ -95,17 +95,7 @@ export function ProductRecommendations({ groups, loading }: Props) {
                       product={{
                         ...product,
                         images: product.images?.length ? product.images : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'],
-                        name: product.title,
-                        currentPrice: product.price,
-                        originalPrice: product.compareAtPrice || product.oldPrice,
-                        rating: product.rating || 0,
-                        reviews: product.reviewCount || 0,
-                        isNew: product.newArrival,
-                        isOnSale: !!(product.discountPercentage || product.oldPrice),
-                        discount: product.discountPercentage,
                         slug: product.slug || product.id,
-                        category: product.categoryId || '',
-                        currency: '₺',
                       }}
                     />
                   </Link>

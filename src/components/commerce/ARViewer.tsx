@@ -74,23 +74,21 @@ export function ARViewer({ modelUrl, productTitle, open, onClose }: Props) {
 
             {/* 3D Viewer */}
             <div className="relative aspect-square md:aspect-[4/3] bg-zinc-950">
-              <model-viewer
-                ref={viewerRef}
-                src={modelUrl}
-                alt={productTitle}
-                ar
-                ar-modes="webxr scene-viewer quick-look"
-                camera-controls
-                auto-rotate
-                rotation-per-second="30deg"
-                shadow-intensity="1"
-                exposure="0.8"
-                style={{ width: '100%', height: '100%', display: 'block' }}
-                ar-placement="floor"
-                ar-scale="auto"
-              >
-                <div slot="progress-bar" className="hidden" />
-              </model-viewer>
+              {React.createElement('model-viewer', {
+                ref: viewerRef,
+                src: modelUrl,
+                alt: productTitle,
+                ar: true,
+                'ar-modes': 'webxr scene-viewer quick-look',
+                'camera-controls': true,
+                'auto-rotate': true,
+                'rotation-per-second': '30deg',
+                'shadow-intensity': '1',
+                exposure: '0.8',
+                style: { width: '100%', height: '100%', display: 'block' },
+                'ar-placement': 'floor',
+                'ar-scale': 'auto',
+              }, React.createElement('div', { slot: 'progress-bar', className: 'hidden' }))}
 
               {/* Loading fallback */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

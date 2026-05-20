@@ -559,7 +559,7 @@ export function ProductDetail() {
                                 {selectedAttrs[attr] && <span className="ml-2 text-brand-primary normal-case font-bold">: {selectedAttrs[attr]}</span>}
                               </p>
                               <div className="flex flex-wrap gap-2">
-                                {uniqueValues.map(val => {
+                                {uniqueValues.map((val: string) => {
                                   const hasStock = product.variants!.some(v => v.attributes[attr] === val && v.stock > 0);
                                   return (
                                     <button
@@ -809,7 +809,7 @@ export function ProductDetail() {
                            {product.specifications ? Object.entries(product.specifications).map(([key, val], i) => (
                              <div key={key} className={cn("grid grid-cols-2 p-6 transition-colors", i % 2 === 0 ? "bg-brand-secondary/20" : "bg-white")}>
                                <span className="text-[10px] font-black uppercase tracking-wider text-brand-primary/40">{key}</span>
-                               <span className="text-sm font-black text-brand-primary uppercase italic">{val}</span>
+                               <span className="text-sm font-black text-brand-primary uppercase italic">{val as string}</span>
                              </div>
                            )) : (
                              <div className="p-12 text-center text-brand-primary/20 italic">No structured data for this artifact.</div>

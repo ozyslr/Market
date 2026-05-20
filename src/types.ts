@@ -19,6 +19,7 @@ export interface Address {
 
 export interface User {
   id: string;
+  uid?: string;
   name: string;
   email: string;
   role: UserRole;
@@ -194,6 +195,7 @@ export interface Product {
   relatedProductIds?: string[];
   frequentlyBoughtTogetherIds?: string[];
   model3dUrl?: string;
+  isActive?: boolean;
   reviews?: Review[];
   createdAt?: string;
 }

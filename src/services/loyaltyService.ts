@@ -45,7 +45,7 @@ async function ensureBalance(userId: string): Promise<PointsBalance> {
   const ref = doc(db, BALANCE_COL, userId);
   const snap = await getDoc(ref);
   if (snap.exists()) {
-    return { id: snap.id, ...snap.data() } as PointsBalance;
+    return { id: snap.id, ...snap.data() } as unknown as PointsBalance;
   }
   const now = new Date().toISOString();
   const newBalance: PointsBalance = {
@@ -73,7 +73,7 @@ export async function getPointsTransactions(
     orderBy('createdAt', 'desc'),
     limit(max),
   ));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as PointsTransaction);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as unknown as PointsTransaction);
 }
 
 // ─── Earn ───────────────────────────────────────────────────────────────────

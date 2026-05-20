@@ -1,7 +1,10 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
+import { Helmet as HelmetOrig } from 'react-helmet-async';
 import { JsonLd } from '../seo/JsonLd';
 import { organizationSchema, websiteSchema } from '../seo/schemas';
+
+// React 19 class component type compat
+const Helmet = HelmetOrig as any;
 
 interface SEOProps {
   title?: string;

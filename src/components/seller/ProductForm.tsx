@@ -29,7 +29,7 @@ export interface ProductFormData {
   estimatedDeliveryDays: number;
   deliveryTerms: string;
   returnPolicy: string;
-  visibility: 'public' | 'hidden' | 'draft';
+  visibility: 'public' | 'hidden' | 'draft' | 'unlisted';
   metaDescription: string;
 }
 
@@ -328,7 +328,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             </div>
             {Object.entries(form.specifications).map(([k, v]) => (
               <div key={k} className="flex items-center justify-between bg-zinc-800 px-3 py-2 rounded-lg mb-1 text-sm">
-                <span className="text-zinc-300"><span className="text-zinc-500">{k}:</span> {v}</span>
+                <span className="text-zinc-300"><span className="text-zinc-500">{k}:</span> {v as string}</span>
                 <button onClick={() => {
                   const s = { ...form.specifications }; delete s[k]; update('specifications', s);
                 }}><Trash2 size={12} className="text-red-400" /></button>

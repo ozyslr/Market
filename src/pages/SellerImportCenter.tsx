@@ -470,7 +470,7 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
               ['disableMissing', "Feed'de olmayan ürünleri gizle"],
               ['autoPublish',    'Otomatik yayınla (onay atla)'],
             ] as [keyof typeof xmlOpts, string][]).map(([key, label]) => (
-              <label key={key} className="flex items-center gap-3 cursor-pointer">
+              <label key={String(key)} className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={xmlOpts[key]}
                   onChange={e => setXmlOpts(p => ({ ...p, [key]: e.target.checked }))}
                   className="w-4 h-4 accent-emerald-500" />

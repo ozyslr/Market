@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-03-31.basil',
+  apiVersion: '2025-03-31.basil' as any,
 });
 
 // ─── Lazy iyzico SDK loader ─────────────────────────────────────────────────

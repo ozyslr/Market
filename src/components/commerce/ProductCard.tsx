@@ -307,7 +307,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                         {key}: <span className="text-[#1A1033] dark:text-white normal-case font-bold">{selectedVariants[key] || value}</span>
                       </p>
                       <div className="flex flex-wrap gap-1.5">
-                        {[value].map(v => (
+                        {[value as string].map(v => (
                           <button
                             key={v}
                             onClick={() => setSelectedVariants(prev => ({ ...prev, [key]: v }))}
@@ -318,7 +318,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                                 : 'border-gray-200 text-gray-500 hover:border-accent/40'
                             )}
                           >
-                            {v}
+                            {v as string}
                           </button>
                         ))}
                       </div>

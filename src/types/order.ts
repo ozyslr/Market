@@ -7,6 +7,7 @@ export interface OrderItem {
   productId: string;
   sellerId: string;
   name: string;
+  title?: string;
   image: string;
   price: number;
   quantity: number;
@@ -27,6 +28,7 @@ export interface ShippingAddress {
 export interface Order {
   id: string;
   userId: string;
+  buyerId?: string;
   userEmail: string;
   items: OrderItem[];
   sellerIds: string[];
@@ -34,6 +36,7 @@ export interface Order {
   shipping: number;
   tax: number;
   total: number;
+  totalAmount?: number;
   currency: string;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
