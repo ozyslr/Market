@@ -8,7 +8,7 @@ async function getIyzico() {
     const secretKey = process.env.IYZICO_SECRET_KEY || '';
     const baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox.iyzipay.com';
     if (apiKey && secretKey) {
-      const mod = await import('O:/AI/E-tic 2026/server/iyzico.cjs');
+      const mod = await import('@/lib/iyzico.cjs');
       const client = mod.createClient({ apiKey, secretKey, uri: baseUrl });
       iyzicoSdk = { client, ...mod };
     } else {
