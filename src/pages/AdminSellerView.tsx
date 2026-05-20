@@ -4,9 +4,13 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getProducts } from '@/services/productService';
 import { getOrdersBySeller } from '@/services/orderService';
+import { calcSellerPerformance, SellerPerformanceScore } from '@/services/sellerRatingService';
+import { getSellerCommissions, CommissionTransaction } from '@/services/commissionService';
+import { getPayoutHistory, getSellerBalance, PayoutRequest } from '@/services/sellerPayoutService';
 import { Seller, Product } from '@/types';
 import { Order } from '@/types/order';
-import { ArrowLeft, Package, ShoppingBag, Star, Loader2 } from 'lucide-react';
+import { ArrowLeft, Package, ShoppingBag, Star, Loader2, TrendingUp, DollarSign, Medal, CreditCard } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function AdminSellerView() {
   const { sellerId } = useParams<{ sellerId: string }>();
@@ -15,16 +19,29 @@ export function AdminSellerView() {
   const [orders, setOrders]     = useState<Order[]>([]);
   const [loading, setLoading]   = useState(true);
 
+  const [perfScore, setPerfScore]     = useState<SellerPerformanceScore | null>(null);
+  const [commissions, setCommissions] = useState<CommissionTransaction[]>([]);
+  const [payouts, setPayouts]         = useState<PayoutRequest[]>([]);
+  const [sellerBal, setSellerBal]     = useState<any>(null);
+
   useEffect(() => {
     if (!sellerId) return;
     Promise.all([
       getDoc(doc(db, 'sellers', sellerId)),
       getProducts({ sellerId, includeNonApproved: true } as any),
       getOrdersBySeller(sellerId),
-    ]).then(([snap, prods, ords]) => {
+      calcSellerPerformance(sellerId),
+      getSellerCommissions(sellerId),
+      getPayoutHistory(sellerId),
+      getSellerBalance(sellerId),
+    ]).then(([snap, prods, ords, perf, comms, pays, bal]) => {
       if (snap.exists()) setSeller({ id: snap.id, ...snap.data() } as Seller);
       setProducts(prods);
       setOrders(ords);
+      setPerfScore(perf);
+      setCommissions(comms);
+      setPayouts(pays);
+      setSellerBal(bal);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [sellerId]);
@@ -97,6 +114,53 @@ export function AdminSellerView() {
           <div className="text-right flex-shrink-0">
             <p className="text-2xl font-bold text-emerald-400">{totalRevenue.toLocaleString('tr-TR')} ₺</p>
             <p className="text-xs text-zinc-500 mt-0.5">Toplam Ciro</p>
+          </div>
+        </div>
+
+        {/* Performance & Financial Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {perfScore && (
+            <div className="bg-zinc-900 rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Medal size={16} className="text-yellow-400" />
+                <span className="text-xs text-zinc-500 font-semibold">Performans</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{perfScore.overall}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-xs font-semibold',
+                  perfScore.level === 'platinum' ? 'bg-purple-500/20 text-purple-400' :
+                  perfScore.level === 'gold' ? 'bg-yellow-500/20 text-yellow-400' :
+                  perfScore.level === 'silver' ? 'bg-gray-500/20 text-gray-400' :
+                  'bg-orange-500/20 text-orange-400'
+                )}>{perfScore.level}</span>
+                <span className="text-xs text-zinc-500">İade: %{perfScore.returnRate}</span>
+              </div>
+            </div>
+          )}
+          <div className="bg-zinc-900 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <DollarSign size={16} className="text-emerald-400" />
+              <span className="text-xs text-zinc-500 font-semibold">Ödenen</span>
+            </div>
+            <p className="text-2xl font-bold text-emerald-400">{sellerBal?.totalPaidOut?.toLocaleString('tr-TR') ?? '0'} ₺</p>
+            <p className="text-xs text-zinc-500 mt-1">Kullanılabilir: {sellerBal?.availableBalance?.toLocaleString('tr-TR') ?? '0'} ₺</p>
+          </div>
+          <div className="bg-zinc-900 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp size={16} className="text-blue-400" />
+              <span className="text-xs text-zinc-500 font-semibold">Komisyon</span>
+            </div>
+            <p className="text-2xl font-bold text-blue-400">{commissions.reduce((s, c) => s + c.amount, 0).toLocaleString('tr-TR')} ₺</p>
+            <p className="text-xs text-zinc-500 mt-1">{commissions.length} işlem</p>
+          </div>
+          <div className="bg-zinc-900 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <CreditCard size={16} className="text-purple-400" />
+              <span className="text-xs text-zinc-500 font-semibold">Çekimler</span>
+            </div>
+            <p className="text-2xl font-bold text-purple-400">{payouts.length}</p>
+            <p className="text-xs text-zinc-500 mt-1">{payouts.filter(p => p.status === 'completed').length} tamamlandı</p>
           </div>
         </div>
 

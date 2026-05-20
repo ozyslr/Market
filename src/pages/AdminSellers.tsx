@@ -3,10 +3,15 @@ import { Link } from 'react-router-dom';
 import { getSellers, updateSeller } from '@/services/userService';
 import { createNotification } from '@/services/notificationService';
 import { getProducts } from '@/services/productService';
+import { getApplications, reviewApplication } from '@/services/sellerApplicationService';
+import { getCommissionRules, saveCommissionRule, CommissionRule } from '@/services/commissionService';
+import { calcSellerPerformance, SellerPerformanceScore } from '@/services/sellerRatingService';
+import { getPayoutHistory, PayoutRequest } from '@/services/sellerPayoutService';
 import { Seller, Product } from '@/types';
 import {
   Store, Loader2, CheckCircle, XCircle, Search,
-  ShieldCheck, ShieldOff, Edit2, Check, X, Package, ChevronRight
+  ShieldCheck, ShieldOff, Edit2, Check, X, Package, ChevronRight,
+  FileText, DollarSign, TrendingUp, Plus, Save, Medal,
 } from 'lucide-react';
 import { MOCK_SELLERS } from '@/mockData';
 import { cn } from '@/lib/utils';
@@ -24,6 +29,7 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
 };
 
 export function AdminSellers() {
+  const [adminTab, setAdminTab] = useState<'sellers' | 'applications' | 'rules'>('sellers');
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -34,6 +40,20 @@ export function AdminSellers() {
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [sellerProducts, setSellerProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+
+  // Application state
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loadingApps, setLoadingApps] = useState(false);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+
+  // Commission rules state
+  const [rules, setRules] = useState<CommissionRule[]>([]);
+  const [loadingRules, setLoadingRules] = useState(false);
+  const [editingRule, setEditingRule] = useState<CommissionRule | null>(null);
+  const [savingRule, setSavingRule] = useState(false);
+
+  // Performance scores cache
+  const [perfScores, setPerfScores] = useState<Record<string, SellerPerformanceScore>>({});
 
   useEffect(() => {
     (async () => {
@@ -56,6 +76,36 @@ export function AdminSellers() {
       .then(setSellerProducts)
       .finally(() => setLoadingProducts(false));
   }, [selectedSeller]);
+
+  // Load applications
+  useEffect(() => {
+    if (adminTab !== 'applications') return;
+    setLoadingApps(true);
+    getApplications()
+      .then(setApplications)
+      .finally(() => setLoadingApps(false));
+  }, [adminTab]);
+
+  // Load commission rules
+  useEffect(() => {
+    if (adminTab !== 'rules') return;
+    setLoadingRules(true);
+    getCommissionRules()
+      .then(setRules)
+      .finally(() => setLoadingRules(false));
+  }, [adminTab]);
+
+  // Preload performance scores for visible sellers
+  useEffect(() => {
+    if (adminTab !== 'sellers') return;
+    filtered.slice(0, 20).forEach(s => {
+      if (!perfScores[s.id]) {
+        calcSellerPerformance(s.userId || s.id).then(score => {
+          setPerfScores(prev => ({ ...prev, [s.id]: score }));
+        });
+      }
+    });
+  }, [sellers, search, kycFilter, adminTab]);
 
   const filtered = useMemo(() => {
     let list = sellers;
@@ -85,6 +135,41 @@ export function AdminSellers() {
   const toggleSuspend = (seller: Seller) => {
     const next = (seller.status ?? 'active') === 'active' ? 'suspended' : 'active';
     update(seller.id, { status: next });
+  };
+
+  const handleReview = async (app: any, status: 'approved' | 'rejected') => {
+    setReviewingId(app.id);
+    try {
+      await reviewApplication(app.id, status, status === 'approved' ? 'Onaylandı' : 'Reddedildi', 'admin');
+      setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status } : a));
+    } finally {
+      setReviewingId(null);
+    }
+  };
+
+  const handleSaveRule = async () => {
+    if (!editingRule) return;
+    setSavingRule(true);
+    try {
+      await saveCommissionRule(editingRule);
+      setRules(prev => {
+        const exists = prev.find(r => r.id === editingRule.id);
+        if (exists) return prev.map(r => r.id === editingRule.id ? editingRule : r);
+        return [...prev, editingRule];
+      });
+      setEditingRule(null);
+    } finally {
+      setSavingRule(false);
+    }
+  };
+
+  const newRule = () => {
+    setEditingRule({
+      id: `rule-${Date.now()}`,
+      name: '',
+      rate: 10,
+      isActive: true,
+    });
   };
 
   const setKyc = async (seller: Seller, status: 'verified' | 'rejected') => {
@@ -122,12 +207,30 @@ export function AdminSellers() {
         <div className="relative w-full sm:w-64">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1A1033]/30" />
           <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Mağaza adı ara..."
+            placeholder={adminTab === 'sellers' ? 'Mağaza adı ara...' : 'Başvuru ara...'}
             className="w-full pl-9 pr-4 py-2.5 bg-[#F8F8FA] rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/20" />
         </div>
       </div>
 
-      {/* KYC filter chips */}
+      {/* Tab bar */}
+      <div className="flex gap-2 mb-6">
+        {([
+          { key: 'sellers', label: 'Satıcılar', icon: Store },
+          { key: 'applications', label: 'Başvurular', icon: FileText },
+          { key: 'rules', label: 'Komisyon Kuralları', icon: DollarSign },
+        ] as const).map(({ key, label, icon: Icon }) => (
+          <button key={key} onClick={() => setAdminTab(key)}
+            className={cn('flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+              adminTab === key ? 'bg-[#1A1033] text-white' : 'bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/10'
+            )}>
+            <Icon size={14} /> {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── SELLERS TAB ── */}
+      {adminTab === 'sellers' && <>
+        {/* KYC filter chips */}
       <div className="flex gap-2 flex-wrap mb-5">
         {(['all', 'pending', 'verified', 'rejected'] as const).map(f => (
           <button key={f} onClick={() => setKycFilter(f)}
@@ -148,6 +251,7 @@ export function AdminSellers() {
               <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Komisyon</th>
               <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Durum</th>
               <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Rating</th>
+              <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Performans</th>
               <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">İşlemler</th>
             </tr>
           </thead>
@@ -223,6 +327,23 @@ export function AdminSellers() {
                       <span className="text-[10px] text-[#1A1033]/40">({seller.reviewsCount})</span>
                     </div>
                   </td>
+                  <td className="py-3 text-right">
+                    {perfScores[seller.id] ? (
+                      <span className={cn(
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest',
+                        perfScores[seller.id].level === 'platinum' ? 'bg-purple-100 text-purple-700' :
+                        perfScores[seller.id].level === 'gold' ? 'bg-yellow-100 text-yellow-700' :
+                        perfScores[seller.id].level === 'silver' ? 'bg-gray-100 text-gray-600' :
+                        'bg-orange-100 text-orange-700'
+                      )}>
+                        <Medal size={10} />
+                        {perfScores[seller.id].level}
+                        <span className="ml-0.5 opacity-60">{perfScores[seller.id].overall}</span>
+                      </span>
+                    ) : (
+                      <span className="text-[9px] text-[#1A1033]/30">—</span>
+                    )}
+                  </td>
                   <td className="py-3">
                     <div className="flex items-center justify-end gap-1">
                       <button
@@ -253,7 +374,7 @@ export function AdminSellers() {
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={6} className="py-10 text-center text-[#1A1033]/30 text-sm font-bold">Satıcı bulunamadı</td></tr>
+              <tr><td colSpan={7} className="py-10 text-center text-[#1A1033]/30 text-sm font-bold">Satıcı bulunamadı</td></tr>
             )}
           </tbody>
         </table>
@@ -307,6 +428,217 @@ export function AdminSellers() {
               })}
             </div>
           </div>
+        </div>
+      )}
+      </>}                    {/* end sellers tab */}
+
+      {/* ── APPLICATIONS TAB ── */}
+      {adminTab === 'applications' && (
+        <>
+          {loadingApps ? (
+            <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>
+          ) : applications.length === 0 ? (
+            <div className="text-center py-16">
+              <FileText size={36} className="mx-auto text-[#1A1033]/20 mb-3" />
+              <p className="text-sm font-bold text-[#1A1033]/30">Henüz başvuru yok</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#F8F8FA]">
+                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Mağaza</th>
+                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Satıcı</th>
+                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Kategoriler</th>
+                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Deneyim</th>
+                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Hedef</th>
+                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Durum</th>
+                    <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {applications.map(app => (
+                    <tr key={app.id} className="border-b border-[#F8F8FA] hover:bg-[#F8F8FA]/50 transition-colors">
+                      <td className="py-3">
+                        <span className="font-bold text-[#1A1033] text-xs">{app.storeName}</span>
+                      </td>
+                      <td className="py-3">
+                        <span className="text-xs text-[#1A1033]">{app.userName}</span>
+                        <span className="text-[10px] text-[#1A1033]/40 block">{app.userEmail}</span>
+                      </td>
+                      <td className="py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {app.productCategories?.slice(0, 3).map((c: string) => (
+                            <span key={c} className="px-1.5 py-0.5 rounded bg-[#F8F8FA] text-[9px] font-bold text-[#1A1033]/60">{c}</span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-3 text-xs font-bold text-[#1A1033]">
+                        {app.experience ? `${app.experience} yıl` : '—'}
+                      </td>
+                      <td className="py-3 text-xs text-[#1A1033]/60">{app.monthlySalesTarget || '—'}</td>
+                      <td className="py-3">
+                        <span className={cn(
+                          'px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest',
+                          app.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                          app.status === 'approved' ? 'bg-green-100 text-green-700' :
+                          'bg-red-100 text-red-600'
+                        )}>
+                          {app.status === 'pending' ? 'Bekliyor' : app.status === 'approved' ? 'Onaylı' : 'Red'}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right">
+                        {app.status === 'pending' && (
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => handleReview(app, 'approved')}
+                              disabled={reviewingId === app.id}
+                              className="p-1.5 rounded bg-green-50 text-green-600 hover:bg-green-100 transition-all disabled:opacity-50"
+                              title="Onayla"
+                            >
+                              {reviewingId === app.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                            </button>
+                            <button
+                              onClick={() => handleReview(app, 'rejected')}
+                              disabled={reviewingId === app.id}
+                              className="p-1.5 rounded bg-red-50 text-red-500 hover:bg-red-100 transition-all disabled:opacity-50"
+                              title="Reddet"
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── COMMISSION RULES TAB ── */}
+      {adminTab === 'rules' && (
+        <div className="space-y-6">
+          {/* Rule list */}
+          {loadingRules ? (
+            <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#F8F8FA]">
+                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Kural Adı</th>
+                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Oran</th>
+                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Min/Max</th>
+                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Kategori Override</th>
+                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Durum</th>
+                    <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rules.map(rule => (
+                    <tr key={rule.id} className="border-b border-[#F8F8FA] hover:bg-[#F8F8FA]/50 transition-colors">
+                      <td className="py-3 font-bold text-[#1A1033] text-xs">{rule.name}</td>
+                      <td className="py-3 text-xs font-black text-[#1A1033]">%{rule.rate}</td>
+                      <td className="py-3 text-xs text-[#1A1033]/60">
+                        {rule.minAmount != null ? `Min: ${rule.minAmount}₺` : '—'}
+                        {rule.maxAmount != null ? ` / Max: ${rule.maxAmount}₺` : ''}
+                      </td>
+                      <td className="py-3">
+                        {rule.categoryOverrides ? (
+                          <div className="flex flex-wrap gap-1">
+                            {rule.categoryOverrides && Object.entries(rule.categoryOverrides).slice(0, 3).map(([cat, r]) => (
+                              <span key={cat} className="px-1.5 py-0.5 rounded bg-[#F8F8FA] text-[9px] font-bold text-[#1A1033]/60">{cat}: %{r as number}</span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[#1A1033]/30">—</span>
+                        )}
+                      </td>
+                      <td className="py-3">
+                        <span className={cn('px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest',
+                          rule.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                        )}>{rule.isActive ? 'Aktif' : 'Pasif'}</span>
+                      </td>
+                      <td className="py-3 text-right">
+                        <button onClick={() => setEditingRule(rule)}
+                          className="p-1.5 rounded-lg bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/10 transition-all">
+                          <Edit2 size={12} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {rules.length === 0 && (
+                    <tr><td colSpan={6} className="py-10 text-center text-[#1A1033]/30 text-sm font-bold">Henüz komisyon kuralı yok</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Yeni kural / Düzenleme formu */}
+          {editingRule && (
+            <div className="bg-amber-50 rounded-2xl p-6 border border-amber-200 space-y-4">
+              <h4 className="text-sm font-black uppercase italic text-[#1A1033]">
+                {rules.find(r => r.id === editingRule.id) ? 'Kuralı Düzenle' : 'Yeni Kural'}
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-[#1A1033]/60 mb-1">Kural Adı</label>
+                  <input value={editingRule.name} onChange={e => setEditingRule(p => p ? { ...p, name: e.target.value } : null)}
+                    placeholder="Örn: Varsayılan Komisyon"
+                    className="w-full px-3 py-2 bg-white border border-[#1A1033]/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1A1033]/60 mb-1">Komisyon Oranı (%)</label>
+                  <input type="number" min="0" max="100" step="0.5"
+                    value={editingRule.rate} onChange={e => setEditingRule(p => p ? { ...p, rate: parseFloat(e.target.value) || 0 } : null)}
+                    className="w-full px-3 py-2 bg-white border border-[#1A1033]/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1A1033]/60 mb-1">Platform Hizmet Bedeli (%)</label>
+                  <input type="number" disabled value="3.5"
+                    className="w-full px-3 py-2 bg-gray-50 border border-[#1A1033]/10 rounded-xl text-sm font-bold text-[#1A1033]/50 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1A1033]/60 mb-1">Minimum Komisyon (₺)</label>
+                  <input type="number" min="0"
+                    value={editingRule.minAmount ?? ''} onChange={e => setEditingRule(p => p ? { ...p, minAmount: e.target.value ? parseFloat(e.target.value) : undefined } : null)}
+                    className="w-full px-3 py-2 bg-white border border-[#1A1033]/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1A1033]/60 mb-1">Maksimum Komisyon (₺)</label>
+                  <input type="number" min="0"
+                    value={editingRule.maxAmount ?? ''} onChange={e => setEditingRule(p => p ? { ...p, maxAmount: e.target.value ? parseFloat(e.target.value) : undefined } : null)}
+                    className="w-full px-3 py-2 bg-white border border-[#1A1033]/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400" />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editingRule.isActive}
+                  onChange={e => setEditingRule(p => p ? { ...p, isActive: e.target.checked } : null)}
+                  className="w-4 h-4 accent-amber-500" />
+                <span className="text-xs font-bold text-[#1A1033]/60">Aktif</span>
+              </label>
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setEditingRule(null)}
+                  className="px-5 py-2 border border-[#1A1033]/10 text-[#1A1033] text-xs font-black rounded-xl hover:bg-white transition-all">
+                  İptal
+                </button>
+                <button onClick={handleSaveRule} disabled={savingRule || !editingRule.name}
+                  className="px-5 py-2 bg-[#1A1033] text-white text-xs font-black rounded-xl hover:bg-amber-800 transition-all disabled:opacity-50 flex items-center gap-2">
+                  {savingRule ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                  Kaydet
+                </button>
+              </div>
+            </div>
+          )}
+
+          <button onClick={newRule}
+            className="flex items-center gap-2 px-4 py-2 bg-[#1A1033] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all">
+            <Plus size={14} /> Yeni Kural Ekle
+          </button>
         </div>
       )}
     </div>

@@ -40,6 +40,7 @@ import { FollowsProvider } from './context/FollowsContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { SellerSettings } from './pages/SellerSettings';
 import { SellerImportCenter } from './pages/SellerImportCenter';
+import { SellerApplication } from './pages/SellerApplication';
 import { SellerFinance } from './pages/SellerFinance';
 import { SellerPricing } from './pages/SellerPricing';
 import { SellerCertificates } from './pages/SellerCertificates';
@@ -117,6 +118,7 @@ export default function App() {
                     <Route path="/admin/categories" element={<AdminCategories />} />
                     <Route path="/admin/seller/:sellerId" element={<AdminSellerView />} />
                     <Route path="/sell" element={<SellOnMercora />} />
+                    <Route path="/sell/apply" element={<SellerApplication />} />
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/orders/:orderId" element={<OrderTracking />} />
                     <Route path="/support" element={<UserSupport />} />

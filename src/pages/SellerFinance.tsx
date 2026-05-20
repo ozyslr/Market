@@ -14,6 +14,13 @@ import {
   FinanceSummary,
   Transaction,
 } from '@/services/financeService';
+import {
+  getSellerBalance,
+  requestPayout,
+  getPayoutHistory,
+  PayoutRequest,
+  PayoutMethod,
+} from '@/services/sellerPayoutService';
 
 function formatCurrency(amount: number) {
   return amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
@@ -35,6 +42,15 @@ export function SellerFinance() {
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  // Payout integration state
+  const [balance, setBalance] = useState<any>(null);
+  const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [payoutMethod, setPayoutMethod] = useState<PayoutMethod>('bank_transfer');
+  const [payoutDest, setPayoutDest] = useState('');
+  const [payoutAmount, setPayoutAmount] = useState<number>(0);
+  const [requestingPayout, setRequestingPayout] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     getOrdersBySeller(user.id)
@@ -51,6 +67,13 @@ export function SellerFinance() {
       setSummary(sum);
       setTransactions(txs);
     });
+  }, [user?.id]);
+
+  // Load payout data
+  useEffect(() => {
+    if (!user?.id) return;
+    getSellerBalance(user.id).then(setBalance);
+    getPayoutHistory(user.id).then(setPayouts);
   }, [user?.id]);
 
   if (loading) return (
@@ -146,16 +169,16 @@ export function SellerFinance() {
                   <p className="text-xl font-display font-black">{formatCurrency(availableBalance)}</p>
                 </div>
                 <button
-                  onClick={() => setWithdrawRequested(true)}
-                  disabled={availableBalance <= 0 || withdrawRequested}
+                  onClick={() => { setShowPayoutModal(true); setPayoutAmount(availableBalance); }}
+                  disabled={availableBalance <= 0}
                   className={cn(
                     "mt-auto text-[10px] font-black uppercase tracking-widest py-2 rounded-xl transition-all",
-                    availableBalance > 0 && !withdrawRequested
+                    availableBalance > 0
                       ? "bg-accent text-white hover:bg-accent/90"
                       : "bg-white/10 text-white/40 cursor-not-allowed"
                   )}
                 >
-                  {withdrawRequested ? '✓ Talep Alındı' : 'Çekim Talebi'}
+                  {'Çekim Talebi'}
                 </button>
               </div>
 
@@ -223,12 +246,12 @@ export function SellerFinance() {
                   </p>
                 </div>
               </div>
-              {withdrawRequested && (
+              {payouts.filter(p => p.status === 'pending').length > 0 && (
                 <>
                   <div className="w-px h-8 bg-[#1A1033]/5" />
                   <div className="flex items-center gap-2 text-green-600">
                     <AlertCircle size={14} />
-                    <p className="text-[10px] font-bold">Çekim talebiniz iletildi. En geç 2 iş günü içinde işleme alınır.</p>
+                    <p className="text-[10px] font-bold">{payouts.filter(p => p.status === 'pending').length} bekleyen çekim talebi</p>
                   </div>
                 </>
               )}
@@ -336,9 +359,111 @@ export function SellerFinance() {
                 </div>
               )}
             </div>
+
+            {/* ── PAYOUT HISTORY ── */}
+            {payouts.length > 0 && (
+              <div className="bg-white rounded-2xl border border-[#1A1033]/5 overflow-hidden mt-8">
+                <div className="px-6 py-4 border-b border-[#1A1033]/5">
+                  <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60">Çekim Geçmişi</h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-[#1A1033]/5">
+                        {['Tutar', 'Ücret', 'Net', 'Yöntem', 'Durum', 'Tarih'].map(h => (
+                          <th key={h} className="px-5 py-3 text-[9px] font-black uppercase tracking-widest text-[#1A1033]/30">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payouts.slice(0, 10).map(p => (
+                        <tr key={p.id} className="border-b border-[#1A1033]/5 hover:bg-[#F8F8FA] transition-colors">
+                          <td className="px-5 py-3 text-[11px] font-black text-[#1A1033]">{formatCurrency(p.amount)}</td>
+                          <td className="px-5 py-3 text-[11px] text-red-400">−{formatCurrency(p.fee)}</td>
+                          <td className="px-5 py-3 text-[11px] font-black text-green-600">{formatCurrency(p.netAmount)}</td>
+                          <td className="px-5 py-3 text-[11px] text-[#1A1033]/60">{p.method}</td>
+                          <td className="px-5 py-3">
+                            <span className={cn('px-2 py-0.5 rounded-lg text-[9px] font-black uppercase',
+                              p.status === 'completed' ? 'bg-green-100 text-green-700' :
+                              p.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                              p.status === 'failed' ? 'bg-red-100 text-red-600' :
+                              'bg-yellow-100 text-yellow-700'
+                            )}>{p.status}</span>
+                          </td>
+                          <td className="px-5 py-3 text-[11px] text-[#1A1033]/60">
+                            {new Date(p.createdAt).toLocaleDateString('tr-TR')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
+
+      {/* ── PAYOUT MODAL ── */}
+      {showPayoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowPayoutModal(false)} />
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl space-y-5">
+            <h3 className="text-lg font-black uppercase italic text-[#1A1033]">Çekim Talebi</h3>
+            <p className="text-[10px] font-bold text-[#1A1033]/40 uppercase tracking-widest">
+              Kullanılabilir Bakiye: {formatCurrency(availableBalance)}
+            </p>
+            <div>
+              <label className="block text-xs font-bold text-[#1A1033]/60 mb-1.5">Tutar</label>
+              <input type="number" min="0" max={availableBalance}
+                value={payoutAmount} onChange={e => setPayoutAmount(parseFloat(e.target.value) || 0)}
+                className="w-full px-4 py-3 rounded-xl border border-[#1A1033]/10 text-sm font-bold outline-none focus:ring-2 focus:ring-accent" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-[#1A1033]/60 mb-1.5">Yöntem</label>
+              <select value={payoutMethod} onChange={e => setPayoutMethod(e.target.value as PayoutMethod)}
+                className="w-full px-4 py-3 rounded-xl border border-[#1A1033]/10 text-sm font-bold outline-none focus:ring-2 focus:ring-accent">
+                <option value="bank_transfer">Banka Havalesi</option>
+                <option value="iyzico">iyzico</option>
+                <option value="stripe">Stripe</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-[#1A1033]/60 mb-1.5">Hesap / Destinasyon</label>
+              <input value={payoutDest} onChange={e => setPayoutDest(e.target.value)}
+                placeholder="IBAN veya hesap no"
+                className="w-full px-4 py-3 rounded-xl border border-[#1A1033]/10 text-sm font-bold outline-none focus:ring-2 focus:ring-accent" />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setShowPayoutModal(false)}
+                className="flex-1 py-3 border border-[#1A1033]/10 text-[#1A1033] font-black text-xs rounded-xl hover:bg-[#F8F8FA] transition-all uppercase tracking-widest">
+                İptal
+              </button>
+              <button
+                onClick={async () => {
+                  if (!user?.id || payoutAmount <= 0 || !payoutDest) return;
+                  setRequestingPayout(true);
+                  try {
+                    await requestPayout(user.id, payoutAmount, payoutMethod, payoutDest);
+                    setShowPayoutModal(false);
+                    setPayoutDest('');
+                    // Refresh balance & payouts
+                    getSellerBalance(user.id).then(setBalance);
+                    getPayoutHistory(user.id).then(setPayouts);
+                  } finally {
+                    setRequestingPayout(false);
+                  }
+                }}
+                disabled={requestingPayout || payoutAmount <= 0 || !payoutDest}
+                className="flex-1 py-3 bg-accent text-white font-black text-xs rounded-xl hover:opacity-90 transition-all disabled:opacity-50 uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                {requestingPayout ? <Loader2 size={14} className="animate-spin" /> : null}
+                {requestingPayout ? 'Gönderiliyor...' : 'Talep Oluştur'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
