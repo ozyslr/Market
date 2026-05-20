@@ -29,6 +29,17 @@ export function CheckoutScreen({ navigation }: Props) {
 
   const handlePlaceOrder = async () => {
     if (!user) return;
+
+    // Kredi Kartı → WebView ödeme
+    if (paymentMethod === 'card') {
+      navigation.navigate('PaymentWebView', {
+        items,
+        total,
+      });
+      return;
+    }
+
+    // Diğer ödeme yöntemleri (havale/EFT, kapıda ödeme) → direkt sipariş
     setPlacing(true);
     try {
       const orderRef = doc(collection(db, 'orders'));

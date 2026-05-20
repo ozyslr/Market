@@ -8,6 +8,7 @@ import { ProductDetailScreen } from '../screens/ProductDetailScreen';
 import { AuthScreen } from '../screens/AuthScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
+import { PaymentWebViewScreen } from '../screens/PaymentWebViewScreen';
 import { OrderDetailScreen } from '../screens/OrderDetailScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
 import { AddressesScreen } from '../screens/AddressesScreen';
@@ -63,6 +64,11 @@ export function AppNavigator() {
           name="Checkout"
           component={CheckoutScreen}
           options={{ ...screenHeaderOptions, headerTitle: 'Ödeme' }}
+        />
+        <Stack.Screen
+          name="PaymentWebView"
+          component={PaymentWebViewScreen}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="OrderDetail"
