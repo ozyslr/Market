@@ -562,7 +562,7 @@ export function Home() {
             </div>
           </section>
         )}
-      </main>
+      </section>
     </div>
   );
 }

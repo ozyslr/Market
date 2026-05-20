@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(sed -i 's|<img src={img} alt=\"\" className=\"w-full h-full object-cover\" referrerPolicy=\"no-referrer\" />|<img src={img} alt={product.title} className=\"w-full h-full object-cover\" referrerPolicy=\"no-referrer\" />|g' src/components/commerce/ProductCard.tsx)",
+      "Bash(sed -i 's|<img src={url} alt=\"\" className=\"w-full h-full object-cover\" />|<img src={url} alt=\"Ürün görseli\" className=\"w-full h-full object-cover\" />|g' src/components/seller/ProductForm.tsx)",
+      "Bash(sed -i 's|alt=\"\" />}|alt={slide.title || '\"'\"'Slide'\"'\"'} />}|g' src/pages/AdminCMS.tsx)",
+      "Bash(sed -i 's|<img src={cat.image} className=\"w-full h-full object-cover\" alt=\"\" referrerPolicy=\"no-referrer\" />|<img src={cat.image} className=\"w-full h-full object-cover\" alt={cat.name} referrerPolicy=\"no-referrer\" />|g' src/pages/AdminCMS.tsx)",
+      "Bash(sed -i 's|alt=\"\" />|alt=\"Admin avatarı\" />|g' src/pages/AdminDashboard.tsx)",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+      "Bash(npm info:*)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('Deps:', JSON.stringify\\(Object.keys\\(p.dependencies||{}\\).filter\\(d=>d.includes\\('helmet'\\)||d.includes\\('rate'\\)||d.includes\\('cors'\\)||d.includes\\('csp'\\)||d.includes\\('security'\\)||d.includes\\('csrf'\\)||d.includes\\('supertokens'\\)||d.includes\\('express'\\)\\), null, 2\\)\\)\")",
+      "Bash(node -e \"console.log\\('Node:', process.version\\); const h = require\\('helmet'\\); console.log\\('Helmet loaded:', typeof h\\)\")",
+      "Bash(node -e \"import\\('express-rate-limit'\\).then\\(m => console.log\\('rateLimit type:', typeof m.default\\)\\)\")",
+      "Bash(node -e \"import\\('cors'\\).then\\(m => console.log\\('cors type:', typeof m.default\\)\\)\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(ls package.json vitest.config* playwright.config*)",
+      "Bash(grep -c '\"test\\\\|\"vitest\\\\|\"playwright\\\\|\"cypress\\\\|@testing' package.json)",
+      "Bash(ls src/components/)",
+      "Bash(ls src/pages/)",
+      "Bash(ls src/lib/)",
+      "Bash(ls src/utils/)",
+      "Bash(npx vitest:*)",
+      "Bash(npm ls:*)",
+      "Bash(xargs grep:*)",
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "Bash(npx create-next-app@latest mercora-next --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
+      "Bash(npx next:*)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(k\\) for k in ['recharts','motion','framer-motion'] if k in d.get\\('dependencies',{}\\) or k in d.get\\('devDependencies',{}\\)]\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('recharts:',!!p.dependencies.recharts\\); console.log\\('motion:',!!p.dependencies.motion\\); console.log\\('framer-motion:',!!p.dependencies['framer-motion']\\)\")",
+      "Bash(npx --yes vercel --version)",
+      "Bash(ls -la .env*)",
+      "Bash(cat .env.local)",
+      "Bash(grep -v \"^\\\\s*$\")",
+      "Bash(ls \"O:/AI/E-tic 2026/.env\"*)",
+      "Bash(ls \"O:/AI/E-tic 2026/\"*.json)",
+      "Bash(npx vercel:*)",
+      "Bash(node -e ':*)"
+    ]
+  }
+}

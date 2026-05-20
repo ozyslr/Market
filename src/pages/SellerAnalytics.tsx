@@ -149,7 +149,7 @@ function ChartTooltip({ active, payload, label }: any) {
 // PAGE COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════════
 
-export default function SellerAnalytics() {
+export default function SellerAnalyticsPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
 
