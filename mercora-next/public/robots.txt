@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /seller/
+
+Sitemap: https://mercora.app/sitemap.xml
