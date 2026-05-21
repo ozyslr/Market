@@ -1,5 +1,3 @@
-'use client';
-
 import {
   collection, addDoc, getDocs, updateDoc, deleteDoc, doc,
   query, where, orderBy, limit,

@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import './globals.css';
 import { Providers } from '@/components/Providers';
 import { LayoutAddons } from '@/components/layout/LayoutAddons';
+import { PWARegister } from '@/components/common/PWARegister';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { organizationSchema, websiteSchema } from '@/components/seo/schemas';
 import { SkipToContent } from '@/components/ui/SkipToContent';
@@ -57,9 +58,16 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/favicon.ico',
+    apple: '/icons/icon-192x192.png',
   },
+  manifest: '/manifest.json',
   other: {
     'google-site-verification': process.env.GOOGLE_SITE_VERIFICATION || '',
+    'theme-color': '#7c3aed',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-title': 'Mercora',
+    'format-detection': 'telephone=no',
   },
 };
 
@@ -76,10 +84,11 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-gray-50 text-gray-900">
         <SkipToContent />
         <Suspense fallback={null}>
-          <Providers>{children}</Providers>
-        </Suspense>
-        <Suspense fallback={null}>
-          <LayoutAddons />
+          <Providers>
+            {children}
+            <LayoutAddons />
+            <PWARegister />
+          </Providers>
         </Suspense>
         <JsonLd data={organizationSchema()} />
         <JsonLd data={websiteSchema(`${BASE_URL}/search`)} />
