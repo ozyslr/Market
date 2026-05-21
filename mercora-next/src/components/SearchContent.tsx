@@ -114,7 +114,7 @@ export function SearchContent({ query: initialQuery, categoryId }: { query: stri
           <div className="flex flex-wrap gap-2 ml-2">
             {debouncedQuery && (
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm">
-                "{debouncedQuery}"
+                &quot;{debouncedQuery}&quot;
                 <button onClick={() => { setSearchQuery(''); setDebouncedQuery(''); }}><X size={14} /></button>
               </span>
             )}

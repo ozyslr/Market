@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Star, MapPin, Globe, CheckCircle, Package,
   MessageSquare, UserPlus, Share2, Search,
@@ -193,12 +194,12 @@ export default function SellerStorePage({ params }: { params: Promise<{ id: stri
           <p className="text-brand-primary/60 font-medium mb-8">
             {error || 'Bu satıcı mağazası mevcut değil veya kaldırılmış olabilir.'}
           </p>
-          <a
+          <Link
             href="/"
             className="inline-flex items-center gap-2 px-8 py-4 bg-brand-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-accent transition-all"
           >
             Ana Sayfaya Dön
-          </a>
+          </Link>
         </div>
       </div>
     );

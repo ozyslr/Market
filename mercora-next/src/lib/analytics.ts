@@ -78,7 +78,7 @@ function initGA4(measurementId: string) {
   if (existing) return;
 
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function () { window.dataLayer.push(arguments); };
+  window.gtag = function (...args: unknown[]) { window.dataLayer.push(args); };
   window.gtag('js', new Date());
   window.gtag('config', measurementId, {
     send_page_view: false,
