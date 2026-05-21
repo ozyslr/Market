@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Check, X, Star, TrendingUp, Loader2, AlertCircle, Package } from 'lucide-react';
+import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 
@@ -11,6 +12,7 @@ interface ProductItem {
   category: string;
   price: number;
   sellerName: string;
+  sellerId?: string;
   status: 'pending' | 'approved' | 'rejected' | 'draft';
   featured: boolean;
   bestSeller: boolean;
@@ -45,6 +47,7 @@ export default function AdminProductsPage() {
           category: data.categoryId || data.category || '',
           price: data.price || 0,
           sellerName: data.sellerName || data.sellerId || '',
+          sellerId: data.sellerId || '',
           status: data.status || 'draft',
           featured: data.featured || false,
           bestSeller: data.bestSeller || false,
@@ -215,7 +218,15 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="p-4 text-gray-600">{product.category}</td>
                   <td className="p-4 text-gray-900 font-medium">{product.price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</td>
-                  <td className="p-4 text-gray-600">{product.sellerName}</td>
+                  <td className="p-4">
+                    {product.sellerId ? (
+                      <Link href={`/admin/sellers/${product.sellerId}`} className="text-purple-600 hover:text-purple-800 hover:underline font-medium">
+                        {product.sellerName}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-600">{product.sellerName}</span>
+                    )}
+                  </td>
                   <td className="p-4">
                     <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[product.status]}`}>
                       {STATUS_LABELS[product.status]}

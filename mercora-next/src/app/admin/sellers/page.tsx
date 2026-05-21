@@ -234,7 +234,7 @@ export default function AdminSellersPage() {
                 <tr key={s.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="p-4">
                     <Link
-                      href={`/admin/seller/${s.id}`}
+                      href={`/admin/sellers/${s.id}`}
                       className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors flex items-center gap-2"
                     >
                       {s.storeName}
@@ -284,7 +284,7 @@ export default function AdminSellersPage() {
 
                       {/* Detail Page Link */}
                       <Link
-                        href={`/admin/seller/${s.id}`}
+                        href={`/admin/sellers/${s.id}`}
                         className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Satıcı Detayı"
                       >

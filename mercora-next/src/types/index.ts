@@ -131,6 +131,8 @@ export interface Product {
   isTrending?: boolean;
   isAiPick?: boolean;
   discountPercentage?: number;
+  discountStart?: string;
+  discountEnd?: string;
   promoBadge?: string;
   sku?: string;
   status?: ProductStatus;

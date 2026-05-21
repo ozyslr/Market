@@ -3,14 +3,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { ShoppingCart, Heart, Star, Truck, Shield, RotateCcw, Box } from 'lucide-react';
-import { useState } from 'react';
+import { ShoppingCart, Heart, Star, Truck, Shield, RotateCcw, Box, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
 import { ProductRecommendations } from '@/components/commerce/ProductRecommendations';
-import type { Product } from '@/types';
+import { getCategories } from '@/services/productService';
+import type { Product, Category } from '@/types';
 
 const ARViewer = dynamic(() => import('@/components/commerce/ARViewer').then(m => ({ default: m.ARViewer })), { ssr: false });
 
@@ -21,6 +22,27 @@ export function ProductDetailContent({ product }: { product: Product }) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [arOpen, setArOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    getCategories().then(setCategories).catch(() => {});
+  }, []);
+
+  const categoryPath = useMemo(() => {
+    if (!categories.length || !product.categoryId) return [];
+    const cat = categories.find(c => c.id === product.categoryId);
+    if (!cat) return [{ id: product.categoryId, name: product.categoryId }];
+    const path = [cat];
+    let parentId = cat.parentId;
+    while (parentId) {
+      const parent = categories.find(c => c.id === parentId);
+      if (parent) {
+        path.unshift(parent);
+        parentId = parent.parentId;
+      } else break;
+    }
+    return path;
+  }, [categories, product.categoryId]);
 
   const wishlisted = isWishlisted(product.id);
   const inStock = product.stock > 0;
@@ -28,11 +50,19 @@ export function ProductDetailContent({ product }: { product: Product }) {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 mb-6">
+      <nav className="text-sm text-gray-500 mb-6 flex items-center gap-1.5 flex-wrap">
         <Link href="/" className="hover:text-purple-700">{t('nav.home_page')}</Link>
-        <span className="mx-2">/</span>
-        <Link href={`/category/${product.categoryId}`} className="hover:text-purple-700">{product.categoryId}</Link>
-        <span className="mx-2">/</span>
+        {categoryPath.map((cat, i) => (
+          <span key={cat.id} className="flex items-center gap-1.5">
+            <ChevronRight size={12} className="text-gray-300" />
+            {i < categoryPath.length - 1 ? (
+              <Link href={`/category/${cat.id}`} className="hover:text-purple-700">{cat.name}</Link>
+            ) : (
+              <span className="text-gray-900">{cat.name}</span>
+            )}
+          </span>
+        ))}
+        <ChevronRight size={12} className="text-gray-300" />
         <span className="text-gray-900">{product.title}</span>
       </nav>
 
