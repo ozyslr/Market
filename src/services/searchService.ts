@@ -146,7 +146,7 @@ function computeFacets(
   products: Product[],
   categoryId?: string,
 ): SearchResult['facets'] {
-  const categoryMap = new Map<string, { name: string; count: number }>();
+  const categoryMap = new Map<string, { id: string; name: string; count: number }>();
   const brandMap = new Map<string, number>();
   let priceMin = Infinity;
   let priceMax = -Infinity;
@@ -360,23 +360,23 @@ export async function searchProducts(
  * Uses Firestore prefix match with a small limit; falls back to MOCK_PRODUCTS.
  */
 export async function searchSuggestions(
-  query: string,
+  searchQuery: string,
   maxResults = 6,
 ): Promise<Product[]> {
-  if (!query.trim() || query.trim().length < 2) return [];
+  if (!searchQuery.trim() || searchQuery.trim().length < 2) return [];
 
   try {
     const productsRef = collection(db, 'products');
     const q = query(
       productsRef,
-      where('title', '>=', query.trim()),
-      where('title', '<=', query.trim() + '\uf8ff'),
+      where('title', '>=', searchQuery.trim()),
+      where('title', '<=', searchQuery.trim() + '\uf8ff'),
       limit(maxResults),
     );
     const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
-      return snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Product[];
+      return snapshot.docs.map(d => ({ id: d.id, ...(d.data() as object) })) as Product[];
     }
   } catch (error) {
     console.warn(
@@ -386,7 +386,7 @@ export async function searchSuggestions(
   }
 
   // Fallback: client-side filter on MOCK_PRODUCTS
-  const nq = normalizeTR(query);
+  const nq = normalizeTR(searchQuery);
   return MOCK_PRODUCTS.filter(
     p =>
       (p.status === undefined || p.status === 'approved') &&

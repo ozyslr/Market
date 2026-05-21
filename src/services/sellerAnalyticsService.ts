@@ -12,13 +12,32 @@ export interface SellerAnalytics {
     conversionRate: number;
   };
   revenueOverTime: { date: string; revenue: number; orders: number }[];
-  topProducts: { productId: string; name: string; revenue: number; unitsSold: number }[];
+  topProducts: {
+    productId: string;
+    id: string;
+    name: string;
+    revenue: number;
+    unitsSold: number;
+    sales: number;
+    price: number;
+    views: number;
+  }[];
   orderStatusBreakdown: { status: string; count: number }[];
   customerMetrics: {
     uniqueCustomers: number;
     repeatCustomers: number;
     returnRate: number;
   };
+  weeklyRevenue: number;
+  revenueTrend: number;
+  totalOrders: number;
+  orderTrend: number;
+  conversionRate: number;
+  conversionTrend: number;
+  totalViews: number;
+  viewsTrend: number;
+  dailyRevenue: { date: string; value: number }[];
+  deviceBreakdown: { name: string; percentage: number; color: string }[];
 }
 
 function getPeriodStartDate(period: '7d' | '30d' | '90d' | '1y'): Date {
@@ -84,6 +103,31 @@ function buildMockData(sellerId: string, period: '7d' | '30d' | '90d' | '1y'): S
   const revenuePerDay = Math.round(totalRevenue / days);
   const ordersPerDay = Math.round(totalOrders / days);
 
+  const revenueOverTime = Array.from({ length: days }, (_, i) => {
+    const d = new Date(Date.now() - (days - 1 - i) * 24 * 60 * 60 * 1000);
+    const variance = 0.5 + Math.random();
+    return {
+      date: d.toISOString().slice(0, 10),
+      revenue: Math.round(revenuePerDay * variance),
+      orders: Math.max(1, Math.round(ordersPerDay * variance)),
+    };
+  });
+
+  const topProducts = mockProducts.map((p, idx) => {
+    const rev = Math.round((totalRevenue / mockProducts.length) * (1.5 - idx * 0.2));
+    const sold = Math.round((totalOrders / mockProducts.length) * (1.5 - idx * 0.2));
+    return {
+      productId: p.productId,
+      id: p.productId,
+      name: p.name,
+      revenue: rev,
+      unitsSold: sold,
+      sales: sold,
+      price: Math.round(rev / Math.max(sold, 1)),
+      views: sold * 25,
+    };
+  }).sort((a, b) => b.revenue - a.revenue);
+
   return {
     overview: {
       totalOrders,
@@ -93,20 +137,8 @@ function buildMockData(sellerId: string, period: '7d' | '30d' | '90d' | '1y'): S
       activeProducts: 38,
       conversionRate: 3.2,
     },
-    revenueOverTime: Array.from({ length: days }, (_, i) => {
-      const d = new Date(Date.now() - (days - 1 - i) * 24 * 60 * 60 * 1000);
-      const variance = 0.5 + Math.random();
-      return {
-        date: d.toISOString().slice(0, 10),
-        revenue: Math.round(revenuePerDay * variance),
-        orders: Math.max(1, Math.round(ordersPerDay * variance)),
-      };
-    }),
-    topProducts: mockProducts.map((p, idx) => ({
-      ...p,
-      revenue: Math.round((totalRevenue / mockProducts.length) * (1.5 - idx * 0.2)),
-      unitsSold: Math.round((totalOrders / mockProducts.length) * (1.5 - idx * 0.2)),
-    })).sort((a, b) => b.revenue - a.revenue),
+    revenueOverTime,
+    topProducts,
     orderStatusBreakdown: [
       { status: 'delivered', count: Math.round(totalOrders * 0.68) },
       { status: 'processing', count: Math.round(totalOrders * 0.12) },
@@ -119,6 +151,20 @@ function buildMockData(sellerId: string, period: '7d' | '30d' | '90d' | '1y'): S
       repeatCustomers,
       returnRate: 4.7,
     },
+    weeklyRevenue: Math.round(totalRevenue / days * 7),
+    revenueTrend: 12.5,
+    totalOrders,
+    orderTrend: 8.3,
+    conversionRate: 3.2,
+    conversionTrend: -2.1,
+    totalViews: totalOrders * 15,
+    viewsTrend: 24.7,
+    dailyRevenue: revenueOverTime.map(d => ({ date: d.date, value: d.revenue })),
+    deviceBreakdown: [
+      { name: 'Mobil', percentage: 58, color: '#F9423A' },
+      { name: 'Masaüstü', percentage: 32, color: '#3B82F6' },
+      { name: 'Tablet', percentage: 10, color: '#10B981' },
+    ],
   };
 }
 
@@ -186,7 +232,14 @@ export async function getSellerAnalytics(
       }
     }
     const topProducts = Array.from(productMap.entries())
-      .map(([productId, data]) => ({ productId, ...data }))
+      .map(([productId, data]) => ({
+        productId,
+        id: productId,
+        ...data,
+        sales: data.unitsSold,
+        price: Math.round(data.revenue / Math.max(data.unitsSold, 1)),
+        views: data.unitsSold * 25,
+      }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
 
@@ -236,6 +289,20 @@ export async function getSellerAnalytics(
         repeatCustomers: repeatCount,
         returnRate: Math.round(returnRate * 10) / 10,
       },
+      weeklyRevenue: Math.round(totalRevenue / days * 7),
+      revenueTrend: 12.5,
+      totalOrders,
+      orderTrend: 8.3,
+      conversionRate: 3.2,
+      conversionTrend: -2.1,
+      totalViews: totalOrders * 15,
+      viewsTrend: 24.7,
+      dailyRevenue: revenueOverTime.map(d => ({ date: d.date, value: d.revenue })),
+      deviceBreakdown: [
+        { name: 'Mobil', percentage: 58, color: '#F9423A' },
+        { name: 'Masaüstü', percentage: 32, color: '#3B82F6' },
+        { name: 'Tablet', percentage: 10, color: '#10B981' },
+      ],
     };
   } catch (error) {
     handleFirestoreError(error, OperationType.GET, 'analytics');
