@@ -1,13 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import Link from 'next/link';
 import { User, Package, Heart, Settings, LogOut } from 'lucide-react';
+import { ProfileSettings } from '@/components/profile/ProfileSettings';
 
 export function ProfileContent() {
   const { firebaseUser, logout, loading } = useAuth();
   const { t } = useLanguage();
+  const [showSettings, setShowSettings] = useState(false);
 
   if (loading) {
     return (
@@ -46,30 +49,54 @@ export function ProfileContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Link href="/orders" className="bg-white p-6 rounded-xl border border-gray-200 hover:border-purple-200 transition-colors flex items-center gap-4">
-          <Package size={24} className="text-purple-700" />
-          <div>
-            <h3 className="font-bold">{t('nav.orders')}</h3>
-            <p className="text-sm text-gray-500">Siparişlerinizi takip edin</p>
+      {showSettings ? (
+        <div>
+          <button
+            onClick={() => setShowSettings(false)}
+            className="mb-4 text-sm text-purple-700 hover:text-purple-800 font-medium"
+          >
+            &larr; Profile
+          </button>
+          <ProfileSettings />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link href="/orders" className="bg-white p-6 rounded-xl border border-gray-200 hover:border-purple-200 transition-colors flex items-center gap-4">
+              <Package size={24} className="text-purple-700" />
+              <div>
+                <h3 className="font-bold">{t('nav.orders')}</h3>
+                <p className="text-sm text-gray-500">Siparişlerinizi takip edin</p>
+              </div>
+            </Link>
+            <Link href="/wishlist" className="bg-white p-6 rounded-xl border border-gray-200 hover:border-purple-200 transition-colors flex items-center gap-4">
+              <Heart size={24} className="text-purple-700" />
+              <div>
+                <h3 className="font-bold">{t('nav.favorite')}</h3>
+                <p className="text-sm text-gray-500">{t('wishlist.empty_desc')}</p>
+              </div>
+            </Link>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="bg-white p-6 rounded-xl border border-gray-200 hover:border-purple-200 transition-colors flex items-center gap-4 text-left"
+            >
+              <Settings size={24} className="text-purple-700" />
+              <div>
+                <h3 className="font-bold">{t('settings.title') || 'Settings'}</h3>
+                <p className="text-sm text-gray-500">Manage your preferences</p>
+              </div>
+            </button>
           </div>
-        </Link>
-        <Link href="/wishlist" className="bg-white p-6 rounded-xl border border-gray-200 hover:border-purple-200 transition-colors flex items-center gap-4">
-          <Heart size={24} className="text-purple-700" />
-          <div>
-            <h3 className="font-bold">{t('nav.favorite')}</h3>
-            <p className="text-sm text-gray-500">{t('wishlist.empty_desc')}</p>
-          </div>
-        </Link>
-      </div>
 
-      <button
-        onClick={logout}
-        className="mt-6 flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors"
-      >
-        <LogOut size={18} />
-        {t('nav.logout')}
-      </button>
+          <button
+            onClick={logout}
+            className="mt-6 flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors"
+          >
+            <LogOut size={18} />
+            {t('nav.logout')}
+          </button>
+        </>
+      )}
     </div>
   );
 }

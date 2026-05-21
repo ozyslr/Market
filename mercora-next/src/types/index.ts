@@ -62,6 +62,7 @@ export interface Seller {
   userId: string;
   storeName: string;
   slug: string;
+  email?: string;
   rating: number;
   reviewsCount: number;
   followersCount: number;
@@ -127,6 +128,8 @@ export interface Product {
   bestSeller?: boolean;
   newArrival?: boolean;
   isFlashDeal?: boolean;
+  isTrending?: boolean;
+  isAiPick?: boolean;
   discountPercentage?: number;
   promoBadge?: string;
   sku?: string;
@@ -170,8 +173,11 @@ export interface Coupon {
   discountType: 'percentage' | 'fixed';
   discountValue: number;
   minOrderAmount?: number;
+  maxUses?: number;
+  usedCount: number;
   isActive: boolean;
   expiresAt?: string;
+  createdAt: string;
 }
 
 export interface ReturnRequest {
@@ -194,4 +200,32 @@ export interface Campaign {
   isActive: boolean;
   startDate: string;
   endDate: string;
+}
+
+export interface MarketContext {
+  country: string;
+  currency: string;
+  language: string;
+  vatRate: number;
+  importTaxThreshold: number;
+}
+
+export interface TaxCalculation {
+  subtotal: number;
+  shipping: number;
+  vat: number;
+  customs: number;
+  handlingFee: number;
+  total: number;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: 'order_status' | 'price_drop' | 'promotion' | 'system' | 'follow';
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+  read: boolean;
+  createdAt: string;
 }

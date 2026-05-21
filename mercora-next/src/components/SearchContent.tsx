@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
+import { FilterPanel, type FilterGroup } from '@/components/commerce/FilterPanel';
 import { useLanguage } from '@/context/LanguageContext';
 import { searchProducts, getFacetedFilters } from '@/services/searchService';
 import type { Product } from '@/types';
@@ -138,83 +139,23 @@ export function SearchContent({ query: initialQuery, categoryId }: { query: stri
 
       <div className="flex gap-6">
         {/* Filter Sidebar */}
-        {showFilters && (
-          <div className="w-64 shrink-0 space-y-6">
-            {/* Sort */}
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">{t('search.sort') || 'Sıralama'}</h3>
-              <select
-                value={sortBy}
-                onChange={e => { setSortBy(e.target.value); setPage(1); }}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-              >
-                <option value="popular">{t('search.popular') || 'Popüler'}</option>
-                <option value="newest">{t('search.newest') || 'En Yeni'}</option>
-                <option value="price_asc">{t('search.price_asc') || 'Fiyat: Düşükten Yükseğe'}</option>
-                <option value="price_desc">{t('search.price_desc') || 'Fiyat: Yüksekten Düşüğe'}</option>
-                <option value="rating">{t('search.rating') || 'Puana Göre'}</option>
-              </select>
-            </div>
-
-            {/* Categories */}
-            {facets && facets.categories.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">{t('search.categories') || 'Kategoriler'}</h3>
-                <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {facets.categories.map(cat => (
-                    <button
-                      key={cat.id}
-                      onClick={() => { setSelectedCategory(cat.id === selectedCategory ? '' : cat.id); setPage(1); }}
-                      className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                        selectedCategory === cat.id
-                          ? 'bg-purple-50 text-purple-700 font-medium'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {cat.name} ({cat.count})
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Brands */}
-            {facets && facets.brands.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">{t('search.brands') || 'Markalar'}</h3>
-                <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {facets.brands.map(b => (
-                    <label key={b.name} className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 cursor-pointer hover:bg-gray-50 rounded-lg">
-                      <input type="checkbox" className="rounded border-gray-300" />
-                      {b.name} ({b.count})
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Price Range */}
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">{t('search.price_range') || 'Fiyat Aralığı'}</h3>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={priceRange.min}
-                  onChange={e => setPriceRange(p => ({ ...p, min: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                />
-                <span className="text-gray-400">-</span>
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={priceRange.max}
-                  onChange={e => setPriceRange(p => ({ ...p, max: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-            </div>
-          </div>
+        {showFilters && facets && (
+          <FilterPanel
+            groups={[
+              ...(facets.categories.length > 0 ? [{
+                id: 'category',
+                label: 'Kategoriler',
+                type: 'checkbox' as const,
+                options: facets.categories.map(c => ({ id: c.id, label: c.name, count: c.count })),
+              }] : []),
+              ...(facets.brands.length > 0 ? [{
+                id: 'brand',
+                label: 'Markalar',
+                type: 'checkbox' as const,
+                options: facets.brands.map(b => ({ id: b.name, label: b.name, count: b.count })),
+              }] : []),
+            ]}
+          />
         )}
 
         {/* Results */}

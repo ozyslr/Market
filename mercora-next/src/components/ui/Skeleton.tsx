@@ -43,6 +43,18 @@ export function SearchResultsSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
+export function TableRowSkeleton({ cols = 6 }: { cols?: number }) {
+  return (
+    <tr className="animate-pulse">
+      {Array.from({ length: cols }).map((_, i) => (
+        <td key={i} className="px-10 py-6">
+          <div className="h-4 bg-gray-200 rounded w-3/4" />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
 export function CategoryListSkeleton() {
   return (
     <div className="flex gap-3 overflow-x-auto pb-2 animate-pulse">

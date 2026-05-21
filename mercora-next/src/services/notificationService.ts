@@ -13,7 +13,8 @@ export type NotificationType =
   | 'back_in_stock'
   | 'review_approved'
   | 'payout'
-  | 'moderation';
+  | 'moderation'
+  | 'question_answered';
 
 export interface Notification {
   id: string;

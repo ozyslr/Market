@@ -6,6 +6,9 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Lock, ChevronRight } from 'lucide-react';
+import { PaymentMethodSelector, type PaymentMethodType } from '@/components/checkout/PaymentMethodSelector';
+import { IyzicoPayment } from '@/components/checkout/IyzicoPayment';
+import { ManualPayment } from '@/components/checkout/ManualPayment';
 
 export function CheckoutContent() {
   const { t } = useLanguage();
@@ -13,6 +16,8 @@ export function CheckoutContent() {
   const { firebaseUser } = useAuth();
   const router = useRouter();
   const [address, setAddress] = useState({ fullName: '', line1: '', city: '', country: 'Türkiye', postalCode: '' });
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('stripe');
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
 
   const total = items.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
 
@@ -77,6 +82,33 @@ export function CheckoutContent() {
             <span>{t('cart.total')}</span>
             <span>{total.toLocaleString()} TL</span>
           </div>
+        </div>
+
+        {/* Payment Method */}
+        <div className="bg-white p-6 rounded-xl border border-gray-200">
+          <PaymentMethodSelector value={paymentMethod} onChange={setPaymentMethod} />
+          {paymentMethod === 'iyzico' && (
+            <div className="mt-4">
+              <IyzicoPayment
+                amount={total}
+                currency="TRY"
+                onSuccess={(token) => { setPaymentStatus(`Payment successful: ${token}`); }}
+                onError={(err) => { setPaymentStatus(`Payment error: ${err}`); }}
+              />
+            </div>
+          )}
+          {paymentMethod === 'manual' && (
+            <div className="mt-4">
+              <ManualPayment
+                amount={total}
+                currency="TRY"
+                onConfirmed={() => { setPaymentStatus('Payment confirmed via bank transfer.'); }}
+              />
+            </div>
+          )}
+          {paymentStatus && (
+            <p className="mt-3 text-sm text-gray-600">{paymentStatus}</p>
+          )}
         </div>
 
         <button

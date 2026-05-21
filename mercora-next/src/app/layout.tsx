@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from 'next/font/google';
 import { Suspense } from 'react';
 import './globals.css';
 import { Providers } from '@/components/Providers';
+import { LayoutAddons } from '@/components/layout/LayoutAddons';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { organizationSchema, websiteSchema } from '@/components/seo/schemas';
 import { SkipToContent } from '@/components/ui/SkipToContent';
@@ -76,6 +77,9 @@ export default function RootLayout({
         <SkipToContent />
         <Suspense fallback={null}>
           <Providers>{children}</Providers>
+        </Suspense>
+        <Suspense fallback={null}>
+          <LayoutAddons />
         </Suspense>
         <JsonLd data={organizationSchema()} />
         <JsonLd data={websiteSchema(`${BASE_URL}/search`)} />

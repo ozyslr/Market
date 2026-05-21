@@ -2,12 +2,17 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShoppingCart, Heart, Star, Truck, Shield, RotateCcw } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { ShoppingCart, Heart, Star, Truck, Shield, RotateCcw, Box } from 'lucide-react';
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { ProductCarousel } from '@/components/commerce/ProductCarousel';
+import { ProductRecommendations } from '@/components/commerce/ProductRecommendations';
 import type { Product } from '@/types';
+
+const ARViewer = dynamic(() => import('@/components/commerce/ARViewer').then(m => ({ default: m.ARViewer })), { ssr: false });
 
 export function ProductDetailContent({ product }: { product: Product }) {
   const { addItem } = useCart();
@@ -15,6 +20,7 @@ export function ProductDetailContent({ product }: { product: Product }) {
   const { t } = useLanguage();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [arOpen, setArOpen] = useState(false);
 
   const wishlisted = isWishlisted(product.id);
   const inStock = product.stock > 0;
@@ -152,6 +158,16 @@ export function ProductDetailContent({ product }: { product: Product }) {
               >
                 <Heart size={20} className={wishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'} />
               </button>
+              {/* AR View */}
+              {product.images?.[0] && (
+                <button
+                  onClick={() => setArOpen(true)}
+                  className="p-3 rounded-xl border border-gray-300 hover:bg-gray-50"
+                  title="AR View"
+                >
+                  <Box size={20} className="text-gray-600" />
+                </button>
+              )}
             </div>
           )}
 
@@ -187,6 +203,28 @@ export function ProductDetailContent({ product }: { product: Product }) {
           )}
         </div>
       </div>
+
+      {/* AR Viewer */}
+      {arOpen && product.images?.[0] && (
+        <ARViewer imageUrl={product.images[0]} productName={product.title} onClose={() => setArOpen(false)} />
+      )}
+
+      {/* Product Carousel — same seller */}
+      {product.sellerId && (
+        <section className="mt-12">
+          <ProductCarousel
+            title="More from this seller"
+            products={[product].map(p => ({
+              id: p.id, name: p.title, price: p.price, images: p.images || [], rating: p.rating,
+            }))}
+          />
+        </section>
+      )}
+
+      {/* Recommendations */}
+      <section className="mt-8">
+        <ProductRecommendations type="cross-sell" currentProductId={product.id} category={product.categoryId} maxResults={6} />
+      </section>
     </div>
   );
 }

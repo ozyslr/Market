@@ -2,6 +2,9 @@
 
 import Link from 'next/link';
 import { ProductCard } from '@/components/ProductCard';
+import { Hero } from '@/components/home/Hero';
+import { StoryBar } from '@/components/commerce/StoryBar';
+import { ProductRecommendations } from '@/components/commerce/ProductRecommendations';
 import { useLanguage } from '@/context/LanguageContext';
 import type { Product, Category } from '@/types';
 
@@ -18,29 +21,7 @@ export function HomeContent({ featured, bestSellers, flashDeals, categories }: H
   return (
     <div>
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-purple-900 via-[#1A1033] to-purple-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
-          <div className="max-w-2xl">
-            <span className="text-purple-300 text-sm font-semibold uppercase tracking-widest">
-              {t('hero.badge')}
-            </span>
-            <h1 className="text-4xl md:text-6xl font-black mt-4 leading-tight">
-              {t('hero.title')}
-            </h1>
-            <p className="text-lg md:text-xl text-purple-200 mt-4 leading-relaxed">
-              {t('hero.desc')}
-            </p>
-            <div className="flex gap-4 mt-8">
-              <Link
-                href="/search"
-                className="bg-white text-purple-900 px-8 py-3 rounded-xl font-bold hover:bg-purple-100 transition-colors"
-              >
-                {t('hero.cta')}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Hero />
 
       {/* Categories */}
       {categories.length > 0 && (
@@ -58,6 +39,9 @@ export function HomeContent({ featured, bestSellers, flashDeals, categories }: H
           </div>
         </section>
       )}
+
+      {/* Story Bar */}
+      <StoryBar />
 
       {/* Flash Deals */}
       {flashDeals.length > 0 && (
@@ -94,6 +78,11 @@ export function HomeContent({ featured, bestSellers, flashDeals, categories }: H
           </div>
         </section>
       )}
+
+      {/* Recommendations */}
+      <section className="max-w-7xl mx-auto px-4 py-8">
+        <ProductRecommendations type="trending" maxResults={8} />
+      </section>
 
       {/* Best Sellers */}
       {bestSellers.length > 0 && (
