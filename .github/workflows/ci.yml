@@ -18,6 +18,12 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run lint
+      - name: mercora-next Type Check
+        working-directory: mercora-next
+        run: npx tsc --noEmit
+      - name: mercora-next Lint
+        working-directory: mercora-next
+        run: npx next lint
 
   test:
     name: Unit Tests
