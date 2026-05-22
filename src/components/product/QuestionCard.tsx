@@ -105,6 +105,7 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
                 value={answerText}
                 onChange={e => setAnswerText(e.target.value)}
                 placeholder="Cevabınızı yazın..."
+                maxLength={1000}
                 className="flex-1 px-3 py-1.5 bg-white border border-brand-primary/10 rounded-xl text-xs outline-none focus:border-accent"
               />
               <button

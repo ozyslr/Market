@@ -170,6 +170,7 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName }:
             value={replyText}
             onChange={e => setReplyText(e.target.value)}
             placeholder="Satıcı yanıtı..."
+            maxLength={1000}
             className="flex-1 px-3 py-2 bg-white border border-brand-primary/10 rounded-xl text-xs outline-none focus:border-accent"
           />
           <button

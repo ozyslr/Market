@@ -37,12 +37,14 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
       setPhotoError('En fazla 3 fotoğraf ekleyebilirsiniz.');
       return;
     }
-    setPhotoError('');
-    files.forEach(file => {
-      if (file.size > 500 * 1024) {
-        setPhotoError('Her fotoğraf en fazla 500KB olabilir.');
-        return;
-      }
+    const oversized = files.filter(f => f.size > 500 * 1024);
+    if (oversized.length > 0) {
+      setPhotoError('Her fotoğraf en fazla 500KB olabilir.');
+    } else {
+      setPhotoError('');
+    }
+    const valid = files.filter(f => f.size <= 500 * 1024);
+    valid.forEach(file => {
       const reader = new FileReader();
       reader.onload = ev => setPhotos(prev => [...prev, ev.target!.result as string]);
       reader.readAsDataURL(file);

@@ -1,18 +1,23 @@
 import {
   collection, addDoc, getDocs, getDoc,
   query, where, orderBy, updateDoc, doc,
+  arrayUnion, arrayRemove, increment,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ProductQuestion } from '@/types';
 
 export async function getQuestions(productId: string): Promise<ProductQuestion[]> {
-  const q = query(
-    collection(db, 'productQuestions'),
-    where('productId', '==', productId),
-    orderBy('createdAt', 'desc'),
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as ProductQuestion));
+  try {
+    const q = query(
+      collection(db, 'productQuestions'),
+      where('productId', '==', productId),
+      orderBy('createdAt', 'desc'),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as ProductQuestion));
+  } catch {
+    return [];
+  }
 }
 
 export async function askQuestion(
@@ -50,12 +55,10 @@ export async function voteQuestionHelpful(questionId: string, userId: string): P
   if (!snap.exists()) throw new Error('Question not found');
 
   const data = snap.data();
-  const voters: string[] = data.helpfulVoters || [];
-  const alreadyVoted = voters.includes(userId);
-  const newVoters = alreadyVoted
-    ? voters.filter(v => v !== userId)
-    : [...voters, userId];
-
-  await updateDoc(ref, { helpfulVoters: newVoters, helpfulCount: newVoters.length });
-  return newVoters.length;
+  const alreadyVoted = (data.helpfulVoters || []).includes(userId);
+  await updateDoc(ref, {
+    helpfulVoters: alreadyVoted ? arrayRemove(userId) : arrayUnion(userId),
+    helpfulCount: increment(alreadyVoted ? -1 : 1),
+  });
+  return (data.helpfulCount ?? 0) + (alreadyVoted ? -1 : 1);
 }

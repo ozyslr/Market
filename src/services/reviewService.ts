@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, where, orderBy, limit, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Review } from '../types';
 import { createNotification } from './notificationService';
@@ -95,8 +95,7 @@ export async function rejectReview(reviewId: string): Promise<void> {
   }
 }
 
-export async function getReviewStats(productId: string): Promise<ReviewStats> {
-  const reviews = await getReviewsByProduct(productId);
+export function computeReviewStats(reviews: Review[]): ReviewStats {
   const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   let qualitySum = 0, shippingSum = 0, descSum = 0, catCount = 0;
 
@@ -121,20 +120,23 @@ export async function getReviewStats(productId: string): Promise<ReviewStats> {
   };
 }
 
+export async function getReviewStats(productId: string): Promise<ReviewStats> {
+  const reviews = await getReviewsByProduct(productId);
+  return computeReviewStats(reviews);
+}
+
 export async function voteReviewHelpful(reviewId: string, userId: string): Promise<number> {
   const ref = doc(db, REVIEWS_COLLECTION, reviewId);
   const snap = await getDoc(ref);
   if (!snap.exists()) throw new Error('Review not found');
 
   const data = snap.data() as Review;
-  const voters: string[] = data.helpfulVoters || [];
-  const alreadyVoted = voters.includes(userId);
-  const newVoters = alreadyVoted
-    ? voters.filter(v => v !== userId)
-    : [...voters, userId];
-
-  await updateDoc(ref, { helpfulVoters: newVoters, helpfulCount: newVoters.length });
-  return newVoters.length;
+  const alreadyVoted = (data.helpfulVoters || []).includes(userId);
+  await updateDoc(ref, {
+    helpfulVoters: alreadyVoted ? arrayRemove(userId) : arrayUnion(userId),
+    helpfulCount: increment(alreadyVoted ? -1 : 1),
+  });
+  return (data.helpfulCount ?? 0) + (alreadyVoted ? -1 : 1);
 }
 
 export async function addSellerResponse(

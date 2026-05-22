@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Review } from '@/types';
 import {
   getReviewsByProduct,
-  getReviewStats,
+  computeReviewStats,
   ReviewStats,
   addReview,
   checkUserReview,
@@ -54,13 +54,13 @@ export function ReviewSection({
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([getReviewsByProduct(productId), getReviewStats(productId)]).then(
-      ([r, s]) => {
+    getReviewsByProduct(productId)
+      .then(r => {
         setReviews(r);
-        setStats(s);
-        setLoading(false);
-      },
-    );
+        setStats(computeReviewStats(r));
+      })
+      .catch(() => setStats(EMPTY_STATS))
+      .finally(() => setLoading(false));
   }, [productId]);
 
   useEffect(() => {
