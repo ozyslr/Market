@@ -5,10 +5,10 @@ import {
   Star, Truck, ShieldCheck, ChevronRight, ShoppingCart,
   Globe, Heart, Share2, Info, ChevronLeft, Award,
   Clock, Sparkles, Zap, Shield, MapPin,
-  Undo2, CheckCircle2, AlertCircle, MessageCircle,
-  ThumbsUp, BarChart, ExternalLink, Package, ArrowRight,
+  Undo2, CheckCircle2, AlertCircle,
+  BarChart, Package,
   Facebook, Twitter, Navigation,
-  TrendingUp, Eye, Tag, Ticket, Copy, HelpCircle, BellRing, Smartphone,
+  TrendingUp, Eye, Tag, Ticket, Copy, BellRing, Smartphone,
 } from 'lucide-react';
 import { MOCK_PRODUCTS } from '@/mockData';
 import { cn } from '@/lib/utils';
@@ -20,19 +20,19 @@ import { SEO } from '@/components/common/SEO';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { getProductBySlug } from '@/services/productService';
-import { addReview, getReviewsByProduct, checkUserReview } from '@/services/reviewService';
-import { Product, Review, Campaign, Coupon, ProductQuestion, ProductVariant } from '@/types';
+import { Product, Campaign, Coupon, ProductVariant } from '@/types';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
-import { getQuestions, askQuestion, answerQuestion } from '@/services/productQuestionService';
+import { ReviewSection } from '@/components/product/ReviewSection';
+import { QASection } from '@/components/product/QASection';
 import { getActiveCampaigns, calcCampaignDiscount } from '@/services/campaignService';
 import { getCoupons } from '@/services/couponService';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { trackPrice, untrackPrice, isTracking } from '@/services/priceTrackService';
-import { trackEvent } from '@/services/behaviorService';
+import { trackEvent, getRecentViewedIds } from '@/services/behaviorService';
 import { productSchema, breadcrumbSchema } from '@/components/seo/schemas';
 import { getContentBasedRecommendations, getCollaborativeRecommendations } from '@/services/recommendationService';
-import { RecommendationStrip } from '@/components/commerce/ProductRecommendations';
 import { ARViewer } from '@/components/commerce/ARViewer';
 import { AuthenticityBadge } from '@/components/commerce/AuthenticityBadge';
 import { ProductDetailSkeleton } from '@/components/ui/Skeleton';
@@ -48,33 +48,25 @@ const MARKET_DATA = [
   { day: 'Sun', demand: 95, price: 299 },
 ];
 
-function SellerAnswerForm({ onAnswer }: { onAnswer: (ans: string) => void }) {
-  const [ans, setAns] = React.useState('');
-  return (
-    <div className="ml-5 mt-2 flex gap-2">
-      <input
-        value={ans}
-        onChange={e => setAns(e.target.value)}
-        placeholder="Cevabınızı yazın..."
-        className="flex-1 px-3 py-1.5 bg-white border border-[#F8F8FA] rounded-xl text-xs outline-none focus:border-accent"
-      />
-      <button
-        onClick={() => { if (ans.trim()) { onAnswer(ans.trim()); setAns(''); } }}
-        className="px-3 py-1.5 bg-accent text-white rounded-xl text-xs font-black hover:bg-accent/90"
-      >
-        Cevapla
-      </button>
-    </div>
-  );
-}
+const POPULAR_SEARCHES_BY_LANG: Record<string, string[]> = {
+  tr: ['Akıllı Saat', 'Kablosuz Kulaklık', 'Robot Süpürge', 'Oyuncu Bilgisayarı', 'Deri Ceket', 'Kahve Makinesi', 'Güneş Gözlüğü', 'Bluetooth Hoparlör'],
+  en: ['Smart Watch', 'Wireless Earbuds', 'Robot Vacuum', 'Gaming Laptop', 'Leather Jacket', 'Coffee Maker', 'Sunglasses', 'Bluetooth Speaker'],
+  de: ['Smartwatch', 'Kabellose Kopfhörer', 'Saugroboter', 'Gaming-Laptop', 'Lederjacke', 'Kaffeemaschine', 'Sonnenbrille', 'Bluetooth-Lautsprecher'],
+  ar: ['ساعة ذكية', 'سماعات لاسلكية', 'مكنسة روبوت', 'كمبيوتر ألعاب', 'سترة جلدية', 'آلة صنع القهوة', 'نظارات شمسية', 'مكبر صوت بلوتوث'],
+};
+
 
 export function ProductDetail() {
   const { t, lang } = useLanguage();
   const { selectedLocation, setIsLocationModalOpen, location } = useLocationStore();
   const { user, firebaseUser } = useAuth();
   const { addItem } = useCart();
+  const { toggleWishlist, isWishlisted } = useWishlist();
   const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<Product | null>(null);
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
@@ -83,43 +75,94 @@ export function ProductDetail() {
   const nextImage = () =>
     setActiveImage(i => (i + 1) % (product?.images.length ?? 1));
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsLightboxOpen(false);
+      } else if (e.key === 'ArrowLeft') {
+        prevImage();
+      } else if (e.key === 'ArrowRight') {
+        nextImage();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isLightboxOpen, product?.images.length]);
   const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews' | 'qa'>('details');
-  const [firestoreReviews, setFirestoreReviews] = useState<Review[]>([]);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [hasReviewed, setHasReviewed] = useState(false);
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [viewers, setViewers] = useState(0);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [activeCoupons, setActiveCoupons] = useState<Coupon[]>([]);
-  const [questions, setQuestions] = useState<ProductQuestion[]>([]);
-  const [questionText, setQuestionText] = useState('');
-  const [submittingQ, setSubmittingQ] = useState(false);
   const [tracking, setTracking] = useState(false);
   const [trackLoading, setTrackLoading] = useState(false);
   const [recSimilar, setRecSimilar] = useState<Product[]>([]);
   const [recAlsoBought, setRecAlsoBought] = useState<Product[]>([]);
   const [arOpen, setArOpen] = useState(false);
+  const [recentViewed, setRecentViewed] = useState<Product[]>([]);
 
   useEffect(() => {
     if (product?.id) setViewers(Math.floor(Math.random() * 14) + 2);
   }, [product?.id]);
 
   useEffect(() => {
-    if (!firebaseUser?.uid || !product?.id) return;
-    trackEvent(firebaseUser.uid, {
-      type: 'view',
-      productId: product.id,
-      timestamp: new Date().toISOString(),
-    });
+    if (!product?.id) return;
+    
+    // 1. Firebase tracking (authenticated user)
+    if (firebaseUser?.uid) {
+      trackEvent(firebaseUser.uid, {
+        type: 'view',
+        productId: product.id,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // 2. localStorage tracking (both guest & logged-in user fallback)
+    try {
+      const localKey = 'mercora_recently_viewed_local';
+      const existing = localStorage.getItem(localKey);
+      let list: string[] = existing ? JSON.parse(existing) : [];
+      list = [product.id, ...list.filter(id => id !== product.id)].slice(0, 10);
+      localStorage.setItem(localKey, JSON.stringify(list));
+    } catch (err) {
+      console.error('Error tracking recently viewed locally:', err);
+    }
   }, [firebaseUser?.uid, product?.id]);
 
   useEffect(() => {
-    if (product?.id && firebaseUser?.uid) {
-      checkUserReview(product.id, firebaseUser.uid).then(setHasReviewed);
+    async function loadRecentViewed() {
+      if (!product?.id) return;
+      let viewedIds: string[] = [];
+      
+      if (firebaseUser?.uid) {
+        viewedIds = await getRecentViewedIds(firebaseUser.uid, 12);
+      }
+      
+      // Fallback or guest user: read from localStorage
+      if (viewedIds.length === 0) {
+        try {
+          const localKey = 'mercora_recently_viewed_local';
+          const existing = localStorage.getItem(localKey);
+          viewedIds = existing ? JSON.parse(existing) : [];
+        } catch {
+          viewedIds = [];
+        }
+      }
+
+      // Filter out current product id
+      const filteredIds = viewedIds.filter(id => id !== product.id);
+
+      // Map to MOCK_PRODUCTS
+      const products = filteredIds
+        .map(id => MOCK_PRODUCTS.find(p => p.id === id))
+        .filter((p): p is Product => !!p);
+
+      setRecentViewed(products.slice(0, 8));
     }
+
+    loadRecentViewed();
   }, [product?.id, firebaseUser?.uid]);
 
   useEffect(() => {
@@ -134,9 +177,6 @@ export function ProductDetail() {
       const data = await getProductBySlug(slug);
       setProduct(data);
       setLoading(false);
-      if (data) {
-        getReviewsByProduct(data.id).then(setFirestoreReviews);
-      }
     }
     loadProduct();
   }, [slug]);
@@ -165,53 +205,10 @@ export function ProductDetail() {
   }, []);
 
   useEffect(() => {
-    if (product?.id) getQuestions(product.id).then(setQuestions);
-  }, [product?.id]);
-
-  useEffect(() => {
     if (!product?.id) return;
     getContentBasedRecommendations(product, 10).then(setRecSimilar);
     getCollaborativeRecommendations(product.id, 6).then(setRecAlsoBought);
   }, [product?.id]);
-
-  async function handleSubmitReview(e: React.FormEvent, productId: string) {
-    e.preventDefault();
-    if (!firebaseUser || !reviewComment.trim()) return;
-    setSubmitting(true);
-    try {
-      await addReview({
-        productId,
-        sellerId: product?.sellerId,
-        userId: firebaseUser.uid,
-        userName: user?.name || firebaseUser.displayName || 'Kullanıcı',
-        rating: reviewRating,
-        comment: reviewComment.trim(),
-        createdAt: new Date().toISOString(),
-        verified: false,
-      });
-      setReviewComment('');
-      setReviewRating(5);
-      setShowReviewForm(false);
-      setHasReviewed(true);
-      setReviewSubmitted(true);
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function handleAskQuestion() {
-    if (!questionText.trim() || !user || !product) return;
-    setSubmittingQ(true);
-    const newQ = await askQuestion(
-      product.id,
-      user.id,
-      user.name || user.email || 'Kullanıcı',
-      questionText.trim(),
-    );
-    setQuestions(prev => [newQ, ...prev]);
-    setQuestionText('');
-    setSubmittingQ(false);
-  }
 
   async function handleTrackPrice() {
     if (!firebaseUser || !product) return; // silently ignore — UI should guide user to login
@@ -302,7 +299,10 @@ export function ProductDetail() {
               <div className="grid md:grid-cols-2 gap-12">
                 {/* Gallery */}
                 <div className="space-y-6">
-                  <div className="aspect-square bg-white rounded-3xl overflow-hidden border border-brand-primary/5 p-8 relative flex items-center justify-center">
+                  <div 
+                    onClick={() => setIsLightboxOpen(true)}
+                    className="aspect-square bg-white rounded-3xl overflow-hidden border border-brand-primary/5 p-8 relative flex items-center justify-center cursor-zoom-in group/image"
+                  >
                     <motion.div
                       key={activeImage}
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -321,13 +321,13 @@ export function ProductDetail() {
                     {(product?.images.length ?? 0) > 1 && (
                       <>
                         <button
-                          onClick={prevImage}
+                          onClick={(e) => { e.stopPropagation(); prevImage(); }}
                           className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white/80 backdrop-blur rounded-full shadow-md flex items-center justify-center hover:bg-white transition-all"
                         >
                           <ChevronLeft size={18} className="text-[#1A1033]" />
                         </button>
                         <button
-                          onClick={nextImage}
+                          onClick={(e) => { e.stopPropagation(); nextImage(); }}
                           className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white/80 backdrop-blur rounded-full shadow-md flex items-center justify-center hover:bg-white transition-all"
                         >
                           <ChevronRight size={18} className="text-[#1A1033]" />
@@ -337,17 +337,23 @@ export function ProductDetail() {
                     <div className="absolute top-6 right-6 flex flex-col gap-3">
                       {product.model3dUrl && (
                         <button
-                          onClick={() => setArOpen(true)}
+                          onClick={(e) => { e.stopPropagation(); setArOpen(true); }}
                           className="p-3 bg-gradient-to-br from-purple-500 to-blue-500 shadow-xl rounded-full text-white hover:from-purple-400 hover:to-blue-400 transition-all border border-white/20"
                           title="3D / AR ile görüntüle"
                         >
                           <Smartphone size={20} />
                         </button>
                       )}
-                      <button className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5">
-                        <Heart size={20} />
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
+                        className={cn(
+                          "p-3 bg-white/80 backdrop-blur shadow-xl rounded-full transition-all border border-brand-primary/5",
+                          isWishlisted(product.id) ? "text-red-500 bg-white" : "text-brand-primary/40 hover:text-accent hover:bg-white"
+                        )}
+                      >
+                        <Heart size={20} fill={isWishlisted(product.id) ? "currentColor" : "none"} />
                       </button>
-                      <div className="relative group">
+                      <div className="relative group" onClick={(e) => e.stopPropagation()}>
                          <button className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5">
                            <Share2 size={20} />
                          </button>
@@ -823,233 +829,117 @@ export function ProductDetail() {
                     )}
 
                     {activeTab === 'reviews' && (
-                      <motion.div 
+                      <motion.div
                         key="reviews"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="space-y-12"
                       >
-                         <div className="grid md:grid-cols-3 gap-12 border-b border-brand-primary/5 pb-12">
-                            <div className="text-center md:text-left space-y-4">
-                               <h4 className="text-6xl font-display font-black text-brand-primary uppercase italic">{product.rating}</h4>
-                               <div className="flex items-center justify-center md:justify-start gap-1">
-                                 {Array.from({ length: 5 }).map((_, i) => (
-                                   <Star key={i} size={24} fill={i < Math.floor(product.rating) ? "#FF5200" : "none"} className={i < Math.floor(product.rating) ? "text-accent" : "text-brand-primary/10"} />
-                                 ))}
-                               </div>
-                               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary/40">Verified Artifact Balance</p>
-                            </div>
-                            <div className="md:col-span-2 space-y-4">
-                               {[5, 4, 3, 2, 1].map(star => {
-                                 const count = [85, 10, 3, 1, 1][5-star];
-                                 return (
-                                   <div key={star} className="flex items-center gap-4">
-                                      <span className="text-[10px] font-black w-8 text-brand-primary/60">{star} ★</span>
-                                      <div className="flex-1 h-3 bg-brand-secondary rounded-full overflow-hidden border border-brand-primary/5">
-                                         <div className="h-full bg-accent shadow-[0_0_10px_rgba(255,82,0,0.4)]" style={{ width: `${count}%` }} />
-                                      </div>
-                                      <span className="text-[10px] font-black w-8 text-brand-primary/40 text-right">{count}%</span>
-                                   </div>
-                                 );
-                               })}
-                            </div>
-                         </div>
-                         
-                         {/* Write Review */}
-                         <div className="mb-8">
-                           {reviewSubmitted && (
-                             <div className="mb-4 px-5 py-4 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3">
-                               <CheckCircle2 size={16} className="text-green-500 shrink-0" />
-                               <p className="text-xs font-bold text-green-700">Yorumunuz alındı. Admin onayından sonra yayınlanacak.</p>
-                             </div>
-                           )}
-                           {!firebaseUser ? (
-                             <p className="text-xs font-bold text-brand-primary/40 px-4 py-3 bg-brand-secondary/50 rounded-xl">Yorum yazmak için <Link to="/auth" className="text-accent underline">giriş yapın</Link>.</p>
-                           ) : hasReviewed ? (
-                             <div className="flex items-center gap-2 px-4 py-3 bg-accent/5 border border-accent/20 rounded-xl w-fit">
-                               <CheckCircle2 size={14} className="text-accent" />
-                               <span className="text-[10px] font-black uppercase tracking-widest text-accent">Bu ürüne zaten yorum yaptınız</span>
-                             </div>
-                           ) : !showReviewForm ? (
-                             <button
-                               onClick={() => setShowReviewForm(true)}
-                               className="px-8 py-3 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent/20 hover:bg-brand-primary transition-all"
-                             >
-                               Yorum Yaz
-                             </button>
-                           ) : (
-                             <form onSubmit={e => handleSubmitReview(e, product.id)} className="bg-brand-secondary/30 rounded-[2rem] p-8 border border-brand-primary/5 space-y-6">
-                               <h4 className="text-sm font-black uppercase tracking-widest text-brand-primary">Değerlendirmenizi Yazın</h4>
-                               <div className="flex items-center gap-2">
-                                 {Array.from({ length: 5 }).map((_, i) => (
-                                   <button key={i} type="button" onClick={() => setReviewRating(i + 1)}>
-                                     <Star size={28} fill={i < reviewRating ? '#FF5200' : 'none'} className={i < reviewRating ? 'text-accent' : 'text-brand-primary/20'} />
-                                   </button>
-                                 ))}
-                               </div>
-                               <textarea
-                                 value={reviewComment}
-                                 onChange={e => setReviewComment(e.target.value)}
-                                 placeholder="Ürün hakkındaki deneyiminizi paylaşın..."
-                                 rows={4}
-                                 required
-                                 className="w-full p-4 bg-white rounded-2xl border border-brand-primary/5 outline-none focus:ring-4 ring-accent/10 text-sm font-medium resize-none"
-                               />
-                               <div className="flex gap-3">
-                                 <button type="submit" disabled={submitting || !reviewComment.trim()}
-                                   className="px-8 py-3 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40 hover:bg-brand-primary transition-all flex items-center gap-2">
-                                   {submitting && <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />}
-                                   Gönder
-                                 </button>
-                                 <button type="button" onClick={() => setShowReviewForm(false)}
-                                   className="px-6 py-3 bg-white rounded-xl text-[10px] font-black uppercase tracking-widest border border-brand-primary/5 hover:border-brand-primary/20 transition-all">
-                                   İptal
-                                 </button>
-                               </div>
-                             </form>
-                           )}
-                         </div>
-
-                         <div className="space-y-12">
-                            {firestoreReviews.map((review) => (
-                              <div key={review.id} className="group pb-12 border-b border-brand-primary/5">
-                                 <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-3">
-                                       <div className="w-12 h-12 bg-accent/10 border border-accent/20 rounded-2xl flex items-center justify-center font-black text-accent uppercase">
-                                          {review.userName.charAt(0)}
-                                       </div>
-                                       <div>
-                                          <p className="text-xs font-black uppercase tracking-wider text-brand-primary">{review.userName}</p>
-                                          <div className="flex items-center gap-1 text-accent mt-1">
-                                            {Array.from({length: 5}).map((_, i) => (
-                                              <Star key={i} size={10} fill={i < review.rating ? "currentColor" : "none"} />
-                                            ))}
-                                            <span className="text-[10px] font-black ml-2 text-brand-primary/40">{review.createdAt.split('T')[0]}</span>
-                                          </div>
-                                       </div>
-                                    </div>
-                                    {review.verified && (
-                                       <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-600 rounded-full border border-green-500/20">
-                                          <CheckCircle2 size={12} />
-                                          <span className="text-[8px] font-black uppercase tracking-widest">{t('product.verified_purchase')}</span>
-                                       </div>
-                                    )}
-                                 </div>
-                                 <p className="text-sm text-brand-primary/70 leading-relaxed font-medium mb-6">{review.comment}</p>
-                                 <div className="flex items-center gap-6">
-                                    <button className="flex items-center gap-2 text-[10px] font-black uppercase text-brand-primary/40 hover:text-accent transition-colors"><ThumbsUp size={14} /> {t('product.useful')} (12)</button>
-                                    <button className="flex items-center gap-2 text-[10px] font-black uppercase text-brand-primary/40 hover:text-accent transition-colors"><MessageCircle size={14} /> Yanıtla</button>
-                                 </div>
-                              </div>
-                            ))}
-                         </div>
+                        <ReviewSection
+                          productId={product.id}
+                          sellerId={product.sellerId}
+                          productRating={product.rating}
+                          currentUserId={firebaseUser?.uid}
+                          currentUserName={user?.name || firebaseUser?.displayName || undefined}
+                          isSeller={user?.id === product.sellerId || (user as any)?.role === 'admin'}
+                          isLoggedIn={!!firebaseUser}
+                        />
                       </motion.div>
                     )}
 
                     {activeTab === 'qa' && (
-                       <motion.div key="qa" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                         <div className="space-y-4">
-                           {user ? (
-                             <div className="flex gap-2">
-                               <input
-                                 value={questionText}
-                                 onChange={e => setQuestionText(e.target.value)}
-                                 onKeyDown={e => e.key === 'Enter' && handleAskQuestion()}
-                                 placeholder="Ürün hakkında bir soru sorun..."
-                                 className="flex-1 px-4 py-2.5 bg-[#F8F8FA] rounded-xl text-sm outline-none"
-                               />
-                               <button
-                                 onClick={handleAskQuestion}
-                                 disabled={submittingQ || !questionText.trim()}
-                                 className="px-4 py-2.5 bg-accent text-white rounded-xl text-xs font-black disabled:opacity-50 hover:bg-accent/90 transition-colors"
-                               >
-                                 {submittingQ ? '...' : 'Sor'}
-                               </button>
-                             </div>
-                           ) : (
-                             <p className="text-xs text-[#1A1033]/40 font-bold py-2">
-                               Soru sormak için giriş yapın.
-                             </p>
-                           )}
-
-                           {questions.length === 0 ? (
-                             <div className="text-center py-8">
-                               <MessageCircle size={32} className="mx-auto text-[#1A1033]/10 mb-2" />
-                               <p className="text-xs font-bold text-[#1A1033]/30">
-                                 Henüz soru sorulmamış. İlk soran sen ol!
-                               </p>
-                             </div>
-                           ) : (
-                             <div className="space-y-3">
-                               {questions.map(q => (
-                                 <div key={q.id} className="bg-[#F8F8FA] rounded-2xl p-4">
-                                   <div className="flex items-start gap-2 mb-2">
-                                     <HelpCircle size={14} className="text-accent mt-0.5 flex-shrink-0" />
-                                     <div className="flex-1">
-                                       <p className="text-sm font-bold text-[#1A1033]">{q.text}</p>
-                                       <p className="text-[10px] text-[#1A1033]/30 mt-0.5">
-                                         {q.userName} · {new Date(q.createdAt).toLocaleDateString('tr-TR')}
-                                       </p>
-                                     </div>
-                                   </div>
-                                   {q.answer ? (
-                                     <div className="ml-5 pl-3 border-l-2 border-accent/30">
-                                       <p className="text-xs font-bold text-[#1A1033]/70">{q.answer}</p>
-                                       <p className="text-[10px] text-accent font-bold mt-0.5">
-                                         {q.answeredBy} · {new Date(q.answeredAt!).toLocaleDateString('tr-TR')}
-                                       </p>
-                                     </div>
-                                   ) : (user?.id === product?.sellerId || (user as any)?.role === 'admin') ? (
-                                     <SellerAnswerForm
-                                       onAnswer={ans => {
-                                         answerQuestion(q.id, ans, user?.name || 'Satıcı').then(() => {
-                                           setQuestions(prev =>
-                                             prev.map(x =>
-                                               x.id === q.id
-                                                 ? { ...x, answer: ans, answeredBy: user?.name || 'Satıcı', answeredAt: new Date().toISOString() }
-                                                 : x,
-                                             ),
-                                           );
-                                         });
-                                       }}
-                                     />
-                                   ) : (
-                                     <p className="ml-5 text-[10px] text-[#1A1033]/20 font-bold italic">
-                                       Henüz cevaplanmadı
-                                     </p>
-                                   )}
-                                 </div>
-                               ))}
-                             </div>
-                           )}
-                         </div>
-                       </motion.div>
+                      <motion.div
+                        key="qa"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <QASection
+                          productId={product.id}
+                          currentUserId={firebaseUser?.uid}
+                          currentUserName={user?.name || firebaseUser?.displayName || undefined}
+                          isSeller={user?.id === product.sellerId || (user as any)?.role === 'admin'}
+                          isLoggedIn={!!firebaseUser}
+                        />
+                      </motion.div>
                     )}
                   </AnimatePresence>
                </div>
             </div>
 
             {/* Recommendations Blocks */}
-            {recSimilar.length > 0 && (
-              <div className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm p-6 md:p-8">
-                <RecommendationStrip
-                  title="Benzer Ürünler"
-                  products={recSimilar}
-                  source="content_based"
+            <div className="space-y-6">
+              {/* Row 1: Bunlar da İlgini Çekebilir */}
+              {(recSimilar.length > 0 || relatedProducts.length > 0) && (
+                <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+                  <ProductCarousel
+                    title={t('product.rec.interest.title')}
+                    subtext={t('product.rec.interest.sub')}
+                    products={recSimilar.length > 0 ? recSimilar : relatedProducts}
+                  />
+                </div>
+              )}
+
+              {/* Row 2: Buna Bakanların Aldıkları */}
+              {recAlsoBought.length > 0 && (
+                <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+                  <ProductCarousel
+                    title={t('product.rec.bakanAldi.title')}
+                    subtext={t('product.rec.bakanAldi.sub')}
+                    products={recAlsoBought}
+                  />
+                </div>
+              )}
+
+              {/* Row 3: Birlikte Alınanlar */}
+              {boughtTogether.length > 0 && (
+                <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+                  <ProductCarousel
+                    title={t('product.rec.birlikte.title')}
+                    subtext={t('product.rec.birlikte.sub')}
+                    products={boughtTogether}
+                  />
+                </div>
+              )}
+
+              {/* Row 4: Herkes Bunlara Bakıyor */}
+              {categoriesProducts.length > 0 && (
+                <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+                  <ProductCarousel
+                    title={t('product.rec.populer.title')}
+                    subtext={t('product.rec.populer.sub')}
+                    products={categoriesProducts}
+                  />
+                </div>
+              )}
+
+              {/* Row 5: Popüler Ürünlerden Seçtik */}
+              <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+                <ProductCarousel
+                  title={t('product.rec.secilmis.title')}
+                  subtext={t('product.rec.secilmis.sub')}
+                  products={MOCK_PRODUCTS.filter(p => p.featured && p.id !== product.id).slice(0, 10)}
                 />
               </div>
-            )}
-            {recAlsoBought.length > 0 && (
-              <div className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm p-6 md:p-8">
-                <RecommendationStrip
-                  title="Bunu Alanlar Bunları da Aldı"
-                  products={recAlsoBought}
-                  source="collaborative"
-                />
+
+              {/* Popular Searches badge grid */}
+              <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+                <h4 className="text-sm font-black uppercase tracking-wider text-brand-primary dark:text-white mb-4">
+                  {t('product.rec.searches.title')}
+                </h4>
+                <div className="flex flex-wrap gap-2.5">
+                  {(POPULAR_SEARCHES_BY_LANG[lang] || POPULAR_SEARCHES_BY_LANG['en']).map((tag) => (
+                    <Link
+                      key={tag}
+                      to={`/search?q=${encodeURIComponent(tag)}`}
+                      className="px-4 py-2 bg-brand-secondary/50 dark:bg-zinc-800 text-brand-primary/80 dark:text-zinc-300 hover:text-white hover:bg-accent rounded-xl text-xs font-black transition-all border border-brand-primary/5 dark:border-white/5 shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
+                    >
+                      {tag}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            )}
-            <ProductCarousel title={t('product.everyone_looking')} products={MOCK_PRODUCTS.filter(p => p.featured).slice(0, 10)} />
+            </div>
           </div>
 
           {/* Right: Seller & Delivery Control */}
@@ -1187,6 +1077,83 @@ export function ProductDetail() {
             onClose={() => setArOpen(false)}
           />
         )}
+
+        {/* Lightbox / Zoom Modal */}
+        <AnimatePresence>
+          {isLightboxOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsLightboxOpen(false)}
+              className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-between p-4 md:p-8"
+            >
+              {/* Close Button */}
+              <div className="w-full flex justify-end">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsLightboxOpen(false); }}
+                  className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white transition-all border border-white/10"
+                >
+                  <span className="text-xl font-bold">✕</span>
+                </button>
+              </div>
+
+              {/* Main Image View */}
+              <div className="flex-1 w-full max-w-5xl flex items-center justify-between gap-4 md:gap-8 my-4">
+                {/* Prev Button */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                  className="w-12 h-12 md:w-16 md:h-16 bg-white/10 hover:bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white transition-all border border-white/10"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+
+                {/* Image Container */}
+                <div 
+                  onClick={(e) => e.stopPropagation()}
+                  className="relative max-h-[70vh] max-w-[80vw] flex items-center justify-center"
+                >
+                  <motion.img
+                    key={activeImage}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    src={product.images[activeImage]}
+                    alt={product.title}
+                    className="max-h-[70vh] max-w-[80vw] object-contain select-none pointer-events-none"
+                  />
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                  className="w-12 h-12 md:w-16 md:h-16 bg-white/10 hover:bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white transition-all border border-white/10"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </div>
+
+              {/* Thumbnail Strip */}
+              <div 
+                onClick={(e) => e.stopPropagation()}
+                className="flex gap-3 overflow-x-auto no-scrollbar max-w-full pb-4"
+              >
+                {product.images.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImage(i)}
+                    className={cn(
+                      "w-16 h-16 rounded-xl overflow-hidden border-2 transition-all p-1 bg-white shrink-0",
+                      activeImage === i ? "border-accent scale-105 shadow-lg" : "border-transparent opacity-50 hover:opacity-100"
+                    )}
+                  >
+                    <img src={img} alt={product.title} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
     </div>
   );
 }
