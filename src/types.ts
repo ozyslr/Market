@@ -43,6 +43,11 @@ export interface Review {
   createdAt: string;
   verified: boolean;
   status: 'pending' | 'approved' | 'rejected';
+  photos?: string[];
+  helpfulCount?: number;
+  helpfulVoters?: string[];
+  categoryRatings?: { quality?: number; shipping?: number; description?: number };
+  sellerResponse?: { text: string; createdAt: string; sellerName: string };
 }
 
 export interface Seller {
@@ -323,8 +328,10 @@ export interface ProductQuestion {
   userId: string;
   userName: string;
   text: string;
+  createdAt: string;
   answer?: string;
   answeredBy?: string;
   answeredAt?: string;
-  createdAt: string;
+  helpfulCount?: number;
+  helpfulVoters?: string[];
 }
