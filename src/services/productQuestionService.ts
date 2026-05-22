@@ -1,5 +1,5 @@
 import {
-  collection, addDoc, getDocs,
+  collection, addDoc, getDocs, getDoc,
   query, where, orderBy, updateDoc, doc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -42,4 +42,20 @@ export async function answerQuestion(
     answeredBy,
     answeredAt: new Date().toISOString(),
   });
+}
+
+export async function voteQuestionHelpful(questionId: string, userId: string): Promise<number> {
+  const ref = doc(db, 'productQuestions', questionId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error('Question not found');
+
+  const data = snap.data();
+  const voters: string[] = data.helpfulVoters || [];
+  const alreadyVoted = voters.includes(userId);
+  const newVoters = alreadyVoted
+    ? voters.filter(v => v !== userId)
+    : [...voters, userId];
+
+  await updateDoc(ref, { helpfulVoters: newVoters, helpfulCount: newVoters.length });
+  return newVoters.length;
 }
