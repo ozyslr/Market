@@ -841,7 +841,7 @@ export function ProductDetail() {
                           productRating={product.rating}
                           currentUserId={firebaseUser?.uid}
                           currentUserName={user?.name || firebaseUser?.displayName || undefined}
-                          isSeller={user?.id === product.sellerId || (user as any)?.role === 'admin'}
+                          isSeller={user?.id === product.sellerId || user?.role === 'admin'}
                           isLoggedIn={!!firebaseUser}
                         />
                       </motion.div>
@@ -850,15 +850,15 @@ export function ProductDetail() {
                     {activeTab === 'qa' && (
                       <motion.div
                         key="qa"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
                       >
                         <QASection
                           productId={product.id}
                           currentUserId={firebaseUser?.uid}
                           currentUserName={user?.name || firebaseUser?.displayName || undefined}
-                          isSeller={user?.id === product.sellerId || (user as any)?.role === 'admin'}
+                          isSeller={user?.id === product.sellerId || user?.role === 'admin'}
                           isLoggedIn={!!firebaseUser}
                         />
                       </motion.div>
