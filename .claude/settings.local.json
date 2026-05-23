@@ -37,11 +37,31 @@
       "Bash(ls \"O:/AI/E-tic 2026/.env\"*)",
       "Bash(ls \"O:/AI/E-tic 2026/\"*.json)",
       "Bash(npx vercel:*)",
-      "Bash(node -e ':*)",
-      "Bash(npx @react-native-community/cli --version)",
-      "Bash(npx expo:*)",
-      "Bash(ls O:\\\\AI\\\\E-tic 2026:*)",
-      "Bash(npx firebase:*)"
+      "Bash(mkdir -p \"O:/AI/E-tic 2026/docs/superpowers/plans\")",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git -C \"O:\\\\AI\\\\E-tic 2026\" diff HEAD -- src/components/product/RatingSummary.tsx src/components/product/ReviewCard.tsx src/components/product/ReviewForm.tsx src/components/product/ReviewFilters.tsx src/components/product/ReviewSection.tsx src/components/product/QuestionCard.tsx src/components/product/QASection.tsx src/types.ts src/services/reviewService.ts src/services/productQuestionService.ts src/pages/ProductDetail.tsx)",
+      "Bash(npm test *)",
+      "Bash(git merge-base *)",
+      "mcp__plugin_context-mode_context-mode__ctx_doctor",
+      "mcp__plugin_context-mode_context-mode__ctx_upgrade",
+      "Bash(node:*)",
+      "Read(//c/Users/ozyslr/.claude/plugins/cache/context-mode/context-mode/1.0.89/**)",
+      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\" rebuild better-sqlite3)",
+      "mcp__plugin_context-mode_context-mode__ctx_stats",
+      "Bash(C:\\\\Program Files\\\\nodejs\\\\npm.cmd root:*)",
+      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\" install -g context-mode@latest)",
+      "Bash(cp:*)",
+      "mcp__plugin_context-mode_context-mode__ctx_insight",
+      "Bash(git -C \"C:\\\\Users\\\\ozyslr\\\\.claude\\\\plugins\\\\marketplaces\\\\context-mode\" log --oneline -3)",
+      "Bash(git -C \"C:\\\\Users\\\\ozyslr\\\\.claude\\\\plugins\\\\marketplaces\\\\context-mode\" pull)",
+      "mcp__plugin_context-mode_context-mode__ctx_execute_file",
+      "mcp__plugin_context-mode_context-mode__ctx_execute",
+      "mcp__plugin_context-mode_context-mode__ctx_search"
+    ],
+    "additionalDirectories": [
+      "O:\\AI\\E-tic 2026\\docs\\superpowers"
     ]
   }
 }

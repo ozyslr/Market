@@ -8,7 +8,8 @@ import {
   FirestoreError,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Product } from '@/types';
+import type { Product, SponsoredSlot } from '@/types';
+import { injectSponsoredProducts } from './adService';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -34,6 +35,7 @@ export interface SearchResult {
     brands: { name: string; count: number }[];
     priceRange: { min: number; max: number };
   };
+  sponsoredSlots?: SponsoredSlot[];
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

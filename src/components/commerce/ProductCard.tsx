@@ -70,7 +70,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           className="relative aspect-3/4 overflow-hidden bg-brand-secondary/30 dark:bg-zinc-800"
           onMouseMove={handleImageMouseMove}
         >
-          <Link to={`/product/${product.slug}`} className="block w-full h-full relative">
+          <Link to={`/product/${product.slug}`} target="_blank" rel="noopener noreferrer" className="block w-full h-full relative">
+            {product.promotionStatus === 'active' && (
+              <div className="absolute top-0 left-0 z-30 px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold rounded-br-md shadow-xs">
+                REKLAM
+              </div>
+            )}
             <OptimizedImage
               src={product.images[imgIdx]}
               alt={product.title}
@@ -127,7 +132,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Info Section */}
         <div className="p-3 flex flex-col flex-1">
-          <Link to={`/product/${product.slug}`} className="flex flex-col mb-1 flex-1">
+          <Link to={`/product/${product.slug}`} target="_blank" rel="noopener noreferrer" className="flex flex-col mb-1 flex-1">
             <span className="text-xs font-bold text-brand-primary dark:text-zinc-100 leading-tight uppercase line-clamp-1 mb-0.5">
               {product.sellerId || "MERCORA"} 
             </span>
@@ -350,6 +355,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     </div>
                     <Link
                       to={`/product/${product.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={() => setShowQuickView(false)}
                       className="flex items-center justify-center w-full py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-accent transition-colors"
                     >

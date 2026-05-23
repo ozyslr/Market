@@ -145,13 +145,29 @@ export function Home() {
   }, []);
 
   useEffect(() => {
-    if (!firebaseUser?.uid) return;
-    getRecentViewedIds(firebaseUser.uid).then(ids => {
+    async function loadRecentlyViewed() {
+      let ids: string[] = [];
+      if (firebaseUser?.uid) {
+        ids = await getRecentViewedIds(firebaseUser.uid);
+      }
+      
+      // Fallback/guest: read from localStorage
+      if (ids.length === 0) {
+        try {
+          const localKey = 'mercora_recently_viewed_local';
+          const existing = localStorage.getItem(localKey);
+          ids = existing ? JSON.parse(existing) : [];
+        } catch {
+          ids = [];
+        }
+      }
+
       const prods = ids
         .map(id => MOCK_PRODUCTS.find(p => p.id === id))
         .filter((p): p is typeof MOCK_PRODUCTS[0] => Boolean(p));
       setRecentlyViewed(prods);
-    });
+    }
+    loadRecentlyViewed();
   }, [firebaseUser?.uid]);
 
   useEffect(() => {
@@ -544,7 +560,7 @@ export function Home() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {recentlyViewed.slice(0, 4).map(product => (
-                <Link key={product.id} to={`/product/${product.slug}`} className="bg-white rounded-3xl p-4 border border-[#1A1033]/5 hover:border-accent/30 transition-all group">
+                <Link key={product.id} to={`/product/${product.slug}`} target="_blank" rel="noopener noreferrer" className="bg-white rounded-3xl p-4 border border-[#1A1033]/5 hover:border-accent/30 transition-all group">
                   <div className="aspect-square bg-[#F8F8FA] rounded-2xl overflow-hidden mb-3 p-3">
                     <img
                       src={product.images[0]}

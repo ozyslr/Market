@@ -21,6 +21,11 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <div className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200">
       <Link href={`/product/${product.slug}`} className="block relative aspect-square overflow-hidden bg-gray-100">
+        {product.promotionStatus === 'active' && (
+          <div className="absolute top-0 left-0 z-10 px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold rounded-br-md shadow-xs">
+            REKLAM
+          </div>
+        )}
         {product.images?.[0] ? (
           <Image
             src={product.images[0]}

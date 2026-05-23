@@ -8,8 +8,9 @@ import {
   FirestoreError,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Product, Category } from '@/types';
+import { Product, Category, SponsoredSlot } from '@/types';
 import { MOCK_PRODUCTS, CATEGORIES } from '@/mockData';
+import { injectSponsoredProducts } from './adService';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ export interface SearchResult {
     brands: { name: string; count: number }[];
     priceRange: { min: number; max: number };
   };
+  sponsoredSlots?: SponsoredSlot[];
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -347,12 +349,47 @@ export async function searchProducts(
 ): Promise<SearchResult> {
   // Try Firestore first
   const firestoreResult = await searchFirestore(params);
+  let result: SearchResult;
+
   if (firestoreResult !== null) {
-    return firestoreResult;
+    result = firestoreResult;
+  } else {
+    // Fallback to MOCK_PRODUCTS
+    result = searchMockProducts(params);
   }
 
-  // Fallback to MOCK_PRODUCTS
-  return searchMockProducts(params);
+  // Inject sponsored products into search results
+  try {
+    const existingIds = result.products.map(p => p.id);
+    const sponsoredSlots = await injectSponsoredProducts(existingIds);
+
+    if (sponsoredSlots.length > 0) {
+      result.sponsoredSlots = sponsoredSlots;
+
+      // Resolve sponsored products and insert them at their positions
+      const { getProducts } = await import('./productService');
+      const sponsoredProductIds = sponsoredSlots.map(s => s.productId);
+      const sponsoredProducts = await getProducts({ limit: sponsoredProductIds.length });
+      const sponsoredMap = new Map(
+        sponsoredProducts.filter(p => sponsoredProductIds.includes(p.id)).map(p => [p.id, p]),
+      );
+
+      // Insert sponsored products at specified positions (sorted descending to avoid index shift)
+      const sortedSlots = [...sponsoredSlots].sort((a, b) => b.position - a.position);
+      for (const slot of sortedSlots) {
+        const prod = sponsoredMap.get(slot.productId);
+        if (prod && slot.position < result.products.length) {
+          prod.promotionStatus = 'active';
+          result.products.splice(slot.position, 0, prod);
+          result.totalCount++;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[searchService] Failed to inject sponsored products:', err);
+  }
+
+  return result;
 }
 
 /**

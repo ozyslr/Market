@@ -43,6 +43,11 @@ export interface Review {
   createdAt: string;
   verified: boolean;
   status: 'pending' | 'approved' | 'rejected';
+  photos?: string[];
+  helpfulCount?: number;
+  helpfulVoters?: string[];
+  categoryRatings?: { quality?: number; shipping?: number; description?: number };
+  sellerResponse?: { text: string; createdAt: string; sellerName: string };
 }
 
 export interface Seller {
@@ -323,8 +328,91 @@ export interface ProductQuestion {
   userId: string;
   userName: string;
   text: string;
+  category?: 'size' | 'shipping' | 'stock' | 'other';
+  createdAt: string;
   answer?: string;
   answeredBy?: string;
   answeredAt?: string;
+  helpfulCount?: number;
+  helpfulVoters?: string[];
+}
+
+// === CPC Advertising Engine Types ===
+
+export type AdCampaignStatus = 'pending' | 'active' | 'paused' | 'rejected' | 'ended' | 'exhausted';
+
+export interface AdCampaign {
+  id: string;
+  sellerId: string;
+  productId: string;
+  campaignName: string;
+  cpcBid: number;
+  dailyBudget: number;
+  totalBudget: number;
+  status: AdCampaignStatus;
+  isActive: boolean;
+  startDate: string;
+  endDate: string;
+  adminNote?: string;
+  floorPrice?: number;
+  impressions: number;
+  clicks: number;
+  spend: number;
+  dailySpend: number;
+  dailySpendDate: string;
   createdAt: string;
+  updatedAt: string;
+}
+
+export type AdEventType = 'impression' | 'click';
+
+export interface AdEvent {
+  id: string;
+  adCampaignId: string;
+  sellerId: string;
+  productId: string;
+  type: AdEventType;
+  sessionId: string;
+  userId?: string;
+  cost: number;
+  ts: string;
+  searchQuery?: string;
+}
+
+export interface AdConfig {
+  floorCpc: number;
+  maxSponsoredSlots: number;
+  minBid: number;
+  platformFeeRate: number;
+}
+
+export interface SponsoredSlot {
+  productId: string;
+  position: number;
+  adCampaignId: string;
+}
+
+export interface AdDailyBreakdown {
+  date: string;
+  impressions: number;
+  clicks: number;
+  spend: number;
+}
+
+export interface AdPerformance {
+  impressions: number;
+  clicks: number;
+  ctr: number;
+  spend: number;
+  avgCpc: number;
+  dailyBreakdown: AdDailyBreakdown[];
+}
+
+export interface SellerAdAnalytics {
+  totalImpressions: number;
+  totalClicks: number;
+  totalSpend: number;
+  averageCtr: number;
+  activeCampaigns: number;
+  campaigns: (AdCampaign & { ctr: number; avgCpc: number })[];
 }

@@ -8,10 +8,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
 import { ProductRecommendations } from '@/components/commerce/ProductRecommendations';
+import { ReviewSection } from '@/components/product/ReviewSection';
+import { QASection } from '@/components/product/QASection';
 import { getCategories } from '@/services/productService';
 import type { Product, Category } from '@/types';
+import { cn } from '@/lib/utils';
 
 const ARViewer = dynamic(() => import('@/components/commerce/ARViewer').then(m => ({ default: m.ARViewer })), { ssr: false });
 
@@ -19,10 +23,12 @@ export function ProductDetailContent({ product }: { product: Product }) {
   const { addItem } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const { t } = useLanguage();
+  const { user, firebaseUser } = useAuth();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [arOpen, setArOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews' | 'qa'>('details');
 
   useEffect(() => {
     getCategories().then(setCategories).catch(() => {});
@@ -230,6 +236,76 @@ export function ProductDetailContent({ product }: { product: Product }) {
                 ))}
               </dl>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Tabbed Detailed View */}
+      <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden mt-12">
+        <div className="flex border-b border-gray-200 dark:border-zinc-800 overflow-x-auto no-scrollbar">
+          {[
+            { id: 'details', label: t('product.description') },
+            { id: 'specs', label: t('product.specifications') },
+            { id: 'reviews', label: t('product.reviews') },
+            { id: 'qa', label: t('product.questions_answers') }
+          ].map(tab => (
+            <button 
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={cn(
+                "px-8 py-6 text-xs font-black uppercase tracking-widest transition-all relative shrink-0",
+                activeTab === tab.id ? "text-accent border-b-2 border-accent" : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        
+        <div className="p-8 md:p-12">
+          {activeTab === 'details' && (
+            <div className="prose prose-zinc dark:prose-invert max-w-none">
+              <div className="text-gray-700 dark:text-zinc-300 leading-relaxed font-medium whitespace-pre-wrap">
+                {product.longDescription || product.description}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'specs' && (
+            <div className="grid grid-cols-1 border border-gray-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
+              {product.specifications && Object.keys(product.specifications).length > 0 ? (
+                Object.entries(product.specifications).map(([key, val], i) => (
+                  <div key={key} className={cn("grid grid-cols-2 p-6 transition-colors", i % 2 === 0 ? "bg-gray-50 dark:bg-zinc-800/30" : "bg-white dark:bg-zinc-900")}>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-zinc-500">{key}</span>
+                    <span className="text-sm font-black text-gray-900 dark:text-white uppercase italic">{val as string}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="p-12 text-center text-gray-400 italic">No specifications provided.</div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'reviews' && (
+            <ReviewSection
+              productId={product.id}
+              sellerId={product.sellerId}
+              productRating={product.rating}
+              currentUserId={firebaseUser?.uid}
+              currentUserName={user?.name || firebaseUser?.displayName || undefined}
+              isSeller={user?.id === product.sellerId || user?.role === 'admin'}
+              isLoggedIn={!!firebaseUser}
+            />
+          )}
+
+          {activeTab === 'qa' && (
+            <QASection
+              productId={product.id}
+              currentUserId={firebaseUser?.uid}
+              currentUserName={user?.name || firebaseUser?.displayName || undefined}
+              isSeller={user?.id === product.sellerId || user?.role === 'admin'}
+              isLoggedIn={!!firebaseUser}
+            />
           )}
         </div>
       </div>
