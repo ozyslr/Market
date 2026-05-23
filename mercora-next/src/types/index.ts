@@ -47,6 +47,7 @@ export interface UserProfile extends User {
 export interface Review {
   id: string;
   productId?: string;
+  sellerId?: string;
   userId: string;
   userName: string;
   userAvatar?: string;
@@ -55,6 +56,32 @@ export interface Review {
   createdAt: string;
   verified: boolean;
   status: 'pending' | 'approved' | 'rejected';
+  photos?: string[];
+  helpfulCount?: number;
+  helpfulVoters?: string[];
+  categoryRatings?: { quality?: number; shipping?: number; description?: number };
+  sellerResponse?: { text: string; createdAt: string; sellerName: string };
+}
+
+export interface ReviewStats {
+  total: number;
+  distribution: Record<number, number>;
+  avgCategoryRatings: { quality: number; shipping: number; description: number };
+}
+
+export interface ProductQuestion {
+  id: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  text: string;
+  category?: 'size' | 'shipping' | 'stock' | 'other';
+  createdAt: string;
+  answer?: string;
+  answeredBy?: string;
+  answeredAt?: string;
+  helpfulCount?: number;
+  helpfulVoters?: string[];
 }
 
 export interface Seller {
@@ -138,6 +165,7 @@ export interface Product {
   status?: ProductStatus;
   visibility?: ProductVisibility;
   isActive?: boolean;
+  promotionStatus?: 'none' | 'pending' | 'active' | 'rejected';
   createdAt?: string;
 }
 
@@ -230,4 +258,155 @@ export interface Notification {
   data?: Record<string, string>;
   read: boolean;
   createdAt: string;
+}
+
+// === CPC Advertising Engine Types ===
+
+export type AdCampaignStatus = 'pending' | 'active' | 'paused' | 'rejected' | 'ended' | 'exhausted';
+
+export interface AdCampaign {
+  id: string;
+  sellerId: string;
+  productId: string;
+  campaignName: string;
+  cpcBid: number;
+  dailyBudget: number;
+  totalBudget: number;
+  status: AdCampaignStatus;
+  isActive: boolean;
+  startDate: string;
+  endDate: string;
+  adminNote?: string;
+  floorPrice?: number;
+  impressions: number;
+  clicks: number;
+  spend: number;
+  dailySpend: number;
+  dailySpendDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AdEventType = 'impression' | 'click';
+
+export interface AdEvent {
+  id: string;
+  adCampaignId: string;
+  sellerId: string;
+  productId: string;
+  type: AdEventType;
+  sessionId: string;
+  userId?: string;
+  cost: number;
+  ts: string;
+  searchQuery?: string;
+}
+
+export interface AdConfig {
+  floorCpc: number;
+  maxSponsoredSlots: number;
+  minBid: number;
+  platformFeeRate: number;
+}
+
+export interface SponsoredSlot {
+  productId: string;
+  position: number;
+  adCampaignId: string;
+}
+
+export interface AdDailyBreakdown {
+  date: string;
+  impressions: number;
+  clicks: number;
+  spend: number;
+}
+
+export interface AdPerformance {
+  impressions: number;
+  clicks: number;
+  ctr: number;
+  spend: number;
+  avgCpc: number;
+  dailyBreakdown: AdDailyBreakdown[];
+}
+
+export interface SellerAdAnalytics {
+  totalImpressions: number;
+  totalClicks: number;
+  totalSpend: number;
+  averageCtr: number;
+  activeCampaigns: number;
+  campaigns: (AdCampaign & { ctr: number; avgCpc: number })[];
+}
+
+// === Seller Subscription Model (STREAM D) ===
+
+export type SellerSubscriptionTier = 'standard' | 'pro' | 'enterprise';
+
+export type SubscriptionStatus = 'active' | 'paused' | 'cancelled' | 'expired' | 'trial';
+
+export type BillingCycle = 'monthly' | 'yearly';
+
+export interface SellerSubscriptionTierBenefits {
+  maxProducts: number;
+  inventorySyncApi: boolean;
+  advancedAnalytics: boolean;
+  featuredListings: boolean;
+  featuredBadge: boolean;
+  prioritySupport: 'email' | 'phone' | 'whatsapp' | 'none';
+  dedicatedAccountManager: boolean;
+  whiteLabelOptions: boolean;
+  customIntegrations: boolean;
+  commissionRate: number;
+  monthlyPrice: number;
+  yearlyPrice: number;
+}
+
+export interface SellerSubscription {
+  id: string;
+  sellerId: string;
+  tier: SellerSubscriptionTier;
+  status: SubscriptionStatus;
+  billingCycle: BillingCycle;
+  stripeSubscriptionId?: string;
+  stripePriceId?: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelledAt?: string;
+  trialEndDate?: string;
+  autoRenew: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SellerBillingInvoice {
+  id: string;
+  sellerId: string;
+  subscriptionId: string;
+  stripeInvoiceId?: string;
+  amount: number;
+  currency: string;
+  status: 'draft' | 'open' | 'paid' | 'void' | 'uncollectible';
+  paidAt?: string;
+  dueAt: string;
+  periodStart: string;
+  periodEnd: string;
+  createdAt: string;
+  pdfUrl?: string;
+}
+
+export interface SellerOnboardingData {
+  storeName: string;
+  email: string;
+  phone: string;
+  bankAccount?: {
+    accountNumber: string;
+    accountHolder: string;
+    bankName: string;
+    swiftCode?: string;
+  };
+  taxId?: string;
+  businessAddress: Address;
+  businessType: 'individual' | 'company' | 'partnership';
 }

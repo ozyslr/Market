@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface LanguagePack {
   code: string;
@@ -64,6 +64,20 @@ const initialTranslations: Record<string, Record<string, string>> = {
     'product.addToCart': 'Add to Cart',
     'product.added': 'Added!',
     'product.freeShipping': 'Free Shipping',
+    'product.questions_answers': 'Q&A',
+    'product.verified_purchase': 'Verified Purchase',
+    'product.useful': 'Helpful',
+    'product.rec.interest.title': 'You Might Also Like',
+    'product.rec.interest.sub': 'Other items viewed by customers who viewed this',
+    'product.rec.bakanAldi.title': 'Also Bought by Viewers',
+    'product.rec.bakanAldi.sub': 'Other items bought by customers who viewed this',
+    'product.rec.birlikte.title': 'Frequently Bought Together',
+    'product.rec.birlikte.sub': 'Items often bought together with this product',
+    'product.rec.populer.title': 'Everyone is Looking at These',
+    'product.rec.populer.sub': 'Most popular items in this category',
+    'product.rec.secilmis.title': 'Curated Popular Products',
+    'product.rec.secilmis.sub': 'Popular items curated for you',
+    'product.rec.searches.title': 'Popular Searches',
     'home.best_sellers': 'Best Sellers',
     'home.for_everyone': 'Products for Everyone',
     'home.new_arrivals': 'New Arrivals',
@@ -167,6 +181,20 @@ const initialTranslations: Record<string, Record<string, string>> = {
     'product.addToCart': 'Sepete Ekle',
     'product.added': 'Eklendi!',
     'product.freeShipping': 'Ücretsiz Kargo',
+    'product.questions_answers': 'Soru & Cevap',
+    'product.verified_purchase': 'Onaylanmış Alışveriş',
+    'product.useful': 'Faydalı',
+    'product.rec.interest.title': 'Bunlar da İlgini Çekebilir',
+    'product.rec.interest.sub': 'Ürünü inceleyenlerin baktığı diğer ürünler',
+    'product.rec.bakanAldi.title': 'Buna Bakanların Aldıkları',
+    'product.rec.bakanAldi.sub': 'Ürünü inceleyenlerin aldığı diğer ürünler',
+    'product.rec.birlikte.title': 'Birlikte Alınanlar',
+    'product.rec.birlikte.sub': 'Beraber alınan ürünler',
+    'product.rec.populer.title': 'Herkes Bunlara Bakıyor',
+    'product.rec.populer.sub': 'Kategorinin en popüler ürünleri',
+    'product.rec.secilmis.title': 'Popüler Ürünlerden Seçtik',
+    'product.rec.secilmis.sub': 'Sizin için seçilen popüler ürünler',
+    'product.rec.searches.title': 'Popüler Aramalar',
     'home.best_sellers': 'En Çok Satanlar',
     'home.for_everyone': 'Bu Ürünler Herkese Göre',
     'home.new_arrivals': 'Yeni Gelenler',
@@ -270,6 +298,20 @@ const initialTranslations: Record<string, Record<string, string>> = {
     'product.addToCart': 'In den Warenkorb',
     'product.added': 'Hinzugefügt!',
     'product.freeShipping': 'Kostenloser Versand',
+    'product.questions_answers': 'Fragen & Antworten',
+    'product.verified_purchase': 'Verifizierter Kauf',
+    'product.useful': 'Nützlich',
+    'product.rec.interest.title': 'Das könnte Ihnen gefallen',
+    'product.rec.interest.sub': 'Andere Produkte, die von Käufern dieses Artikels angesehen wurden',
+    'product.rec.bakanAldi.title': 'Auch von Betrachtern gekauft',
+    'product.rec.bakanAldi.sub': 'Andere Produkte, die von Käufern dieses Artikels gekauft wurden',
+    'product.rec.birlikte.title': 'Wird oft zusammen gekauft',
+    'product.rec.birlikte.sub': 'Zusammen gekaufte Produkte mit diesem Artikel',
+    'product.rec.populer.title': 'Alle schauen sich das an',
+    'product.rec.populer.sub': 'Beliebteste Produkte in dieser Kategorie',
+    'product.rec.secilmis.title': 'Beliebte Artikel für Sie',
+    'product.rec.secilmis.sub': 'Beliebte Artikel für Sie ausgewählt',
+    'product.rec.searches.title': 'Beliebte Suchen',
     'home.best_sellers': 'Bestseller',
     'home.for_everyone': 'Produkte für jeden',
     'home.new_arrivals': 'Neu eingetroffen',
@@ -373,6 +415,20 @@ const initialTranslations: Record<string, Record<string, string>> = {
     'product.addToCart': 'أضف للسلة',
     'product.added': 'تمت الإضافة!',
     'product.freeShipping': 'شحن مجاني',
+    'product.questions_answers': 'الأسئلة والأجوبة',
+    'product.verified_purchase': 'شراء مؤكد',
+    'product.useful': 'مفيد',
+    'product.rec.interest.title': 'قد يعجبك أيضاً',
+    'product.rec.interest.sub': 'منتجات أخرى شاهدها زوار هذه السلعة',
+    'product.rec.bakanAldi.title': 'اشتراها أيضاً من شاهدوها',
+    'product.rec.bakanAldi.sub': 'منتجات أخرى اشتراها زوار هذه السلعة',
+    'product.rec.birlikte.title': 'يُشترى معاً في الغالب',
+    'product.rec.birlikte.sub': 'منتجات تُشترى معاً مع هذه السلعة',
+    'product.rec.populer.title': 'الجميع يتصفح هذا',
+    'product.rec.populer.sub': 'المنتجات الأكثر شعبية in هذه الفئة',
+    'product.rec.secilmis.title': 'منتجات شائعة مختارة لك',
+    'product.rec.secilmis.sub': 'منتجات شائعة مختارة لك',
+    'product.rec.searches.title': 'عمليات البحث الشائعة',
     'home.best_sellers': 'الأكثر مبيعاً',
     'home.for_everyone': 'منتجات للجميع',
     'home.new_arrivals': 'وصل حديثاً',
@@ -448,6 +504,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Language>('tr');
   const [availableLanguages, setAvailableLanguages] = useState<LanguagePack[]>(initialAvailableLanguages);
   const [translations, setTranslations] = useState<Record<string, Record<string, string>>>(initialTranslations);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    }
+  }, [lang]);
 
   const t = (key: string) => {
     return translations[lang]?.[key] || initialTranslations['en']?.[key] || key;
