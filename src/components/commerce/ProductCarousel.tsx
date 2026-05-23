@@ -6,9 +6,10 @@ import { ProductCard } from './ProductCard';
 interface ProductCarouselProps {
   title: string;
   products: Product[];
+  subtext?: string;
 }
 
-export const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) => {
+export const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, subtext }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -23,9 +24,14 @@ export const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, product
 
   return (
     <section className="mt-12 mb-12 group/carousel">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-xl md:text-2xl font-black tracking-tight text-brand-primary uppercase italic">{title}</h2>
-        <div className="flex gap-2">
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <h2 className="text-xl md:text-2xl font-black tracking-tight text-brand-primary uppercase italic">{title}</h2>
+          {subtext && (
+            <p className="text-xs md:text-sm text-muted-foreground font-medium tracking-wide mt-1">{subtext}</p>
+          )}
+        </div>
+        <div className="flex gap-2 shrink-0">
           <button 
             onClick={() => scroll('left')}
             className="p-3 border border-brand-primary/5 bg-white rounded-xl shadow-sm hover:bg-accent hover:text-white transition-all"

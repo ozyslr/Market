@@ -9,7 +9,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { MOCK_PRODUCTS } from '@/mockData';
 import { getCategories } from '@/services/productService';
-import { Category, FilterAttribute } from '@/types';
+import { Category, FilterAttribute, Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { useLanguage } from '@/context/LanguageContext';
@@ -23,6 +23,39 @@ function normalizeTR(s: string): string {
     .replace(/ö/g, 'o').replace(/ı/g, 'i').replace(/ç/g, 'c')
     .replace(/İ/g, 'i').replace(/Ş/g, 's').replace(/Ğ/g, 'g')
     .replace(/Ü/g, 'u').replace(/Ö/g, 'o').replace(/Ç/g, 'c');
+}
+
+function isProductInCategory(product: Product, catId: string, allCategories: Category[]): boolean {
+  if (!catId) return true;
+  if (product.categoryId === catId) return true;
+  
+  const cat = allCategories.find(c => c.id === catId);
+  if (!cat) return false;
+  
+  // If the category has a parent, the product must belong to that parent category
+  if (cat.parentId && product.categoryId !== cat.parentId) return false;
+  
+  // Subcategory fallback keyword matching
+  const words = new Set<string>();
+  cat.name.split(/[\s&,_\/\-]+/).forEach(w => words.add(normalizeTR(w)));
+  cat.slug.split(/[_\-]+/).forEach(w => words.add(normalizeTR(w)));
+  
+  if (cat.items) {
+    cat.items.forEach(item => {
+      item.name.split(/[\s&,_\/\-]+/).forEach(w => words.add(normalizeTR(w)));
+      item.query.split(/[_\-]+/).forEach(w => words.add(normalizeTR(w)));
+    });
+  }
+  
+  const keywords = Array.from(words)
+    .map(w => w.replace(/[^a-z0-9]/g, ''))
+    .filter(w => w.length > 2);
+    
+  if (keywords.length === 0) return false;
+  
+  const productText = normalizeTR(`${product.title} ${product.description} ${product.brand} ${(product.tags ?? []).join(' ')}`);
+  
+  return keywords.some(kw => productText.includes(kw));
 }
 
 const RECENT_KEY = 'mercora_recent_searches';
@@ -86,7 +119,7 @@ export function SearchResultsPage() {
     const nq = normalizeTR(query);
     const matchesQuery = !query || [p.title, p.description, p.brand, ...(p.tags ?? [])]
       .some(field => normalizeTR(field ?? '').includes(nq));
-    const matchesCategory = !categoryId || p.categoryId === categoryId;
+    const matchesCategory = isProductInCategory(p, categoryId, allCategories);
     const matchesTag = !tag || p.tags.includes(tag as any) || (tag === 'deals' && (p.oldPrice && p.oldPrice > p.price));
     const matchesOrigin = !origin || (origin === 'global' ? p.originCountry !== 'UK' : p.originCountry === origin);
     const matchesDelivery = !delivery || (delivery === 'prime' ? p.estimatedDeliveryDays <= 2 : true);
@@ -538,6 +571,8 @@ const FilterContent = ({
   const minRating = searchParams.get('rating') ?? '';
   const quickActive = [searchParams.get('advantageous'), searchParams.get('freeShipping')].filter(v => v === '1').length;
   const activeCategoryName = categories.find(c => c.id === categoryId)?.name;
+  const activeCategory = categories.find(c => c.id === categoryId);
+  const parentCategory = activeCategory?.parentId ? categories.find(c => c.id === activeCategory.parentId) : null;
 
   return (
     <div className="space-y-0">
@@ -572,15 +607,121 @@ const FilterContent = ({
       </FilterSection>
 
       {/* Kategoriler */}
-      <FilterSection title={t('filter.categories')} activeCount={categoryId ? 1 : 0} defaultOpen={!categoryId}>
-        {categories.filter(c => !c.parentId).map(cat => (
-          <FilterCheckbox
-            key={cat.id}
-            label={cat.name}
-            checked={categoryId === cat.id}
-            href={`/search?categoryId=${cat.id}`}
-          />
-        ))}
+      <FilterSection title={t('filter.categories')} activeCount={categoryId ? 1 : 0} defaultOpen={true}>
+        <div className="space-y-1.5 py-1">
+          {/* Back Navigation */}
+          {categoryId && (
+            <button
+              onClick={() => {
+                const nextId = activeCategory?.parentId || null;
+                const next = new URLSearchParams(searchParams);
+                if (nextId) {
+                  next.set('categoryId', nextId);
+                } else {
+                  next.delete('categoryId');
+                }
+                next.delete('tag');
+                setSearchParams(next);
+              }}
+              className="flex items-center gap-2 text-xs font-bold text-accent hover:text-accent/80 transition-colors pb-2 mb-2 border-b border-brand-primary/5 w-full text-left"
+            >
+              <ArrowRight size={12} className="rotate-180 text-accent" />
+              <span>{activeCategory?.parentId ? parentCategory?.name : t('nav.all_categories') || 'Tüm Kategoriler'}</span>
+            </button>
+          )}
+
+          {/* Root Level: No category selected */}
+          {!categoryId && (
+            <div className="space-y-1">
+              {categories.filter(c => !c.parentId).map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    const next = new URLSearchParams(searchParams);
+                    next.set('categoryId', cat.id);
+                    next.delete('tag');
+                    setSearchParams(next);
+                  }}
+                  className="flex items-center justify-between w-full text-left py-1.5 px-2.5 rounded-xl hover:bg-brand-primary/5 text-sm font-bold text-brand-primary/60 hover:text-brand-primary transition-all group"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-primary/20 group-hover:bg-accent transition-colors" />
+                    {cat.name}
+                  </span>
+                  <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 text-accent transition-all transform translate-x-[-4px] group-hover:translate-x-0" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Level 1 Active: Show L1 and its L2 child subcategories */}
+          {categoryId && activeCategory && !activeCategory.parentId && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 py-1 px-2.5 text-sm font-black text-brand-primary uppercase italic">
+                <span className="w-2 h-2 rounded-sm bg-accent rotate-45" />
+                {activeCategory.name}
+              </div>
+              <div className="pl-4 space-y-1 border-l border-brand-primary/10 ml-3.5">
+                {categories.filter(c => c.parentId === categoryId).map(subCat => (
+                  <button
+                    key={subCat.id}
+                    onClick={() => {
+                      const next = new URLSearchParams(searchParams);
+                      next.set('categoryId', subCat.id);
+                      next.delete('tag');
+                      setSearchParams(next);
+                    }}
+                    className="flex items-center justify-between w-full text-left py-1.5 px-2 rounded-xl hover:bg-brand-primary/5 text-xs font-bold text-brand-primary/60 hover:text-brand-primary transition-all group"
+                  >
+                    <span>{subCat.name}</span>
+                    <ArrowRight size={10} className="opacity-0 group-hover:opacity-100 text-accent transition-all transform translate-x-[-4px] group-hover:translate-x-0" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Level 2 Active: Show parent, active L2, and its L3 sub-items */}
+          {categoryId && activeCategory && activeCategory.parentId && (
+            <div className="space-y-1">
+              <div className="px-2.5 text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
+                {parentCategory?.name}
+              </div>
+              <div className="flex items-center gap-2 py-1 px-2.5 text-sm font-black text-brand-primary uppercase italic">
+                <span className="w-2 h-2 rounded-sm bg-accent rotate-45" />
+                {activeCategory.name}
+              </div>
+              <div className="pl-4 space-y-1 border-l border-accent/20 ml-3.5">
+                {(activeCategory.items || []).map(item => {
+                  const isSelected = searchParams.get('tag') === item.query;
+                  return (
+                    <button
+                      key={item.query}
+                      onClick={() => {
+                        const next = new URLSearchParams(searchParams);
+                        if (isSelected) {
+                          next.delete('tag');
+                        } else {
+                          next.set('tag', item.query);
+                        }
+                        setSearchParams(next);
+                      }}
+                      className={cn(
+                        "flex items-center justify-between w-full text-left py-1.5 px-2 rounded-xl text-xs transition-all group",
+                        isSelected 
+                          ? "bg-accent/15 text-accent font-extrabold" 
+                          : "hover:bg-brand-primary/5 text-brand-primary/60 font-bold hover:text-brand-primary"
+                      )}
+                    >
+                      <span>{item.name}</span>
+                      {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       </FilterSection>
 
       {/* Dinamik kategori filtreleri */}

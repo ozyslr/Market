@@ -112,12 +112,15 @@
 
 ## 4. Ürün Sayfası Özellikleri
 
-### Vite ProductDetail.tsx (1.192 satır)
+### Vite ProductDetail.tsx (Şu Anki Durum: ✅ Geliştirildi)
 - **Sekmeli navigasyon**: details / specs / **reviews** / **qa**
 - **Yorum sistemi**: addReview, getReviewsByProduct, checkUserReview
 - **Puan/değerlendirme**: Star bileşeni, review formu (rating + comment)
 - **Ürün soru-cevap**: productQuestionService entegrasyonu
 - **Scroll anchoring**: Tab değişiminde ilgili bölüme kaydırma
+- **✅ Wishlist Entegrasyonu**: Görsel üzerindeki kalp ikonu `useWishlist` context'ine bağlandı.
+- **✅ Sosyal Paylaşım**: Desktop'ta Framer Motion popover, mobil cihazlarda ise slide-up drawer ve native Web Share API entegre edildi.
+- **✅ Son Gezilenler (Recently Viewed)**: Sayfa altında dynamic carousel ve hem üye hem de ziyaretçi (localStorage) bazlı çift hatlı izleme eklendi.
 
 ### mercora-next ProductDetailContent.tsx
 - **EKSİK**: Yorum/değerlendirme sekmeleri
@@ -129,13 +132,13 @@
 
 ### Rakip Platformlarda Ürün Sayfası Standart Özellikleri
 Trendyol, Hepsiburada, Amazon, Etsy'de ortak olanlar:
-- **Yeni sekmede açma**: Kullanıcının gezinirken karşılaştırma yapabilmesi için. CTRL+click / sağ tık + yeni sekme desteği
-- **Direkt yorum/puan erişimi**: Ürün kartında yıldız + yorum sayısı → tıklandığında sayfada reviews bölümüne scroll/anchor
-- **Karşılaştırma listesi**: 2+ ürünü yan yana karşılaştırma
-- **Sorular & Cevaplar**: Alıcı-satıcı iletişimi
-- **Stok/Fiyat geçmişi grafikleri**
-- **Görsel arama**: "Find similar" (mercora-next'te Visual Search var)
-- **Sosyal kanıt**: "X kişi satın aldı", "X kişi inceliyor"
+- **Yeni sekmede açma**: Kullanıcının gezinirken karşılaştırma yapabilmesi için. CTRL+click / sağ tık + yeni sekme desteği.
+- **Direkt yorum/puan erişimi**: Ürün kartında yıldız + yorum sayısı → tıklandığında sayfada reviews bölümüne scroll/anchor.
+- **Karşılaştırma listesi**: 2+ ürünü yan yana karşılaştırma.
+- **Sorular & Cevaplar**: Alıcı-satıcı iletişimi.
+- **Stok/Fiyat geçmişi grafikleri**.
+- **Görsel arama**: "Find similar" (mercora-next'te Visual Search var).
+- **Sosyal kanıt**: "X kişi satın aldı", "X kişi inceliyor".
 
 ---
 
@@ -217,55 +220,73 @@ t = (key: string) => {
 
 ---
 
-## 7. Rakip Karşılaştırma — Neden Yeni Sekmede Açılıyor?
+## 7. Rakip Karşılaştırma — Güncel Durum ve Platform Standartları
 
-### Trendyol, Hepsiburada, Amazon, Etsy'nin Ortak Özellikleri
+### Trendyol, Hepsiburada, Amazon, Etsy ve Mercora Karşılaştırması
 
-| Özellik | Trendyol | Hepsiburada | Amazon | Etsy | Mercora |
-|---------|----------|-------------|--------|------|---------|
-| **Yeni sekme** | ✅ | ✅ | ✅ | ✅ | ❌ yok |
-| **Yorum anchor link** | ✅ | ✅ | ✅ | ✅ | ❌ yok |
-| **Star rating (kartta)** | ✅ | ✅ | ✅ | ✅ | ⚠️ sadece text |
-| **Karşılaştırma** | ✅ | ✅ | ✅ | ❌ | ❌ yok |
-| **Soru-Cevap** | ✅ | ✅ | ✅ | ✅ | ❌ yok |
-| **Fiyat geçmişi** | ❌ | ❌ | ✅ Keepa | ❌ | ❌ yok |
-| **Görsel arama** | ✅ | ✅ | ✅ | ✅ | ✅ var |
-| **Toplu yükleme** | ✅ API | ✅ API | ✅ | ✅ CSV | ❌ yok |
-| **Satıcı mağazası** | ✅ | ✅ | ✅ | ✅ | ⚠️ stub |
-| **3D/AR görüntüleme** | ❌ | ❌ | ✅ | ❌ | ⚠️ ARViewer var |
-| **PWA desteği** | ✅ | ✅ | ✅ | ✅ | ❌ swRegistration yok |
+| Özellik | Trendyol | Hepsiburada | Amazon | Etsy | Mercora (Vite - Kaynak) | Mercora (Next.js - Hedef) |
+|---------|----------|-------------|--------|------|------------------------|---------------------------|
+| **Yeni Sekmede Açma** | ✅ | ✅ | ✅ | ✅ | ✅ **Tamamlandı** (`target="_blank"`) | ❌ Yok (Taşınacak) |
+| **Yorum Anchor Link** | ✅ | ✅ | ✅ | ✅ | ✅ Var (Tab scroll anchoring) | ❌ Yok (Taşınacak) |
+| **Star Rating (Kartta)** | ✅ | ✅ | ✅ | ✅ | ✅ Var (Yıldız ikonları) | ⚠️ Sadece Text |
+| **Karşılaştırma Listesi** | ✅ | ✅ | ✅ | ❌ | ❌ Yok | ❌ Yok |
+| **Soru-Cevap (Q&A)** | ✅ | ✅ | ✅ | ✅ | ✅ Var (qa / question service) | ❌ Yok (Taşınacak) |
+| **Fiyat Geçmişi Grafiği** | ❌ | ❌ | ✅ Keepa | ❌ | ❌ Yok | ❌ Yok |
+| **Görsel Arama (Visual)** | ✅ | ✅ | ✅ | ✅ | ✅ Var | ✅ Var |
+| **Toplu Ürün Yükleme** | ✅ API | ✅ API | ✅ | ✅ CSV | ✅ Var (Import Center) | ❌ Stub |
+| **Satıcı Mağazası** | ✅ | ✅ | ✅ | ✅ | ✅ Var (SellerStore 350+ satır) | ⚠️ Stub (19 satır) |
+| **Takip Edilen Mağazalar**| ✅ | ✅ | ✅ | ✅ | ✅ **Tamamlandı** (Profil tabı) | ❌ Stub |
+| **Kategori Ağacı Filtresi**| ✅ | ✅ | ✅ | ✅ | ✅ **Tamamlandı** (L1->L2->L3 Tree) | ❌ Yok |
+| **Sosyal Paylaşım** | ✅ | ✅ | ✅ | ✅ | ✅ **Tamamlandı** (Share Drawer/Popover) | ❌ Yok |
+| **Son Gezilenler** | ✅ | ✅ | ✅ | ✅ | ✅ **Tamamlandı** (Çift hatlı Carousel) | ❌ Yok |
+| **3D/AR Görüntüleme** | ❌ | ❌ | ✅ | ❌ | ✅ Var | ❌ Servis Eksik |
+| **PWA Desteği** | ✅ | ✅ | ✅ | ✅ | ✅ Var | ❌ Servis Eksik |
 
 ### "Yeni Sekme" Neden Önemli?
-- Kullanıcı arama sonuçlarında gezinirken ürünleri karşılaştırabilmek için
-- Sepet/sekmeler arası geçişte bağlam kaybetmemek için
-- Dönüşüm oranını artırır (kullanıcı aynı anda birden fazla ürünü değerlendirebilir)
-- Next.js'te `Link`'e `target="_blank"` veya CTRL+click ile yapılabilir
+- Kullanıcı arama sonuçlarında gezinirken ürünleri karşılaştırabilmek için.
+- Sepet/sekmeler arası geçişte arama filtresini ve sayfa kaydırma konumunu kaybetmemek için.
+- Dönüşüm oranını artırır (kullanıcı aynı anda birden fazla ürünü değerlendirebilir).
+- Vite projesinde ürün kartları, son gezilenler ve tavsiye şeritleri `target="_blank"` ile yeni sekmede açılacak şekilde güncellenmiştir. Next.js geçişinde de bu standart korunmalıdır.
 
 ---
 
-## 8. Öncelikli Yapılacaklar Listesi
+## 8. Öncelikli Yapılacaklar Listesi ve Yol Haritası
 
-### Acil (Hemen)
-1. **📄 Seller Import Center** — Vite'tan 786 satırlık Import Center'ı taşı (CSV/XML/API/AI)
-2. **📄 Seller Inventory** — Vite'tan 804 satırlık envanter sayfasını taşı
-3. **🏪 Seller Store** — Vite'tan 350+ satırlık mağaza sayfasını taşı
-4. **⭐ Product Reviews** — Vite'tan yorum sistemi ekle (sekmeler, addReview, star rating, Q&A)
-5. **🌍 DE/AR Dil Dosyaları** — 56-58 eksik key'i çevir
-6. **🔁 RTL Desteği** — Arapça için dir="rtl" ve CSS mirroring
+### ✅ 1. Aşama: Vite Kaynak Projesinde Tamamlanan Geliştirmeler
+Vite tarafındaki kullanıcı deneyimini iyileştirmek ve hataları çözmek amacıyla aşağıdaki özellikler başarıyla entegre edilmiştir:
+- **Kalp İkonu & Wishlist Bağlantısı**: Ürün detay sayfasındaki favori ikonu `useWishlist` context'i ile ilişkilendirildi.
+- **Sosyal Paylaşım Drawer/Popover**: Ürün detayında desktop için Framer Motion popover, mobil için slide-up drawer ve Web Share API entegrasyonu tamamlandı.
+- **Takip Edilen Mağazalar**: Kullanıcı profilinde "Takip Edilen Mağazalar" sekmesi oluşturuldu ve `useFollows` servisi ile mağazaları takip etme/bırakma işlevleri eklendi.
+- **Hiyerarşik Kategori Ağacı**: Arama sonuçları sol tarafındaki filtre alanı L1 -> L2 -> L3 kırılımlı ağaç yapısına kavuşturuldu ve kelime tabanlı ürün eşleştirme algoritması geliştirildi.
+- **Yeni Sekmede Açma (`target="_blank"`)**: Ürün kartları, tavsiye şeritleri ve son gezilen ürün linkleri yeni sekmede açılacak şekilde düzenlendi; nested link konsol hataları giderildi.
+- **Son Gezilenler (Recently Viewed)**: Hem giriş yapmış kullanıcılar (Firestore) hem de ziyaretçiler (LocalStorage) için çift hatlı izleme ve ürün detay sayfasının altında dinamik carousel gösterimi sağlandı.
 
-### Önemli (Bu Hafta)
-7. **🗑️ Orphaned libs** — `csvTemplate.ts` ve `taxEngine.ts`'yi entegre et veya sil
-8. **📦 4 Eksik Servis** — arService, emailService, storageService, swRegistration
-9. **🖼️ Admin Categories** — 12 satırlık stub'ı tam CRUD sayfasına çevir
-10. **🔗 Ürün linkleri** — Arama/liste sayfalarında `target="_blank"` desteği
+---
 
-### İyileştirme (Önümüzdeki Günler)
-11. **📊 Admin Reports** — Dinamik grafikler, CSV export
-12. **🏷️ Admin Payments** — Ödeme sağlayıcı yönetimi
-13. **📋 Toplu ürün güncelleme** — Admin batch operations
-14. **👥 Rol tabanlı yetkilendirme UI**
-15. **📈 Audit log** görüntüleme
-16. **🔍 Karşılaştırma listesi** özelliği
+### 🚀 2. Aşama: Next.js'e (mercora-next) Taşınacak Öncelikli Özellikler
+Vite kaynak projesinde tam işlevsel olan ancak Next.js projesinde şu an taslak (stub) halinde bulunan kritik özelliklerin göç sıralaması:
+
+#### P1: Kritik Entegrasyonlar ve Satıcı Modülleri (Kritik Öncelik)
+1. **🏪 Satıcı Mağazası (`seller/[id]`)**: Vite'taki 350+ satırlık filtreleme, takip, sıralama ve ürün listeleme özelliklerine sahip satıcı mağazasını Next.js tarafına taşımak.
+2. **📄 Satıcı Envanter Yönetimi (`Inventory`)**: Vite'ta 804 satır olan tam CRUD envanter yönetim arayüzünün Next.js'e entegrasyonu.
+3. **📄 Satıcı İçerik/Ürün Yükleme (`Import Center`)**: CSV/XML/API entegrasyonu ve AI destekli veri eşleştirme sunan 786 satırlık modülün Next.js stub sayfası yerine geçirilmesi.
+4. **⭐ Ürün Yorum, Puanlama ve Soru-Cevap (Reviews & QA)**: Vite projesindeki gelişmiş yorum ve soru-cevap sekmelerinin Next.js `ProductDetailContent.tsx` dosyasına port edilmesi.
+5. **❤️ Wishlist, Paylaşım ve Son Gezilenler**: Vite'ta geliştirilen favoriye ekleme, sosyal paylaşım drawer'ı ve son gezilenler carousel'inin Next.js bileşenlerine entegre edilmesi.
+
+#### P2: Çoklu Dil ve Altyapı Servisleri (Yüksek Öncelik)
+6. **🌍 Almanca ve Arapça (DE/AR) Dil Eksikleri**: `LanguageContext` içinde tespit edilen 56-58 adet eksik çeviri anahtarının tamamlanması.
+7. **🔁 Arapça Dil İçin RTL Desteği**: `<html>` elementine dinamik `dir="rtl"` verilmesi ve CSS flexbox/grid yönlerinin Arapça diline göre aynalanması.
+8. **📦 4 Eksik Servisin Taşınması**:
+   - `arService.ts` (Firebase Storage 3D model yükleme)
+   - `emailService.ts` (E-posta bildirim şablonları)
+   - `storageService.ts` (Canvas ile görsel resize ve upload)
+   - `swRegistration.ts` (PWA Service Worker desteği)
+
+#### P3: Yönetici (Admin) Modülleri ve İyileştirmeler (Orta Öncelik)
+9. **🖼️ Admin Kategoriler Sayfası (`Categories`)**: 12 satırlık boş stub yerine tam işlevsel bir kategori CRUD yönetim panelinin yazılması.
+10. **🗑️ Yetim Kütüphanelerin Temizlenmesi**: `csvTemplate.ts` ve `taxEngine.ts` dosyalarının projeye dahil edilmesi ya da silinmesi.
+11. **📊 Admin Raporları ve Finans Paneli**: Dashboard ve finans sayfalarındaki recharts grafiklerinin dinamik hale getirilmesi, CSV/Excel export özelliklerinin eklenmesi.
+12. **📋 Toplu İşlemler ve Güvenlik**: Toplu ürün güncelleme (batch operations) ekranı, audit log geçmişi ve rol tabanlı yetkilendirme (RBAC) arayüzü.
 
 ---
 

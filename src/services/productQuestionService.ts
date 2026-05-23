@@ -25,12 +25,14 @@ export async function askQuestion(
   userId: string,
   userName: string,
   text: string,
+  category?: 'size' | 'shipping' | 'stock' | 'other',
 ): Promise<ProductQuestion> {
   const data = {
     productId,
     userId,
     userName,
     text,
+    category,
     createdAt: new Date().toISOString(),
   };
   const ref = await addDoc(collection(db, 'productQuestions'), data);

@@ -47,6 +47,7 @@ export function ReviewSection({
   const [sort, setSort] = useState<SortOption>('newest');
   const [filter, setFilter] = useState<FilterOption>('all');
   const [starFilter, setStarFilter] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
@@ -95,6 +96,10 @@ export function ReviewSection({
       return true;
     })
     .filter(r => starFilter === null || r.rating === starFilter)
+    .filter(r => {
+      if (!search.trim()) return true;
+      return r.comment.toLowerCase().includes(search.toLowerCase());
+    })
     .sort((a, b) => {
       if (sort === 'newest') return b.createdAt.localeCompare(a.createdAt);
       if (sort === 'helpful') return (b.helpfulCount || 0) - (a.helpfulCount || 0);
@@ -109,7 +114,7 @@ export function ReviewSection({
     return (
       <div className="animate-pulse space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-24 bg-brand-secondary/50 rounded-2xl" />
+          <div key={i} className="h-24 bg-brand-secondary/50 dark:bg-zinc-800/50 rounded-2xl" />
         ))}
       </div>
     );
@@ -122,6 +127,7 @@ export function ReviewSection({
         stats={stats}
         activeStarFilter={starFilter}
         onStarFilter={star => { setStarFilter(star); setPage(1); }}
+        reviews={reviews}
       />
 
       {/* Yorum yaz */}
@@ -135,7 +141,7 @@ export function ReviewSection({
           </div>
         )}
         {!isLoggedIn ? (
-          <p className="text-xs font-bold text-brand-primary/40 px-4 py-3 bg-brand-secondary/50 rounded-xl">
+          <p className="text-xs font-bold text-brand-primary/40 px-4 py-3 bg-brand-secondary/50 dark:bg-zinc-900 rounded-xl">
             Yorum yazmak için <Link to="/auth" className="text-accent underline">giriş yapın</Link>.
           </p>
         ) : hasReviewed ? (
@@ -171,13 +177,15 @@ export function ReviewSection({
           onStarFilter={s => { setStarFilter(s); setPage(1); }}
           total={reviews.length}
           filtered={filtered.length}
+          search={search}
+          onSearch={s => { setSearch(s); setPage(1); }}
         />
       )}
 
       {/* Yorum listesi */}
       <div className="space-y-0">
         {filtered.length === 0 ? (
-          <p className="text-center py-8 text-sm text-brand-primary/30 font-bold">
+          <p className="text-center py-8 text-sm text-brand-primary/30 dark:text-zinc-500 font-bold">
             Bu filtreye uygun yorum bulunamadı.
           </p>
         ) : (
@@ -197,7 +205,7 @@ export function ReviewSection({
       {paginated.length < filtered.length && (
         <button
           onClick={() => setPage(p => p + 1)}
-          className="w-full py-4 border border-brand-primary/10 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-brand-secondary/50 transition-colors"
+          className="w-full py-4 border border-brand-primary/10 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors text-brand-primary dark:text-white"
         >
           Daha Fazla Göster ({filtered.length - paginated.length} yorum)
         </button>

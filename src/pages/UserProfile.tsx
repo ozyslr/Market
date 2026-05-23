@@ -3,25 +3,30 @@ import {
   Package, Heart, MapPin, Settings, Star, ShoppingBag,
   TrendingUp, Wallet, Zap, LayoutDashboard, ArrowRight,
   Camera, Clock, Truck, CheckCircle2, XCircle, RefreshCw, RotateCcw,
+  Store,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { MOCK_USER, MOCK_PRODUCTS } from '@/mockData';
+import { MOCK_USER, MOCK_PRODUCTS, MOCK_SELLERS } from '@/mockData';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useFollows } from '@/context/FollowsContext';
 import { getOrdersByUser } from '@/services/orderService';
 import { Order, OrderStatus } from '@/types/order';
 import { ProfileSettings } from '@/components/profile/ProfileSettings';
 import { ProductCard } from '@/components/commerce/ProductCard';
+import { getUserTracks, untrackPrice, PriceTrack } from '@/services/priceTrackService';
 
-type ProfileTab = 'overview' | 'orders' | 'favorites' | 'addresses' | 'settings';
+type ProfileTab = 'overview' | 'orders' | 'favorites' | 'pricetracks' | 'stores' | 'addresses' | 'settings';
 
 const TABS: { key: ProfileTab; labelKey: string; icon: React.ElementType }[] = [
   { key: 'overview', labelKey: 'profile.overview', icon: LayoutDashboard },
   { key: 'orders', labelKey: 'profile.orders', icon: Package },
   { key: 'favorites', labelKey: 'profile.favorites', icon: Heart },
+  { key: 'pricetracks', labelKey: 'profile.priceAlerts', icon: TrendingUp },
+  { key: 'stores', labelKey: 'profile.followedStores', icon: Store },
   { key: 'addresses', labelKey: 'profile.addresses', icon: MapPin },
   { key: 'settings', labelKey: 'profile.settings', icon: Settings },
 ];
@@ -105,8 +110,9 @@ const OrderCard: React.FC<{ order: Order; expanded?: boolean }> = ({ order, expa
 
 export function UserProfilePage() {
   const { user: authUser, firebaseUser } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { wishlist, loading: wishlistLoading } = useWishlist();
+  const { followedSellers, toggleFollow, loading: followsLoading } = useFollows();
   const user = authUser ? { ...MOCK_USER, name: authUser.name, email: authUser.email } : MOCK_USER;
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -117,6 +123,39 @@ export function UserProfilePage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
+
+  const [tracks, setTracks] = useState<PriceTrack[]>([]);
+  const [tracksLoading, setTracksLoading] = useState(false);
+
+  useEffect(() => {
+    if (!firebaseUser || activeTab !== 'pricetracks') return;
+    setTracksLoading(true);
+    getUserTracks(firebaseUser.uid)
+      .then(data => {
+        setTracks(data);
+      })
+      .catch(err => {
+        console.error("Error fetching price tracks:", err);
+      })
+      .finally(() => {
+        setTracksLoading(false);
+      });
+  }, [firebaseUser, activeTab]);
+
+  const handleRemoveTrack = async (productId: string) => {
+    if (!firebaseUser) return;
+    try {
+      await untrackPrice(firebaseUser.uid, productId);
+      setTracks(prev => prev.filter(t => t.productId !== productId));
+    } catch (err) {
+      console.error("Error untracking price:", err);
+    }
+  };
+
+  const trackedProducts = tracks.map(track => {
+    const product = MOCK_PRODUCTS.find(p => p.id === track.productId);
+    return { track, product };
+  }).filter((item): item is { track: PriceTrack; product: typeof MOCK_PRODUCTS[0] } => item.product !== undefined);
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -371,6 +410,169 @@ export function UserProfilePage() {
                 {wishlistProducts.map(p => (
                   <ProductCard key={p.id} product={p} />
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── PRICE TRACKS ─────────────────────────────── */}
+        {activeTab === 'pricetracks' && (
+          <div>
+            {tracksLoading ? (
+              <div className="flex justify-center py-16">
+                <div className="w-8 h-8 border-2 border-brand-primary/20 border-t-accent rounded-full animate-spin" />
+              </div>
+            ) : trackedProducts.length === 0 ? (
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-12 text-center border border-brand-primary/5">
+                <TrendingUp size={36} className="mx-auto text-brand-primary/10 mb-3" />
+                <p className="text-[11px] font-black uppercase tracking-widest text-brand-primary/30 mb-4">
+                  {t('profile.noPriceAlerts')}
+                </p>
+                <Link to="/" className="inline-block px-6 py-2.5 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
+                  {t('profile.startShopping')}
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {trackedProducts.map(({ track, product }) => {
+                  const priceDiff = track.originalPrice - product.price;
+                  const hasDropped = priceDiff > 0;
+                  
+                  return (
+                    <div key={product.id} className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-brand-primary/5 dark:border-white/5 shadow-sm flex flex-col justify-between hover:border-accent/20 transition-all relative overflow-hidden">
+                      {hasDropped && (
+                        <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl flex items-center gap-1">
+                          <span>↓</span> {t('profile.priceDropped')}
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-4 mb-4">
+                          <Link to={`/product/${product.slug}`} className="w-20 h-20 bg-brand-secondary dark:bg-zinc-800 rounded-2xl p-2 overflow-hidden border border-brand-primary/5 dark:border-white/5 flex items-center justify-center shrink-0">
+                            <img src={product.images[0]} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal rounded-xl animate-fade-in" alt={product.title} loading="lazy" referrerPolicy="no-referrer" />
+                          </Link>
+                          <div className="min-w-0 flex-1">
+                            <Link to={`/product/${product.slug}`} className="hover:text-accent transition-colors">
+                              <h3 className="text-sm font-black text-brand-primary dark:text-white truncate">
+                                {product.title}
+                              </h3>
+                            </Link>
+                            <p className="text-[10px] text-brand-primary/40 dark:text-zinc-500 font-medium mt-1">
+                              {t('nav.watchlist')}: {new Date(track.addedAt).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')}
+                            </p>
+                            
+                            <div className="mt-3 flex items-center gap-4">
+                              <div>
+                                <p className="text-[9px] font-bold text-brand-primary/40 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1">
+                                  {t('profile.originalPrice')}
+                                </p>
+                                <p className="text-sm font-black text-brand-primary/60 dark:text-zinc-400 line-through">
+                                  ${track.originalPrice.toFixed(2)}
+                                </p>
+                              </div>
+                              
+                              <div>
+                                <p className="text-[9px] font-bold text-brand-primary/40 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1">
+                                  {t('profile.currentPrice')}
+                                </p>
+                                <p className={cn("text-base font-black", hasDropped ? "text-green-500" : "text-brand-primary dark:text-white")}>
+                                  ${product.price.toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 pt-4 border-t border-brand-primary/5 dark:border-white/5 mt-4">
+                        <Link
+                          to={`/product/${product.slug}`}
+                          className="flex-1 py-2.5 bg-brand-secondary dark:bg-zinc-800 text-brand-primary dark:text-white rounded-xl text-[10px] font-black uppercase tracking-widest text-center hover:bg-brand-primary hover:text-white transition-all"
+                        >
+                          {t('product.origin')}
+                        </Link>
+                        <button
+                          onClick={() => handleRemoveTrack(product.id)}
+                          className="flex-1 py-2.5 border border-red-500/20 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all"
+                        >
+                          {t('profile.removeTrack')}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── FOLLOWED STORES ─────────────────────────── */}
+        {activeTab === 'stores' && (
+          <div>
+            {followsLoading ? (
+              <div className="flex justify-center py-16">
+                <div className="w-8 h-8 border-2 border-brand-primary/20 border-t-accent rounded-full animate-spin" />
+              </div>
+            ) : followedSellers.length === 0 ? (
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-12 text-center border border-brand-primary/5">
+                <Store size={36} className="mx-auto text-brand-primary/10 mb-3" />
+                <p className="text-[11px] font-black uppercase tracking-widest text-brand-primary/30 mb-4">
+                  {t('profile.noFollowedStores')}
+                </p>
+                <Link to="/" className="inline-block px-6 py-2.5 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
+                  {t('profile.startShopping')}
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {followedSellers.map(sellerId => {
+                  const seller = MOCK_SELLERS.find(s => s.id === sellerId);
+                  if (!seller) return null;
+                  return (
+                    <div key={seller.id} className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-brand-primary/5 dark:border-white/5 shadow-sm flex flex-col justify-between hover:border-accent/20 transition-all">
+                      <div>
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="w-16 h-16 bg-brand-secondary dark:bg-zinc-800 rounded-2xl p-2 overflow-hidden border border-brand-primary/5 dark:border-white/5 flex items-center justify-center shrink-0">
+                            <img src={seller.logoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${seller.storeName}`} className="w-full h-full object-cover rounded-xl" alt={seller.storeName} loading="lazy" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <h3 className="text-sm font-black text-brand-primary dark:text-white truncate">
+                                {seller.storeName}
+                              </h3>
+                              {seller.isVerified && (
+                                <span className="w-4 h-4 bg-blue-500 text-white rounded-full flex items-center justify-center text-[8px] font-bold" title="Doğrulanmış Satıcı">✓</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-brand-primary/40 dark:text-zinc-500">
+                              <div className="flex items-center gap-1">
+                                <Star size={12} fill="#FF5200" className="text-accent" />
+                                <span className="font-bold text-brand-primary dark:text-white">{seller.rating}</span>
+                              </div>
+                              <span>•</span>
+                              <span>{seller.followersCount} Takipçi</span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-brand-primary/60 dark:text-zinc-400 line-clamp-2 mb-4 leading-relaxed">
+                          {seller.description}
+                        </p>
+                      </div>
+                      <div className="flex gap-3 pt-4 border-t border-brand-primary/5 dark:border-white/5 mt-auto">
+                        <Link
+                          to={`/seller/${seller.id}`}
+                          className="flex-1 py-2.5 bg-brand-secondary dark:bg-zinc-800 text-brand-primary dark:text-white rounded-xl text-[10px] font-black uppercase tracking-widest text-center hover:bg-brand-primary hover:text-white transition-all"
+                        >
+                          {t('profile.visitStore')}
+                        </Link>
+                        <button
+                          onClick={() => toggleFollow(seller.id)}
+                          className="px-4 py-2.5 border border-red-500/20 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all"
+                        >
+                          {t('profile.unfollow')}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

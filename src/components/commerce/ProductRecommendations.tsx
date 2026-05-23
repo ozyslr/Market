@@ -90,15 +90,13 @@ export function ProductRecommendations({ groups, loading }: Props) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: gi * 0.1 + pi * 0.05 }}
                 >
-                  <Link to={`/product/${product.slug || product.id}`}>
-                    <ProductCard
-                      product={{
-                        ...product,
-                        images: product.images?.length ? product.images : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'],
-                        slug: product.slug || product.id,
-                      }}
-                    />
-                  </Link>
+                  <ProductCard
+                    product={{
+                      ...product,
+                      images: product.images?.length ? product.images : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'],
+                      slug: product.slug || product.id,
+                    }}
+                  />
                 </motion.div>
               ))}
             </div>
@@ -139,6 +137,8 @@ export function RecommendationStrip({ title, products, source = 'content_based' 
           <Link
             key={product.id}
             to={`/product/${product.slug || product.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="snap-start shrink-0 w-[180px]"
           >
             <div className="bg-white rounded-2xl border border-brand-primary/5 overflow-hidden hover:shadow-lg transition-all group">

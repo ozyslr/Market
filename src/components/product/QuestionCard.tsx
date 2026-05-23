@@ -11,6 +11,13 @@ interface Props {
   onAnswer?: (questionId: string, answer: string) => Promise<void>;
 }
 
+const CATEGORY_LABELS = {
+  size: 'Beden / Ölçü',
+  shipping: 'Kargo / Teslimat',
+  stock: 'Stok Bilgisi',
+  other: 'Diğer',
+} as const;
+
 export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Props) {
   const [helpfulCount, setHelpfulCount] = useState(question.helpfulCount || 0);
   const [hasVoted, setHasVoted] = useState(
@@ -56,22 +63,31 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
   }
 
   return (
-    <div className="bg-[#F8F8FA] rounded-2xl p-4">
+    <div className="bg-[#F8F8FA] dark:bg-zinc-900/60 rounded-2xl p-4 border border-brand-primary/5 dark:border-white/5">
       {/* Soru */}
-      <div className="flex items-start gap-2 mb-2">
-        <HelpCircle size={14} className="text-accent mt-0.5 shrink-0" />
-        <div className="flex-1">
-          <p className="text-sm font-bold text-brand-primary">{question.text}</p>
-          <p className="text-[10px] text-brand-primary/30 mt-0.5">
-            {question.userName} · {new Date(question.createdAt).toLocaleDateString('tr-TR')}
-          </p>
+      <div className="flex items-start justify-between gap-4 mb-2">
+        <div className="flex items-start gap-2 min-w-0">
+          <HelpCircle size={14} className="text-accent mt-0.5 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-brand-primary dark:text-white leading-relaxed break-words">{question.text}</p>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-[10px] text-brand-primary/30 dark:text-zinc-500 font-bold">
+                {question.userName} · {new Date(question.createdAt).toLocaleDateString('tr-TR')}
+              </span>
+              {question.category && question.category !== 'other' && (
+                <span className="text-[8px] font-black uppercase tracking-wider bg-brand-secondary dark:bg-zinc-800 text-brand-primary/60 dark:text-zinc-400 px-1.5 py-0.5 rounded">
+                  {CATEGORY_LABELS[question.category] || question.category}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         <button
           onClick={handleVote}
           disabled={!currentUserId || voting}
           className={cn(
-            'flex items-center gap-1 text-[9px] font-black uppercase transition-colors shrink-0',
-            hasVoted ? 'text-accent' : 'text-brand-primary/30 hover:text-accent',
+            'flex items-center gap-1.5 text-[9px] font-black uppercase transition-colors shrink-0 p-1 rounded hover:bg-brand-secondary dark:hover:bg-zinc-800',
+            hasVoted ? 'text-accent' : 'text-brand-primary/30 dark:text-zinc-500 hover:text-accent',
             (!currentUserId || voting) && 'opacity-50 cursor-not-allowed',
           )}
           title="Faydalı"
@@ -83,9 +99,9 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
 
       {/* Cevap */}
       {localAnswer ? (
-        <div className="ml-5 pl-3 border-l-2 border-accent/30">
-          <p className="text-xs font-bold text-brand-primary/70">{localAnswer.text}</p>
-          <p className="text-[10px] text-accent font-bold mt-0.5">
+        <div className="ml-5 pl-3 border-l-2 border-accent/30 mt-2">
+          <p className="text-xs font-bold text-brand-primary/70 dark:text-zinc-300">{localAnswer.text}</p>
+          <p className="text-[10px] text-accent font-bold mt-1">
             {localAnswer.by}
             {localAnswer.at && ` · ${new Date(localAnswer.at).toLocaleDateString('tr-TR')}`}
           </p>
@@ -106,7 +122,7 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
                 onChange={e => setAnswerText(e.target.value)}
                 placeholder="Cevabınızı yazın..."
                 maxLength={1000}
-                className="flex-1 px-3 py-1.5 bg-white border border-brand-primary/10 rounded-xl text-xs outline-none focus:border-accent"
+                className="flex-1 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-brand-primary/10 dark:border-white/10 rounded-xl text-xs outline-none focus:border-accent text-brand-primary dark:text-white"
               />
               <button
                 onClick={handleAnswer}
@@ -117,7 +133,7 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
               </button>
               <button
                 onClick={() => setShowAnswerForm(false)}
-                className="px-3 py-1.5 bg-white border border-brand-primary/10 rounded-xl text-xs font-black"
+                className="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-brand-primary/10 dark:border-white/10 rounded-xl text-xs font-black text-brand-primary dark:text-white"
               >
                 İptal
               </button>
@@ -125,7 +141,7 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
           )}
         </>
       ) : (
-        <p className="ml-5 text-[10px] text-brand-primary/20 font-bold italic mt-1">
+        <p className="ml-5 text-[10px] text-brand-primary/20 dark:text-zinc-600 font-bold italic mt-1">
           Henüz cevaplanmadı
         </p>
       )}
