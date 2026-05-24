@@ -22,7 +22,8 @@ export function StickyBuyBar({
   onAddToCart,
   onBuyNow,
 }: StickyBuyBarProps) {
-  const symbol = currency === 'gbp' ? '£' : '₺';
+  const CURRENCY_SYMBOLS: Record<string, string> = { gbp: '£', try: '₺', usd: '$', eur: '€' };
+  const symbol = CURRENCY_SYMBOLS[currency] ?? currency.toUpperCase();
 
   return (
     <AnimatePresence>
@@ -43,6 +44,7 @@ export function StickyBuyBar({
             </div>
             {onBuyNow && (
               <button
+                type="button"
                 onClick={onBuyNow}
                 aria-label="Hemen satın al"
                 className="px-4 py-3 bg-yellow-400 text-black text-[10px] font-black uppercase rounded-xl flex items-center gap-1.5 shrink-0"
@@ -51,6 +53,7 @@ export function StickyBuyBar({
               </button>
             )}
             <button
+              type="button"
               onClick={onAddToCart}
               disabled={!canAdd}
               aria-label={canAdd ? 'Sepete ekle' : 'Stokta yok'}

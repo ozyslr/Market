@@ -119,7 +119,8 @@ export function ProductDetail() {
   const [showStickyBar, setShowStickyBar] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setShowStickyBar(window.scrollY > 600);
+    const STICKY_THRESHOLD = 600;
+    const onScroll = () => setShowStickyBar(window.scrollY > STICKY_THRESHOLD);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -961,9 +962,9 @@ export function ProductDetail() {
       {(() => {
         const hasVariants = (product.variantAttributes?.length ?? 0) > 0 && (product.variants?.length ?? 0) > 0;
         const stickyVariant: ProductVariant | undefined = hasVariants
-          ? product.variants!.find(v => product.variantAttributes!.every(attr => v.attributes[attr] === selectedAttrs[attr]))
+          ? product.variants!.find(v => (product.variantAttributes ?? []).every(attr => v.attributes[attr] === selectedAttrs[attr]))
           : undefined;
-        const allSelected = !hasVariants || product.variantAttributes!.every(attr => selectedAttrs[attr]);
+        const allSelected = !hasVariants || (product.variantAttributes ?? []).every(attr => selectedAttrs[attr]);
         const canAdd = allSelected && (!hasVariants || !!stickyVariant);
         return (
           <StickyBuyBar
