@@ -800,7 +800,7 @@ export function ProductDetail() {
             )}
 
         {/* Tabbed Detailed View */}
-        <div className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm overflow-hidden mb-12">
+        <div data-tab-panel className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm overflow-hidden mb-12">
           <div className="flex border-b border-brand-primary/5 overflow-x-auto no-scrollbar">
             {[
                     { id: 'details', label: t('product.description') },
