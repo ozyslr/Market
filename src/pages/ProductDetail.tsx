@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Star, Truck, ShieldCheck, ChevronRight, ShoppingCart,
@@ -8,7 +8,7 @@ import {
   Undo2, CheckCircle2, AlertCircle,
   BarChart, Package,
   Facebook, Twitter, Navigation,
-  TrendingUp, Eye, Tag, Ticket, Copy, BellRing, Smartphone,
+  TrendingUp, Eye, Tag, Ticket, Copy, BellRing, Smartphone, Zap as ZapIcon,
 } from 'lucide-react';
 import { MOCK_PRODUCTS } from '@/mockData';
 import { cn } from '@/lib/utils';
@@ -30,6 +30,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { trackPrice, untrackPrice, isTracking } from '@/services/priceTrackService';
+import { executeOneClickCheckout } from '@/services/oneClickCheckoutService';
+import { OneClickSuccessModal } from '@/components/checkout/OneClickSuccessModal';
 import { trackEvent, getRecentViewedIds } from '@/services/behaviorService';
 import { productSchema, breadcrumbSchema } from '@/components/seo/schemas';
 import { getContentBasedRecommendations, getCollaborativeRecommendations } from '@/services/recommendationService';
@@ -62,6 +64,7 @@ export function ProductDetail() {
   const { user, firebaseUser } = useAuth();
   const { addItem } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
+  const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -98,6 +101,9 @@ export function ProductDetail() {
   const [activeCoupons, setActiveCoupons] = useState<Coupon[]>([]);
   const [tracking, setTracking] = useState(false);
   const [trackLoading, setTrackLoading] = useState(false);
+  const [oneClickLoading, setOneClickLoading] = useState(false);
+  const [oneClickError, setOneClickError] = useState<string | null>(null);
+  const [oneClickResult, setOneClickResult] = useState<{ orderId: string; total: number } | null>(null);
   const [recSimilar, setRecSimilar] = useState<Product[]>([]);
   const [recAlsoBought, setRecAlsoBought] = useState<Product[]>([]);
   const [arOpen, setArOpen] = useState(false);
@@ -224,6 +230,33 @@ export function ProductDetail() {
     } finally {
       setTrackLoading(false);
     }
+  }
+
+  function canOneClick(): boolean {
+    if (!user) return false;
+    if (!user.defaultPaymentMethodId) return false;
+    if (!user.defaultAddressId) return false;
+    if (!user.addresses?.find(a => a.id === user.defaultAddressId)) return false;
+    return true;
+  }
+
+  async function handleBuyNow() {
+    if (!firebaseUser || !user || !product || !canOneClick()) return;
+    setOneClickLoading(true);
+    setOneClickError(null);
+    const result = await executeOneClickCheckout(
+      firebaseUser,
+      [{ productId: product.id, variantId: selectedVariant?.id, quantity }],
+      user.currency || 'gbp'
+    );
+    if (result.status === 'succeeded' && result.orderId) {
+      setOneClickResult({ orderId: result.orderId, total: result.total! });
+    } else if (result.status === 'requires_action') {
+      navigate('/checkout');
+    } else {
+      setOneClickError(result.errorMessage || 'Ödeme başarısız oldu.');
+    }
+    setOneClickLoading(false);
   }
 
   if (loading) {
@@ -636,6 +669,41 @@ export function ProductDetail() {
                         </div>
                       );
                     })()}
+
+                    {/* One-Click Buy Now Button */}
+                    {user && (
+                      <div className="mt-2">
+                        {canOneClick() ? (
+                          <button
+                            onClick={handleBuyNow}
+                            disabled={oneClickLoading || !canAdd}
+                            className="w-full flex items-center justify-center gap-2 py-3 px-6 bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 text-black font-semibold rounded-2xl transition-colors"
+                          >
+                            <ZapIcon size={18} />
+                            {oneClickLoading ? 'İşleniyor...' : 'Hemen Satın Al'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => navigate('/profile?tab=payment')}
+                            className="w-full text-sm text-gray-500 underline py-2 hover:text-gray-700"
+                          >
+                            Tek tıkla ödeme için kart ekle →
+                          </button>
+                        )}
+                        {oneClickError && (
+                          <p className="text-sm text-red-500 mt-2 text-center">{oneClickError}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {oneClickResult && (
+                      <OneClickSuccessModal
+                        orderId={oneClickResult.orderId}
+                        total={oneClickResult.total}
+                        currency={user?.currency || 'gbp'}
+                        onClose={() => setOneClickResult(null)}
+                      />
+                    )}
                   </div>
 
                   {firebaseUser && (
