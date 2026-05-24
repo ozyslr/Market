@@ -94,7 +94,13 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create: if isVerified() && isValidUser(incoming()) && uid == userId();
       allow update: if isVerified() && (
-        (uid == userId() && incoming().id == existing().id && incoming().role == existing().role) || 
+        (uid == userId() &&
+         incoming().id == existing().id &&
+         incoming().role == existing().role &&
+         !('stripeCustomerId' in incoming().keys() ||
+           'defaultPaymentMethodId' in incoming().keys() ||
+           'defaultPaymentMethodLast4' in incoming().keys() ||
+           'defaultPaymentMethodBrand' in incoming().keys())) ||
         isAdmin()
       );
     }
