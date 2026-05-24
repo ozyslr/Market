@@ -201,17 +201,18 @@ interface CompactRatingProps {
 }
 
 export function CompactRating({ rating, reviewsCount, onScrollToReviews }: CompactRatingProps) {
+  const Wrapper = onScrollToReviews ? 'button' : 'div';
   return (
-    <button
-      onClick={onScrollToReviews}
-      className="flex items-center gap-2 hover:opacity-75 transition-opacity"
+    <Wrapper
+      {...(onScrollToReviews ? { onClick: onScrollToReviews } : {})}
+      className={`flex items-center gap-2 transition-opacity${onScrollToReviews ? ' hover:opacity-75 cursor-pointer' : ''}`}
     >
       <div className="flex items-center gap-0.5">
         {Array.from({ length: 5 }).map((_, i) => {
           const fill = Math.max(0, Math.min(1, rating - i));
           return (
             <div key={i} className="relative w-4 h-4">
-              <Star size={16} className="absolute text-yellow-200" />
+              <Star size={16} className="absolute text-yellow-200 dark:text-yellow-700" />
               <div className="absolute overflow-hidden h-4" style={{ width: `${fill * 100}%` }}>
                 <Star size={16} fill="#FBBF24" className="text-yellow-400" />
               </div>
@@ -223,6 +224,6 @@ export function CompactRating({ rating, reviewsCount, onScrollToReviews }: Compa
       <span className="text-xs text-brand-primary/40 underline decoration-dotted">
         {reviewsCount} değerlendirme
       </span>
-    </button>
+    </Wrapper>
   );
 }

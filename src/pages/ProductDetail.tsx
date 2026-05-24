@@ -245,6 +245,10 @@ export function ProductDetail() {
     if (!firebaseUser || !user || !product || !canOneClick()) return;
     setOneClickLoading(true);
     setOneClickError(null);
+    const hasVariants = (product.variantAttributes?.length ?? 0) > 0 && (product.variants?.length ?? 0) > 0;
+    const selectedVariant: ProductVariant | undefined = hasVariants
+      ? product.variants!.find(v => product.variantAttributes!.every(attr => v.attributes[attr] === selectedAttrs[attr]))
+      : undefined;
     const result = await executeOneClickCheckout(
       firebaseUser,
       [{ productId: product.id, variantId: selectedVariant?.id, quantity }],
@@ -290,6 +294,11 @@ export function ProductDetail() {
 
   const currentMarket = MARKETS[location.market] ?? MARKETS['UK'];
   const tax = calculateTotal(product.price, 12, currentMarket, product.originCountry === 'UK');
+
+  const scrollToReviews = () => {
+    setActiveTab('reviews');
+    document.querySelector('[data-tab-panel]')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <div className="bg-[#f2f4f7] dark:bg-zinc-950 min-h-screen pb-20 transition-colors duration-300">
@@ -485,10 +494,7 @@ export function ProductDetail() {
                 <CompactRating
                   rating={product.rating}
                   reviewsCount={product.reviewsCount || 0}
-                  onScrollToReviews={() => {
-                    setActiveTab('reviews');
-                    document.querySelector('[data-tab-panel]')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
+                  onScrollToReviews={scrollToReviews}
                 />
               </div>
 
@@ -514,7 +520,7 @@ export function ProductDetail() {
                   {viewers > 0 && (
                     <div className="flex items-center gap-2 mt-2">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 border border-orange-100 rounded-full text-[10px] font-black text-orange-600">
-                        <Eye size={11} /> {viewers + 40} kişi şu an inceliyor
+                        <Eye size={11} /> {viewers} kişi şu an inceliyor
                       </span>
                     </div>
                   )}
