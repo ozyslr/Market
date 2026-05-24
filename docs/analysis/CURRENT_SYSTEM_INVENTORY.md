@@ -14,7 +14,7 @@ Benim Olan is a comprehensive e-commerce marketplace platform with 47 user-facin
 
 ---
 
-## Section 1: User-Facing Pages (47 Pages)
+## Section 1: User-Facing Pages (47 Pages Total)
 
 ### Core Shopping Pages (6 pages)
 1. **Home** - Landing page with hero banner, featured products, flash deals, and category showcase
@@ -118,11 +118,9 @@ Benim Olan is a comprehensive e-commerce marketplace platform with 47 user-facin
 46. **ProductVerification** - Quality verification dashboard for product listings
     - Features: Image verification, description validation, specification checks, batch approval
 
-### Content & Moderation (2 pages)
+### Content & Moderation (1 page)
 47. **ModeratorDashboard** - Moderation workflow for content review
     - Features: Review queue, flagged content, user reports, moderation tools
-48. **SellOnMercora** - Seller onboarding and marketing page
-    - Features: Seller benefits, application form, educational content, support links
 
 ---
 
@@ -623,6 +621,6 @@ Benim Olan is a comprehensive e-commerce marketplace platform with 47 user-facin
 **Last Updated:** May 24, 2026  
 **Document Version:** 1.0  
 **Status:** Complete Inventory  
-**Total Pages:** 48 (includes NotFound)  
+**Total Pages:** 47 (Core Shopping: 6, Checkout & Orders: 4, Account & Preferences: 3, Seller Center: 12, Admin Console: 21, Content & Moderation: 1)  
 **Total Services:** 42+  
 **Coverage:** 100% of implemented features
