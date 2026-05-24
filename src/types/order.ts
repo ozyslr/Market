@@ -52,3 +52,16 @@ export interface Order {
   paidAt?: string;
   shippedAt?: string;
 }
+
+export interface OneClickCheckoutPayload {
+  items: Array<{ productId: string; variantId?: string; quantity: number }>;
+  currency: string;
+}
+
+export interface OneClickCheckoutResult {
+  orderId?: string;
+  total?: number;
+  status: 'succeeded' | 'requires_action' | 'failed';
+  clientSecret?: string;   // present when status === 'requires_action'
+  errorMessage?: string;   // present when status === 'failed'
+}

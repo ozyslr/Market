@@ -99,6 +99,10 @@ export interface UserProfile extends User {
   savedItems: string[];
   addresses?: Address[];
   defaultAddressId?: string;
+  stripeCustomerId?: string;
+  defaultPaymentMethodId?: string;
+  defaultPaymentMethodLast4?: string;   // e.g. "4242" — for display only
+  defaultPaymentMethodBrand?: string;   // e.g. "visa" — for display only
   followedSellers?: string[];
   preferences: {
     newsletter: boolean;
