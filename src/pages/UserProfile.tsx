@@ -3,7 +3,7 @@ import {
   Package, Heart, MapPin, Settings, Star, ShoppingBag,
   TrendingUp, Wallet, Zap, LayoutDashboard, ArrowRight,
   Camera, Clock, Truck, CheckCircle2, XCircle, RefreshCw, RotateCcw,
-  Store,
+  Store, CreditCard,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -16,10 +16,11 @@ import { useFollows } from '@/context/FollowsContext';
 import { getOrdersByUser } from '@/services/orderService';
 import { Order, OrderStatus } from '@/types/order';
 import { ProfileSettings } from '@/components/profile/ProfileSettings';
+import { SavedPaymentMethod } from '@/components/profile/SavedPaymentMethod';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { getUserTracks, untrackPrice, PriceTrack } from '@/services/priceTrackService';
 
-type ProfileTab = 'overview' | 'orders' | 'favorites' | 'pricetracks' | 'stores' | 'addresses' | 'settings';
+type ProfileTab = 'overview' | 'orders' | 'favorites' | 'pricetracks' | 'stores' | 'addresses' | 'payment' | 'settings';
 
 const TABS: { key: ProfileTab; labelKey: string; icon: React.ElementType }[] = [
   { key: 'overview', labelKey: 'profile.overview', icon: LayoutDashboard },
@@ -28,6 +29,7 @@ const TABS: { key: ProfileTab; labelKey: string; icon: React.ElementType }[] = [
   { key: 'pricetracks', labelKey: 'profile.priceAlerts', icon: TrendingUp },
   { key: 'stores', labelKey: 'profile.followedStores', icon: Store },
   { key: 'addresses', labelKey: 'profile.addresses', icon: MapPin },
+  { key: 'payment', labelKey: 'profile.payment', icon: CreditCard },
   { key: 'settings', labelKey: 'profile.settings', icon: Settings },
 ];
 
@@ -583,6 +585,11 @@ export function UserProfilePage() {
           <div className="max-w-xl">
             <ProfileSettings defaultOpen="addresses" />
           </div>
+        )}
+
+        {/* ── PAYMENT ──────────────────────────────────── */}
+        {activeTab === 'payment' && (
+          <SavedPaymentMethod />
         )}
 
         {/* ── SETTINGS ─────────────────────────────────── */}
