@@ -42,6 +42,7 @@ export function SellerCard({
       <div className="flex gap-2">
         <Link
           to={`/seller/${sellerId}`}
+          aria-label={`${sellerName} satıcı sayfasına git`}
           className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-brand-primary/10 rounded-xl text-[10px] font-black uppercase tracking-wider text-brand-primary hover:border-accent hover:text-accent transition-all"
         >
           Satıcıya Git <ChevronRight size={12} />
@@ -49,6 +50,7 @@ export function SellerCard({
         {onToggleFollow && (
           <button
             onClick={onToggleFollow}
+            aria-label={isFollowing ? 'Satıcıyı takipten çık' : 'Satıcıyı takip et'}
             className={cn(
               'flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border',
               isFollowing

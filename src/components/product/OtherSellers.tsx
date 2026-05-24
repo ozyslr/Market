@@ -25,6 +25,8 @@ export function OtherSellers({ sellers, onAddToCart }: OtherSellersProps) {
     <div className="bg-white rounded-2xl border border-brand-primary/5 shadow-sm overflow-hidden">
       <button
         onClick={() => setExpanded(e => !e)}
+        aria-label={expanded ? 'Diğer satıcıları gizle' : 'Diğer satıcıları göster'}
+        aria-expanded={expanded}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-brand-secondary/30 transition-colors"
       >
         <div>
@@ -52,6 +54,7 @@ export function OtherSellers({ sellers, onAddToCart }: OtherSellersProps) {
                 {onAddToCart && (
                   <button
                     onClick={() => onAddToCart(seller.sellerId)}
+                    aria-label={`${seller.sellerName} satıcısından sepete ekle`}
                     className="mt-1 flex items-center gap-1 px-2 py-1 bg-accent text-white text-[9px] font-black rounded-lg hover:bg-brand-primary transition-colors"
                   >
                     <ShoppingCart size={10} /> Sepete Ekle
