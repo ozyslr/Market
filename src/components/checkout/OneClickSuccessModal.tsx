@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface Props {
   orderId: string;
@@ -12,7 +12,7 @@ interface Props {
 
 export function OneClickSuccessModal({ orderId, total, currency, onClose }: Props) {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
 
   const deliveryDate = new Date();
   deliveryDate.setDate(deliveryDate.getDate() + 4);

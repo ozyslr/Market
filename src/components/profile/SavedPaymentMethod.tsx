@@ -4,7 +4,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useAuth } from '../../context/AuthContext';
 import { createSetupIntent, setupPaymentMethod } from '../../services/oneClickCheckoutService';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../../context/LanguageContext';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
@@ -12,7 +12,7 @@ function SetupForm({ onSuccess }: { onSuccess: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const { firebaseUser, refreshUser } = useAuth();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,7 +70,7 @@ function SetupForm({ onSuccess }: { onSuccess: () => void }) {
 
 export function SavedPaymentMethod() {
   const { user, firebaseUser } = useAuth();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [showForm, setShowForm] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
