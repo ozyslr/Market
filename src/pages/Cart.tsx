@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Trash2, Plus, Minus, ShieldCheck, Truck,
   HelpCircle, ChevronRight, Heart, Sparkles,
-  ArrowRight, Globe, Lock, Info, ShoppingBag
+  ArrowRight, Globe, Lock, Info, ShoppingBag, Zap as ZapIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -13,18 +13,50 @@ import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 import { useLocationStore } from '@/context/LocationContext';
+import { useAuth } from '@/context/AuthContext';
+import { executeOneClickCheckout } from '@/services/oneClickCheckoutService';
+import { OneClickSuccessModal } from '@/components/checkout/OneClickSuccessModal';
 
 export function CartPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { user, firebaseUser } = useAuth();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const { items, removeItem, updateQuantity } = useCart();
+  const [oneClickLoading, setOneClickLoading] = useState(false);
+  const [oneClickError, setOneClickError] = useState<string | null>(null);
+  const [oneClickResult, setOneClickResult] = useState<{ orderId: string; total: number } | null>(null);
+  const { items, removeItem, updateQuantity, clearCart } = useCart();
   const { location } = useLocationStore();
 
   const handleCheckout = () => {
     navigate('/checkout');
   };
+
+  function canOneClick(): boolean {
+    if (!user) return false;
+    if (!user.defaultPaymentMethodId) return false;
+    if (!user.defaultAddressId) return false;
+    if (!user.addresses?.find(a => a.id === user.defaultAddressId)) return false;
+    return true;
+  }
+
+  async function handleOneClickOrder() {
+    if (!firebaseUser || !user || !canOneClick()) return;
+    setOneClickLoading(true);
+    setOneClickError(null);
+    const cartItems = items.map(i => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity }));
+    const result = await executeOneClickCheckout(firebaseUser, cartItems, user.currency || 'gbp');
+    if (result.status === 'succeeded' && result.orderId) {
+      clearCart();
+      setOneClickResult({ orderId: result.orderId, total: result.total! });
+    } else if (result.status === 'requires_action') {
+      navigate('/checkout');
+    } else {
+      setOneClickError(result.errorMessage || 'Ödeme başarısız oldu.');
+    }
+    setOneClickLoading(false);
+  }
 
   const updateQuantityDelta = (id: string, delta: number, variantId?: string) => {
     const item = items.find(i => i.productId === id && (i.variantId ?? '') === (variantId ?? ''));
@@ -237,6 +269,40 @@ export function CartPage() {
                     <Info size={16} className="text-red-500 shrink-0" />
                     <p className="text-[10px] font-bold text-red-600 uppercase tracking-tight">{checkoutError}</p>
                   </div>
+                )}
+
+                {/* One-Click Order Button */}
+                {user && canOneClick() && items.length > 0 && (
+                  <>
+                    <div className="mb-1">
+                      <p className="text-xs text-brand-primary/60 mb-1">
+                        {user.defaultPaymentMethodBrand} •••• {user.defaultPaymentMethodLast4}
+                      </p>
+                      <button
+                        onClick={handleOneClickOrder}
+                        disabled={oneClickLoading}
+                        className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 text-black font-black uppercase tracking-widest rounded-2xl transition-colors"
+                      >
+                        <ZapIcon size={18} />
+                        {oneClickLoading ? 'İşleniyor...' : 'Tek Tıkla Sipariş'}
+                      </button>
+                      {oneClickError && <p className="text-sm text-red-500 mt-1">{oneClickError}</p>}
+                    </div>
+                    <div className="flex items-center gap-2 my-3">
+                      <hr className="flex-1" />
+                      <span className="text-xs text-brand-primary/40">veya</span>
+                      <hr className="flex-1" />
+                    </div>
+                  </>
+                )}
+
+                {oneClickResult && (
+                  <OneClickSuccessModal
+                    orderId={oneClickResult.orderId}
+                    total={oneClickResult.total}
+                    currency={user?.currency || 'gbp'}
+                    onClose={() => setOneClickResult(null)}
+                  />
                 )}
 
                 <button 
