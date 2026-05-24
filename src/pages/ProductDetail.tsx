@@ -24,6 +24,13 @@ import { Product, Campaign, Coupon, ProductVariant } from '@/types';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { ReviewSection } from '@/components/product/ReviewSection';
 import { CompactRating } from '@/components/product/RatingSummary';
+import { ProductGallery } from '@/components/product/ProductGallery';
+import { SellerCard } from '@/components/product/SellerCard';
+import { OtherSellers } from '@/components/product/OtherSellers';
+import { DeliveryBox } from '@/components/product/DeliveryBox';
+import { InstallmentTable } from '@/components/product/InstallmentTable';
+import { ProductFeatures } from '@/components/product/ProductFeatures';
+import { StickyBuyBar } from '@/components/commerce/StickyBuyBar';
 import { QASection } from '@/components/product/QASection';
 import { getActiveCampaigns, calcCampaignDiscount } from '@/services/campaignService';
 import { getCoupons } from '@/services/couponService';
@@ -109,6 +116,13 @@ export function ProductDetail() {
   const [recAlsoBought, setRecAlsoBought] = useState<Product[]>([]);
   const [arOpen, setArOpen] = useState(false);
   const [recentViewed, setRecentViewed] = useState<Product[]>([]);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowStickyBar(window.scrollY > 600);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     if (product?.id) setViewers(Math.floor(Math.random() * 14) + 2);
@@ -336,58 +350,26 @@ export function ProductDetail() {
         {/* Main Product Stage: 2-Column Layout (60% Gallery / 40% Sidebar) */}
         <div className="grid lg:grid-cols-[3fr_2fr] gap-10 mb-16">
 
-          {/* LEFT: Gallery (60%) - Large Professional Gallery */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-3xl border border-brand-primary/5 shadow-sm overflow-hidden p-6 md:p-8">
-              {/* Main Image - Larger gallery for desktop viewing */}
-              <div
-                onClick={() => setIsLightboxOpen(true)}
-                className="aspect-square bg-gradient-to-br from-white to-brand-secondary/10 rounded-3xl overflow-hidden border border-brand-primary/5 p-8 relative flex items-center justify-center cursor-zoom-in group/image"
-                style={{ minHeight: '600px' }}
-              >
-                <motion.div
-                  key={activeImage}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="w-full h-full"
-                >
-                  <OptimizedImage
-                    src={product.images[activeImage]}
-                    className="w-full h-full object-contain mix-blend-multiply"
-                    alt={product.title}
-                    containerClassName="w-full h-full"
-                    lazy={false}
-                    referrerPolicy="no-referrer"
-                  />
-                </motion.div>
-                {(product?.images.length ?? 0) > 1 && (
-                  <>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white/80 backdrop-blur rounded-full shadow-md flex items-center justify-center hover:bg-white transition-all"
-                    >
-                      <ChevronLeft size={18} className="text-[#1A1033]" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white/80 backdrop-blur rounded-full shadow-md flex items-center justify-center hover:bg-white transition-all"
-                    >
-                      <ChevronRight size={18} className="text-[#1A1033]" />
-                    </button>
-                  </>
-                )}
-                <div className="absolute top-6 right-6 flex flex-col gap-3">
+          {/* LEFT: Gallery */}
+          <div>
+            <ProductGallery
+              images={product.images}
+              title={product.title}
+              extraActions={
+                <>
                   {product.model3dUrl && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setArOpen(true); }}
                       className="p-3 bg-gradient-to-br from-purple-500 to-blue-500 shadow-xl rounded-full text-white hover:from-purple-400 hover:to-blue-400 transition-all border border-white/20"
                       title="3D / AR ile görüntüle"
+                      aria-label="3D/AR ile görüntüle"
                     >
                       <Smartphone size={20} />
                     </button>
                   )}
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
+                    aria-label={isWishlisted(product.id) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
                     className={cn(
                       "p-3 bg-white/80 backdrop-blur shadow-xl rounded-full transition-all border border-brand-primary/5",
                       isWishlisted(product.id) ? "text-red-500 bg-white" : "text-brand-primary/40 hover:text-accent hover:bg-white"
@@ -395,57 +377,9 @@ export function ProductDetail() {
                   >
                     <Heart size={20} fill={isWishlisted(product.id) ? "currentColor" : "none"} />
                   </button>
-                  <div className="relative group" onClick={(e) => e.stopPropagation()}>
-                     <button className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5">
-                       <Share2 size={20} />
-                     </button>
-                     <div className="absolute right-full top-0 mr-3 flex items-center gap-2 opacity-0 -translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-300">
-                       <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1877F2] hover:scale-110 transition-transform">
-                          <Facebook size={18} />
-                       </a>
-                       <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1DA1F2] hover:scale-110 transition-transform">
-                          <Twitter size={18} />
-                       </a>
-                       <a href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(window.location.href)}&media=${encodeURIComponent(product.images[0])}&description=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#E60023] hover:scale-110 transition-transform">
-                          <span className="font-extrabold text-sm" style={{ fontFamily: 'serif' }}>P</span>
-                       </a>
-                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Thumbnails */}
-              {(product?.images.length ?? 0) > 1 && (
-                <>
-                  <div className="flex gap-1.5 justify-center my-6">
-                    {product!.images.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setActiveImage(i)}
-                        className={cn(
-                          'h-1.5 rounded-full transition-all duration-300',
-                          i === activeImage ? 'bg-accent w-4' : 'bg-[#1A1033]/20 w-1.5',
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                    {product.images.map((img, i) => (
-                      <button
-                        key={i}
-                        onMouseEnter={() => setActiveImage(i)}
-                        className={cn(
-                          "w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all p-1 bg-white shrink-0",
-                          activeImage === i ? "border-accent shadow-lg" : "border-transparent opacity-60 hover:opacity-100"
-                        )}
-                      >
-                        <OptimizedImage src={img} alt={product.title} className="w-full h-full object-contain" containerClassName="w-full h-full" referrerPolicy="no-referrer" />
-                      </button>
-                    ))}
-                  </div>
                 </>
-              )}
-            </div>
+              }
+            />
           </div>
 
           {/* RIGHT: Sticky Sidebar with Product Info (40%) */}
@@ -550,6 +484,23 @@ export function ProductDetail() {
                 />
               </div>
             </div>
+
+            {/* Seller Card */}
+            <SellerCard
+              sellerId={product.sellerId}
+              sellerName={product.brand || 'Mağaza'}
+            />
+
+            {/* Other Sellers */}
+            <OtherSellers sellers={[]} />
+
+            {/* Product Features */}
+            {product.specifications && (
+              <ProductFeatures specifications={product.specifications as Record<string, string>} />
+            )}
+
+            {/* Installment Table */}
+            <InstallmentTable price={product.price} currency={product.currency ?? 'gbp'} />
 
             {/* Promotions Card */}
             {(campaigns.length > 0 || cartDiscount > 0 || activeCoupons.length > 0) && (
@@ -736,35 +687,11 @@ export function ProductDetail() {
             })()}
 
             {/* Delivery & Trust */}
-            <div className="bg-white rounded-3xl border border-brand-primary/5 shadow-sm p-6 md:p-8 space-y-4">
-              <div className="flex gap-3 cursor-pointer hover:bg-brand-secondary/30 p-3 -m-3 rounded-xl transition-colors" onClick={() => setIsLocationModalOpen(true)}>
-                <div className="w-10 h-10 bg-brand-secondary/30 rounded-xl flex items-center justify-center text-accent shrink-0">
-                  <Navigation size={18} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[9px] font-black uppercase text-brand-primary/40 tracking-widest">Teslimat</p>
-                  <p className="text-xs font-black text-brand-primary mt-0.5 line-clamp-1">{selectedLocation}</p>
-                </div>
-                <ChevronRight size={14} className="text-brand-primary/40 mt-0.5" />
-              </div>
-
-              <div className="space-y-2 pt-2 border-t border-brand-primary/5">
-                <div className="flex gap-2">
-                  <Package size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[9px] font-black uppercase text-brand-primary/40">Kolay İade</p>
-                    <p className="text-xs font-bold text-brand-primary/60 mt-0.5">15 gün</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <ShieldCheck size={14} className="text-green-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[9px] font-black uppercase text-brand-primary/40">Garantili</p>
-                    <p className="text-xs font-bold text-brand-primary/60 mt-0.5">2 Yıl</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <DeliveryBox
+              locationLabel={selectedLocation}
+              onChangeLocation={() => setIsLocationModalOpen(true)}
+              hasExpressShipping={product.isFlashDeal}
+            />
           </div>
         </div>
 
@@ -1029,6 +956,27 @@ export function ProductDetail() {
         </section>
       </div>
     </div>
+
+      {/* Mobile Sticky Buy Bar */}
+      {(() => {
+        const hasVariants = (product.variantAttributes?.length ?? 0) > 0 && (product.variants?.length ?? 0) > 0;
+        const stickyVariant: ProductVariant | undefined = hasVariants
+          ? product.variants!.find(v => product.variantAttributes!.every(attr => v.attributes[attr] === selectedAttrs[attr]))
+          : undefined;
+        const allSelected = !hasVariants || product.variantAttributes!.every(attr => selectedAttrs[attr]);
+        const canAdd = allSelected && (!hasVariants || !!stickyVariant);
+        return (
+          <StickyBuyBar
+            visible={showStickyBar}
+            price={cartPrice}
+            currency={product.currency ?? 'gbp'}
+            productTitle={product.title}
+            canAdd={canAdd}
+            onAddToCart={() => canAdd && addItem(product.id, quantity, stickyVariant?.id)}
+            onBuyNow={canOneClick() ? handleBuyNow : undefined}
+          />
+        );
+      })()}
 
       {/* AR Viewer Modal */}
         {product.model3dUrl && (
