@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, ZoomIn, X } from 'lucide-react';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
@@ -14,8 +14,8 @@ export function ProductGallery({ images, title, extraActions }: ProductGalleryPr
   const [activeImage, setActiveImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const prev = () => setActiveImage(i => (i - 1 + images.length) % images.length);
-  const next = () => setActiveImage(i => (i + 1) % images.length);
+  const prev = useCallback(() => setActiveImage(i => (i - 1 + images.length) % images.length), [images.length]);
+  const next = useCallback(() => setActiveImage(i => (i + 1) % images.length), [images.length]);
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -26,7 +26,11 @@ export function ProductGallery({ images, title, extraActions }: ProductGalleryPr
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [lightboxOpen, images.length]);
+  }, [lightboxOpen, images.length, prev, next]);
+
+  useEffect(() => {
+    setActiveImage(i => Math.min(i, Math.max(0, images.length - 1)));
+  }, [images.length]);
 
   return (
     <>
@@ -58,9 +62,10 @@ export function ProductGallery({ images, title, extraActions }: ProductGalleryPr
         )}
 
         <div className="flex-1 relative">
-          <div
+          <button
+            type="button"
             onClick={() => setLightboxOpen(true)}
-            className="aspect-square bg-white rounded-2xl border border-brand-primary/5 overflow-hidden cursor-zoom-in relative flex items-center justify-center p-6 group"
+            className="w-full text-left aspect-square bg-white rounded-2xl border border-brand-primary/5 overflow-hidden cursor-zoom-in relative flex items-center justify-center p-6 group"
           >
             <AnimatePresence mode="wait">
               <motion.div
@@ -92,12 +97,14 @@ export function ProductGallery({ images, title, extraActions }: ProductGalleryPr
               <>
                 <button
                   onClick={e => { e.stopPropagation(); prev(); }}
+                  aria-label="Önceki görsel"
                   className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur rounded-full shadow flex items-center justify-center hover:bg-white transition-all"
                 >
                   <ChevronLeft size={16} className="text-brand-primary" />
                 </button>
                 <button
                   onClick={e => { e.stopPropagation(); next(); }}
+                  aria-label="Sonraki görsel"
                   className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur rounded-full shadow flex items-center justify-center hover:bg-white transition-all"
                 >
                   <ChevronRight size={16} className="text-brand-primary" />
@@ -110,7 +117,7 @@ export function ProductGallery({ images, title, extraActions }: ProductGalleryPr
                 {extraActions}
               </div>
             )}
-          </div>
+          </button>
 
           {images.length > 1 && (
             <div className="flex md:hidden gap-1.5 justify-center mt-3">
@@ -118,6 +125,8 @@ export function ProductGallery({ images, title, extraActions }: ProductGalleryPr
                 <button
                   key={i}
                   onClick={() => setActiveImage(i)}
+                  aria-label={`Görsel ${i + 1}`}
+                  aria-pressed={i === activeImage}
                   className={cn(
                     'h-1.5 rounded-full transition-all',
                     i === activeImage ? 'bg-accent w-4' : 'bg-brand-primary/20 w-1.5'
@@ -159,6 +168,7 @@ export function ProductGallery({ images, title, extraActions }: ProductGalleryPr
             <div className="w-full flex justify-end">
               <button
                 onClick={e => { e.stopPropagation(); setLightboxOpen(false); }}
+                aria-label="Kapat"
                 className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white"
               >
                 <X size={18} />
@@ -167,6 +177,7 @@ export function ProductGallery({ images, title, extraActions }: ProductGalleryPr
             <div className="flex-1 w-full max-w-5xl flex items-center gap-4 my-4">
               <button
                 onClick={e => { e.stopPropagation(); prev(); }}
+                aria-label="Önceki görsel"
                 className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white"
               >
                 <ChevronLeft size={22} />
@@ -176,6 +187,7 @@ export function ProductGallery({ images, title, extraActions }: ProductGalleryPr
                   key={activeImage}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
                   src={images[activeImage]}
                   alt={title}
                   className="max-h-[70vh] max-w-full object-contain select-none"
@@ -183,6 +195,7 @@ export function ProductGallery({ images, title, extraActions }: ProductGalleryPr
               </div>
               <button
                 onClick={e => { e.stopPropagation(); next(); }}
+                aria-label="Sonraki görsel"
                 className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white"
               >
                 <ChevronRight size={22} />
