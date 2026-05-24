@@ -4,7 +4,7 @@ import { SiteSettings } from '@/types';
 import { Save, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
 
 export function AdminSettings() {
-  const [settings, setSettings] = useState<SiteSettings>({ id: 'global', siteName: 'Mercora', maintenanceMode: false });
+  const [settings, setSettings] = useState<SiteSettings>({ id: 'global', siteName: 'Benim Olan', maintenanceMode: false });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -33,9 +33,9 @@ export function AdminSettings() {
 
       <form onSubmit={handleSave} className="space-y-6">
         {[
-          { label: 'Site Adı', key: 'siteName' as const, placeholder: 'Mercora' },
+          { label: 'Site Adı', key: 'siteName' as const, placeholder: 'Benim Olan' },
           { label: 'Logo URL', key: 'logoUrl' as const, placeholder: 'https://...' },
-          { label: 'İletişim E-postası', key: 'contactEmail' as const, placeholder: 'info@mercora.com' },
+          { label: 'İletişim E-postası', key: 'contactEmail' as const, placeholder: 'info@benimolan.com' },
         ].map(({ label, key, placeholder }) => (
           <div key={key}>
             <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">{label}</label>

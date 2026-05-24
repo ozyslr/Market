@@ -6,19 +6,19 @@ export function organizationSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Mercora',
-    url: 'https://mercora.com',
-    logo: 'https://mercora.com/logo.png',
+    name: 'Benim Olan',
+    url: 'https://benimolan.com',
+    logo: 'https://benimolan.com/logo.png',
     description: 'Global Artisan Marketplace — El işçiliği ve özel tasarım ürünler',
     sameAs: [
-      'https://facebook.com/mercora',
-      'https://instagram.com/mercora',
-      'https://twitter.com/mercora',
+      'https://facebook.com/benimolan',
+      'https://instagram.com/benimolan',
+      'https://twitter.com/benimolan',
     ],
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
-      email: 'info@mercora.com',
+      email: 'info@benimolan.com',
     },
     address: {
       '@type': 'PostalAddress',
@@ -35,8 +35,8 @@ export function websiteSchema(searchActionUrl?: string) {
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Mercora',
-    url: 'https://mercora.com',
+    name: 'Benim Olan',
+    url: 'https://benimolan.com',
     description: 'Global Artisan Marketplace — El işçiliği ve özel tasarım ürünler',
     inLanguage: ['tr', 'en', 'de', 'ar'],
   };
@@ -46,7 +46,7 @@ export function websiteSchema(searchActionUrl?: string) {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `https://mercora.com/search?q={search_term_string}`,
+        urlTemplate: `https://benimolan.com/search?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     };

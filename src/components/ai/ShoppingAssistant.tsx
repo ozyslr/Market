@@ -12,7 +12,7 @@ export function ShoppingAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<{ role: 'bot' | 'user', text: string }[]>([
-    { role: 'bot', text: "Welcome to Mercora Global. I am your Strategic Artifact Advisor. I can help you with cross-border logistics, tax compliance, or finding the perfect artisan piece. How shall we begin?" }
+    { role: 'bot', text: "Welcome to Benim Olan Global. I am your Strategic Artifact Advisor. I can help you with cross-border logistics, tax compliance, or finding the perfect artisan piece. How shall we begin?" }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -60,7 +60,7 @@ export function ShoppingAssistant() {
                   <BrainCircuit size={24} className="text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-widest italic">Mercora Navigator</h3>
+                  <h3 className="text-sm font-black uppercase tracking-widest italic">Benim Olan Navigator</h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
                     <span className="text-[10px] font-bold text-white/60 tracking-widest">Global Intelligence Active</span>

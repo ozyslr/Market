@@ -58,7 +58,13 @@
       "Bash(git -C \"C:\\\\Users\\\\ozyslr\\\\.claude\\\\plugins\\\\marketplaces\\\\context-mode\" pull)",
       "mcp__plugin_context-mode_context-mode__ctx_execute_file",
       "mcp__plugin_context-mode_context-mode__ctx_execute",
-      "mcp__plugin_context-mode_context-mode__ctx_search"
+      "mcp__plugin_context-mode_context-mode__ctx_search",
+      "Bash(Get-ChildItem -Path \"O:\\\\AI\\\\E-tic 2026\\\\mercora-next\\\\src\" -Name \"middleware*\" -Recurse -ErrorAction SilentlyContinue)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \"3000\\\\|3001\")",
+      "Bash(tasklist)",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3000, 3001 -State Listen | Select-Object OwningProcess, LocalPort\")",
+      "Bash(taskkill /PID 17648 /F)"
     ],
     "additionalDirectories": [
       "O:\\AI\\E-tic 2026\\docs\\superpowers"

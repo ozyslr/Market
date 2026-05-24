@@ -131,7 +131,7 @@ export function CollectionPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
       <Helmet>
-        <title>{config.label} — Mercora</title>
+        <title>{config.label} — Benim Olan</title>
         <meta name="description" content={config.description} />
       </Helmet>
 

@@ -90,7 +90,7 @@ export function CategoryPage() {
     <div className="min-h-screen bg-white dark:bg-zinc-950">
       <SEO
         title={category?.name || 'Kategori'}
-        description={`${category?.name || 'Kategori'} sayfası — Mercora'da ${category?.name || 'kategori'} ürünlerini keşfedin.`}
+        description={`${category?.name || 'Kategori'} sayfası — Benim Olan'da ${category?.name || 'kategori'} ürünlerini keşfedin.`}
         canonical={`/category/${id}`}
         lang={lang}
         jsonLd={

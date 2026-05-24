@@ -26,23 +26,23 @@ export const SEO: React.FC<SEOProps> = ({
   canonical,
   type = 'website',
   image,
-  name = 'Mercora',
+  name = 'Benim Olan',
   jsonLd,
   lang = 'tr',
 }) => {
   const fullTitle = title ? `${title} | ${name}` : name;
   const siteDescription = description || 'Global Artisan Marketplace';
   const canonicalUrl = canonical
-    ? `https://mercora.com${canonical.startsWith('/') ? canonical : `/${canonical}`}`
+    ? `https://benimolan.com${canonical.startsWith('/') ? canonical : `/${canonical}`}`
     : typeof window !== 'undefined'
       ? window.location.href
-      : 'https://mercora.com';
+      : 'https://benimolan.com';
 
   // Build hreflang alternate links
   const hreflangLinks = canonical
     ? LANGUAGES.map((l) => ({
         lang: l,
-        href: canonicalUrl.replace('mercora.com', `mercora.com/${l === 'tr' ? '' : l}`),
+        href: canonicalUrl.replace('benimolan.com', `benimolan.com/${l === 'tr' ? '' : l}`),
       }))
     : [];
 

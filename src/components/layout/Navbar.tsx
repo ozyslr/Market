@@ -90,7 +90,7 @@ export function Navbar() {
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent rounded-xl flex items-center justify-center text-white rotate-3 group-hover:rotate-0 transition-transform shadow-lg shadow-accent/20">
               <Zap size={20} className="sm:size-[24px]" fill="currentColor" />
             </div>
-            <span className="font-display font-bold text-xl sm:text-3xl tracking-tighter uppercase italic text-brand-primary dark:text-white">Mercora</span>
+            <span className="font-display font-bold text-xl sm:text-3xl tracking-tighter uppercase italic text-brand-primary dark:text-white">BENIM OLAN</span>
           </Link>
 
           {/* Mobile Header Icons (Right side) */}
@@ -432,7 +432,7 @@ export function Navbar() {
               { name: 'Yeni Gelenler', path: '/collection/new-arrivals' },
               { name: 'Flash Fırsatları', path: '/collection/flash-deals' },
               { name: 'Öne Çıkanlar', path: '/collection/featured' },
-              { name: 'Mercora Prime', path: '/search?delivery=prime' },
+              { name: 'Benim Olan Prime', path: '/search?delivery=prime' },
               { name: 'Gift Finder', path: '/search?tag=gift' },
             ].map((item, i) => (
               <Link key={i} to={item.path} className="text-[10px] font-black uppercase tracking-widest hover:text-accent transition-all hidden md:block opacity-60 hover:opacity-100">

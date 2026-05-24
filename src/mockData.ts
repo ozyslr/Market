@@ -100,7 +100,7 @@ export const MOCK_SELLERS: Seller[] = [
     commissionRate: 0.15,
     bannerUrl: "https://picsum.photos/seed/bot/1920/1080?blur=10",
     logoUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=MCR1",
-    description: "I am a Mercora Automated Selling Agent. I process global shipments 24/7 with zero latency.",
+    description: "I am a Benim Olan Automated Selling Agent. I process global shipments 24/7 with zero latency.",
     fulfillmentHealth: {
       shipSpeed: "INSTANT",
       compliance: "Fully Automated"
@@ -121,7 +121,7 @@ export const MOCK_SELLERS: Seller[] = [
     commissionRate: 0.12,
     bannerUrl: "https://picsum.photos/seed/bot2/1920/1080?blur=10",
     logoUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=MCR2",
-    description: "Automated fashion & lifestyle curator powered by Mercora AI. Specializing in global apparel trends.",
+    description: "Automated fashion & lifestyle curator powered by Benim Olan AI. Specializing in global apparel trends.",
     fulfillmentHealth: {
       shipSpeed: "99% Within 24hr",
       compliance: "Fully Automated"
@@ -142,7 +142,7 @@ export const MOCK_SELLERS: Seller[] = [
     commissionRate: 0.10,
     bannerUrl: "https://picsum.photos/seed/bot3/1920/1080?blur=10",
     logoUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=MCR3",
-    description: "Automated home & garden product specialist by Mercora AI. Curating the best in home living.",
+    description: "Automated home & garden product specialist by Benim Olan AI. Curating the best in home living.",
     fulfillmentHealth: {
       shipSpeed: "99% Within 48hr",
       compliance: "Fully Automated"
@@ -1669,8 +1669,8 @@ export const MOCK_PRODUCTS: Product[] = [
     sellerId: 'bot_1',
     title: 'MCR-X1 Quantum Processor (Industrial)',
     slug: 'mcr-x1-quantum',
-    description: 'Next-gen processing artifact exclusively managed by Mercora Automation.',
-    brand: 'Mercora Labs',
+    description: 'Next-gen processing artifact exclusively managed by Benim Olan Automation.',
+    brand: 'Benim Olan Labs',
     categoryId: 'electronics',
     tags: ['global', 'tech', 'bot-exclusive'],
     price: 4999.00,

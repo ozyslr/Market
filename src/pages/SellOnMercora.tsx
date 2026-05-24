@@ -85,7 +85,7 @@ export function SellOnMercora() {
           >
             <div className="px-6 py-2 bg-white/10 rounded-full border border-white/10 backdrop-blur-md flex items-center gap-3">
               <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Mercora Satıcı Platformu 2026</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">Benim Olan Satıcı Platformu 2026</span>
             </div>
           </motion.div>
 
@@ -104,7 +104,7 @@ export function SellOnMercora() {
             transition={{ delay: 0.2 }}
             className="text-xl text-white/60 max-w-2xl mx-auto mb-12 font-medium"
           >
-            450+ seçkin satıcıya katılın. Mercora'nın AI destekli altyapısıyla ürünlerinizi global pazara taşıyın.
+            450+ seçkin satıcıya katılın. Benim Olan'ın AI destekli altyapısıyla ürünlerinizi global pazara taşıyın.
           </motion.p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">

@@ -206,14 +206,14 @@ export function SearchResultsPage() {
     <div className="min-h-screen bg-brand-secondary/20 pt-24 sm:pt-32 pb-10 sm:pb-20">
       <SEO
         title={`${results.length} Artifacts Found ${categoryName ? `- ${categoryName}` : ''}`}
-        description={`Search results for ${categoryName || query}. Find the best deals and global artifacts on Mercora.`}
+        description={`Search results for ${categoryName || query}. Find the best deals and global artifacts on Benim Olan.`}
       />
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6">
         {/* Search Header / Breadcrumb */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
           <div>
             <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2 sm:mb-4">
-              <Link to="/" className="hover:text-accent">Mercora Global</Link>
+              <Link to="/" className="hover:text-accent">Benim Olan Global</Link>
               <span>/</span>
               <span className="text-brand-primary">Search Results</span>
             </div>

@@ -259,7 +259,7 @@ export function Home() {
     <div className="min-h-screen bg-brand-secondary dark:bg-brand-secondary transition-colors duration-300">
       <SEO
         title={t('nav.home_page')}
-        description="Mercora - The next-generation global commerce ecosystem connecting artisans to the world."
+        description="Benim Olan - The next-generation global commerce ecosystem connecting artisans to the world."
         lang={lang}
       />
       

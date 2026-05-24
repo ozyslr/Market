@@ -47,7 +47,7 @@ export function MobileMenu({ isOpen, onClose, categories, onOpenAuth }: MobileMe
             <div className="p-6 bg-brand-primary text-white flex items-center justify-between">
               <Link to="/" onClick={onClose} className="flex items-center gap-2">
                 <Zap size={20} fill="currentColor" className="text-accent" />
-                <span className="font-display font-black text-xl uppercase italic tracking-tighter">Mercora</span>
+                <span className="font-display font-black text-xl uppercase italic tracking-tighter">BENIM OLAN</span>
               </Link>
               <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors" aria-label="Menüyü kapat">
                 <X size={24} />

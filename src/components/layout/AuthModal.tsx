@@ -82,7 +82,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg">
                   <Zap size={20} fill="currentColor" />
                 </div>
-                <span className="font-display font-black text-xl uppercase italic tracking-tighter">Mercora</span>
+                <span className="font-display font-black text-xl uppercase italic tracking-tighter">BENIM OLAN</span>
               </div>
               <div className="flex gap-1 bg-white/10 p-1 rounded-2xl relative z-10">
                 <button

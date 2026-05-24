@@ -21,14 +21,14 @@ const DEFAULT_ACCOUNTS: BankAccount[] = [
   {
     bankName: 'Ziraat Bankası',
     iban: 'TR00 0000 0000 0000 0000 0000 00',
-    accountHolder: 'Mercora Ltd. Şti.',
+    accountHolder: 'Benim Olan Ltd. Şti.',
     branchCode: '1234',
     accountNumber: '5678901-2',
   },
   {
     bankName: 'Garanti BBVA',
     iban: 'TR00 0000 0000 0000 0000 0000 00',
-    accountHolder: 'Mercora Ltd. Şti.',
+    accountHolder: 'Benim Olan Ltd. Şti.',
     branchCode: '5678',
     accountNumber: '9012345-6',
   },

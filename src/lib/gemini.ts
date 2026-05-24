@@ -15,7 +15,7 @@ export async function askShoppingAssistant(query: string, context?: any) {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `
-        You are Mercora Shopping Assistant. Mercora is a next-gen global marketplace.
+        You are Benim Olan Shopping Assistant. Benim Olan is a next-gen global marketplace.
         Context: ${JSON.stringify(context || {})}
         User Question: ${query}
         

@@ -54,7 +54,7 @@ export function InvoiceModal({ order, onClose }: InvoiceModalProps) {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-3xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
-                  MERCORA
+                  BENIM OLAN
                 </h1>
                 <p className="text-[10px] font-bold text-[#1A1033]/40 uppercase tracking-widest mt-0.5">
                   Global Marketplace
@@ -154,7 +154,7 @@ export function InvoiceModal({ order, onClose }: InvoiceModalProps) {
 
             {/* Footer */}
             <p className="text-center text-[9px] text-[#1A1033]/20 font-bold uppercase tracking-widest pt-4 border-t border-[#1A1033]/5">
-              Mercora Global Marketplace · Bu belge bilgilendirme amaçlıdır · mercora.com
+              Benim Olan Global Marketplace · Bu belge bilgilendirme amaçlıdır · benimolan.com
             </p>
           </div>
         </div>

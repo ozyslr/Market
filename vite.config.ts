@@ -21,8 +21,8 @@ export default defineConfig(({mode}) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg'],
         manifest: {
-          name: 'Mercora — Alışverişin Yeni Adresi',
-          short_name: 'Mercora',
+          name: 'Benim Olan — Alışverişin Yeni Adresi',
+          short_name: 'Benim Olan',
           description: 'Global Artisan Marketplace — El işçiliği ve özel tasarım ürünler',
           theme_color: '#1A1033',
           background_color: '#F8F8FA',

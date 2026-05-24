@@ -82,7 +82,7 @@ export function VisualSearch() {
   return (
     <div className="min-h-screen bg-brand-secondary dark:bg-zinc-950 transition-colors">
       <SEO
-        title="Görsel ile Ara — Mercora"
+        title="Görsel ile Ara — Benim Olan"
         description="Mercora'da fotoğraf çekerek veya görsel yükleyerek ürün arayın."
         lang={lang}
       />

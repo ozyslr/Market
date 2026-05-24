@@ -134,7 +134,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="p-3 flex flex-col flex-1">
           <Link to={`/product/${product.slug}`} target="_blank" rel="noopener noreferrer" className="flex flex-col mb-1 flex-1">
             <span className="text-xs font-bold text-brand-primary dark:text-zinc-100 leading-tight uppercase line-clamp-1 mb-0.5">
-              {product.sellerId || "MERCORA"} 
+              {product.sellerId || "BENIM OLAN"} 
             </span>
             <span className="text-xs text-brand-primary/70 dark:text-zinc-400 line-clamp-2 leading-snug">
               {product.title}
