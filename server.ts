@@ -120,6 +120,24 @@ async function startServer() {
   });
   app.use('/api/create-payment-intent', paymentLimiter);
   app.use('/api/iyzico/init', paymentLimiter);
+  app.use('/api/create-setup-intent', paymentLimiter);
+  app.use('/api/setup-payment-method', paymentLimiter);
+  app.use('/api/one-click-checkout', paymentLimiter);
+
+  // ─── Auth Middleware Helper ─────────────────────────────────────────────────
+  async function verifyFirebaseToken(req: any, res: any, next: any) {
+    const header = (req.headers.authorization as string) || '';
+    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    if (!adminAuth) return res.status(503).json({ error: 'Auth not configured' });
+    try {
+      const decoded = await adminAuth.verifyIdToken(token);
+      req.uid = decoded.uid;
+      next();
+    } catch {
+      res.status(401).json({ error: 'Invalid token' });
+    }
+  }
 
   // ─── Abandoned Cart Email ──────────────────────────────────────────────────
   app.post("/api/abandoned-cart/check", async (req, res) => {
@@ -364,6 +382,188 @@ async function startServer() {
       res.json({ clientSecret: paymentIntent.client_secret });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
+    }
+  });
+
+  // ─── Save Card: Create SetupIntent ──────────────────────────────────────────
+  app.post('/api/create-setup-intent', verifyFirebaseToken, async (req: any, res) => {
+    if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+    try {
+      const uid: string = req.uid;
+      const userDoc = await adminDb.collection('users').doc(uid).get();
+      let customerId: string = userDoc.data()?.stripeCustomerId || '';
+
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: userDoc.data()?.email || '',
+          metadata: { firebaseUid: uid },
+        });
+        customerId = customer.id;
+        // Write customerId now so setup-payment-method can rely on it
+        await adminDb.collection('users').doc(uid).update({ stripeCustomerId: customerId });
+      }
+
+      const setupIntent = await stripe.setupIntents.create({
+        customer: customerId,
+        usage: 'off_session',
+        automatic_payment_methods: { enabled: true },
+      });
+      res.json({ clientSecret: setupIntent.client_secret });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // ─── Save Card: Attach PaymentMethod to Customer ─────────────────────────────
+  app.post('/api/setup-payment-method', verifyFirebaseToken, async (req: any, res) => {
+    if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+    const { paymentMethodId, last4, brand } = req.body;
+    if (!paymentMethodId) return res.status(400).json({ error: 'paymentMethodId required' });
+
+    try {
+      const uid: string = req.uid;
+      const userDoc = await adminDb.collection('users').doc(uid).get();
+      const customerId: string = userDoc.data()?.stripeCustomerId || '';
+      if (!customerId) return res.status(400).json({ error: 'No Stripe customer found — call create-setup-intent first' });
+
+      await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
+      await stripe.customers.update(customerId, {
+        invoice_settings: { default_payment_method: paymentMethodId },
+      });
+
+      await adminDb.collection('users').doc(uid).update({
+        defaultPaymentMethodId: paymentMethodId,
+        defaultPaymentMethodLast4: last4 || '',
+        defaultPaymentMethodBrand: brand || '',
+      });
+
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // ─── One-Click Checkout ──────────────────────────────────────────────────────
+  app.post('/api/one-click-checkout', verifyFirebaseToken, async (req: any, res) => {
+    if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+    const { items, currency = 'gbp' } = req.body as {
+      items: Array<{ productId: string; variantId?: string; quantity: number }>;
+      currency: string;
+    };
+    if (!items?.length) return res.status(400).json({ error: 'No items provided' });
+
+    try {
+      const uid: string = req.uid;
+      const userDoc = await adminDb.collection('users').doc(uid).get();
+      const userData = userDoc.data();
+      if (!userData) return res.status(404).json({ error: 'User not found' });
+
+      const { stripeCustomerId, defaultPaymentMethodId, defaultAddressId, addresses = [], email } = userData;
+      if (!stripeCustomerId || !defaultPaymentMethodId) {
+        return res.status(400).json({ error: 'No saved payment method' });
+      }
+      const shippingAddress = addresses.find((a: any) => a.id === defaultAddressId);
+      if (!shippingAddress) {
+        return res.status(400).json({ error: 'No default shipping address' });
+      }
+
+      // ── Fetch product prices server-side (never trust client prices) ──
+      let subtotal = 0;
+      const orderItems: any[] = [];
+      for (const item of items) {
+        const productDoc = await adminDb.collection('products').doc(item.productId).get();
+        const product = productDoc.data();
+        if (!product) return res.status(404).json({ error: `Product ${item.productId} not found` });
+
+        let price: number = product.price;
+        if (item.variantId && product.variants) {
+          const variant = product.variants.find((v: any) => v.id === item.variantId);
+          if (variant) price = variant.price;
+        }
+        subtotal += price * item.quantity;
+        orderItems.push({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          price,
+          name: product.name,
+          image: product.images?.[0] || '',
+          sellerId: product.sellerId || '',
+        });
+      }
+
+      const shipping = subtotal >= 100 ? 0 : 4.99;
+      const tax = parseFloat((subtotal * 0.2).toFixed(2));
+      const total = parseFloat((subtotal + shipping + tax).toFixed(2));
+
+      // ── Charge off-session ────────────────────────────────────────────
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(total * 100),
+        currency,
+        customer: stripeCustomerId,
+        payment_method: defaultPaymentMethodId,
+        confirm: true,
+        off_session: true,
+      });
+
+      if (paymentIntent.status === 'requires_action') {
+        return res.json({ status: 'requires_action', clientSecret: paymentIntent.client_secret });
+      }
+
+      if (paymentIntent.status !== 'succeeded') {
+        return res.json({ status: 'failed', errorMessage: 'Payment did not succeed' });
+      }
+
+      // ── Create order ──────────────────────────────────────────────────
+      const sellerIds = [...new Set(orderItems.map((i: any) => i.sellerId).filter(Boolean))];
+      const orderRef = await adminDb.collection('orders').add({
+        userId: uid,
+        userEmail: email || '',
+        items: orderItems,
+        sellerIds,
+        subtotal,
+        shipping,
+        tax,
+        total,
+        currency,
+        status: 'confirmed',
+        paymentStatus: 'succeeded',
+        paymentMethod: 'stripe',
+        stripePaymentIntentId: paymentIntent.id,
+        shippingAddress,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      // ── Decrease stock ────────────────────────────────────────────────
+      for (const item of items) {
+        await adminDb.collection('products').doc(item.productId).update({
+          stock: FieldValue.increment(-item.quantity),
+        });
+      }
+
+      // ── Clear cart ────────────────────────────────────────────────────
+      await adminDb.collection('carts').doc(uid).delete();
+
+      // ── Create in-app notification ────────────────────────────────────
+      await adminDb.collection('notifications').add({
+        userId: uid,
+        type: 'order_status',
+        title: 'Siparişiniz Alındı',
+        message: `#${orderRef.id.slice(0, 8).toUpperCase()} numaralı siparişiniz onaylandı.`,
+        link: `/profile?tab=orders`,
+        read: false,
+        createdAt: new Date().toISOString(),
+      });
+
+      res.json({ status: 'succeeded', orderId: orderRef.id, total });
+    } catch (error: any) {
+      // Handle Stripe card errors (declined, etc.)
+      if (error.type === 'StripeCardError') {
+        return res.json({ status: 'failed', errorMessage: error.message });
+      }
+      console.error('one-click-checkout error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
