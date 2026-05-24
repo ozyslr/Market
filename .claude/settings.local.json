@@ -64,7 +64,8 @@
       "Bash(findstr \"3000\\\\|3001\")",
       "Bash(tasklist)",
       "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3000, 3001 -State Listen | Select-Object OwningProcess, LocalPort\")",
-      "Bash(taskkill /PID 17648 /F)"
+      "Bash(taskkill /PID 17648 /F)",
+      "Bash(grep -E 'js$|json$|config|test|spec')"
     ],
     "additionalDirectories": [
       "O:\\AI\\E-tic 2026\\docs\\superpowers"
