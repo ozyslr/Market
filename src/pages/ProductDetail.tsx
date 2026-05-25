@@ -50,7 +50,9 @@ import { ComparisonBar } from '@/components/commerce/ComparisonBar';
 import { ComparisonModal } from '@/components/commerce/ComparisonModal';
 import { useComparison } from '@/hooks/useComparison';
 
-const AIProductInsights = React.lazy(() => import('@/components/product/AIProductInsights'));
+const AIProductInsights = React.lazy(() =>
+  import('@/components/product/AIProductInsights').then(m => ({ default: m.AIProductInsights }))
+);
 
 const POPULAR_SEARCHES_BY_LANG: Record<string, string[]> = {
   tr: ['Akıllı Saat', 'Kablosuz Kulaklık', 'Robot Süpürge', 'Oyuncu Bilgisayarı', 'Deri Ceket', 'Kahve Makinesi', 'Güneş Gözlüğü', 'Bluetooth Hoparlör'],
@@ -289,6 +291,11 @@ export function ProductDetail() {
        <p className="text-brand-primary/40 text-xs font-bold uppercase tracking-widest mt-4">The requested data node does not exist in the master matrix.</p>
        <Link to="/" className="mt-10 px-8 py-3 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Master Feed</Link>
     </div>
+  );
+
+  const memoizedSpecs = React.useMemo(
+    () => product?.specifications ?? {},
+    [product?.specifications]
   );
 
   const cartDiscount = product
@@ -801,7 +808,7 @@ export function ProductDetail() {
                            <AIProductInsights
                              productTitle={product.title}
                              description={product.description ?? ''}
-                             specs={product.specifications ?? {}}
+                             specs={memoizedSpecs}
                            />
                          </Suspense>
                          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
