@@ -204,6 +204,7 @@ export interface Product {
   relatedProductIds?: string[];
   frequentlyBoughtTogetherIds?: string[];
   model3dUrl?: string;
+  videoUrl?: string;
   isActive?: boolean;
   reviews?: Review[];
   createdAt?: string;
