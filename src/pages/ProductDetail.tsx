@@ -86,16 +86,16 @@ export function ProductDetail() {
       if (e.key === 'Escape') {
         setIsLightboxOpen(false);
       } else if (e.key === 'ArrowLeft') {
-        prevImage();
+        setActiveImage(i => (i - 1 + (product?.images?.length ?? 1)) % (product?.images?.length ?? 1));
       } else if (e.key === 'ArrowRight') {
-        nextImage();
+        setActiveImage(i => (i + 1) % (product?.images?.length ?? 1));
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isLightboxOpen, product?.images.length]);
+  }, [isLightboxOpen, product?.images?.length]);
   const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews' | 'qa'>('details');
   const [viewers, setViewers] = useState(0);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -801,7 +801,7 @@ export function ProductDetail() {
                            <AIProductInsights
                              productTitle={product.title}
                              description={product.description ?? ''}
-                             specs={product.specifications}
+                             specs={product.specifications ?? {}}
                            />
                          </Suspense>
                          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
