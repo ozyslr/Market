@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, ChevronRight, UserPlus } from 'lucide-react';
+import { Star, ChevronRight, UserPlus, Award, Zap, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SellerCardProps {
@@ -10,6 +10,8 @@ interface SellerCardProps {
   sellerReviewCount?: number;
   isFollowing?: boolean;
   onToggleFollow?: () => void;
+  responseRate?: number;    // shows "Hızlı Cevap" badge if >= 90
+  onTimeShipping?: number;  // shows "Zamanında Kargo" badge if >= 95
 }
 
 export function SellerCard({
@@ -19,6 +21,8 @@ export function SellerCard({
   sellerReviewCount = 0,
   isFollowing = false,
   onToggleFollow,
+  responseRate,
+  onTimeShipping,
 }: SellerCardProps) {
   return (
     <div className="bg-white rounded-2xl border border-brand-primary/5 shadow-sm p-4 space-y-3">
@@ -38,6 +42,32 @@ export function SellerCard({
           </div>
         </div>
       </div>
+
+      {/* Premium badge */}
+      {(sellerRating ?? 0) >= 4.5 && (
+        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-yellow-400/10 text-yellow-600 dark:text-yellow-500 border border-yellow-400/20 rounded-full w-fit" aria-label="Premium satıcı rozeti">
+          <Award size={10} aria-hidden="true" />
+          <span className="text-[9px] font-black uppercase tracking-widest">Premium Satıcı</span>
+        </div>
+      )}
+
+      {/* Trust metrics row */}
+      {(responseRate !== undefined || onTimeShipping !== undefined) && (
+        <div className="flex flex-wrap gap-2">
+          {responseRate !== undefined && responseRate >= 90 && (
+            <div className="flex items-center gap-1 px-2 py-0.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-[9px] font-black">
+              <Zap size={9} aria-hidden="true" />
+              Hızlı Cevap
+            </div>
+          )}
+          {onTimeShipping !== undefined && onTimeShipping >= 95 && (
+            <div className="flex items-center gap-1 px-2 py-0.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-[9px] font-black">
+              <Truck size={9} aria-hidden="true" />
+              Zamanında Kargo
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Link
