@@ -3,11 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Star, Truck, ShieldCheck, ChevronRight, ShoppingCart,
-  Globe, Heart, Share2, Info, ChevronLeft, Award,
+  Globe, Heart, Share2, Info, Award,
   Clock, Sparkles, Zap, Shield, MapPin,
   Undo2, CheckCircle2, AlertCircle,
   BarChart, Package,
-  TrendingUp, Eye, Tag, Ticket, Copy, BellRing, Smartphone, Zap as ZapIcon,
+  TrendingUp, Eye, Tag, Ticket, Copy, BellRing, Smartphone, Zap as ZapIcon, Facebook, Twitter,
 } from 'lucide-react';
 import { MOCK_PRODUCTS } from '@/mockData';
 import { cn } from '@/lib/utils';
@@ -72,32 +72,10 @@ export function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [activeImage, setActiveImage] = useState(0);
-  const prevImage = () =>
-    setActiveImage(i => (i - 1 + (product?.images.length ?? 1)) % (product?.images.length ?? 1));
-  const nextImage = () =>
-    setActiveImage(i => (i + 1) % (product?.images.length ?? 1));
   const [quantity, setQuantity] = useState(1);
 
-  useEffect(() => {
-    if (!isLightboxOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsLightboxOpen(false);
-      } else if (e.key === 'ArrowLeft') {
-        setActiveImage(i => (i - 1 + (product?.images?.length ?? 1)) % (product?.images?.length ?? 1));
-      } else if (e.key === 'ArrowRight') {
-        setActiveImage(i => (i + 1) % (product?.images?.length ?? 1));
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isLightboxOpen, product?.images?.length]);
   const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews' | 'qa'>('details');
   const [viewers, setViewers] = useState(0);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -358,8 +336,6 @@ export function ProductDetail() {
             <ProductGallery
               images={product.images}
               title={product.title}
-              videoUrl={product.videoUrl}
-              has360View={!!product.model3dUrl}
               extraActions={
                 <>
                   {product.model3dUrl && (
@@ -382,33 +358,22 @@ export function ProductDetail() {
                   >
                     <Heart size={20} fill={isWishlisted(product.id) ? "currentColor" : "none"} />
                   </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setIsShareOpen(true); }}
-                    aria-label="Paylaş"
-                    className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5"
-                  >
-                    <Share2 size={20} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      isAddedToComparison(product.id)
-                        ? removeFromComparison(product.id)
-                        : addToComparison({
-                            id: product.id,
-                            title: product.title,
-                            price: cartPrice,
-                            image: (product.images ?? [])[0] ?? '',
-                            specifications: product.specifications,
-                          });
-                    }}
-                    aria-label={isAddedToComparison(product.id) ? 'Karşılaştırmadan çıkar' : 'Karşılaştırmaya ekle'}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-brand-primary/10 dark:border-white/10 text-[9px] font-black uppercase tracking-widest hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors bg-white/80 backdrop-blur shadow-xl"
-                  >
-                    <BarChart size={12} className={isAddedToComparison(product.id) ? 'text-accent' : 'text-brand-primary/40 dark:text-zinc-500'} />
-                    {isAddedToComparison(product.id) ? 'Karşılaştırmada' : 'Karşılaştır'}
-                  </button>
+                  <div className="relative group" onClick={(e) => e.stopPropagation()}>
+                    <button className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5">
+                      <Share2 size={20} />
+                    </button>
+                    <div className="absolute right-full top-0 mr-3 flex items-center gap-2 opacity-0 -translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-300">
+                      <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1877F2] hover:scale-110 transition-transform">
+                        <Facebook size={18} />
+                      </a>
+                      <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1DA1F2] hover:scale-110 transition-transform">
+                        <Twitter size={18} />
+                      </a>
+                      <a href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(window.location.href)}&media=${encodeURIComponent(product.images[0])}&description=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#E60023] hover:scale-110 transition-transform">
+                        <span className="font-extrabold text-sm" style={{ fontFamily: 'serif' }}>P</span>
+                      </a>
+                    </div>
+                  </div>
                 </>
               }
             />
@@ -1011,83 +976,6 @@ export function ProductDetail() {
         {/* Comparison */}
         <ComparisonBar onOpen={() => setComparisonOpen(true)} />
         <ComparisonModal isOpen={comparisonOpen} onClose={() => setComparisonOpen(false)} />
-
-        {/* Lightbox / Zoom Modal */}
-        <AnimatePresence>
-          {isLightboxOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsLightboxOpen(false)}
-              className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-between p-4 md:p-8"
-            >
-              {/* Close Button */}
-              <div className="w-full flex justify-end">
-                <button
-                  onClick={(e) => { e.stopPropagation(); setIsLightboxOpen(false); }}
-                  className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white transition-all border border-white/10"
-                >
-                  <span className="text-xl font-bold">✕</span>
-                </button>
-              </div>
-
-              {/* Main Image View */}
-              <div className="flex-1 w-full max-w-5xl flex items-center justify-between gap-4 md:gap-8 my-4">
-                {/* Prev Button */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                  className="w-12 h-12 md:w-16 md:h-16 bg-white/10 hover:bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white transition-all border border-white/10"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-
-                {/* Image Container */}
-                <div 
-                  onClick={(e) => e.stopPropagation()}
-                  className="relative max-h-[70vh] max-w-[80vw] flex items-center justify-center"
-                >
-                  <motion.img
-                    key={activeImage}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    src={product.images[activeImage]}
-                    alt={product.title}
-                    className="max-h-[70vh] max-w-[80vw] object-contain select-none pointer-events-none"
-                  />
-                </div>
-
-                {/* Next Button */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                  className="w-12 h-12 md:w-16 md:h-16 bg-white/10 hover:bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white transition-all border border-white/10"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </div>
-
-              {/* Thumbnail Strip */}
-              <div 
-                onClick={(e) => e.stopPropagation()}
-                className="flex gap-3 overflow-x-auto no-scrollbar max-w-full pb-4"
-              >
-                {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImage(i)}
-                    className={cn(
-                      "w-16 h-16 rounded-xl overflow-hidden border-2 transition-all p-1 bg-white shrink-0",
-                      activeImage === i ? "border-accent scale-105 shadow-lg" : "border-transparent opacity-50 hover:opacity-100"
-                    )}
-                  >
-                    <img src={img} alt={product.title} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
     </div>
   );
 }
