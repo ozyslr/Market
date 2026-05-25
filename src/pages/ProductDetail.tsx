@@ -44,7 +44,6 @@ import { getContentBasedRecommendations, getCollaborativeRecommendations } from 
 import { ARViewer } from '@/components/commerce/ARViewer';
 import { AuthenticityBadge } from '@/components/commerce/AuthenticityBadge';
 import { ProductDetailSkeleton } from '@/components/ui/Skeleton';
-import { ShareModal } from '@/components/product/ShareModal';
 import { PriceHistoryChart } from '@/components/product/PriceHistoryChart';
 import { ComparisonBar } from '@/components/commerce/ComparisonBar';
 import { ComparisonModal } from '@/components/commerce/ComparisonModal';
@@ -71,7 +70,6 @@ export function ProductDetail() {
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<Product | null>(null);
-  const [isShareOpen, setIsShareOpen] = useState(false);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -359,17 +357,17 @@ export function ProductDetail() {
                     <Heart size={20} fill={isWishlisted(product.id) ? "currentColor" : "none"} />
                   </button>
                   <div className="relative group" onClick={(e) => e.stopPropagation()}>
-                    <button className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5">
+                    <button aria-label="Paylaş" className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5">
                       <Share2 size={20} />
                     </button>
                     <div className="absolute right-full top-0 mr-3 flex items-center gap-2 opacity-0 -translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-300">
-                      <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1877F2] hover:scale-110 transition-transform">
+                      <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" aria-label="Facebook'ta paylaş" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1877F2] hover:scale-110 transition-transform">
                         <Facebook size={18} />
                       </a>
-                      <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1DA1F2] hover:scale-110 transition-transform">
+                      <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer" aria-label="Twitter'da paylaş" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1DA1F2] hover:scale-110 transition-transform">
                         <Twitter size={18} />
                       </a>
-                      <a href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(window.location.href)}&media=${encodeURIComponent(product.images[0])}&description=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#E60023] hover:scale-110 transition-transform">
+                      <a href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(window.location.href)}&media=${encodeURIComponent(product.images[0])}&description=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer" aria-label="Pinterest'te paylaş" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#E60023] hover:scale-110 transition-transform">
                         <span className="font-extrabold text-sm" style={{ fontFamily: 'serif' }}>P</span>
                       </a>
                     </div>
@@ -964,14 +962,6 @@ export function ProductDetail() {
             onClose={() => setArOpen(false)}
           />
         )}
-
-        {/* Share Modal */}
-        <ShareModal
-          isOpen={isShareOpen}
-          onClose={() => setIsShareOpen(false)}
-          url={typeof window !== 'undefined' ? window.location.href : ''}
-          title={product.title}
-        />
 
         {/* Comparison */}
         <ComparisonBar onOpen={() => setComparisonOpen(true)} />
