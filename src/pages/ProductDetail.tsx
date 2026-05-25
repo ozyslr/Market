@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -7,7 +7,6 @@ import {
   Clock, Sparkles, Zap, Shield, MapPin,
   Undo2, CheckCircle2, AlertCircle,
   BarChart, Package,
-  Facebook, Twitter, Navigation,
   TrendingUp, Eye, Tag, Ticket, Copy, BellRing, Smartphone, Zap as ZapIcon,
 } from 'lucide-react';
 import { MOCK_PRODUCTS } from '@/mockData';
@@ -18,7 +17,6 @@ import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { SEO } from '@/components/common/SEO';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { getProductBySlug } from '@/services/productService';
 import { Product, Campaign, Coupon, ProductVariant } from '@/types';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
@@ -46,17 +44,13 @@ import { getContentBasedRecommendations, getCollaborativeRecommendations } from 
 import { ARViewer } from '@/components/commerce/ARViewer';
 import { AuthenticityBadge } from '@/components/commerce/AuthenticityBadge';
 import { ProductDetailSkeleton } from '@/components/ui/Skeleton';
+import { ShareModal } from '@/components/product/ShareModal';
+import { PriceHistoryChart } from '@/components/product/PriceHistoryChart';
+import { ComparisonBar } from '@/components/commerce/ComparisonBar';
+import { ComparisonModal } from '@/components/commerce/ComparisonModal';
+import { useComparison } from '@/hooks/useComparison';
 
-// Mock data for the chart
-const MARKET_DATA = [
-  { day: 'Mon', demand: 65, price: 230 },
-  { day: 'Tue', demand: 72, price: 245 },
-  { day: 'Wed', demand: 68, price: 240 },
-  { day: 'Thu', demand: 85, price: 260 },
-  { day: 'Fri', demand: 92, price: 280 },
-  { day: 'Sat', demand: 88, price: 275 },
-  { day: 'Sun', demand: 95, price: 299 },
-];
+const AIProductInsights = React.lazy(() => import('@/components/product/AIProductInsights'));
 
 const POPULAR_SEARCHES_BY_LANG: Record<string, string[]> = {
   tr: ['Akıllı Saat', 'Kablosuz Kulaklık', 'Robot Süpürge', 'Oyuncu Bilgisayarı', 'Deri Ceket', 'Kahve Makinesi', 'Güneş Gözlüğü', 'Bluetooth Hoparlör'],
@@ -76,7 +70,6 @@ export function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -117,6 +110,8 @@ export function ProductDetail() {
   const [arOpen, setArOpen] = useState(false);
   const [recentViewed, setRecentViewed] = useState<Product[]>([]);
   const [showStickyBar, setShowStickyBar] = useState(false);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+  const { addItem: addToComparison, removeItem: removeFromComparison, isAdded: isAddedToComparison } = useComparison();
 
   useEffect(() => {
     const STICKY_THRESHOLD = 600;
@@ -356,6 +351,8 @@ export function ProductDetail() {
             <ProductGallery
               images={product.images}
               title={product.title}
+              videoUrl={product.videoUrl}
+              has360View={!!product.model3dUrl}
               extraActions={
                 <>
                   {product.model3dUrl && (
@@ -377,6 +374,33 @@ export function ProductDetail() {
                     )}
                   >
                     <Heart size={20} fill={isWishlisted(product.id) ? "currentColor" : "none"} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setIsShareOpen(true); }}
+                    aria-label="Paylaş"
+                    className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5"
+                  >
+                    <Share2 size={20} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      isAddedToComparison(product.id)
+                        ? removeFromComparison(product.id)
+                        : addToComparison({
+                            id: product.id,
+                            title: product.title,
+                            price: cartPrice,
+                            image: (product.images ?? [])[0] ?? '',
+                            specifications: product.specifications,
+                          });
+                    }}
+                    aria-label={isAddedToComparison(product.id) ? 'Karşılaştırmadan çıkar' : 'Karşılaştırmaya ekle'}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-brand-primary/10 dark:border-white/10 text-[9px] font-black uppercase tracking-widest hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors bg-white/80 backdrop-blur shadow-xl"
+                  >
+                    <BarChart size={12} className={isAddedToComparison(product.id) ? 'text-accent' : 'text-brand-primary/40 dark:text-zinc-500'} />
+                    {isAddedToComparison(product.id) ? 'Karşılaştırmada' : 'Karşılaştır'}
                   </button>
                 </>
               }
@@ -486,10 +510,19 @@ export function ProductDetail() {
               </div>
             </div>
 
+            {/* Price History Chart */}
+            <PriceHistoryChart
+              productId={product.id}
+              currentPrice={cartPrice}
+              currency={product.currency ?? 'try'}
+            />
+
             {/* Seller Card */}
             <SellerCard
               sellerId={product.sellerId}
               sellerName={product.brand || 'Mağaza'}
+              responseRate={undefined}
+              onTimeShipping={undefined}
             />
 
             {/* Other Sellers */}
@@ -764,6 +797,13 @@ export function ProductDetail() {
                          <div className="text-brand-primary/70 leading-relaxed font-medium whitespace-pre-wrap">
                             {product.longDescription || product.description}
                          </div>
+                         <Suspense fallback={<div className="h-32 bg-brand-secondary/50 dark:bg-zinc-800/50 rounded-2xl animate-pulse" />}>
+                           <AIProductInsights
+                             productTitle={product.title}
+                             description={product.description ?? ''}
+                             specs={product.specifications}
+                           />
+                         </Suspense>
                          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
                             {[
                               { label: 'Origin', value: product.originCountry, icon: Globe },
@@ -919,42 +959,6 @@ export function ProductDetail() {
           </div>
         </div>
 
-        {/* Global Commercial Intelligence Pulse (Full-width Visual Support) */}
-        <section className="bg-brand-primary rounded-[4rem] p-12 mb-20 relative overflow-hidden group shadow-3xl">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-125 transition-transform duration-1000" />
-          <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
-            <div className="flex-1 space-y-6">
-              <div className="inline-flex items-center gap-3 px-4 py-2 bg-accent text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-xl shadow-accent/20">
-                <BarChart size={14} /> Pazar Verisi
-              </div>
-              <h2 className="text-4xl md:text-5xl font-display font-black text-white uppercase italic leading-[1.1]">Küresel Talep Analizi</h2>
-              <p className="text-sm font-bold text-white/40 uppercase tracking-[0.2em] leading-relaxed max-w-xl">
-                Artifact {product.id} için gerçek zamanlı küresel talep endeksi. Hub London ve Mercora Istanbul çıkışlı verilerle hazırlanmıştır.
-              </p>
-            </div>
-            <div className="w-full md:w-[400px] h-64 bg-white/5 backdrop-blur-xl rounded-[2.5rem] border border-white/10 p-8 shadow-2xl">
-                  <div className="flex justify-between items-start mb-6">
-                     <p className="text-[10px] font-black uppercase text-white/40 tracking-widest italic">{product.brand} Market Cap</p>
-                     <Zap size={20} className="text-accent animate-pulse" />
-                  </div>
-                  <ResponsiveContainer width="100%" height="70%">
-                    <AreaChart data={MARKET_DATA}>
-                      <defs>
-                        <linearGradient id="colorWave" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#FF5200" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#FF5200" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <Area type="monotone" dataKey="price" stroke="#FF5200" strokeWidth={4} fill="url(#colorWave)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                  <div className="flex justify-between mt-4">
-                     <span className="text-[9px] font-black text-accent uppercase tracking-widest">Bullish Indicator</span>
-                     <span className="text-[9px] font-black text-white uppercase tracking-widest">+12.4% Momentum</span>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </div>
 
@@ -988,6 +992,18 @@ export function ProductDetail() {
             onClose={() => setArOpen(false)}
           />
         )}
+
+        {/* Share Modal */}
+        <ShareModal
+          isOpen={isShareOpen}
+          onClose={() => setIsShareOpen(false)}
+          url={typeof window !== 'undefined' ? window.location.href : ''}
+          title={product.title}
+        />
+
+        {/* Comparison */}
+        <ComparisonBar onOpen={() => setComparisonOpen(true)} />
+        <ComparisonModal isOpen={comparisonOpen} onClose={() => setComparisonOpen(false)} />
 
         {/* Lightbox / Zoom Modal */}
         <AnimatePresence>
