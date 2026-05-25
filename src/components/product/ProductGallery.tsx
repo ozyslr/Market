@@ -12,6 +12,20 @@ interface ProductGalleryProps {
   extraActions?: React.ReactNode;
 }
 
+function getYouTubeEmbedUrl(url: string): string | null {
+  if (url.includes('youtu.be/')) {
+    const parts = url.split('youtu.be/');
+    const id = parts[1]?.split(/[?&#]/)[0];
+    return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : null;
+  }
+  if (url.includes('youtube.com')) {
+    const match = url.match(/[?&]v=([^&#]+)/);
+    const id = match?.[1];
+    return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : null;
+  }
+  return null;
+}
+
 export function ProductGallery({ images, title, videoUrl, has360View, extraActions }: ProductGalleryProps) {
   const [activeImage, setActiveImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -37,20 +51,6 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
   }, [totalSlots]);
 
   const isVideoActive = activeImage === images.length && videoUrl !== undefined;
-
-  function getYouTubeEmbedUrl(url: string): string | null {
-    if (url.includes('youtu.be/')) {
-      const parts = url.split('youtu.be/');
-      const id = parts[1]?.split(/[?&#]/)[0];
-      return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : null;
-    }
-    if (url.includes('youtube.com')) {
-      const match = url.match(/[?&]v=([^&#]+)/);
-      const id = match?.[1];
-      return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : null;
-    }
-    return null;
-  }
 
   return (
     <>
@@ -80,6 +80,7 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
             ))}
             {videoUrl && (
               <button
+                type="button"
                 onMouseEnter={() => setActiveImage(images.length)}
                 onClick={() => setActiveImage(images.length)}
                 aria-label="Videoyu oynat"
@@ -102,11 +103,11 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
               'w-full aspect-square bg-white rounded-2xl border border-brand-primary/5 overflow-hidden relative flex items-center justify-center p-6 group',
               !isVideoActive && 'cursor-zoom-in'
             )}
-            onClick={() => { if (!isVideoActive) setLightboxOpen(true); }}
-            role={!isVideoActive ? 'button' : undefined}
-            tabIndex={!isVideoActive ? 0 : undefined}
-            aria-label={!isVideoActive ? 'Görseli büyüt' : undefined}
-            onKeyDown={!isVideoActive ? (e) => { if (e.key === 'Enter' || e.key === ' ') setLightboxOpen(true); } : undefined}
+            onClick={() => { if (!isVideoActive && images.length > 0) setLightboxOpen(true); }}
+            role={!isVideoActive && images.length > 0 ? 'button' : undefined}
+            tabIndex={!isVideoActive && images.length > 0 ? 0 : undefined}
+            aria-label={!isVideoActive && images.length > 0 ? 'Görseli büyüt' : undefined}
+            onKeyDown={!isVideoActive && images.length > 0 ? (e) => { if (e.key === 'Enter' || e.key === ' ') setLightboxOpen(true); } : undefined}
           >
             <AnimatePresence mode="wait">
               {isVideoActive ? (
@@ -119,23 +120,27 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
                   className="w-full h-full"
                   onClick={e => e.stopPropagation()}
                 >
-                  {(videoUrl.includes('youtube') || videoUrl.includes('youtu.be')) ? (
-                    <iframe
-                      src={getYouTubeEmbedUrl(videoUrl) ?? videoUrl}
-                      title="Ürün videosu"
-                      allowFullScreen
-                      className="w-full h-full"
-                      allow="autoplay; encrypted-media"
-                    />
-                  ) : (
-                    <video
-                      src={videoUrl}
-                      controls
-                      autoPlay
-                      aria-label="Ürün videosu"
-                      className="w-full h-full object-contain"
-                    />
-                  )}
+                  {(() => {
+                    const embedUrl = getYouTubeEmbedUrl(videoUrl);
+                    return embedUrl ? (
+                      <iframe
+                        src={embedUrl}
+                        title="Ürün videosu"
+                        allowFullScreen
+                        sandbox="allow-scripts allow-same-origin allow-presentation"
+                        className="w-full h-full"
+                        allow="autoplay; encrypted-media"
+                      />
+                    ) : (
+                      <video
+                        src={videoUrl}
+                        controls
+                        autoPlay
+                        aria-label="Ürün videosu"
+                        className="w-full h-full object-contain"
+                      />
+                    );
+                  })()}
                 </motion.div>
               ) : (
                 <motion.div
@@ -166,7 +171,7 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
               </div>
             )}
 
-            {has360View && (
+            {has360View && !isVideoActive && (
               <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 bg-black/60 text-white text-[9px] font-black rounded-lg pointer-events-none">
                 <RotateCcw size={12} />
                 360°
@@ -233,6 +238,7 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
               ))}
               {videoUrl && (
                 <button
+                  type="button"
                   onMouseEnter={() => setActiveImage(images.length)}
                   onClick={() => setActiveImage(images.length)}
                   aria-label="Videoyu oynat"
@@ -281,7 +287,7 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
-                  src={images[Math.min(activeImage, images.length - 1)]}
+                  src={images.length > 0 ? images[Math.min(activeImage, images.length - 1)] : ''}
                   alt={title}
                   className="max-h-[70vh] max-w-full object-contain select-none"
                 />
@@ -309,6 +315,7 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
               ))}
               {videoUrl && (
                 <button
+                  type="button"
                   onClick={() => { setActiveImage(images.length); setLightboxOpen(false); }}
                   aria-label="Videoyu oynat"
                   className={cn(
