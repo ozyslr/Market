@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, ZoomIn, X, Play, RotateCcw } from 'lucide-react';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
@@ -29,6 +29,17 @@ function getYouTubeEmbedUrl(url: string): string | null {
 export function ProductGallery({ images, title, videoUrl, has360View, extraActions }: ProductGalleryProps) {
   const [activeImage, setActiveImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [zoom, setZoom] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+  const imageRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageRef.current) return;
+    const { left, top, width, height } = imageRef.current.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setZoomPos({ x, y });
+  }, []);
 
   const totalSlots = images.length + (videoUrl ? 1 : 0);
 
@@ -99,11 +110,15 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
 
         <div className="flex-1 relative">
           <div
+            ref={imageRef}
             className={cn(
               'w-full aspect-square bg-white rounded-2xl border border-brand-primary/5 overflow-hidden relative flex items-center justify-center p-6 group',
               !isVideoActive && 'cursor-zoom-in'
             )}
             onClick={() => { if (!isVideoActive && images.length > 0) setLightboxOpen(true); }}
+            onMouseEnter={() => setZoom(true)}
+            onMouseLeave={() => setZoom(false)}
+            onMouseMove={handleMouseMove}
             role={!isVideoActive && images.length > 0 ? 'button' : undefined}
             tabIndex={!isVideoActive && images.length > 0 ? 0 : undefined}
             aria-label={!isVideoActive && images.length > 0 ? 'Görseli büyüt' : undefined}
@@ -150,6 +165,14 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.15 }}
                   className="w-full h-full"
+                  style={
+                    zoom
+                      ? {
+                          transform: 'scale(2)',
+                          transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                        }
+                      : undefined
+                  }
                 >
                   <OptimizedImage
                     src={images[activeImage]}
@@ -163,7 +186,7 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
               )}
             </AnimatePresence>
 
-            {!isVideoActive && (
+            {!isVideoActive && !zoom && (
               <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-black/60 text-white rounded-full text-[9px] font-black uppercase tracking-wider">
                   <ZoomIn size={11} /> Büyüt
@@ -178,7 +201,7 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
               </div>
             )}
 
-            {totalSlots > 1 && (
+            {totalSlots > 1 && !zoom && (
               <>
                 <button
                   onClick={e => { e.stopPropagation(); prev(); }}
