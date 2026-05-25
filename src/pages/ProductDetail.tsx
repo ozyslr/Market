@@ -491,20 +491,20 @@ export function ProductDetail() {
             <SellerCard
               sellerId={product.sellerId}
               sellerName={product.brand || 'Mağaza'}
-              responseRate={undefined}
-              onTimeShipping={undefined}
+              sellerRating={product.rating}
+              sellerReviewCount={product.reviewsCount}
             />
 
             {/* Other Sellers */}
             <OtherSellers sellers={[]} />
 
             {/* Product Features */}
-            {product.specifications && (
+            {product.specifications && Object.keys(product.specifications).length > 0 && (
               <ProductFeatures specifications={product.specifications as Record<string, string>} />
             )}
 
             {/* Installment Table */}
-            <InstallmentTable price={product.price} currency={product.currency ?? 'gbp'} />
+            <InstallmentTable price={cartPrice} currency={product.currency ?? 'gbp'} />
 
             {/* Promotions Card */}
             {(campaigns.length > 0 || cartDiscount > 0 || activeCoupons.length > 0) && (
