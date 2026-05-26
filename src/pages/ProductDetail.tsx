@@ -430,20 +430,21 @@ export function ProductDetail() {
               </div>
 
               {/* Price Section */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div>
                   {product.oldPrice && (
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm text-brand-primary/30 line-through">£{product.oldPrice.toFixed(2)}</span>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-base text-gray-400 line-through">£{product.oldPrice.toFixed(2)}</span>
                       {product.discountPercentage && product.discountPercentage > 0 && (
-                        <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black rounded-md">
-                          %{product.discountPercentage} İndirim
+                        <span className="px-1.5 py-0.5 bg-[#FF6000] text-white text-[10px] font-bold rounded">
+                          %{product.discountPercentage}
                         </span>
                       )}
                     </div>
                   )}
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-display font-black text-brand-primary">£{product.price.toFixed(2)}</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-[28px] font-bold text-[#1A1033] tracking-tight">£{Math.floor(product.price)}</span>
+                    <span className="text-lg font-bold text-[#1A1033]">,{Math.floor((product.price % 1) * 100).toString().padStart(2, '0')}</span>
                   </div>
                   {product.unitLabel && product.unitAmount && (
                     <UnitPrice
@@ -608,45 +609,48 @@ export function ProductDetail() {
               const allSelected = !hasVariants || product.variantAttributes!.every(attr => selectedAttrs[attr]);
               const canAdd = allSelected && (!hasVariants || !!selectedVariant);
               return (
-                <div className="space-y-3">
-                  <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-20 h-12 bg-brand-secondary/30 border border-brand-primary/5 rounded-xl flex items-center px-1">
-                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="flex-1 text-brand-primary/40 hover:text-brand-primary font-black">-</button>
-                        <span className="w-6 text-center font-black text-sm">{quantity}</span>
-                        <button onClick={() => setQuantity(quantity + 1)} className="flex-1 text-brand-primary/40 hover:text-brand-primary font-black">+</button>
+                <div className="space-y-2.5">
+                  <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-2.5">
+                    {/* Quantity selector — inline, compact */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase text-gray-400">Adet</span>
+                      <div className="flex items-center gap-0 border border-gray-200 rounded-lg overflow-hidden">
+                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-9 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 font-bold text-sm">−</button>
+                        <span className="w-8 text-center font-bold text-sm text-gray-700">{quantity}</span>
+                        <button onClick={() => setQuantity(quantity + 1)} className="w-9 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 font-bold text-sm">+</button>
                       </div>
-                      <button
-                        onClick={() => canAdd && addItem(product.id, quantity, selectedVariant?.id)}
-                        disabled={!canAdd}
-                        className={cn(
-                          'flex-1 h-12 text-white rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg flex items-center justify-center gap-2',
-                          canAdd
-                            ? 'bg-accent hover:bg-brand-primary shadow-accent/20'
-                            : 'bg-brand-primary/20 cursor-not-allowed'
-                        )}
-                      >
-                        <ShoppingCart size={16} />
-                        {hasVariants && !allSelected ? 'Seçenek Seçin' : t('product.add_cart')}
-                      </button>
                     </div>
+                    {/* Sepete Ekle — full width, orange like Trendyol */}
+                    <button
+                      onClick={() => canAdd && addItem(product.id, quantity, selectedVariant?.id)}
+                      disabled={!canAdd}
+                      className={cn(
+                        'w-full h-12 text-white rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2',
+                        canAdd
+                          ? 'bg-[#FF6000] hover:bg-[#E55500] active:scale-[0.98]'
+                          : 'bg-gray-300 cursor-not-allowed'
+                      )}
+                    >
+                      <ShoppingCart size={18} />
+                      {hasVariants && !allSelected ? 'Seçenek Seçin' : 'Sepete Ekle'}
+                    </button>
 
-                    {/* Buy Now */}
+                    {/* Hemen Al — full width yellow */}
                     {user && (
                       <>
                         {canOneClick() ? (
                           <button
                             onClick={handleBuyNow}
                             disabled={oneClickLoading || !canAdd}
-                            className="w-full flex items-center justify-center gap-2 py-3 bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 text-black font-black uppercase tracking-widest text-[10px] rounded-xl transition-colors"
+                            className="w-full flex items-center justify-center gap-2 py-3 bg-[#FFD814] hover:bg-[#F7CA00] disabled:opacity-50 text-black font-bold text-sm rounded-lg transition-colors active:scale-[0.98]"
                           >
                             <ZapIcon size={16} />
-                            {oneClickLoading ? 'İşleniyor...' : 'Hemen Satın Al'}
+                            {oneClickLoading ? 'İşleniyor...' : 'Hemen Al'}
                           </button>
                         ) : (
                           <button
                             onClick={() => navigate('/profile?tab=payment')}
-                            className="w-full text-[10px] text-brand-primary/40 underline py-2 hover:text-accent font-black"
+                            className="w-full text-[10px] text-gray-400 underline py-2 hover:text-[#FF6000] font-bold"
                           >
                             Tek tıkla ödeme ayarı →
                           </button>
