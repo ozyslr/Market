@@ -206,6 +206,10 @@ export interface Product {
   model3dUrl?: string;
   videoUrl?: string;
   isActive?: boolean;
+  unitLabel?: string;
+  unitAmount?: number;
+  favoriteCount?: number;
+  cartAddCount?: number;
   reviews?: Review[];
   createdAt?: string;
 }

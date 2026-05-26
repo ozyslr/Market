@@ -30,6 +30,9 @@ import { InstallmentTable } from '@/components/product/InstallmentTable';
 import { ProductFeatures } from '@/components/product/ProductFeatures';
 import { StickyBuyBar } from '@/components/commerce/StickyBuyBar';
 import { QASection } from '@/components/product/QASection';
+import { VariantSwatches } from '@/components/product/VariantSwatches';
+import { SocialProofBar } from '@/components/product/SocialProofBar';
+import { UnitPrice } from '@/components/product/UnitPrice';
 import { getActiveCampaigns, calcCampaignDiscount } from '@/services/campaignService';
 import { getCoupons } from '@/services/couponService';
 import { useAuth } from '@/context/AuthContext';
@@ -443,16 +446,23 @@ export function ProductDetail() {
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-display font-black text-brand-primary">£{product.price.toFixed(2)}</span>
                   </div>
+                  {product.unitLabel && product.unitAmount && (
+                    <UnitPrice
+                      price={cartPrice}
+                      unitAmount={product.unitAmount}
+                      unitLabel={product.unitLabel}
+                      currency={product.currency ?? 'gbp'}
+                    />
+                  )}
                   <p className="text-[10px] font-black uppercase text-green-600 tracking-widest flex items-center gap-1.5 mt-2">
                     <Truck size={11} className="text-green-500" /> {t('badge.free_shipping')}
                   </p>
-                  {viewers > 0 && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 border border-orange-100 rounded-full text-[10px] font-black text-orange-600">
-                        <Eye size={11} /> {viewers} kişi şu an inceliyor
-                      </span>
-                    </div>
-                  )}
+                  <SocialProofBar
+                    favoriteCount={product.favoriteCount}
+                    cartAddCount={product.cartAddCount}
+                    viewerCount={viewers}
+                    bestSellerRank={product.bestSeller ? 1 : undefined}
+                  />
                 </div>
 
                 {/* Stock Status */}
@@ -560,28 +570,16 @@ export function ProductDetail() {
                           {attr.charAt(0).toUpperCase() + attr.slice(1)}
                           {selectedAttrs[attr] && <span className="ml-2 text-brand-primary normal-case font-bold">: {selectedAttrs[attr]}</span>}
                         </p>
-                        <div className="flex flex-wrap gap-2">
-                          {uniqueValues.map((val: string) => {
-                            const hasStock = product.variants!.some(v => v.attributes[attr] === val && v.stock > 0);
-                            return (
-                              <button
-                                key={val}
-                                onClick={() => setSelectedAttrs(prev => ({ ...prev, [attr]: val }))}
-                                disabled={!hasStock}
-                                className={cn(
-                                  'px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all',
-                                  selectedAttrs[attr] === val
-                                    ? 'border-accent bg-accent/10 text-accent'
-                                    : hasStock
-                                      ? 'border-brand-primary/10 text-brand-primary hover:border-accent/40'
-                                      : 'border-brand-primary/5 text-brand-primary/20 line-through cursor-not-allowed'
-                                )}
-                              >
-                                {val}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <VariantSwatches
+                          attributeName={attr}
+                          options={uniqueValues.map((val: string) => ({
+                            value: val,
+                            label: val,
+                            inStock: product.variants!.some(v => v.attributes[attr] === val && v.stock > 0),
+                          }))}
+                          selectedValue={selectedAttrs[attr]}
+                          onSelect={(val) => setSelectedAttrs(prev => ({ ...prev, [attr]: val }))}
+                        />
                       </div>
                     );
                   })}
