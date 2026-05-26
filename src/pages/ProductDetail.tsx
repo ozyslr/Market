@@ -296,7 +296,7 @@ export function ProductDetail() {
   };
 
   return (
-    <div className="bg-[#f2f4f7] dark:bg-zinc-950 min-h-screen pb-20 transition-colors duration-300">
+    <div className="bg-[#f5f5f5] dark:bg-zinc-950 min-h-screen pb-20 transition-colors duration-300">
       <SEO
         title={product.title}
         description={product.description}
@@ -380,9 +380,9 @@ export function ProductDetail() {
           </div>
 
           {/* RIGHT: Sticky Sidebar with Product Info (40%) */}
-          <div className="lg:sticky lg:top-4 h-fit space-y-4">
+          <div className="lg:sticky lg:top-4 h-fit space-y-2.5">
             {/* Product Info Card */}
-            <div className="bg-white rounded-2xl border border-brand-primary/5 shadow-sm p-5 md:p-6 space-y-5">
+            <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-3.5">
               {/* Brand & Badges */}
               <div className="space-y-3">
                 <Link to={`/seller/${product.sellerId}`} className="text-accent text-xs font-black uppercase tracking-widest hover:underline decoration-2">{product.brand}</Link>
@@ -517,7 +517,7 @@ export function ProductDetail() {
 
             {/* Promotions Card */}
             {(campaigns.length > 0 || cartDiscount > 0 || activeCoupons.length > 0) && (
-              <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-3xl border border-orange-100/50 p-6 md:p-8 space-y-4">
+              <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg border border-orange-100/50 p-4 space-y-3">
                 {campaigns.length > 0 && (
                   <div className="space-y-2">
                     {campaigns.slice(0, 2).map(c => (
@@ -560,7 +560,7 @@ export function ProductDetail() {
               );
               const allSelected = product.variantAttributes!.every(attr => selectedAttrs[attr]);
               return (
-                <div className="bg-white rounded-3xl border border-brand-primary/5 shadow-sm p-6 md:p-8 space-y-4">
+                <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-3.5">
                   {product.variantAttributes!.map(attr => {
                     const uniqueValues = [...new Set(product.variants!.map(v => v.attributes[attr]).filter(Boolean))];
                     return (
@@ -609,7 +609,7 @@ export function ProductDetail() {
               const canAdd = allSelected && (!hasVariants || !!selectedVariant);
               return (
                 <div className="space-y-3">
-                  <div className="bg-white rounded-3xl border border-brand-primary/5 shadow-sm p-6 md:p-8 space-y-4">
+                  <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-3.5">
                     <div className="flex items-center gap-3">
                       <div className="w-20 h-12 bg-brand-secondary/30 border border-brand-primary/5 rounded-xl flex items-center px-1">
                         <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="flex-1 text-brand-primary/40 hover:text-brand-primary font-black">-</button>
@@ -698,8 +698,8 @@ export function ProductDetail() {
 
         {/* Frequently Bought Together */}
         {boughtTogether.length > 0 && (
-          <div className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm p-6 md:p-8 mb-12">
-            <h3 className="text-xl font-black text-brand-primary uppercase italic mb-8 border-b border-brand-primary/5 pb-4">{t('product.bought_together')}</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-4 md:p-6 mb-8">
+            <h3 className="text-lg font-black text-brand-primary uppercase mb-4 border-b border-gray-100 pb-3">{t('product.bought_together')}</h3>
             <div className="flex flex-col xl:flex-row items-center gap-8">
                   <div className="flex flex-wrap items-center justify-center gap-4">
                     <div className="w-24 h-24 md:w-32 md:h-32 p-2 border border-brand-primary/5 rounded-2xl bg-white shrink-0">
@@ -728,7 +728,7 @@ export function ProductDetail() {
             )}
 
         {/* Tabbed Detailed View */}
-        <div data-tab-panel className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm overflow-hidden mb-12">
+        <div data-tab-panel className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-8">
           <div className="flex border-b border-brand-primary/5 overflow-x-auto no-scrollbar">
             {[
                     { id: 'details', label: t('product.description') },
@@ -856,7 +856,7 @@ export function ProductDetail() {
         <div className="space-y-6 mb-12">
           {/* Row 1: Bunlar da İlgini Çekebilir */}
           {(recSimilar.length > 0 || relatedProducts.length > 0) && (
-            <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-white/5 p-4 md:p-6">
               <ProductCarousel
                 title={t('product.rec.interest.title')}
                 subtext={t('product.rec.interest.sub')}
@@ -867,7 +867,7 @@ export function ProductDetail() {
 
           {/* Row 2: Buna Bakanların Aldıkları */}
           {recAlsoBought.length > 0 && (
-            <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-white/5 p-4 md:p-6">
               <ProductCarousel
                 title={t('product.rec.bakanAldi.title')}
                 subtext={t('product.rec.bakanAldi.sub')}
@@ -878,7 +878,7 @@ export function ProductDetail() {
 
           {/* Row 3: Birlikte Alınanlar */}
           {boughtTogether.length > 0 && (
-            <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-white/5 p-4 md:p-6">
               <ProductCarousel
                 title={t('product.rec.birlikte.title')}
                 subtext={t('product.rec.birlikte.sub')}
@@ -889,7 +889,7 @@ export function ProductDetail() {
 
           {/* Row 4: Herkes Bunlara Bakıyor */}
           {categoriesProducts.length > 0 && (
-            <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-white/5 p-4 md:p-6">
               <ProductCarousel
                 title={t('product.rec.populer.title')}
                 subtext={t('product.rec.populer.sub')}

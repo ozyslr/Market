@@ -25,7 +25,7 @@ export function SellerCard({
   onTimeShipping,
 }: SellerCardProps) {
   return (
-    <div className="bg-white rounded-2xl border border-brand-primary/5 shadow-sm p-4 space-y-3">
+    <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-3">
       <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40">Satıcı</p>
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center font-black text-accent text-sm uppercase shrink-0">

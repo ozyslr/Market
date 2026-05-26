@@ -29,7 +29,7 @@ export function DeliveryBox({ locationLabel, onChangeLocation, hasExpressShippin
   const estimatedDate = React.useMemo(() => getEstimatedDate(), []);
 
   return (
-    <div className="bg-white rounded-2xl border border-brand-primary/5 shadow-sm p-4 space-y-3">
+    <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-3">
       <button
         onClick={onChangeLocation}
         aria-label="Teslimat adresini değiştir"
