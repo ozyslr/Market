@@ -254,6 +254,11 @@ export function ProductDetail() {
     setOneClickLoading(false);
   }
 
+  const memoizedSpecs = React.useMemo(
+    () => product?.specifications ?? {},
+    [product?.specifications]
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f2f4f7] dark:bg-zinc-950 transition-colors duration-300">
@@ -269,11 +274,6 @@ export function ProductDetail() {
        <p className="text-brand-primary/40 text-xs font-bold uppercase tracking-widest mt-4">The requested data node does not exist in the master matrix.</p>
        <Link to="/" className="mt-10 px-8 py-3 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Master Feed</Link>
     </div>
-  );
-
-  const memoizedSpecs = React.useMemo(
-    () => product?.specifications ?? {},
-    [product?.specifications]
   );
 
   const cartDiscount = product
