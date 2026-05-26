@@ -169,3 +169,33 @@ Return ONLY a JSON array of strings, no markdown, no extra text. Example: ["tag1
     return [];
   }
 }
+
+export interface ProductInsights {
+  summary: string;
+  pros: string[];
+  cons: string[];
+}
+
+export async function generateProductInsights(
+  productTitle: string,
+  description: string,
+  specs?: Record<string, string>
+): Promise<ProductInsights | null> {
+  const specText = specs
+    ? Object.entries(specs).map(([k, v]) => `${k}: ${v}`).join(', ')
+    : '';
+  const prompt = `Sen bir ürün analisti olarak çalışıyorsun. Aşağıdaki ürün için Türkçe içgörü üret.
+Ürün: ${productTitle}
+Açıklama: ${description}
+${specText ? `Özellikler: ${specText}` : ''}
+Yanıtı SADECE şu JSON formatında ver, başka hiçbir şey ekleme:
+{"summary":"...tek paragraf özet...","pros":["...","...","..."],"cons":["...","...","..."]}`;
+  const raw = await generateText('gemini-3-flash-preview', prompt);
+  if (!raw) return null;
+  try {
+    const match = raw.match(/\{[\s\S]*\}/);
+    return match ? (JSON.parse(match[0]) as ProductInsights) : null;
+  } catch {
+    return null;
+  }
+}

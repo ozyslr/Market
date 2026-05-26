@@ -204,7 +204,12 @@ export interface Product {
   relatedProductIds?: string[];
   frequentlyBoughtTogetherIds?: string[];
   model3dUrl?: string;
+  videoUrl?: string;
   isActive?: boolean;
+  unitLabel?: string;
+  unitAmount?: number;
+  favoriteCount?: number;
+  cartAddCount?: number;
   reviews?: Review[];
   createdAt?: string;
 }

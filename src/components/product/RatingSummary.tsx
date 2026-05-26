@@ -10,6 +10,7 @@ interface Props {
   activeStarFilter: number | null;
   onStarFilter: (star: number | null) => void;
   reviews: Review[];
+  onScrollToReviews?: () => void;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -18,7 +19,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   description: 'Açıklamaya Uygunluk',
 };
 
-export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, reviews }: Props) {
+export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, reviews, onScrollToReviews }: Props) {
   const hasCategories = Object.values(stats.avgCategoryRatings).some(v => v > 0);
   const [selectedPhotoReview, setSelectedPhotoReview] = useState<{ review: Review; photo: string } | null>(null);
 
@@ -29,22 +30,34 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
     <div className="grid md:grid-cols-3 gap-8 pb-8 border-b border-brand-primary/5">
       {/* Sol: Genel skor + kategori puanları */}
       <div className="flex flex-col items-center md:items-start gap-3">
-        <span className="text-7xl font-display font-black text-brand-primary italic leading-none dark:text-white">
+        <button
+          onClick={onScrollToReviews}
+          className="text-7xl font-display font-black text-brand-primary italic leading-none dark:text-white hover:opacity-75 transition-opacity"
+        >
           {rating.toFixed(1)}
-        </span>
-        <div className="flex items-center gap-1">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              size={20}
-              fill={i < Math.round(rating) ? '#FF5200' : 'none'}
-              className={i < Math.round(rating) ? 'text-accent' : 'text-brand-primary/10 dark:text-white/10'}
-            />
-          ))}
-        </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary/40 dark:text-zinc-500">
+        </button>
+        <button
+          onClick={onScrollToReviews}
+          className="flex items-center gap-1 hover:scale-110 transition-transform cursor-pointer"
+        >
+          {Array.from({ length: 5 }).map((_, i) => {
+            const fillAmount = Math.max(0, Math.min(1, rating - i));
+            return (
+              <div key={i} className="relative w-5 h-5">
+                <Star size={20} className="absolute text-yellow-200 dark:text-yellow-700" />
+                <div className="absolute overflow-hidden h-5" style={{ width: `${fillAmount * 100}%` }}>
+                  <Star size={20} fill="#FBBF24" className="text-yellow-400" />
+                </div>
+              </div>
+            );
+          })}
+        </button>
+        <button
+          onClick={onScrollToReviews}
+          className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary/40 dark:text-zinc-500 hover:text-brand-primary dark:hover:text-zinc-300 transition-colors cursor-pointer"
+        >
           {stats.total} değerlendirme
-        </span>
+        </button>
 
         {hasCategories && (
           <div className="w-full space-y-2 mt-2">
@@ -57,7 +70,7 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
                   </div>
                   <div className="h-1.5 bg-brand-secondary dark:bg-zinc-800 rounded-full">
                     <div
-                      className="h-full bg-accent rounded-full transition-all duration-500"
+                      className="h-full bg-yellow-400 rounded-full transition-all duration-500"
                       style={{ width: `${(val / 5) * 100}%` }}
                     />
                   </div>
@@ -84,10 +97,10 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
               )}
             >
               <span className="text-[10px] font-black w-4 text-brand-primary/60 dark:text-zinc-400 text-right">{star}</span>
-              <Star size={11} fill="#FF5200" className="text-accent shrink-0" />
+              <Star size={11} fill="#FBBF24" className="text-yellow-400 shrink-0" />
               <div className="flex-1 h-2.5 bg-brand-secondary dark:bg-zinc-800 rounded-full overflow-hidden border border-brand-primary/5 dark:border-white/5">
                 <div
-                  className="h-full bg-accent transition-all duration-500"
+                  className="h-full bg-yellow-400 transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -178,5 +191,39 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
         </div>
       )}
     </div>
+  );
+}
+
+interface CompactRatingProps {
+  rating: number;
+  reviewsCount: number;
+  onScrollToReviews?: () => void;
+}
+
+export function CompactRating({ rating, reviewsCount, onScrollToReviews }: CompactRatingProps) {
+  const Wrapper = onScrollToReviews ? 'button' : 'div';
+  return (
+    <Wrapper
+      {...(onScrollToReviews ? { onClick: onScrollToReviews } : {})}
+      className={`flex items-center gap-2 transition-opacity${onScrollToReviews ? ' hover:opacity-75 cursor-pointer' : ''}`}
+    >
+      <div className="flex items-center gap-0.5">
+        {Array.from({ length: 5 }).map((_, i) => {
+          const fill = Math.max(0, Math.min(1, rating - i));
+          return (
+            <div key={i} className="relative w-4 h-4">
+              <Star size={16} className="absolute text-yellow-200 dark:text-yellow-700" />
+              <div className="absolute overflow-hidden h-4" style={{ width: `${fill * 100}%` }}>
+                <Star size={16} fill="#FBBF24" className="text-yellow-400" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <span className="text-sm font-black text-brand-primary">{rating.toFixed(1)}</span>
+      <span className="text-xs text-brand-primary/40 underline decoration-dotted">
+        {reviewsCount} değerlendirme
+      </span>
+    </Wrapper>
   );
 }
