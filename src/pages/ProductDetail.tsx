@@ -741,7 +741,7 @@ export function ProductDetail() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={cn(
-                  "px-8 py-6 text-xs font-black uppercase tracking-widest transition-all relative shrink-0",
+                  "px-4 md:px-8 py-4 md:py-6 text-[10px] md:text-xs font-black uppercase tracking-widest transition-all relative shrink-0",
                   activeTab === tab.id ? "text-accent" : "text-brand-primary/30 hover:text-brand-primary"
                 )}
               >
@@ -751,7 +751,7 @@ export function ProductDetail() {
             ))}
           </div>
 
-          <div className="p-8 md:p-12">
+          <div className="p-4 md:p-8 lg:p-12">
             <AnimatePresence mode="wait">
                     {activeTab === 'details' && (
                       <motion.div 
