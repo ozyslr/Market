@@ -2,12 +2,11 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Star, Truck, ShieldCheck, ChevronRight, ShoppingCart,
+  Truck, ChevronRight, ShoppingCart,
   Globe, Heart, Share2, Info, Award,
-  Clock, Sparkles, Zap, Shield, MapPin,
-  Undo2, CheckCircle2, AlertCircle,
-  BarChart, Package,
-  TrendingUp, Eye, Tag, Ticket, Copy, BellRing, Smartphone, Zap as ZapIcon, Facebook, Twitter,
+  Sparkles, Zap, Shield,
+  CheckCircle2, AlertCircle,
+  TrendingUp, Tag, Copy, BellRing, Smartphone, Zap as ZapIcon, Facebook, Twitter,
 } from 'lucide-react';
 import { MOCK_PRODUCTS } from '@/mockData';
 import { cn } from '@/lib/utils';
