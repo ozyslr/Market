@@ -112,9 +112,10 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
           <div
             ref={imageRef}
             className={cn(
-              'w-full aspect-square bg-white rounded-2xl border border-brand-primary/5 overflow-hidden relative flex items-center justify-center p-6 group',
+              'w-full bg-white rounded-2xl border border-brand-primary/5 overflow-hidden relative flex items-center justify-center group',
               !isVideoActive && 'cursor-zoom-in'
             )}
+            style={{ maxHeight: '550px', minHeight: '350px' }}
             onClick={() => { if (!isVideoActive && images.length > 0) setLightboxOpen(true); }}
             onMouseEnter={() => setZoom(true)}
             onMouseLeave={() => setZoom(false)}
@@ -177,7 +178,7 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
                   <OptimizedImage
                     src={images[activeImage]}
                     alt={title}
-                    className="w-full h-full object-contain mix-blend-multiply"
+                    className="w-full h-full object-contain"
                     containerClassName="w-full h-full"
                     lazy={false}
                     referrerPolicy="no-referrer"

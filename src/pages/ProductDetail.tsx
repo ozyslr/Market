@@ -317,7 +317,7 @@ export function ProductDetail() {
           url: `/product/${product.slug}`,
         })}
       />
-      <div className="max-w-[1600px] mx-auto px-4 md:px-6">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-6">
 
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-1 text-[11px] font-bold text-brand-primary/40 uppercase tracking-wider py-6 overflow-hidden whitespace-nowrap">
@@ -329,7 +329,7 @@ export function ProductDetail() {
         </nav>
 
         {/* Main Product Stage: 2-Column Layout (60% Gallery / 40% Sidebar) */}
-        <div className="grid lg:grid-cols-[3fr_2fr] gap-10 mb-16">
+        <div className="grid lg:grid-cols-[1fr_400px] gap-6 mb-12 max-w-full overflow-hidden">
 
           {/* LEFT: Gallery */}
           <div>
@@ -379,8 +379,8 @@ export function ProductDetail() {
             />
           </div>
 
-          {/* RIGHT: Sticky Sidebar with Product Info (40%) */}
-          <div className="lg:sticky lg:top-4 h-fit space-y-2.5">
+          {/* RIGHT: Product Info Sidebar */}
+          <div className="space-y-2.5">
             {/* Product Info Card */}
             <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-3.5">
               {/* Brand & Badges */}
