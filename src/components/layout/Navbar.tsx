@@ -15,6 +15,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { useLocationStore } from '@/context/LocationContext';
 import { getCategories } from '@/services/productService';
 import { Category } from '@/types';
@@ -33,7 +34,10 @@ export function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
+  const { wishlist } = useWishlist();
   const { selectedLocation, isLocationModalOpen, setIsLocationModalOpen } = useLocationStore();
+  const favoriteCount = wishlist.length;
+  const favoriteBadge = favoriteCount > 30 ? '30+' : favoriteCount > 0 ? String(favoriteCount) : null;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
@@ -181,8 +185,15 @@ export function Navbar() {
             </div>
 
             {/* Favorites */}
-            <Link to="/profile" className="hidden lg:flex items-center gap-2 group p-2 hover:text-mercora-red transition-colors text-brand-primary dark:text-white">
-              <Heart size={20} className="group-hover:-translate-y-1 transition-transform" />
+            <Link to="/profile?tab=favorites" className="hidden lg:flex items-center gap-2 group p-2 hover:text-mercora-red transition-colors text-brand-primary dark:text-white">
+              <div className="relative">
+                <Heart size={20} className="group-hover:-translate-y-1 transition-transform" />
+                {favoriteBadge && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-0.5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-sm leading-none">
+                    {favoriteBadge}
+                  </span>
+                )}
+              </div>
               <span className="text-xs font-bold whitespace-nowrap">Favorilerim</span>
             </Link>
 

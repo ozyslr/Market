@@ -1,5 +1,5 @@
 /**
- * Mercora Core Types
+ * Benim Olan Core Types
  */
 
 export type UserRole = 'buyer' | 'seller' | 'admin' | 'moderator';
@@ -294,6 +294,7 @@ export interface SiteSettings {
   primaryColor?: string;
   maintenanceMode: boolean;
   maintenanceMessage?: string;
+  requireReviewApproval?: boolean;
   contactEmail?: string;
   socialLinks?: { platform: string; url: string }[];
   updatedAt?: string;

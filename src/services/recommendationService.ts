@@ -153,7 +153,7 @@ export async function getGeminiRecommendations(
       rating: p.rating,
     }));
 
-    const prompt = `You are Mercora's AI recommendation engine. Analyze the user context and product catalog, then return the IDs of the ${maxResults} most relevant products to recommend.
+    const prompt = `You are Benim Olan's AI recommendation engine. Analyze the user context and product catalog, then return the IDs of the ${maxResults} most relevant products to recommend.
 
 User Context: ${JSON.stringify(context)}
 

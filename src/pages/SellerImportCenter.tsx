@@ -173,7 +173,7 @@ export function SellerImportCenter() {
     if (!feedFields.length) return;
     setAiMatching(true);
     try {
-      const prompt = `Aşağıdaki ürün feed alanlarını Mercora sistem alanlarıyla eşleştir.
+      const prompt = `Aşağıdaki ürün feed alanlarını Benim Olan sistem alanlarıyla eşleştir.
 Feed alanları: ${feedFields.map(f => f.name).join(', ')}
 Sistem alanları: ${SYSTEM_FIELDS.map(f => f.key).join(', ')}
 Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eşleşme bulamazsan o alanı ekleme.`;
@@ -603,7 +603,7 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
 
               <div className="space-y-2">
                 <div className="grid grid-cols-[1fr_40px_1fr] gap-3 text-xs text-zinc-500 font-semibold uppercase tracking-wider px-1 mb-3">
-                  <span>Feed Alanı</span><span /><span>Mercora Sistem Alanı</span>
+                  <span>Feed Alanı</span><span /><span>Benim Olan Sistem Alanı</span>
                 </div>
                 {feedFields.map(({ name, sample }) => (
                   <div key={name} className="grid grid-cols-[1fr_40px_1fr] gap-3 items-center">
@@ -727,7 +727,7 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
 
           <div className="bg-zinc-800 rounded-xl p-6">
             <h3 className="text-sm font-semibold text-white mb-1">XML Şablonu</h3>
-            <p className="text-xs text-zinc-400 mb-4">Standart Mercora XML feed formatı.</p>
+            <p className="text-xs text-zinc-400 mb-4">Standart Benim Olan XML feed formatı.</p>
             <button onClick={() => {
               const xml = [
                 '<?xml version="1.0" encoding="UTF-8"?>',

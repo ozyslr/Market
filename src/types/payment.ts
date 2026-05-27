@@ -93,7 +93,7 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
     configFields: [
       { key: 'bankName', label: 'Banka Adı', placeholder: 'Ziraat Bankası' },
       { key: 'iban', label: 'IBAN', placeholder: 'TR00 0000 0000 0000 0000 0000 00' },
-      { key: 'accountHolder', label: 'Hesap Sahibi', placeholder: 'Mercora Ltd.' },
+      { key: 'accountHolder', label: 'Hesap Sahibi', placeholder: 'Benim Olan Ltd.' },
       { key: 'instructions', label: 'Ödeme Açıklaması', placeholder: 'Sipariş numaranızı açıklamaya yazınız.' },
     ],
   },

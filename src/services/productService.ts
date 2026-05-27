@@ -28,6 +28,24 @@ function isApproved(p: Product): boolean {
   return p.status === undefined || p.status === 'approved';
 }
 
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function ensureProductHasSlug(product: Product): Product {
+  if (product.slug) return product;
+  return {
+    ...product,
+    slug: generateSlug(product.title),
+  };
+}
+
 function applyClientFilters(products: Product[], options: GetProductsOptions): Product[] {
   let list = products;
   if (!options.includeNonApproved) list = list.filter(isApproved);
@@ -67,11 +85,14 @@ export async function getProducts(options?: GetProductsOptions) {
 
     if (products.length === 0) products = MOCK_PRODUCTS;
 
+    // Ensure all products have slugs
+    products = products.map(ensureProductHasSlug);
+
     return options ? applyClientFilters(products, options) : products;
   } catch (error) {
     console.error("Error fetching products:", error);
     const fallback = options ? applyClientFilters(MOCK_PRODUCTS, options) : MOCK_PRODUCTS;
-    return fallback;
+    return fallback.map(ensureProductHasSlug);
   }
 }
 
@@ -80,15 +101,46 @@ export async function getProductBySlug(slug: string) {
     const productsRef = collection(db, 'products');
     const q = query(productsRef, where('slug', '==', slug), limit(1));
     const snapshot = await getDocs(q);
-    
+
     if (!snapshot.empty) {
-      return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Product;
+      const product = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Product;
+      return ensureProductHasSlug(product);
     }
-    
-    return MOCK_PRODUCTS.find(p => p.slug === slug) || null;
+
+    // Try to find in mock products by slug
+    let product = MOCK_PRODUCTS.find(p => p.slug === slug);
+
+    // If not found, try by generated slug
+    if (!product) {
+      product = MOCK_PRODUCTS.find(p => generateSlug(p.title) === slug);
+    }
+
+    // If still not found, try partial match (slug starts with or contains key words)
+    if (!product) {
+      const slugWords = slug.split('-').filter(w => w.length > 2);
+      product = MOCK_PRODUCTS.find(p => {
+        const productSlug = p.slug || generateSlug(p.title);
+        return slugWords.some(word => productSlug.includes(word)) &&
+               slugWords.every(word => productSlug.includes(word));
+      });
+    }
+
+    return product ? ensureProductHasSlug(product) : null;
   } catch (error) {
     console.error("Error fetching product:", error);
-    return MOCK_PRODUCTS.find(p => p.slug === slug) || null;
+    let product = MOCK_PRODUCTS.find(p => p.slug === slug);
+    if (!product) {
+      product = MOCK_PRODUCTS.find(p => generateSlug(p.title) === slug);
+    }
+    if (!product) {
+      const slugWords = slug.split('-').filter(w => w.length > 2);
+      product = MOCK_PRODUCTS.find(p => {
+        const productSlug = p.slug || generateSlug(p.title);
+        return slugWords.some(word => productSlug.includes(word)) &&
+               slugWords.every(word => productSlug.includes(word));
+      });
+    }
+    return product ? ensureProductHasSlug(product) : null;
   }
 }
 

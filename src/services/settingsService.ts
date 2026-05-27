@@ -4,7 +4,7 @@ import { SiteSettings } from '../types';
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   id: 'global',
-  siteName: 'Mercora',
+  siteName: 'Benim Olan',
   maintenanceMode: false,
 };
 

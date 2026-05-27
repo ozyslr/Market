@@ -94,7 +94,7 @@ function buildOrderEmailHtml(order: Order): string {
         <!-- Footer -->
         <tr><td style="padding:24px 40px;background:#F8F8FA;text-align:center;border-top:1px solid #eee;">
           <p style="margin:0;font-size:10px;color:#bbb;font-weight:700;text-transform:uppercase;letter-spacing:2px;">
-            Mercora Global Marketplace · Bu email otomatik gönderilmiştir
+            Benim Olan · Bu email otomatik gönderilmiştir
           </p>
         </td></tr>
 

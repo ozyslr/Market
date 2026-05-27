@@ -18,7 +18,7 @@ export type Language = string;
 interface LanguageContextType {
   lang: Language;
   setLang: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, fallback?: string) => string;
   availableLanguages: LanguagePack[];
   setAvailableLanguages: (packs: LanguagePack[]) => void;
   translations: Record<string, Record<string, string>>;
@@ -1343,8 +1343,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [availableLanguages, setAvailableLanguages] = useState<LanguagePack[]>(initialAvailableLanguages);
   const [translations, setTranslations] = useState<Record<string, Record<string, string>>>(initialTranslations);
 
-  const t = (key: string) => {
-    return translations[lang]?.[key] || initialTranslations['en']?.[key] || key;
+  const t = (key: string, fallback?: string) => {
+    return translations[lang]?.[key] || initialTranslations['en']?.[key] || fallback || key;
   };
 
   return (

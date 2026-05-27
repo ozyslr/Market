@@ -23,7 +23,7 @@ export function registerSW(): void {
 
       console.info('[PWA] Service worker registered:', registration.scope);
 
-      // Auto-update handling: when a new SW is waiting, reload on next open
+      // Auto-update handling: when a new SW is waiting, show user a prompt
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
         if (newWorker) {
@@ -32,20 +32,12 @@ export function registerSW(): void {
               newWorker.state === 'installed' &&
               navigator.serviceWorker.controller
             ) {
-              // New version available - show update prompt or auto-reload
-              console.info('[PWA] New version available. Reloading...');
-              newWorker.postMessage({ type: 'SKIP_WAITING' });
+              // New version available - tell user
+              console.info('[PWA] New version available. User can refresh to update.');
+              // Dispatch custom event that UI can listen to
+              window.dispatchEvent(new CustomEvent('sw-update-ready'));
             }
           });
-        }
-      });
-
-      // Reload when a new SW takes over
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          window.location.reload();
         }
       });
     } catch (error) {

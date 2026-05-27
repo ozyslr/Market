@@ -1,4 +1,4 @@
-/* Mercora PWA Service Worker v1.0.0 */
+/* Benim Olan PWA Service Worker v1.0.0 */
 
 const CACHE_VERSION = 'v1';
 const STATIC_CACHE = `mercora-static-${CACHE_VERSION}`;

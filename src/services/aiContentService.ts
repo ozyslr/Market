@@ -48,7 +48,7 @@ export async function generateProductDescription(attrs: ProductAttrs): Promise<{
     .map(([k, v]) => `  ${k}: ${v}`)
     .join('\n');
 
-  const prompt = `You are Mercora's AI copywriter. Generate product content in **Turkish**.
+  const prompt = `You are Benim Olan's AI copywriter. Generate product content in **Turkish**.
 
 Product:
 - Title: ${attrs.title}

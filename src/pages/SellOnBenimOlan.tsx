@@ -19,7 +19,7 @@ interface ApplyForm {
   description: string;
 }
 
-export function SellOnMercora() {
+export function SellOnBenimOlan() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);

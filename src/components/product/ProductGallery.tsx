@@ -65,66 +65,22 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
 
   return (
     <>
-      <div className="flex gap-3">
-        {totalSlots > 1 && (
-          <div className="hidden md:flex flex-col gap-2 w-[72px] shrink-0">
-            {images.map((img, i) => (
-              <button
-                key={i}
-                onMouseEnter={() => setActiveImage(i)}
-                onClick={() => setActiveImage(i)}
-                className={cn(
-                  'w-[72px] h-[72px] rounded-xl border-2 p-1 bg-white overflow-hidden transition-all shrink-0',
-                  activeImage === i
-                    ? 'border-accent shadow-md shadow-accent/20'
-                    : 'border-brand-primary/10 opacity-60 hover:opacity-100 hover:border-brand-primary/30'
-                )}
-              >
-                <OptimizedImage
-                  src={img}
-                  alt={`${title} - ${i + 1}`}
-                  className="w-full h-full object-contain"
-                  containerClassName="w-full h-full"
-                  referrerPolicy="no-referrer"
-                />
-              </button>
-            ))}
-            {videoUrl && (
-              <button
-                type="button"
-                onMouseEnter={() => setActiveImage(images.length)}
-                onClick={() => setActiveImage(images.length)}
-                aria-label="Videoyu oynat"
-                className={cn(
-                  'w-[72px] h-[72px] rounded-xl border-2 bg-black overflow-hidden transition-all shrink-0 flex items-center justify-center',
-                  activeImage === images.length
-                    ? 'border-accent shadow-md shadow-accent/20'
-                    : 'border-brand-primary/10 opacity-60 hover:opacity-100 hover:border-brand-primary/30'
-                )}
-              >
-                <Play size={24} className="text-white" />
-              </button>
-            )}
-          </div>
-        )}
-
-        <div className="flex-1 relative">
-          <div
-            ref={imageRef}
-            className={cn(
-              'w-full bg-white rounded-2xl border border-brand-primary/5 overflow-hidden relative flex items-center justify-center group',
-              !isVideoActive && 'cursor-zoom-in'
-            )}
-            style={{ maxHeight: '550px', minHeight: '350px' }}
-            onClick={() => { if (!isVideoActive && images.length > 0) setLightboxOpen(true); }}
-            onMouseEnter={() => setZoom(true)}
-            onMouseLeave={() => setZoom(false)}
-            onMouseMove={handleMouseMove}
-            role={!isVideoActive && images.length > 0 ? 'button' : undefined}
-            tabIndex={!isVideoActive && images.length > 0 ? 0 : undefined}
-            aria-label={!isVideoActive && images.length > 0 ? 'Görseli büyüt' : undefined}
-            onKeyDown={!isVideoActive && images.length > 0 ? (e) => { if (e.key === 'Enter' || e.key === ' ') setLightboxOpen(true); } : undefined}
-          >
+      <div>
+        <div
+          ref={imageRef}
+          className={cn(
+            'w-full bg-white rounded-2xl border border-brand-primary/5 overflow-hidden relative flex items-center justify-center group aspect-[4/5]',
+            !isVideoActive && 'cursor-zoom-in'
+          )}
+          onClick={() => { if (!isVideoActive && images.length > 0) setLightboxOpen(true); }}
+          onMouseEnter={() => setZoom(true)}
+          onMouseLeave={() => setZoom(false)}
+          onMouseMove={handleMouseMove}
+          role={!isVideoActive && images.length > 0 ? 'button' : undefined}
+          tabIndex={!isVideoActive && images.length > 0 ? 0 : undefined}
+          aria-label={!isVideoActive && images.length > 0 ? 'Görseli büyüt' : undefined}
+          onKeyDown={!isVideoActive && images.length > 0 ? (e) => { if (e.key === 'Enter' || e.key === ' ') setLightboxOpen(true); } : undefined}
+        >
             <AnimatePresence mode="wait">
               {isVideoActive ? (
                 <motion.div
@@ -228,55 +184,41 @@ export function ProductGallery({ images, title, videoUrl, has360View, extraActio
             )}
           </div>
 
-          {totalSlots > 1 && (
-            <div className="flex md:hidden gap-1.5 justify-center mt-3">
-              {Array.from({ length: totalSlots }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveImage(i)}
-                  aria-label={i === images.length ? 'Video' : `Görsel ${i + 1}`}
-                  aria-pressed={i === activeImage}
-                  className={cn(
-                    'h-1.5 rounded-full transition-all',
-                    i === activeImage ? 'bg-accent w-4' : 'bg-brand-primary/20 w-1.5'
-                  )}
-                />
-              ))}
-            </div>
-          )}
-
-          {totalSlots > 1 && (
-            <div className="flex md:hidden gap-2 overflow-x-auto no-scrollbar mt-3 pb-1">
-              {images.map((img, i) => (
-                <button
-                  key={i}
-                  onMouseEnter={() => setActiveImage(i)}
-                  onClick={() => setActiveImage(i)}
-                  className={cn(
-                    'w-16 h-16 rounded-xl border-2 p-1 bg-white shrink-0 overflow-hidden transition-all',
-                    activeImage === i ? 'border-accent' : 'border-transparent opacity-60'
-                  )}
-                >
-                  <img src={img} alt="" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                </button>
-              ))}
-              {videoUrl && (
-                <button
-                  type="button"
-                  onMouseEnter={() => setActiveImage(images.length)}
-                  onClick={() => setActiveImage(images.length)}
-                  aria-label="Videoyu oynat"
-                  className={cn(
-                    'w-16 h-16 rounded-xl border-2 bg-black shrink-0 overflow-hidden transition-all flex items-center justify-center',
-                    activeImage === images.length ? 'border-accent' : 'border-transparent opacity-60'
-                  )}
-                >
-                  <Play size={20} className="text-white" />
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+        {totalSlots > 1 && (
+          <div className="flex gap-2 overflow-x-auto no-scrollbar mt-3 pb-1">
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onMouseEnter={() => setActiveImage(i)}
+                onClick={() => setActiveImage(i)}
+                className={cn(
+                  'w-[72px] h-[72px] rounded-xl border-2 p-1 bg-white shrink-0 overflow-hidden transition-all',
+                  activeImage === i
+                    ? 'border-accent shadow-md shadow-accent/20'
+                    : 'border-brand-primary/10 opacity-60 hover:opacity-100 hover:border-brand-primary/30'
+                )}
+              >
+                <img src={img} alt="" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+              </button>
+            ))}
+            {videoUrl && (
+              <button
+                type="button"
+                onMouseEnter={() => setActiveImage(images.length)}
+                onClick={() => setActiveImage(images.length)}
+                aria-label="Videoyu oynat"
+                className={cn(
+                  'w-[72px] h-[72px] rounded-xl border-2 bg-black shrink-0 overflow-hidden transition-all flex items-center justify-center',
+                  activeImage === images.length
+                    ? 'border-accent shadow-md shadow-accent/20'
+                    : 'border-brand-primary/10 opacity-60 hover:opacity-100 hover:border-brand-primary/30'
+                )}
+              >
+                <Play size={20} className="text-white" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <AnimatePresence>

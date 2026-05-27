@@ -24,7 +24,7 @@ import { CategoryPage } from './pages/CategoryPage';
 import { UserProfilePage } from './pages/UserProfile';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminSellerView } from './pages/AdminSellerView';
-import { SellOnMercora } from './pages/SellOnMercora';
+import { SellOnBenimOlan } from './pages/SellOnBenimOlan';
 import { ShoppingAssistant } from './components/ai/ShoppingAssistant';
 import { LiveChatWidget } from './components/chat/LiveChatWidget';
 import { Footer } from './components/layout/Footer';
@@ -125,7 +125,7 @@ export default function App() {
                     <Route path="/admin" element={<AdminDashboard />} />
                     <Route path="/admin/categories" element={<AdminCategories />} />
                     <Route path="/admin/seller/:sellerId" element={<AdminSellerView />} />
-                    <Route path="/sell" element={<SellOnMercora />} />
+                    <Route path="/sell" element={<SellOnBenimOlan />} />
                     <Route path="/sell/apply" element={<SellerApplication />} />
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/orders/:orderId" element={<OrderTracking />} />

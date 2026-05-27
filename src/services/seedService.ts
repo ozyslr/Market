@@ -43,9 +43,9 @@ export async function seedMarketplace() {
     // Seed Site Settings
     batch.set(doc(db, 'settings', 'global'), {
       id: 'global',
-      siteName: 'Mercora',
+      siteName: 'Benim Olan',
       maintenanceMode: false,
-      contactEmail: 'destek@mercora.com',
+      contactEmail: 'destek@benimolan.com',
     });
 
     await batch.commit();

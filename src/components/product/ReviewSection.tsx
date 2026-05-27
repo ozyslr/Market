@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Review } from '@/types';
 import {
-  getReviewsByProduct,
+  subscribeToProductReviews,
   computeReviewStats,
   ReviewStats,
   addReview,
   checkUserReview,
+  updateReview,
+  deleteReview,
 } from '@/services/reviewService';
+import { getSiteSettings } from '@/services/settingsService';
 import { RatingSummary } from './RatingSummary';
 import { ReviewFilters, SortOption, FilterOption } from './ReviewFilters';
 import { ReviewCard } from './ReviewCard';
@@ -52,16 +55,20 @@ export function ReviewSection({
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const reviewsRef = useRef<HTMLDivElement>(null);
+
+  const handleScrollToReviews = () => {
+    reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   useEffect(() => {
     setLoading(true);
-    getReviewsByProduct(productId)
-      .then(r => {
-        setReviews(r);
-        setStats(computeReviewStats(r));
-      })
-      .catch(() => setStats(EMPTY_STATS))
-      .finally(() => setLoading(false));
+    const unsubscribe = subscribeToProductReviews(productId, r => {
+      setReviews(r);
+      setStats(computeReviewStats(r));
+      setLoading(false);
+    });
+    return unsubscribe;
   }, [productId]);
 
   useEffect(() => {
@@ -70,23 +77,38 @@ export function ReviewSection({
 
   async function handleSubmitReview(data: ReviewFormData) {
     if (!currentUserId || !currentUserName) return;
-    await addReview({
-      productId,
-      sellerId,
-      userId: currentUserId,
-      userName: currentUserName,
-      rating: data.rating,
-      comment: data.comment,
-      createdAt: new Date().toISOString(),
-      verified: false,
-      photos: data.photos,
-      categoryRatings: data.categoryRatings,
-      helpfulCount: 0,
-      helpfulVoters: [],
-    });
+    const settings = await getSiteSettings();
+    const requireApproval = settings.requireReviewApproval ?? false;
+    await addReview(
+      {
+        productId,
+        sellerId,
+        userId: currentUserId,
+        userName: currentUserName,
+        rating: data.rating,
+        comment: data.comment,
+        createdAt: new Date().toISOString(),
+        verified: false,
+        photos: data.photos,
+        categoryRatings: data.categoryRatings,
+        helpfulCount: 0,
+        helpfulVoters: [],
+      },
+      requireApproval,
+    );
     setReviewSubmitted(true);
     setHasReviewed(true);
     setShowReviewForm(false);
+  }
+
+  async function handleDeleteReview(reviewId: string) {
+    await deleteReview(reviewId);
+    setHasReviewed(false);
+    setReviewSubmitted(false);
+  }
+
+  async function handleEditReview(reviewId: string, data: { rating: number; comment: string }) {
+    await updateReview(reviewId, data);
   }
 
   const filtered = reviews
@@ -128,6 +150,7 @@ export function ReviewSection({
         activeStarFilter={starFilter}
         onStarFilter={star => { setStarFilter(star); setPage(1); }}
         reviews={reviews}
+        onScrollToReviews={handleScrollToReviews}
       />
 
       {/* Yorum yaz */}
@@ -136,7 +159,7 @@ export function ReviewSection({
           <div className="mb-4 px-5 py-4 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3">
             <CheckCircle2 size={16} className="text-green-500 shrink-0" />
             <p className="text-xs font-bold text-green-700">
-              Yorumunuz alındı. Admin onayından sonra yayınlanacak.
+              Yorumunuz yayınlandı. Katkınız için teşekkürler!
             </p>
           </div>
         )}
@@ -183,7 +206,7 @@ export function ReviewSection({
       )}
 
       {/* Yorum listesi */}
-      <div className="space-y-0">
+      <div ref={reviewsRef} className="space-y-0">
         {filtered.length === 0 ? (
           <p className="text-center py-8 text-sm text-brand-primary/30 dark:text-zinc-500 font-bold">
             Bu filtreye uygun yorum bulunamadı.
@@ -196,6 +219,8 @@ export function ReviewSection({
               currentUserId={currentUserId}
               currentUserName={currentUserName}
               isSeller={isSeller}
+              onDelete={() => handleDeleteReview(review.id)}
+              onEdit={(data) => handleEditReview(review.id, data)}
             />
           ))
         )}

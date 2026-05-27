@@ -35,7 +35,7 @@ export function SellerStorePage() {
     followers: sellerData.followersCount,
     isVerified: sellerData.isVerified,
     joinedDate: sellerData.joinedDate,
-    description: sellerData.description || "Certified Mercora Artisan.",
+    description: sellerData.description || "Sertifikalı Benim Olan Satıcısı.",
     banner: sellerData.bannerUrl || "https://picsum.photos/seed/shop/1920/1080?blur=4",
     avatar: sellerData.logoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${sellerData.storeName}`,
     fulfillment: sellerData.fulfillmentHealth

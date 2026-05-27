@@ -334,7 +334,7 @@ export function SearchResultsPage() {
               )}>
                 {results.length > 0 ? (
                   results.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard key={product.id} product={product} openInNewTab />
                   ))
                 ) : (
                   <div className="col-span-full py-40 flex flex-col items-center justify-center text-center">

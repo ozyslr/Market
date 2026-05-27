@@ -118,7 +118,7 @@ export function SellerApplication() {
           </div>
           <div>
             <h1 className="text-2xl font-black uppercase italic text-brand-primary dark:text-white">Satıcı Başvurusu</h1>
-            <p className="text-xs text-brand-primary/50 font-bold">Mercora'da satış yapmaya başlayın</p>
+            <p className="text-xs text-brand-primary/50 font-bold">Benim Olan'da satış yapmaya başlayın</p>
           </div>
         </div>
 

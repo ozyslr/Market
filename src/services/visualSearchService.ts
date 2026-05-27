@@ -19,7 +19,7 @@ async function describeImage(imageBase64: string, mimeType: string): Promise<str
             {
               parts: [
                 {
-                  text: `You are Mercora's visual search engine. Analyze this product image and return a JSON object with:
+                  text: `You are Benim Olan's visual search engine. Analyze this product image and return a JSON object with:
 1. "title" — a concise product title in Turkish (max 60 chars)
 2. "category" — the best matching category from: electronics, fashion, home, sports, beauty, automotive, baby, food, office, pet, books, other
 3. "keywords" — an array of 5-10 search keywords in Turkish for finding similar products

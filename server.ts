@@ -66,9 +66,14 @@ async function startServer() {
         imgSrc: ["'self'", "data:", "blob:",
           "https://firebasestorage.googleapis.com",
           "https://*.googleapis.com",
+          "https://*.googleusercontent.com",
           "https://*.cloudfront.net",
           "https://*.iyzipay.com",
-          "data:",
+          "https://images.unsplash.com",
+          "https://picsum.photos",
+          "https://*.picsum.photos",
+          "https://via.placeholder.com",
+          "https://*.placeholder.com",
         ],
         connectSrc: ["'self'",
           "https://api.stripe.com",
@@ -240,7 +245,7 @@ async function startServer() {
         </td></tr>
         <tr><td style="padding:24px 40px;background:#F8F8FA;text-align:center;border-top:1px solid #eee;">
           <p style="margin:0;font-size:10px;color:#bbb;font-weight:700;text-transform:uppercase;letter-spacing:2px;">
-            Mercora Global Marketplace · Bu email otomatik gönderilmiştir
+            Benim Olan · Bu email otomatik gönderilmiştir
           </p>
         </td></tr>
       </table>
@@ -254,7 +259,7 @@ async function startServer() {
         await adminDb.collection('mail').add({
           to: userEmail,
           message: {
-            subject: `Sepetinde ${itemCount} ürün kaldı — Mercora`,
+            subject: `Sepetinde ${itemCount} ürün kaldı — Benim Olan`,
             html: emailHtml,
           },
         });
@@ -763,13 +768,26 @@ async function startServer() {
     }
   });
 
+  // Chrome DevTools capability endpoint — avoid 404 noise in console
+  app.get('/.well-known/appspecific/com.chrome.devtools.json', (_req, res) => {
+    res.json({});
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
+    try {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+    } catch (err) {
+      console.error('[Vite] Failed to create dev server:', err);
+      // Fallback: serve dist if available
+      const distPath = path.join(process.cwd(), 'dist');
+      app.use(express.static(distPath));
+      app.get('*', (_req, res) => res.sendFile(path.join(distPath, 'index.html')));
+    }
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
@@ -779,7 +797,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Mercora Omni-Channel Server running on http://localhost:${PORT}`);
+    console.log(`Benim Olan Server running on http://localhost:${PORT}`);
   });
 }
 

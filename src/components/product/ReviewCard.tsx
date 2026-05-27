@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, ThumbsUp, ChevronDown, ChevronUp, X, Store } from 'lucide-react';
+import { Star, ThumbsUp, ChevronDown, ChevronUp, X, Store, Pencil, Trash2 } from 'lucide-react';
 import { CheckCircle2 } from 'lucide-react';
 import { Review } from '@/types';
 import { voteReviewHelpful, addSellerResponse } from '@/services/reviewService';
@@ -10,6 +10,8 @@ interface Props {
   currentUserId?: string;
   isSeller: boolean;
   currentUserName?: string;
+  onDelete?: () => void;
+  onEdit?: (data: { rating: number; comment: string }) => void;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -18,7 +20,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   description: 'Uygunluk',
 };
 
-export function ReviewCard({ review, currentUserId, isSeller, currentUserName }: Props) {
+export function ReviewCard({ review, currentUserId, isSeller, currentUserName, onDelete, onEdit }: Props) {
   const [helpfulCount, setHelpfulCount] = useState(review.helpfulCount || 0);
   const [hasVoted, setHasVoted] = useState(
     currentUserId ? (review.helpfulVoters || []).includes(currentUserId) : false,
@@ -30,6 +32,24 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName }:
   const [localResponse, setLocalResponse] = useState(review.sellerResponse);
   const [showFullComment, setShowFullComment] = useState(false);
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editRating, setEditRating] = useState(review.rating);
+  const [editComment, setEditComment] = useState(review.comment);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const isOwner = !!currentUserId && currentUserId === review.userId;
+
+  async function handleSaveEdit() {
+    if (!editComment.trim() || savingEdit) return;
+    setSavingEdit(true);
+    try {
+      await onEdit?.({ rating: editRating, comment: editComment.trim() });
+      setIsEditing(false);
+    } finally {
+      setSavingEdit(false);
+    }
+  }
 
   const isLongComment = review.comment.length > 300;
   const displayedComment =
@@ -93,8 +113,8 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName }:
           <Star
             key={i}
             size={14}
-            fill={i < review.rating ? '#FF5200' : 'none'}
-            className={i < review.rating ? 'text-accent' : 'text-brand-primary/10'}
+            fill={i < review.rating ? '#FBBF24' : 'none'}
+            className={i < review.rating ? 'text-yellow-400' : 'text-brand-primary/10'}
           />
         ))}
         {review.categoryRatings &&
@@ -107,21 +127,68 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName }:
           )}
       </div>
 
-      {/* Yorum metni */}
-      <p className="text-sm text-brand-primary/70 leading-relaxed font-medium mb-2">
-        {displayedComment}
-      </p>
-      {isLongComment && (
-        <button
-          onClick={() => setShowFullComment(v => !v)}
-          className="flex items-center gap-1 text-[10px] font-black text-accent mb-3"
-        >
-          {showFullComment ? (
-            <><ChevronUp size={12} /> Daha az göster</>
-          ) : (
-            <><ChevronDown size={12} /> Devamını oku</>
+      {/* Yorum metni veya düzenleme formu */}
+      {isEditing ? (
+        <div className="space-y-3 mb-3">
+          <div className="flex gap-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setEditRating(i + 1)}
+                aria-label={`${i + 1} yıldız`}
+              >
+                <Star
+                  size={20}
+                  fill={i < editRating ? '#FBBF24' : 'none'}
+                  className={i < editRating ? 'text-yellow-400' : 'text-brand-primary/20'}
+                />
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={editComment}
+            onChange={e => setEditComment(e.target.value)}
+            rows={3}
+            maxLength={2000}
+            className="w-full px-3 py-2 bg-white border border-brand-primary/10 rounded-xl text-sm outline-none focus:border-accent resize-none"
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleSaveEdit}
+              disabled={savingEdit || !editComment.trim()}
+              className="px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-wider disabled:opacity-50"
+            >
+              {savingEdit ? 'Kaydediliyor...' : 'Kaydet'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsEditing(false); setEditRating(review.rating); setEditComment(review.comment); }}
+              className="px-4 py-2 border border-brand-primary/10 rounded-xl text-[10px] font-black uppercase tracking-wider text-brand-primary/50"
+            >
+              İptal
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="text-sm text-brand-primary/70 leading-relaxed font-medium mb-2">
+            {displayedComment}
+          </p>
+          {isLongComment && (
+            <button
+              onClick={() => setShowFullComment(v => !v)}
+              className="flex items-center gap-1 text-[10px] font-black text-accent mb-3"
+            >
+              {showFullComment ? (
+                <><ChevronUp size={12} /> Daha az göster</>
+              ) : (
+                <><ChevronDown size={12} /> Devamını oku</>
+              )}
+            </button>
           )}
-        </button>
+        </>
       )}
 
       {/* Fotoğraflar */}
@@ -160,6 +227,46 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName }:
           >
             Yanıtla
           </button>
+        )}
+        {isOwner && !isEditing && (
+          <>
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              aria-label="Yorumu düzenle"
+              className="flex items-center gap-1 text-[10px] font-black uppercase text-brand-primary/40 hover:text-accent transition-colors"
+            >
+              <Pencil size={11} /> Düzenle
+            </button>
+            {confirmDelete ? (
+              <span className="flex items-center gap-2 text-[10px] font-black uppercase">
+                <span className="text-red-500">Silinsin mi?</span>
+                <button
+                  type="button"
+                  onClick={() => onDelete?.()}
+                  className="text-red-500 hover:text-red-700 transition-colors"
+                >
+                  Evet
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-brand-primary/40 hover:text-brand-primary transition-colors"
+                >
+                  İptal
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                aria-label="Yorumu sil"
+                className="flex items-center gap-1 text-[10px] font-black uppercase text-brand-primary/40 hover:text-red-500 transition-colors"
+              >
+                <Trash2 size={11} /> Sil
+              </button>
+            )}
+          </>
         )}
       </div>
 

@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, where, orderBy, limit, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, where, orderBy, limit, arrayUnion, arrayRemove, increment, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Review } from '../types';
 import { createNotification } from './notificationService';
@@ -11,9 +11,13 @@ export interface ReviewStats {
   avgCategoryRatings: { quality: number; shipping: number; description: number };
 }
 
-export async function addReview(review: Omit<Review, 'id' | 'status'>): Promise<Review> {
+export async function addReview(
+  review: Omit<Review, 'id' | 'status'>,
+  requireApproval = false,
+): Promise<Review> {
   try {
-    const fullReview = { ...review, status: 'pending' as const };
+    const status = requireApproval ? ('pending' as const) : ('approved' as const);
+    const fullReview = { ...review, status };
     const docRef = await addDoc(collection(db, REVIEWS_COLLECTION), fullReview);
     return { ...fullReview, id: docRef.id };
   } catch (error) {
@@ -27,16 +31,37 @@ export async function getReviewsByProduct(productId: string): Promise<Review[]> 
     const q = query(
       collection(db, REVIEWS_COLLECTION),
       where('productId', '==', productId),
-      orderBy('createdAt', 'desc')
     );
     const snap = await getDocs(q);
     return snap.docs
       .map(d => ({ id: d.id, ...d.data() }) as Review)
-      .filter(r => r.status === 'approved');
+      .filter(r => r.status === 'approved')
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, REVIEWS_COLLECTION);
     return [];
   }
+}
+
+export function subscribeToProductReviews(
+  productId: string,
+  callback: (reviews: Review[]) => void,
+): () => void {
+  const q = query(
+    collection(db, REVIEWS_COLLECTION),
+    where('productId', '==', productId),
+  );
+  return onSnapshot(
+    q,
+    snap => {
+      const reviews = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }) as Review)
+        .filter(r => r.status === 'approved')
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      callback(reviews);
+    },
+    () => callback([]),
+  );
 }
 
 export async function checkUserReview(productId: string, userId: string): Promise<boolean> {
@@ -45,12 +70,37 @@ export async function checkUserReview(productId: string, userId: string): Promis
       collection(db, REVIEWS_COLLECTION),
       where('productId', '==', productId),
       where('userId', '==', userId),
+      where('status', '==', 'approved'),
       limit(1)
     );
     const snap = await getDocs(q);
     return !snap.empty;
   } catch {
     return false;
+  }
+}
+
+export async function updateReview(
+  reviewId: string,
+  data: { rating: number; comment: string },
+): Promise<void> {
+  try {
+    await updateDoc(doc(db, REVIEWS_COLLECTION, reviewId), {
+      rating: data.rating,
+      comment: data.comment,
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `${REVIEWS_COLLECTION}/${reviewId}`);
+    throw error;
+  }
+}
+
+export async function deleteReview(reviewId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, REVIEWS_COLLECTION, reviewId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `${REVIEWS_COLLECTION}/${reviewId}`);
+    throw error;
   }
 }
 

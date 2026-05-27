@@ -26,7 +26,6 @@ import { SellerCard } from '@/components/product/SellerCard';
 import { OtherSellers } from '@/components/product/OtherSellers';
 import { DeliveryBox } from '@/components/product/DeliveryBox';
 import { InstallmentTable } from '@/components/product/InstallmentTable';
-import { ProductFeatures } from '@/components/product/ProductFeatures';
 import { StickyBuyBar } from '@/components/commerce/StickyBuyBar';
 import { QASection } from '@/components/product/QASection';
 import { VariantSwatches } from '@/components/product/VariantSwatches';
@@ -91,6 +90,7 @@ export function ProductDetail() {
   const [recentViewed, setRecentViewed] = useState<Product[]>([]);
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [comparisonOpen, setComparisonOpen] = useState(false);
+  const [isFollowingSeller, setIsFollowingSeller] = useState(false);
   const { addItem: addToComparison, removeItem: removeFromComparison, isAdded: isAddedToComparison } = useComparison();
 
   useEffect(() => {
@@ -296,7 +296,7 @@ export function ProductDetail() {
   };
 
   return (
-    <div className="bg-[#f5f5f5] dark:bg-zinc-950 min-h-screen pb-20 transition-colors duration-300">
+    <div className="bg-white dark:bg-zinc-950 min-h-screen pb-20 transition-colors duration-300">
       <SEO
         title={product.title}
         description={product.description}
@@ -317,7 +317,7 @@ export function ProductDetail() {
           url: `/product/${product.slug}`,
         })}
       />
-      <div className="max-w-[1280px] mx-auto px-4 md:px-6">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-8">
 
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-1 text-[11px] font-bold text-brand-primary/40 uppercase tracking-wider py-6 overflow-hidden whitespace-nowrap">
@@ -329,7 +329,8 @@ export function ProductDetail() {
         </nav>
 
         {/* Main Product Stage: 2-Column Layout (60% Gallery / 40% Sidebar) */}
-        <div className="grid lg:grid-cols-[1fr_400px] gap-6 mb-12 max-w-full overflow-hidden">
+        <div className="max-w-[1060px]">
+        <div className="grid lg:grid-cols-[460px_1fr] gap-6 mb-8 items-start overflow-hidden">
 
           {/* LEFT: Gallery */}
           <div>
@@ -380,9 +381,9 @@ export function ProductDetail() {
           </div>
 
           {/* RIGHT: Product Info Sidebar */}
-          <div className="space-y-2.5">
-            {/* Product Info Card */}
-            <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-3.5">
+          <div className="divide-y divide-gray-100">
+            {/* Product Info */}
+            <div className="pb-4 space-y-3.5">
               {/* Brand & Badges */}
               <div className="space-y-3">
                 <Link to={`/seller/${product.sellerId}`} className="text-accent text-xs font-black uppercase tracking-widest hover:underline decoration-2">{product.brand}</Link>
@@ -503,22 +504,23 @@ export function ProductDetail() {
               sellerName={product.brand || 'Mağaza'}
               sellerRating={product.rating}
               sellerReviewCount={product.reviewsCount}
+              isFollowing={isFollowingSeller}
+              onToggleFollow={() => setIsFollowingSeller(f => !f)}
+              onAskQuestion={() => {
+                setActiveTab('qa');
+                document.querySelector('[data-tab-panel]')?.scrollIntoView({ behavior: 'smooth' });
+              }}
             />
 
             {/* Other Sellers */}
             <OtherSellers sellers={[]} />
-
-            {/* Product Features */}
-            {product.specifications && Object.keys(product.specifications).length > 0 && (
-              <ProductFeatures specifications={product.specifications as Record<string, string>} />
-            )}
 
             {/* Installment Table */}
             <InstallmentTable price={cartPrice} currency={product.currency ?? 'gbp'} />
 
             {/* Promotions Card */}
             {(campaigns.length > 0 || cartDiscount > 0 || activeCoupons.length > 0) && (
-              <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg border border-orange-100/50 p-4 space-y-3">
+              <div className="py-3 space-y-3">
                 {campaigns.length > 0 && (
                   <div className="space-y-2">
                     {campaigns.slice(0, 2).map(c => (
@@ -561,7 +563,7 @@ export function ProductDetail() {
               );
               const allSelected = product.variantAttributes!.every(attr => selectedAttrs[attr]);
               return (
-                <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-3.5">
+                <div className="py-4 space-y-3.5">
                   {product.variantAttributes!.map(attr => {
                     const uniqueValues = [...new Set(product.variants!.map(v => v.attributes[attr]).filter(Boolean))];
                     return (
@@ -610,7 +612,7 @@ export function ProductDetail() {
               const canAdd = allSelected && (!hasVariants || !!selectedVariant);
               return (
                 <div className="space-y-2.5">
-                  <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-2.5">
+                  <div className="py-4 space-y-2.5">
                     {/* Quantity selector — inline, compact */}
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-black uppercase text-gray-400">Adet</span>
@@ -699,11 +701,13 @@ export function ProductDetail() {
             />
           </div>
         </div>
+        </div>
+        </div>{/* end max-w-[1060px] */}
 
         {/* Frequently Bought Together */}
         {boughtTogether.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-4 md:p-6 mb-8">
-            <h3 className="text-lg font-black text-brand-primary uppercase mb-4 border-b border-gray-100 pb-3">{t('product.bought_together')}</h3>
+          <div className="py-8 border-t border-gray-100">
+            <h3 className="text-sm font-black text-brand-primary uppercase tracking-wider mb-6 pb-3 border-b border-gray-100">{t('product.bought_together')}</h3>
             <div className="flex flex-col xl:flex-row items-center gap-8">
                   <div className="flex flex-wrap items-center justify-center gap-4">
                     <div className="w-24 h-24 md:w-32 md:h-32 p-2 border border-brand-primary/5 rounded-2xl bg-white shrink-0">
@@ -732,7 +736,7 @@ export function ProductDetail() {
             )}
 
         {/* Tabbed Detailed View */}
-        <div data-tab-panel className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-8">
+        <div data-tab-panel className="border-t border-gray-100 mb-8">
           <div className="flex border-b border-brand-primary/5 overflow-x-auto no-scrollbar">
             {[
                     { id: 'details', label: t('product.description') },
@@ -857,10 +861,10 @@ export function ProductDetail() {
         </div>
 
         {/* Recommendations Blocks */}
-        <div className="space-y-6 mb-12">
+        <div className="divide-y divide-brand-primary/5 dark:divide-white/5 mb-12">
           {/* Row 1: Bunlar da İlgini Çekebilir */}
           {(recSimilar.length > 0 || relatedProducts.length > 0) && (
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-white/5 p-4 md:p-6">
+            <div className="py-5">
               <ProductCarousel
                 title={t('product.rec.interest.title')}
                 subtext={t('product.rec.interest.sub')}
@@ -871,7 +875,7 @@ export function ProductDetail() {
 
           {/* Row 2: Buna Bakanların Aldıkları */}
           {recAlsoBought.length > 0 && (
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-white/5 p-4 md:p-6">
+            <div className="py-5">
               <ProductCarousel
                 title={t('product.rec.bakanAldi.title')}
                 subtext={t('product.rec.bakanAldi.sub')}
@@ -882,7 +886,7 @@ export function ProductDetail() {
 
           {/* Row 3: Birlikte Alınanlar */}
           {boughtTogether.length > 0 && (
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-white/5 p-4 md:p-6">
+            <div className="py-5">
               <ProductCarousel
                 title={t('product.rec.birlikte.title')}
                 subtext={t('product.rec.birlikte.sub')}
@@ -893,7 +897,7 @@ export function ProductDetail() {
 
           {/* Row 4: Herkes Bunlara Bakıyor */}
           {categoriesProducts.length > 0 && (
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-white/5 p-4 md:p-6">
+            <div className="py-5">
               <ProductCarousel
                 title={t('product.rec.populer.title')}
                 subtext={t('product.rec.populer.sub')}
@@ -903,7 +907,7 @@ export function ProductDetail() {
           )}
 
           {/* Row 5: Popüler Ürünlerden Seçtik */}
-          <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+          <div className="py-5">
             <ProductCarousel
               title={t('product.rec.secilmis.title')}
               subtext={t('product.rec.secilmis.sub')}
@@ -912,7 +916,7 @@ export function ProductDetail() {
           </div>
 
           {/* Popular Searches badge grid */}
-          <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-white/5 shadow-sm p-6 md:p-8">
+          <div className="py-6">
             <h4 className="text-sm font-black uppercase tracking-wider text-brand-primary dark:text-white mb-4">
               {t('product.rec.searches.title')}
             </h4>
@@ -931,7 +935,6 @@ export function ProductDetail() {
         </div>
 
       </div>
-    </div>
 
       {/* Mobile Sticky Buy Bar */}
       {(() => {
