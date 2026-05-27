@@ -103,7 +103,7 @@ export async function getAllAdCampaigns(status?: AdCampaignStatus): Promise<AdCa
       q = query(collection(db, CAMPAIGNS_COL), orderBy('createdAt', 'desc'));
     }
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as AdCampaign));
+    return snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) } as AdCampaign));
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, CAMPAIGNS_COL);
     return [];

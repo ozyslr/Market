@@ -35,7 +35,8 @@ function SetupForm({ onSuccess }: { onSuccess: () => void }) {
     }
 
     if (setupIntent?.payment_method) {
-      const pm = await stripe.retrievePaymentMethod(setupIntent.payment_method as string);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pm = await (stripe as any).retrievePaymentMethod(setupIntent.payment_method as string);
       const card = pm.paymentMethod?.card;
       const result = await setupPaymentMethod(
         firebaseUser,
