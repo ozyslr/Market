@@ -13,3 +13,8 @@ coverage/
 
 .vercel
 .worktrees/
+
+# Firebase service account keys — never commit these
+*adminsdk*.json
+*service-account*.json
+*serviceAccount*.json
