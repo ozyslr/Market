@@ -29,6 +29,7 @@ export function SellerOrdersPage() {
   const [shipTarget, setShipTarget] = useState<Order | null>(null);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [carrier, setCarrier] = useState('PTT');
+  const [orderNote, setOrderNote] = useState('');
   const [shipping, setShipping] = useState(false);
   const [prevOrderIds, setPrevOrderIds] = useState<Set<string>>(new Set());
   const [newOrderCount, setNewOrderCount] = useState(0);
@@ -187,9 +188,11 @@ export function SellerOrdersPage() {
           trackingNumber: result.trackingNumber,
           carrier,
           shippedAt: new Date().toISOString(),
+          notes: orderNote.trim() || undefined,
         });
         setShipTarget(null);
         setTrackingNumber('');
+        setOrderNote('');
 
         // Auto-generate e-invoice
         autoGenerateInvoice(
@@ -454,7 +457,7 @@ export function SellerOrdersPage() {
                             <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                                {(order.status === 'pending' || order.status === 'processing') && (
                                  <button
-                                   onClick={() => { setShipTarget(order); setCarrier('PTT'); setTrackingNumber(''); }}
+                                   onClick={() => { setShipTarget(order); setCarrier('PTT'); setTrackingNumber(''); setOrderNote(''); }}
                                    className="px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
                                  >
                                    Kargoya Ver
@@ -964,6 +967,16 @@ export function SellerOrdersPage() {
                 value={trackingNumber}
                 onChange={e => setTrackingNumber(e.target.value)}
                 placeholder="örn. TR1234567890"
+                className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10 placeholder:text-brand-primary/20"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">Not (opsiyonel)</label>
+              <input
+                value={orderNote}
+                onChange={e => setOrderNote(e.target.value)}
+                placeholder="Sipariş ile ilgili not..."
                 className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10 placeholder:text-brand-primary/20"
               />
             </div>

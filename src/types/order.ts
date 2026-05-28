@@ -51,6 +51,8 @@ export interface Order {
   updatedAt: string;
   paidAt?: string;
   shippedAt?: string;
+  /** Seller/admin notes */
+  notes?: string;
 }
 
 export interface OneClickCheckoutPayload {

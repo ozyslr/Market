@@ -205,6 +205,28 @@ export function SellerSettings() {
               type="textarea"
               placeholder="Kargo hakkında ek bilgi..."
             />
+            <div className="space-y-3">
+              <p className="text-[10px] font-black uppercase text-[#1A1033]/40">Bölgesel Kargo Ücretleri (₺)</p>
+              {[
+                { key: 'shippingMarmara', label: 'Marmara', val: form as any, default: 29.90 },
+                { key: 'shippingEge', label: 'Ege', val: form as any, default: 34.90 },
+                { key: 'shippingIcAnadolu', label: 'İç Anadolu', val: form as any, default: 39.90 },
+                { key: 'shippingAkdeniz', label: 'Akdeniz', val: form as any, default: 39.90 },
+                { key: 'shippingKaradeniz', label: 'Karadeniz', val: form as any, default: 44.90 },
+                { key: 'shippingDogu', label: 'Doğu/G.Doğu Anadolu', val: form as any, default: 49.90 },
+              ].map(region => (
+                <div key={region.key} className="flex items-center justify-between bg-[#F8F8FA] rounded-xl px-4 py-2.5">
+                  <span className="text-xs font-bold text-[#1A1033]">{region.label}</span>
+                  <div className="flex items-center gap-1">
+                    <input type="number" min={0} step={0.01}
+                      value={region.val[region.key] ?? (region as any).default}
+                      onChange={e => setForm((p: any) => ({ ...p, [region.key]: parseFloat(e.target.value) || 0 }))}
+                      className="w-20 text-right bg-white rounded-lg px-2 py-1 text-xs font-bold outline-none border border-transparent focus:border-accent/20" />
+                    <span className="text-[10px] text-[#1A1033]/40">₺</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </>
         )}
 

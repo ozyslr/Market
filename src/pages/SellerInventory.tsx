@@ -173,6 +173,19 @@ export function SellerInventoryPage() {
     }
   }
 
+  const handleCopyProduct = async (p: Product) => {
+    if (!user) return;
+    try {
+      const { id, slug, rating, reviewsCount, createdAt, ...rest } = p as any;
+      const newSlug = `${slug || 'copy'}-copy-${Date.now()}`;
+      const payload = { ...rest, slug: newSlug, sellerId: user.uid, status: 'draft' as const, rating: 0, reviewsCount: 0 };
+      const newId = await createProduct(payload as any);
+      setProducts(prev => [{ id: newId, ...payload } as Product, ...prev]);
+    } catch(e) {
+      console.error("error copying product");
+    }
+  }
+
   const handleBulkStatusUpdate = (status: string) => {
     alert(`${selectedProducts.length} ${t('seller.inventory.bulkStatusUpdated')} ${status}.`);
     setSelectedProducts([]);
@@ -632,6 +645,9 @@ export function SellerInventoryPage() {
                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                  <button onClick={(e) => { e.stopPropagation(); setEditingProduct(product); setIsFormOpen(true); }} className="p-2 hover:bg-white rounded-lg text-brand-primary/40 hover:text-accent transition-all shadow-sm">
                                    <Edit size={16} />
+                                 </button>
+                                 <button onClick={(e) => { e.stopPropagation(); handleCopyProduct(product); }} className="p-2 hover:bg-white rounded-lg text-brand-primary/40 hover:text-green-500 transition-all shadow-sm" title="Kopyala">
+                                   <Copy size={16} />
                                  </button>
                                  <button onClick={(e) => { e.stopPropagation(); handleDeleteSingle(product); }} className="p-2 hover:bg-white rounded-lg text-brand-primary/40 hover:text-red-500 transition-all shadow-sm">
                                    <Trash2 size={16} />
