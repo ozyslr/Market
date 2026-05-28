@@ -6,6 +6,13 @@ import {
   markAllAsRead,
   Notification,
 } from '@/services/notificationService';
+import {
+  getPushPermissionStatus,
+  registerPushToken,
+  unregisterPushToken,
+  onForegroundMessage,
+  requestPushPermission,
+} from '@/services/pushNotificationService';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -14,6 +21,9 @@ interface NotificationContextType {
   markRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   refresh: () => Promise<void>;
+  pushSupported: boolean;
+  pushGranted: boolean;
+  enablePush: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -23,11 +33,52 @@ const NotificationContext = createContext<NotificationContextType>({
   markRead: async () => {},
   markAllAsRead: async () => {},
   refresh: async () => {},
+  pushSupported: false,
+  pushGranted: false,
+  enablePush: async () => {},
 });
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [pushGranted, setPushGranted] = useState(false);
+  const pushSupported = 'Notification' in window && 'serviceWorker' in navigator;
+
+  // Check push permission status and register token
+  useEffect(() => {
+    if (!pushSupported) return;
+    const status = getPushPermissionStatus();
+    setPushGranted(status === 'granted');
+
+    if (status === 'granted' && firebaseUser) {
+      registerPushToken(firebaseUser.uid);
+    }
+  }, [firebaseUser, pushSupported]);
+
+  // Listen for foreground messages
+  useEffect(() => {
+    if (!pushGranted) return;
+    const unsub = onForegroundMessage((payload) => {
+      // Show in-app toast via a custom event (Navbar can listen)
+      window.dispatchEvent(new CustomEvent('push-received', { detail: payload }));
+    });
+    return unsub;
+  }, [pushGranted]);
+
+  // Cleanup push token on unmount
+  useEffect(() => {
+    return () => {
+      if (firebaseUser) unregisterPushToken(firebaseUser.uid);
+    };
+  }, []);
+
+  const enablePush = async () => {
+    const status = await requestPushPermission();
+    setPushGranted(status === 'granted');
+    if (status === 'granted' && firebaseUser) {
+      await registerPushToken(firebaseUser.uid);
+    }
+  };
   const [loading, setLoading] = useState(false);
 
   async function load() {
@@ -69,6 +120,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         markRead,
         markAllAsRead: markAll,
         refresh: load,
+        pushSupported,
+        pushGranted,
+        enablePush,
       }}
     >
       {children}

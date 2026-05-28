@@ -32,17 +32,17 @@ export async function createNotification(
 ): Promise<void> {
   try {
     await addDoc(collection(db, 'notifications'), {
-      userId,
-      type,
-      title,
-      message,
-      link: link ?? null,
-      read: false,
-      createdAt: serverTimestamp(),
+      userId, type, title, message,
+      link: link ?? null, read: false, createdAt: serverTimestamp(),
     });
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, 'notifications');
   }
+  // Fire-and-forget push notification
+  try {
+    const { queuePushNotification } = await import('./pushNotificationService');
+    queuePushNotification(userId, title, message, link).catch(() => {});
+  } catch { /* push service unavailable */ }
 }
 
 export async function getUserNotifications(userId: string, maxCount = 20): Promise<Notification[]> {

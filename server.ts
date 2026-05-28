@@ -980,6 +980,26 @@ async function startServer() {
     }
   });
 
+  // POST /api/send-push — Send push notification to a user
+  app.post('/api/send-push', async (req, res) => {
+    try {
+      const { userId, title, body, url } = req.body;
+      if (!userId || !title || !body) return res.status(400).json({ error: 'userId, title, body required' });
+
+      const tokenDoc = await adminDb.collection('pushTokens').doc(userId).get();
+      if (!tokenDoc.exists) return res.json({ sent: false, reason: 'No push token' });
+
+      const token = tokenDoc.data()!.token;
+      await adminDb.collection('pushMessages').add({
+        userId, title, body, url: url || null,
+        status: 'pending', createdAt: new Date().toISOString(),
+      });
+      return res.json({ sent: true, token: token.slice(0, 20) + '...' });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // GET /api/v1 — API info / health
   app.get('/api/v1', (_req, res) => {
     return res.json({
