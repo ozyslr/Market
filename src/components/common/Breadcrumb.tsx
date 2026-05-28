@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { JsonLd } from '../seo/JsonLd';
+import { breadcrumbSchema } from '../seo/schemas';
 
 export interface BreadcrumbItem {
   label: string;
@@ -15,11 +17,15 @@ interface BreadcrumbProps {
 }
 
 export function Breadcrumb({ items, className, light = false }: BreadcrumbProps) {
+  const schemaItems = items.filter(i => i.href).map(i => ({ name: i.label, url: i.href! }));
+
   return (
-    <nav
-      aria-label="Breadcrumb"
-      className={cn('flex items-center flex-wrap gap-1', className)}
-    >
+    <>
+      {schemaItems.length > 0 && <JsonLd data={breadcrumbSchema(schemaItems)} />}
+      <nav
+        aria-label="Breadcrumb"
+        className={cn('flex items-center flex-wrap gap-1', className)}
+      >
       <Link
         to="/"
         className={cn(
@@ -63,5 +69,6 @@ export function Breadcrumb({ items, className, light = false }: BreadcrumbProps)
         </React.Fragment>
       ))}
     </nav>
+    </>
   );
 }

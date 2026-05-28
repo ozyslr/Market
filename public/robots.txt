@@ -1,11 +1,8 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
-Disallow: /seller/
-Disallow: /checkout/
-Disallow: /cart/
-Disallow: /wishlist/
-Disallow: /profile/
-Disallow: /orders/
+Disallow: /admin
+Disallow: /seller
+Disallow: /checkout
+Disallow: /api/
 
-Sitemap: https://mercora.com/sitemap.xml
+Sitemap: https://benimolan.com/sitemap.xml

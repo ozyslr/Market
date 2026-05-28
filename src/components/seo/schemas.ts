@@ -67,7 +67,7 @@ export function breadcrumbSchema(items: { name: string; url: string }[]) {
       '@type': 'ListItem',
       position: index + 1,
       name: item.name,
-      item: `https://mercora.com${item.url}`,
+      item: `https://benimolan.com${item.url}`,
     })),
   };
 }
@@ -97,7 +97,7 @@ export function productSchema(product: {
     description: product.description,
     image: product.image,
     sku: product.sku,
-    url: product.url ? `https://mercora.com${product.url}` : undefined,
+    url: product.url ? `https://benimolan.com${product.url}` : undefined,
   };
 
   if (product.brand) {
@@ -148,7 +148,7 @@ export function reviewSchema(review: {
     itemReviewed: {
       '@type': 'Product',
       name: review.itemName,
-      url: `https://mercora.com${review.itemUrl}`,
+      url: `https://benimolan.com${review.itemUrl}`,
     },
     author: {
       '@type': 'Person',

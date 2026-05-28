@@ -63,7 +63,7 @@ export const SEO: React.FC<SEOProps> = ({
         {image && <meta property="og:image" content={image} />}
 
         {/* Twitter */}
-        <meta name="twitter:creator" content="@mercora" />
+        <meta name="twitter:creator" content="@benimolan" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={fullTitle} />
         <meta name="twitter:description" content={siteDescription} />
@@ -77,7 +77,7 @@ export const SEO: React.FC<SEOProps> = ({
 
       {/* Default Organization + Website schemas */}
       <JsonLd data={organizationSchema()} />
-      <JsonLd data={websiteSchema('https://mercora.com/search?q={search_term_string}')} />
+      <JsonLd data={websiteSchema('https://benimolan.com/search?q={search_term_string}')} />
 
       {/* Page-specific schema */}
       {jsonLd && <JsonLd data={jsonLd} />}
