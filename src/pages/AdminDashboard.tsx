@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Users, ShoppingBag, TrendingUp, AlertCircle, 
-  CheckCircle2, Clock, ShieldCheck, BarChart3,
+  CheckCircle2, Clock, ShieldCheck, Shield, BarChart3,
   Globe, Zap, ArrowUpRight, Search, Filter, Database, Plus,
   Edit, Trash2, Star, X, ChevronRight, MoreVertical, Package,
   LayoutDashboard, Settings, Bell, HelpCircle, LogOut,
@@ -41,6 +41,7 @@ import { AdminAnalytics } from './AdminAnalytics';
 import { AdminSupport } from './AdminSupport';
 import { AdminChat } from './AdminChat';
 import { AdminWebhooks } from './AdminWebhooks';
+import { AdminAuditLog } from './AdminAuditLog';
 
 // --- MOCK DATA ---
 const SALES_PERFORMANCE = [
@@ -242,6 +243,7 @@ export function AdminDashboard() {
           <SidebarItem id="settings" label="Site Ayarları" icon={Settings} active={activeTab === 'settings'} onClick={setActiveTab} />
           <SidebarItem id="integrations" label="Entegrasyonlar" icon={Share2} active={activeTab === 'integrations'} onClick={setActiveTab} />
           <SidebarItem id="webhooks" label="Webhook'lar" icon={Webhook} active={activeTab === 'webhooks'} onClick={setActiveTab} />
+          <SidebarItem id="audit" label="Denetim Kaydı" icon={Shield} active={activeTab === 'audit'} onClick={setActiveTab} />
           <SidebarItem id="ai" label="Yapay Zeka Analizi" icon={Sparkles} active={activeTab === 'ai'} onClick={setActiveTab} />
         </nav>
 
@@ -340,6 +342,8 @@ export function AdminDashboard() {
               <AdminChat />
            ) : activeTab === 'webhooks' ? (
               <AdminWebhooks />
+           ) : activeTab === 'audit' ? (
+              <AdminAuditLog />
            ) : (
              <>
                {/* Top KPIs Row - Premium Cards */}
