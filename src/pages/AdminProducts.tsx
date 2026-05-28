@@ -2,9 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { getProducts, updateProduct } from '@/services/productService';
 import { approveProduct, rejectProduct } from '@/services/moderationService';
 import { Product, ProductStatus } from '@/types';
-import { Search, Star, Flame, Zap, Sparkles, Loader2, CheckSquare, Square, CheckCircle, XCircle, X } from 'lucide-react';
+import { Search, Star, Flame, Zap, Sparkles, Loader2, CheckSquare, Square, CheckCircle, XCircle, X, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TableRowSkeleton } from '@/components/ui/Skeleton';
+import { moderateProductBatch, ModerationResult } from '@/services/aiModerationService';
 
 const FLAGS = [
   { key: 'featured' as const, label: 'Öne Çıkan', icon: Star, color: 'text-yellow-500' },
@@ -38,6 +39,24 @@ export function AdminProducts() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<{ product: Product } | null>(null);
   const [rejectNote, setRejectNote] = useState('');
+
+  // AI Moderation
+  const [aiScanning, setAiScanning] = useState(false);
+  const [aiProgress, setAiProgress] = useState(0);
+  const [aiResults, setAiResults] = useState<Map<string, ModerationResult>>(new Map());
+
+  const handleAiScan = async () => {
+    const pending = products.filter(p => p.status === 'pending');
+    if (pending.length === 0) return;
+    setAiScanning(true);
+    setAiProgress(0);
+    const results = await moderateProductBatch(
+      pending.map(p => ({ id: p.id, title: p.title, description: p.description || '', brand: p.brand || '', category: p.categoryId || '', price: p.price })),
+      (done, total) => setAiProgress(Math.round((done / total) * 100)),
+    );
+    setAiResults(results);
+    setAiScanning(false);
+  };
 
   useEffect(() => {
     getProducts({ includeNonApproved: true }).then(p => { setProducts(p); setLoading(false); });
@@ -164,7 +183,35 @@ export function AdminProducts() {
             )}
           </button>
         ))}
+        {aiScanning && (
+          <span className="ml-2 inline-flex items-center gap-1.5 text-[10px] font-bold text-accent">
+            <Loader2 size={12} className="animate-spin" /> AI tarıyor... %{aiProgress}
+          </span>
+        )}
+        <button
+          onClick={handleAiScan}
+          disabled={aiScanning}
+          className={cn(
+            'ml-auto px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5',
+            aiScanning
+              ? 'bg-accent/10 text-accent/50 cursor-not-allowed'
+              : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90'
+          )}
+        >
+          <Brain size={14} /> AI ile Tara ({products.filter(p => p.status === 'pending').length})
+        </button>
       </div>
+
+      {aiResults.size > 0 && (
+        <div className="mb-4 p-3 bg-purple-50 rounded-2xl border border-purple-200 flex items-center justify-between">
+          <span className="text-xs font-bold text-purple-700">
+            AI analizi tamamlandı: {[...aiResults.values()].filter(r => r.verdict === 'approved').length} onaylanabilir,{' '}
+            {[...aiResults.values()].filter(r => r.verdict === 'flagged').length} şüpheli,{' '}
+            {[...aiResults.values()].filter(r => r.verdict === 'rejected').length} reddedilebilir
+          </span>
+          <button onClick={() => setAiResults(new Map())} className="text-[10px] text-purple-500 underline">Kapat</button>
+        </div>
+      )}
 
       {selected.size > 0 && (
         <div className="flex items-center gap-3 mb-4 p-3 bg-accent/5 rounded-2xl flex-wrap">
@@ -233,6 +280,15 @@ export function AdminProducts() {
                     <span className={cn('px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest', badge.cls)}>
                       {badge.label}
                     </span>
+                    {aiResults.has(product.id) && (
+                      <span className={cn('ml-1.5 px-2 py-1 rounded-lg text-[8px] font-black uppercase',
+                        aiResults.get(product.id)!.verdict === 'approved' ? 'bg-green-100 text-green-600' :
+                        aiResults.get(product.id)!.verdict === 'rejected' ? 'bg-red-100 text-red-500' :
+                        'bg-amber-100 text-amber-600'
+                      )} title={aiResults.get(product.id)!.reason}>
+                        AI: {aiResults.get(product.id)!.verdict === 'approved' ? 'Onay' : aiResults.get(product.id)!.verdict === 'rejected' ? 'Red' : 'İncele'}
+                      </span>
+                    )}
                   </td>
                   <td className="py-3 text-right font-bold text-[#1A1033] text-xs">{product.price.toLocaleString('tr-TR')} ₺</td>
                   <td className="py-3 text-right text-[10px] font-bold text-[#1A1033]/60">{product.stock}</td>
