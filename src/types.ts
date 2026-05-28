@@ -284,6 +284,8 @@ export interface Coupon {
   expiresAt?: string;
   isActive: boolean;
   description?: string;
+  /** If set, coupon only applies to this seller's products */
+  sellerId?: string;
   createdAt: string;
 }
 
@@ -325,11 +327,25 @@ export interface Campaign {
   targetType: CampaignTargetType;
   targetValue?: string;
   minOrderAmount?: number;
+  /** Auto-applied on cart — no coupon code needed */
+  isCartCampaign?: boolean;
+  /** Maximum discount cap (e.g. max 200 TL off) */
+  maxDiscountAmount?: number;
+  /** Free gift product ID when cart threshold is reached */
+  freeGiftProductId?: string;
+  /** How many gift items to add */
+  freeGiftQuantity?: number;
   startDate: string;
   endDate: string;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface CartCampaign {
+  campaign: Campaign;
+  discountAmount: number;
+  giftProduct?: { id: string; name: string; image: string; quantity: number } | null;
 }
 
 export interface ProductQuestion {

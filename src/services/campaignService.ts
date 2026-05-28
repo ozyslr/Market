@@ -81,3 +81,78 @@ export function calcCampaignDiscount(
   }, 0);
   return Math.min(best, orderTotal);
 }
+
+// ─── Cart Campaigns ──────────────────────────────────────────────────────────
+
+import { CartCampaign } from '../types';
+import { MOCK_PRODUCTS } from '../mockData';
+
+/** Get all active cart-level campaigns that auto-apply based on cart total */
+export async function getActiveCartCampaigns(): Promise<Campaign[]> {
+  try {
+    const now = new Date().toISOString();
+    const q = query(collection(db, COL), where('isActive', '==', true), where('isCartCampaign', '==', true));
+    const snap = await getDocs(q);
+    return snap.docs
+      .map(d => ({ id: d.id, ...d.data() } as Campaign))
+      .filter(c => c.startDate <= now && c.endDate >= now);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, COL);
+    return [];
+  }
+}
+
+/** Calculate cart-level discounts for a given cart subtotal */
+export function calcCartCampaigns(
+  campaigns: Campaign[],
+  cartSubtotal: number,
+  cartProductIds: string[] = [],
+): CartCampaign[] {
+  const now = new Date().toISOString();
+  const active = campaigns.filter(c =>
+    c.isActive && c.isCartCampaign &&
+    c.startDate <= now && c.endDate >= now &&
+    (!c.minOrderAmount || cartSubtotal >= c.minOrderAmount)
+  );
+
+  return active.map(campaign => {
+    let discountAmount = campaign.discountType === 'percentage'
+      ? Math.round(cartSubtotal * (campaign.discountValue / 100) * 100) / 100
+      : campaign.discountValue;
+
+    // Cap at maxDiscountAmount if set
+    if (campaign.maxDiscountAmount && discountAmount > campaign.maxDiscountAmount) {
+      discountAmount = campaign.maxDiscountAmount;
+    }
+
+    // Find free gift product
+    let giftProduct: CartCampaign['giftProduct'] = null;
+    if (campaign.freeGiftProductId) {
+      const product = MOCK_PRODUCTS.find(p => p.id === campaign.freeGiftProductId);
+      if (product) {
+        giftProduct = {
+          id: product.id,
+          name: product.title,
+          image: product.images[0],
+          quantity: campaign.freeGiftQuantity || 1,
+        };
+      }
+    }
+
+    return { campaign, discountAmount, giftProduct };
+  });
+}
+
+/** Get the total cart-level discount from all cart campaigns (best one wins) */
+export function getCartCampaignDiscount(cartCampaigns: CartCampaign[]): number {
+  if (cartCampaigns.length === 0) return 0;
+  // Take the best discount (highest)
+  return Math.max(...cartCampaigns.map(cc => cc.discountAmount));
+}
+
+/** Get all free gifts from applicable cart campaigns */
+export function getCartCampaignGifts(cartCampaigns: CartCampaign[]): NonNullable<CartCampaign['giftProduct']>[] {
+  return cartCampaigns
+    .filter(cc => cc.giftProduct)
+    .map(cc => cc.giftProduct!);
+}

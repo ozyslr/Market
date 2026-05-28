@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Trash2, Plus, Minus, ShieldCheck, Truck,
   HelpCircle, ChevronRight, Heart, Sparkles,
@@ -16,6 +16,8 @@ import { useLocationStore } from '@/context/LocationContext';
 import { useAuth } from '@/context/AuthContext';
 import { executeOneClickCheckout } from '@/services/oneClickCheckoutService';
 import { OneClickSuccessModal } from '@/components/checkout/OneClickSuccessModal';
+import { getActiveCartCampaigns, calcCartCampaigns, getCartCampaignDiscount, getCartCampaignGifts } from '@/services/campaignService';
+import type { CartCampaign } from '@/types';
 
 export function CartPage() {
   const { t } = useLanguage();
@@ -28,6 +30,21 @@ export function CartPage() {
   const [oneClickResult, setOneClickResult] = useState<{ orderId: string; total: number } | null>(null);
   const { items, removeItem, updateQuantity, clearCart } = useCart();
   const { location } = useLocationStore();
+
+  // Cart campaigns
+  const [cartCampaigns, setCartCampaigns] = useState<CartCampaign[]>([]);
+  useEffect(() => {
+    const itemSubtotal = items.reduce((sum, i) => {
+      const product = MOCK_PRODUCTS.find(p => p.id === i.productId);
+      const price = product ? (i.variantId ? product.variants?.find(v => v.id === i.variantId)?.price : product.price) ?? product.price : 0;
+      return sum + price * i.quantity;
+    }, 0);
+    getActiveCartCampaigns().then(campaigns => {
+      setCartCampaigns(calcCartCampaigns(campaigns, itemSubtotal, items.map(i => i.productId)));
+    });
+  }, [items]);
+  const cartCampaignDiscount = getCartCampaignDiscount(cartCampaigns);
+  const cartGifts = getCartCampaignGifts(cartCampaigns);
 
   const handleCheckout = () => {
     navigate('/checkout');
@@ -58,11 +75,26 @@ export function CartPage() {
     setOneClickLoading(false);
   }
 
+  const getAvailableStock = (product: CartProduct): number => {
+    if (product.variant) return product.variant.stock;
+    return product.stock ?? 0;
+  };
+
   const updateQuantityDelta = (id: string, delta: number, variantId?: string) => {
     const item = items.find(i => i.productId === id && (i.variantId ?? '') === (variantId ?? ''));
     if (!item) return;
     if (item.quantity + delta <= 0) {
       removeItem(id, variantId);
+      return;
+    }
+    // Cap at available stock
+    const cartProduct = cartProducts.find(
+      p => p.id === id && (p.variantId ?? '') === (variantId ?? '')
+    );
+    if (cartProduct && delta > 0) {
+      const maxStock = getAvailableStock(cartProduct);
+      const newQty = Math.min(item.quantity + delta, maxStock);
+      updateQuantity(id, newQty, variantId);
     } else {
       updateQuantity(id, item.quantity + delta, variantId);
     }
@@ -95,6 +127,44 @@ export function CartPage() {
                 {items.length} Items in Bay
               </span>
             </div>
+
+            {/* Cart Campaign Banners */}
+            {cartCampaigns.length > 0 && (
+              <div className="space-y-3 mb-4">
+                {cartCampaigns.map((cc, idx) => (
+                  <div key={idx} className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-4">
+                    <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center shrink-0">
+                      <span className="text-white font-black text-xs">%</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-black text-green-700">{cc.campaign.name}</p>
+                      <p className="text-[10px] font-bold text-green-600">
+                        {cc.campaign.discountType === 'percentage'
+                          ? `%${cc.campaign.discountValue} — ${cc.discountAmount.toFixed(2)} ₺ indirim!`
+                          : `${cc.discountAmount.toFixed(2)} ₺ indirim!`}
+                        {cc.giftProduct && ` + Hediye: ${cc.giftProduct.name}`}
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-green-600 bg-green-100 px-3 py-1 rounded-full">Uygulandı</span>
+                  </div>
+                ))}
+                {cartCampaignDiscount > 0 && (
+                  <div className="flex justify-between text-sm bg-accent/5 rounded-2xl px-4 py-3 border border-accent/10">
+                    <span className="font-black text-accent">Sepet İndirimi</span>
+                    <span className="font-black text-accent">-{cartCampaignDiscount.toFixed(2)} ₺</span>
+                  </div>
+                )}
+                {cartGifts.map((gift, idx) => (
+                  <div key={idx} className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-2xl p-3">
+                    <span className="text-lg">🎁</span>
+                    <div>
+                      <p className="text-xs font-black text-purple-700">Hediye Ürün: {gift.name}</p>
+                      <p className="text-[10px] text-purple-500">x{gift.quantity} — Sepete otomatik eklenecek</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Items List */}
             <div className="space-y-6">
@@ -165,16 +235,29 @@ export function CartPage() {
                             <Plus size={16} />
                           </button>
                         </div>
-                        {(() => {
-                          const unitPrice = product.variant?.price ?? product.price;
-                          return (
-                            <div className="text-right">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/20 mb-1">Unit Price: £{unitPrice.toFixed(2)}</p>
-                              <p className="text-2xl font-display font-black text-brand-primary">£{(unitPrice * product.quantity).toFixed(2)}</p>
-                            </div>
-                          );
-                        })()}
-                      </div>
+                        <div className="flex items-center gap-3">
+                          {(() => {
+                            const availStock = getAvailableStock(product);
+                            if (availStock <= 10) {
+                              return (
+                                <span className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 px-2 py-1 rounded-lg">
+                                  Sadece {availStock} adet kaldı!
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                          {(() => {
+                            const unitPrice = product.variant?.price ?? product.price;
+                            return (
+                              <div className="text-right">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/20 mb-1">Unit Price: £{unitPrice.toFixed(2)}</p>
+                                <p className="text-2xl font-display font-black text-brand-primary">£{(unitPrice * product.quantity).toFixed(2)}</p>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                    </div>
                     </div>
                   </motion.div>
                 ))}

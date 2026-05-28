@@ -18,8 +18,11 @@ import {
   getSellerBalance,
   requestPayout,
   getPayoutHistory,
+  getPayoutSchedule,
+  updatePayoutSchedule,
   PayoutRequest,
   PayoutMethod,
+  PayoutSchedule,
 } from '@/services/sellerPayoutService';
 
 function formatCurrency(amount: number) {
@@ -51,6 +54,10 @@ export function SellerFinance() {
   const [payoutAmount, setPayoutAmount] = useState<number>(0);
   const [requestingPayout, setRequestingPayout] = useState(false);
 
+  // Auto-payout state
+  const [payoutSchedule, setPayoutSchedule] = useState<PayoutSchedule | null>(null);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     getOrdersBySeller(user.id)
@@ -74,7 +81,24 @@ export function SellerFinance() {
     if (!user?.id) return;
     getSellerBalance(user.id).then(setBalance);
     getPayoutHistory(user.id).then(setPayouts);
+    getPayoutSchedule(user.id).then(setPayoutSchedule);
   }, [user?.id]);
+
+  const toggleAutoPayout = async () => {
+    if (!user?.id || !payoutSchedule) return;
+    setScheduleLoading(true);
+    const updated = { ...payoutSchedule, autoPayoutEnabled: !payoutSchedule.autoPayoutEnabled };
+    await updatePayoutSchedule(user.id, updated);
+    setPayoutSchedule(updated);
+    setScheduleLoading(false);
+  };
+
+  const nextPayoutDate = payoutSchedule?.nextAutoPayout
+    ? new Date(payoutSchedule.nextAutoPayout)
+    : null;
+  const daysUntilPayout = nextPayoutDate
+    ? Math.ceil((nextPayoutDate.getTime() - Date.now()) / 86_400_000)
+    : null;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -256,6 +280,64 @@ export function SellerFinance() {
                 </>
               )}
             </div>
+
+            {/* ── Auto-Payout Section ── */}
+            {payoutSchedule && (
+              <div className="bg-white rounded-2xl border border-[#1A1033]/5 p-6 mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-black uppercase tracking-widest text-[#1A1033] flex items-center gap-2">
+                    <Clock size={16} className="text-accent" /> Otomatik Ödeme
+                  </h2>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked={payoutSchedule.autoPayoutEnabled}
+                      onChange={toggleAutoPayout} disabled={scheduleLoading}
+                      className="sr-only peer" />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-accent/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-accent after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+                  </label>
+                </div>
+
+                {payoutSchedule.autoPayoutEnabled ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-green-600 mb-1">Sonraki Ödeme</p>
+                      <p className="text-lg font-display font-black text-green-700">
+                        {nextPayoutDate?.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      </p>
+                      <p className="text-[10px] font-bold text-green-600/60 mt-0.5">
+                        {daysUntilPayout != null && daysUntilPayout > 0
+                          ? `${daysUntilPayout} gün sonra (saat 03:00)`
+                          : daysUntilPayout === 0 ? 'Bugün!' : 'Planlanıyor...'}
+                      </p>
+                    </div>
+                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-blue-600 mb-1">Minimum Bakiye</p>
+                      <p className="text-lg font-display font-black text-blue-700">
+                        {payoutSchedule.minBalanceThreshold.toLocaleString('tr-TR')} ₺
+                      </p>
+                      <p className="text-[10px] font-bold text-blue-600/60 mt-0.5">Bu tutarın altında ödeme yapılmaz</p>
+                    </div>
+                    <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-purple-600 mb-1">Periyot</p>
+                      <p className="text-lg font-display font-black text-purple-700">
+                        {payoutSchedule.frequency === 'weekly' ? 'Haftalık' :
+                         payoutSchedule.frequency === 'biweekly' ? '2 Haftada Bir' : 'Aylık'}
+                      </p>
+                      <p className="text-[10px] font-bold text-purple-600/60 mt-0.5">
+                        {payoutSchedule.lastAutoPayout
+                          ? `Son: ${new Date(payoutSchedule.lastAutoPayout).toLocaleDateString('tr-TR')}`
+                          : 'Henüz otomatik ödeme yapılmadı'}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-[#F8F8FA] rounded-xl p-4 text-center">
+                    <p className="text-xs font-bold text-[#1A1033]/40">
+                      Otomatik ödeme kapalı. Aktif ettiğinizde bakiyeniz her hafta otomatik olarak hesabınıza aktarılır.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Transactions / Orders Table */}
             <div className="bg-white rounded-2xl border border-[#1A1033]/5 overflow-hidden">

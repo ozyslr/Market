@@ -5,6 +5,7 @@ import { Sentry } from './lib/sentry';
 import { initAnalytics, getConsent, trackEvent } from './lib/analytics';
 import { AnalyticsTracker } from './components/common/AnalyticsTracker';
 import { Navbar } from './components/layout/Navbar';
+import { OfflineBanner } from './services/offlineService';
 import { SkipToContent } from './components/common/SkipToContent';
 import { CookieConsent } from './components/common/CookieConsent';
 import SellerLayout from './components/layout/SellerLayout';
@@ -50,6 +51,11 @@ import { SellerApplication } from './pages/SellerApplication';
 import { SellerFinance } from './pages/SellerFinance';
 import { SellerPricing } from './pages/SellerPricing';
 import { SellerCertificates } from './pages/SellerCertificates';
+import { SellerCoupons } from './pages/SellerCoupons';
+import { SellerPerformance } from './pages/SellerPerformance';
+import { SellerInvoices } from './pages/SellerInvoices';
+import { SellerPriceAnalysis } from './pages/SellerPriceAnalysis';
+import { SellerApiKeys } from './pages/SellerApiKeys';
 import { ProductVerification } from './pages/ProductVerification';
 import { ModeratorDashboard } from './pages/ModeratorDashboard';
 import { CollectionPage } from './pages/CollectionPage';
@@ -68,6 +74,7 @@ function MainLayout() {
 
   return (
     <div className="relative min-h-screen transition-colors duration-300">
+      <OfflineBanner />
       <SkipToContent />
       <Navbar />
       <main id="main-content" role="main" className="pt-[144px] md:pt-[156px]" tabIndex={-1}>
@@ -109,6 +116,11 @@ export default function App() {
                     <Route path="pricing"  element={<SellerPricing />} />
                     <Route path="analytics" element={<SellerAnalytics />} />
                     <Route path="certificates" element={<SellerCertificates />} />
+                    <Route path="coupons" element={<SellerCoupons />} />
+                    <Route path="performance" element={<SellerPerformance />} />
+                    <Route path="invoices" element={<SellerInvoices />} />
+                    <Route path="price-analysis" element={<SellerPriceAnalysis />} />
+                    <Route path="api-keys" element={<SellerApiKeys />} />
                   </Route>
                   {/* All other routes — with Navbar/Footer */}
                   <Route element={<MainLayout />}>

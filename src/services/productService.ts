@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, doc, getDoc, setDoc, limit, addDoc, updateDoc, deleteDoc, serverTimestamp, runTransaction, increment } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, setDoc, limit, addDoc, updateDoc, deleteDoc, serverTimestamp, runTransaction, increment, writeBatch } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Product, Category } from '../types';
 import { MOCK_PRODUCTS, CATEGORIES } from '../mockData';
@@ -175,20 +175,165 @@ export async function updateProduct(id: string, data: Partial<Product>) {
   }
 }
 
-export async function decreaseProductStock(items: { productId: string; quantity: number }[]): Promise<void> {
+export interface StockCheckItem {
+  productId: string;
+  variantId?: string;
+  quantity: number;
+}
+
+export interface StockCheckResult {
+  passed: boolean;
+  failures: { productId: string; variantId?: string; available: number; requested: number }[];
+}
+
+/**
+ * Validate stock availability BEFORE creating an order.
+ * Call this before checkout to show user-friendly errors.
+ */
+export async function validateCartStock(items: StockCheckItem[]): Promise<StockCheckResult> {
+  const failures: StockCheckResult['failures'] = [];
+
+  for (const { productId, variantId, quantity } of items) {
+    try {
+      const snap = await getDoc(doc(db, 'products', productId));
+      if (!snap.exists()) {
+        failures.push({ productId, variantId, available: 0, requested: quantity });
+        continue;
+      }
+      const product = snap.data() as Product;
+
+      if (variantId && product.variants) {
+        const variant = product.variants.find(v => v.id === variantId);
+        const available = variant?.stock ?? 0;
+        if (available < quantity) {
+          failures.push({ productId, variantId, available, requested: quantity });
+        }
+      } else {
+        const available = product.stock ?? 0;
+        if (available < quantity) {
+          failures.push({ productId, available, requested: quantity });
+        }
+      }
+    } catch {
+      failures.push({ productId, variantId, available: 0, requested: quantity });
+    }
+  }
+
+  return { passed: failures.length === 0, failures };
+}
+
+/**
+ * Atomically decrease stock for ordered items using a Firestore transaction.
+ * Throws with detailed error if any item has insufficient stock.
+ * Supports both product-level and variant-level stock.
+ */
+export async function decreaseProductStock(items: StockCheckItem[]): Promise<void> {
+  if (items.length === 0) return;
+
   try {
     await runTransaction(db, async (tx) => {
-      for (const { productId, quantity } of items) {
+      for (const { productId, variantId, quantity } of items) {
         const ref = doc(db, 'products', productId);
         const snap = await tx.get(ref);
-        if (snap.exists()) {
-          const current = (snap.data().stock as number) ?? 0;
-          tx.update(ref, { stock: Math.max(0, current - quantity) });
+
+        if (!snap.exists()) {
+          throw new Error(`STOCK_ERROR: Ürün bulunamadı (${productId})`);
+        }
+
+        const product = snap.data() as Product;
+
+        if (variantId && product.variants) {
+          // Decrement per-variant stock
+          const variantIndex = product.variants.findIndex(v => v.id === variantId);
+          if (variantIndex === -1) {
+            throw new Error(`STOCK_ERROR: Varyant bulunamadı (${variantId})`);
+          }
+          const available = product.variants[variantIndex].stock ?? 0;
+          if (available < quantity) {
+            throw new Error(
+              `STOCK_ERROR: Yetersiz stok — ${product.title} (${product.variants[variantIndex].sku}) ` +
+              `mevcut: ${available}, istenen: ${quantity}`
+            );
+          }
+          // Update variant stock in-place
+          const updatedVariants = [...product.variants];
+          updatedVariants[variantIndex] = {
+            ...updatedVariants[variantIndex],
+            stock: available - quantity,
+          };
+          // Also decrement total stock
+          const totalStock = (product.stock ?? 0) - quantity;
+          tx.update(ref, {
+            stock: Math.max(0, totalStock),
+            variants: updatedVariants,
+            updatedAt: new Date().toISOString(),
+          });
+        } else {
+          // Decrement product-level stock
+          const available = product.stock ?? 0;
+          if (available < quantity) {
+            throw new Error(
+              `STOCK_ERROR: Yetersiz stok — ${product.title} ` +
+              `mevcut: ${available}, istenen: ${quantity}`
+            );
+          }
+          tx.update(ref, {
+            stock: available - quantity,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+    });
+  } catch (error: any) {
+    if (error?.message?.startsWith('STOCK_ERROR:')) {
+      throw error; // Re-throw our custom errors
+    }
+    handleFirestoreError(error, OperationType.UPDATE, 'products/stock');
+    throw error;
+  }
+}
+
+/**
+ * Atomically restore stock when an order is cancelled or refunded.
+ * Supports both product-level and variant-level stock.
+ */
+export async function restoreProductStock(items: StockCheckItem[]): Promise<void> {
+  if (items.length === 0) return;
+
+  try {
+    await runTransaction(db, async (tx) => {
+      for (const { productId, variantId, quantity } of items) {
+        const ref = doc(db, 'products', productId);
+        const snap = await tx.get(ref);
+
+        if (!snap.exists()) continue;
+
+        const product = snap.data() as Product;
+
+        if (variantId && product.variants) {
+          const variantIndex = product.variants.findIndex(v => v.id === variantId);
+          if (variantIndex === -1) continue;
+          const updatedVariants = [...product.variants];
+          updatedVariants[variantIndex] = {
+            ...updatedVariants[variantIndex],
+            stock: (updatedVariants[variantIndex].stock ?? 0) + quantity,
+          };
+          tx.update(ref, {
+            stock: (product.stock ?? 0) + quantity,
+            variants: updatedVariants,
+            updatedAt: new Date().toISOString(),
+          });
+        } else {
+          tx.update(ref, {
+            stock: (product.stock ?? 0) + quantity,
+            updatedAt: new Date().toISOString(),
+          });
         }
       }
     });
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, 'products/stock');
+    throw error;
   }
 }
 
@@ -351,4 +496,56 @@ export function searchSuggestions(q: string, topN = 6): SearchSuggestion[] {
   }
 
   return results.slice(0, topN);
+}
+
+// ─── Batch Product Updates ──────────────────────────────────────────────────
+
+export interface ProductBulkUpdate {
+  productId: string;
+  price?: number;
+  stock?: number;
+}
+
+export interface BatchProductResult {
+  successCount: number;
+  failCount: number;
+  errors: { productId: string; error: string }[];
+}
+
+/**
+ * Atomically update price and/or stock for multiple products in a single batch write.
+ * Supports up to 500 products per batch (Firestore limit).
+ */
+export async function batchUpdateProducts(updates: ProductBulkUpdate[]): Promise<BatchProductResult> {
+  if (updates.length === 0) return { successCount: 0, failCount: 0, errors: [] };
+  if (updates.length > 500) throw new Error('En fazla 500 ürün aynı anda güncellenebilir.');
+
+  const result: BatchProductResult = { successCount: 0, failCount: 0, errors: [] };
+  const batch = writeBatch(db);
+  const now = new Date().toISOString();
+
+  for (const { productId, price, stock } of updates) {
+    const data: Record<string, any> = { updatedAt: now };
+    if (price !== undefined) data.price = price;
+    if (stock !== undefined) data.stock = stock;
+    batch.update(doc(db, 'products', productId), data);
+  }
+
+  try {
+    await batch.commit();
+    result.successCount = updates.length;
+
+    // Record price history for price changes
+    for (const { productId, price } of updates) {
+      if (price !== undefined) {
+        try { await recordPrice(productId, price); } catch { /* non-blocking */ }
+      }
+    }
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, 'products/batch');
+    result.failCount = updates.length;
+    result.errors = updates.map(u => ({ productId: u.productId, error: 'Batch update başarısız' }));
+  }
+
+  return result;
 }

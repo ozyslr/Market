@@ -46,7 +46,7 @@ export function AdminCampaigns() {
   const openNew = () => { setEditing(null); setForm(DEFAULT_FORM); setShowForm(true); };
   const openEdit = (c: Campaign) => {
     setEditing(c);
-    setForm({ name: c.name, description: c.description ?? '', discountType: c.discountType, discountValue: c.discountValue, targetType: c.targetType, targetValue: c.targetValue ?? '', minOrderAmount: c.minOrderAmount, isActive: c.isActive, startDate: c.startDate.slice(0, 16), endDate: c.endDate.slice(0, 16) });
+    setForm({ name: c.name, description: c.description ?? '', discountType: c.discountType, discountValue: c.discountValue, targetType: c.targetType, targetValue: c.targetValue ?? '', minOrderAmount: c.minOrderAmount, isActive: c.isActive, isCartCampaign: c.isCartCampaign || false, maxDiscountAmount: c.maxDiscountAmount, freeGiftProductId: c.freeGiftProductId, startDate: c.startDate.slice(0, 16), endDate: c.endDate.slice(0, 16) } as any);
     setShowForm(true);
   };
 
@@ -139,6 +139,28 @@ export function AdminCampaigns() {
               <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">Min. Sipariş Tutarı (₺)</label>
               <input type="number" min={0} value={form.minOrderAmount ?? ''} onChange={e => set('minOrderAmount', e.target.value ? parseFloat(e.target.value) : undefined)} placeholder="Opsiyonel" className="w-full px-4 py-2.5 bg-white rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/30" />
             </div>
+            {/* Cart Campaign Toggle */}
+            <div className="col-span-2 bg-[#F8F8FA] rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60">Sepet Kampanyası</p>
+                <p className="text-[9px] text-[#1A1033]/40">Kupon kodu gerektirmeden sepette otomatik uygulanır</p>
+              </div>
+              <button onClick={() => set('isCartCampaign', !(form as any).isCartCampaign)} className="text-accent">
+                {(form as any).isCartCampaign ? <ToggleRight size={28} /> : <ToggleLeft size={28} className="text-[#1A1033]/30" />}
+              </button>
+            </div>
+            {(form as any).isCartCampaign && (
+              <>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">Maks. İndirim (₺)</label>
+                  <input type="number" min={0} value={(form as any).maxDiscountAmount ?? ''} onChange={e => set('maxDiscountAmount', e.target.value ? parseFloat(e.target.value) : undefined)} placeholder="Sınırsız" className="w-full px-4 py-2.5 bg-white rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/30" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">Hediye Ürün ID</label>
+                  <input value={(form as any).freeGiftProductId ?? ''} onChange={e => set('freeGiftProductId', e.target.value || undefined)} placeholder="Opsiyonel" className="w-full px-4 py-2.5 bg-white rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/30" />
+                </div>
+              </>
+            )}
             <div>
               <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">Başlangıç</label>
               <input type="datetime-local" value={form.startDate} onChange={e => set('startDate', e.target.value)} className="w-full px-4 py-2.5 bg-white rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/30" />

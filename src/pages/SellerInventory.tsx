@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Plus, Upload, Download, Search, Filter, 
+import {
+  Plus, Upload, Download, Search, Filter,
   MoreVertical, Edit, Trash2, Eye, Copy,
   CheckCircle, Clock, AlertTriangle, Package,
-  ArrowRight, Globe, Zap, BarChart3, Database, X, Loader2
+  ArrowRight, Globe, Zap, BarChart3, Database, X, Loader2,
+  Save, Edit3,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Product, ProductVariant } from '@/types';
-import { getProducts, deleteProduct, createProduct, updateProduct } from '@/services/productService';
+import { getProducts, deleteProduct, createProduct, updateProduct, batchUpdateProducts } from '@/services/productService';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { ProductForm, ProductFormData } from '../components/seller/ProductForm';
@@ -43,6 +44,68 @@ export function SellerInventoryPage() {
   const bulkFileRef = React.useRef<HTMLInputElement>(null);
 
   const [variants, setVariants] = useState<ProductVariant[]>([]);
+
+  // Bulk inline edit mode
+  const filteredProducts = products.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [editValues, setEditValues] = useState<Record<string, { price?: number; stock?: number }>>({});
+  const [savingBulk, setSavingBulk] = useState(false);
+
+  const enterBulkEdit = () => {
+    const initial: Record<string, { price: number; stock: number }> = {};
+    filteredProducts.forEach(p => {
+      initial[p.id] = { price: p.price, stock: p.stock ?? 0 };
+    });
+    setEditValues(initial);
+    setBulkEditMode(true);
+  };
+
+  const updateEditValue = (productId: string, field: 'price' | 'stock', value: number) => {
+    setEditValues(prev => ({ ...prev, [productId]: { ...prev[productId], [field]: value } }));
+  };
+
+  const hasBulkChanges = () => {
+    return filteredProducts.some(p => {
+      const ev = editValues[p.id];
+      if (!ev) return false;
+      return ev.price !== p.price || ev.stock !== (p.stock ?? 0);
+    });
+  };
+
+  const changedCount = filteredProducts.filter(p => {
+    const ev = editValues[p.id];
+    if (!ev) return false;
+    return ev.price !== p.price || ev.stock !== (p.stock ?? 0);
+  }).length;
+
+  const handleBulkSave = async () => {
+    setSavingBulk(true);
+    const updates = filteredProducts
+      .filter(p => {
+        const ev = editValues[p.id];
+        if (!ev) return false;
+        return ev.price !== p.price || ev.stock !== (p.stock ?? 0);
+      })
+      .map(p => ({
+        productId: p.id,
+        price: editValues[p.id]?.price,
+        stock: editValues[p.id]?.stock,
+      }));
+
+    const result = await batchUpdateProducts(updates);
+
+    // Update local state
+    if (result.successCount > 0) {
+      setProducts(prev => prev.map(p => {
+        const ev = editValues[p.id];
+        if (!ev) return p;
+        return { ...p, price: ev.price ?? p.price, stock: ev.stock ?? p.stock };
+      }));
+      setBulkEditMode(false);
+      setEditValues({});
+    }
+    setSavingBulk(false);
+  };
 
   useEffect(() => {
     if (isFormOpen) {
@@ -83,8 +146,6 @@ export function SellerInventoryPage() {
     };
     fetchProducts();
   }, [user]);
-
-  const filteredProducts = products.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const handleBulkDelete = async () => {
     if (confirm(`Are you sure you want to delete ${selectedProducts.length} items?`)) {
@@ -369,6 +430,28 @@ export function SellerInventoryPage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
+                    {bulkEditMode ? (
+                      <>
+                        <button onClick={() => { setBulkEditMode(false); setEditValues({}); }}
+                          className="px-4 py-2.5 bg-zinc-100 text-zinc-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center gap-1.5">
+                          <X size={14} /> İptal
+                        </button>
+                        <button onClick={handleBulkSave} disabled={!hasBulkChanges() || savingBulk}
+                          className={cn(
+                            "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5",
+                            hasBulkChanges()
+                              ? "bg-accent text-white shadow-lg shadow-accent/20 hover:opacity-90"
+                              : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                          )}>
+                          {savingBulk ? <><Loader2 size={14} className="animate-spin" /> Kaydediliyor…</> : <><Save size={14} /> {changedCount} Değişikliği Kaydet</>}
+                        </button>
+                      </>
+                    ) : (
+                      <button onClick={enterBulkEdit}
+                        className="px-4 py-2.5 bg-accent/10 text-accent rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-accent/20 transition-all flex items-center gap-1.5">
+                        <Edit3 size={14} /> Toplu Düzenle
+                      </button>
+                    )}
                     <button className="p-3 bg-brand-secondary text-brand-primary/60 rounded-xl hover:text-brand-primary transition-colors">
                       <Filter size={18} />
                     </button>
@@ -510,22 +593,40 @@ export function SellerInventoryPage() {
                                  )}
                                </div>
                              </td>
-                             <td className="px-8 py-6">
-                               <div className="flex items-center gap-3">
-                                 <div className="flex-1 w-24 h-2 bg-brand-secondary rounded-full overflow-hidden">
-                                   <div 
-                                      className={cn(
-                                        "h-full rounded-full bg-accent transition-all duration-1000",
-                                        product.stock < 20 ? "bg-red-500" : product.stock < 50 ? "bg-orange-500" : "bg-green-500"
-                                      )} 
-                                      style={{ width: `${Math.min(100, product.stock || 45)}%` }} 
-                                   />
+                             <td className="px-8 py-6" onClick={e => e.stopPropagation()}>
+                               {bulkEditMode ? (
+                                 <input
+                                   type="number" min={0}
+                                   value={editValues[product.id]?.stock ?? product.stock ?? 0}
+                                   onChange={e => updateEditValue(product.id, 'stock', parseInt(e.target.value) || 0)}
+                                   className="w-20 px-2 py-1.5 bg-brand-secondary/30 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-accent/20 text-center"
+                                 />
+                               ) : (
+                                 <div className="flex items-center gap-3">
+                                   <div className="flex-1 w-24 h-2 bg-brand-secondary rounded-full overflow-hidden">
+                                     <div
+                                       className={cn(
+                                         "h-full rounded-full bg-accent transition-all duration-1000",
+                                         (product.stock ?? 0) < 20 ? "bg-red-500" : (product.stock ?? 0) < 50 ? "bg-orange-500" : "bg-green-500"
+                                       )}
+                                       style={{ width: `${Math.min(100, product.stock || 45)}%` }}
+                                     />
+                                   </div>
+                                   <span className="text-[10px] font-black text-brand-primary">{product.stock ?? 0} units</span>
                                  </div>
-                                 <span className="text-[10px] font-black text-brand-primary">{product.stock || 45} units</span>
-                               </div>
+                               )}
                              </td>
-                             <td className="px-8 py-6 text-right font-black text-brand-primary">
-                               ${product.price}
+                             <td className="px-8 py-6 text-right" onClick={e => e.stopPropagation()}>
+                               {bulkEditMode ? (
+                                 <input
+                                   type="number" min={0} step="0.01"
+                                   value={editValues[product.id]?.price ?? product.price}
+                                   onChange={e => updateEditValue(product.id, 'price', parseFloat(e.target.value) || 0)}
+                                   className="w-24 px-2 py-1.5 bg-brand-secondary/30 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-accent/20 text-right"
+                                 />
+                               ) : (
+                                 <span className="font-black text-brand-primary">${product.price}</span>
+                               )}
                              </td>
                              <td className="px-8 py-6" onClick={(e) => e.stopPropagation()}>
                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

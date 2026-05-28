@@ -3,7 +3,7 @@ import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, ShoppingBag, BarChart3, Settings, LogOut,
   Store, Home, FileUp, Loader2, Clock, XCircle, AlertTriangle, TrendingUp, ShieldCheck,
-  Activity,
+  Activity, Ticket, Trophy, FileText, Target, Key,
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -21,6 +21,11 @@ const navItems = [
   { path: '/seller/import',     icon: FileUp,          label: 'Import Center'   },
   { path: '/seller/pricing',    icon: TrendingUp,      label: 'Fiyatlandırma'   },
   { path: '/seller/certificates', icon: ShieldCheck,    label: 'Sertifikalar'    },
+  { path: '/seller/coupons',      icon: Ticket,         label: 'Kuponlarım'      },
+  { path: '/seller/performance',  icon: Trophy,         label: 'Performans'       },
+  { path: '/seller/invoices',     icon: FileText,       label: 'E-Fatura'         },
+  { path: '/seller/price-analysis', icon: Target,       label: 'Fiyat Analizi'    },
+  { path: '/seller/api-keys',        icon: Key,          label: 'API Anahtarları'   },
 ];
 
 type KycStatus = 'loading' | 'none' | 'pending' | 'verified' | 'rejected';

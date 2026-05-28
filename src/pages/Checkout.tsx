@@ -8,7 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MOCK_PRODUCTS } from '@/mockData';
 import { createOrder, getOrderById } from '@/services/orderService';
-import { decreaseProductStock } from '@/services/productService';
+import { decreaseProductStock, validateCartStock } from '@/services/productService';
 import { addAddress } from '@/services/userService';
 import { sendOrderConfirmationEmail } from '@/services/emailService';
 import { InvoiceModal } from '@/components/commerce/InvoiceModal';
@@ -17,6 +17,8 @@ import { IyzicoPayment } from '@/components/checkout/IyzicoPayment';
 import { ManualPayment } from '@/components/checkout/ManualPayment';
 import type { Order, PaymentMethod, ShippingAddress } from '@/types/order';
 import { validateCoupon, incrementCouponUsage, calcDiscount } from '@/services/couponService';
+import { getActiveCartCampaigns, calcCartCampaigns, getCartCampaignDiscount, getCartCampaignGifts } from '@/services/campaignService';
+import type { CartCampaign } from '@/types';
 import type { Address, Coupon } from '@/types';
 import { cn } from '@/lib/utils';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
@@ -133,6 +135,20 @@ export function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [saveAddress, setSaveAddress] = useState(false);
 
+  // Cart campaign auto-apply
+  const [cartCampaigns, setCartCampaigns] = useState<CartCampaign[]>([]);
+  const [cartCampaignDiscount, setCartCampaignDiscount] = useState(0);
+  useEffect(() => {
+    getActiveCartCampaigns().then(campaigns => {
+      const ccs = calcCartCampaigns(campaigns, subtotal, cartProducts.map(p => p.id));
+      setCartCampaigns(ccs);
+      setCartCampaignDiscount(getCartCampaignDiscount(ccs));
+    });
+  }, []);
+  const cartGifts = getCartCampaignGifts(cartCampaigns);
+  const [stockError, setStockError] = useState<string | null>(null);
+  const [stockValidating, setStockValidating] = useState(false);
+
   // ─── iyzico callback handler (redirected back from iyzico payment page) ─────
   const [searchParams] = useSearchParams();
   useEffect(() => {
@@ -188,17 +204,37 @@ export function CheckoutPage() {
     .filter(Boolean) as (typeof MOCK_PRODUCTS[0] & { quantity: number })[];
 
   const subtotal = cartProducts.reduce((s, p) => s + p.price * p.quantity, 0);
-  const totals = calculateTotal(Math.max(0, subtotal - discountAmount), 12, market, true);
+  const totalDiscount = discountAmount + cartCampaignDiscount;
+  const totals = calculateTotal(Math.max(0, subtotal - totalDiscount), 12, market, true);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
     setCouponLoading(true);
     setCouponError('');
     try {
-      const result = await validateCoupon(couponCode, subtotal);
+      // Calculate subtotal for seller-scoped coupons
+      const effectiveSubtotal = subtotal;
+      const result = await validateCoupon(couponCode, effectiveSubtotal);
       if (result.valid && result.coupon) {
+        // If coupon is seller-scoped, verify cart has products from that seller
+        if (result.coupon.sellerId) {
+          const sellerItems = cartProducts.filter(p => p.sellerId === result.coupon!.sellerId);
+          if (sellerItems.length === 0) {
+            setCouponError('Bu kupon sepetinizdeki ürünler için geçerli değil.');
+            setCouponLoading(false);
+            return;
+          }
+          const sellerSubtotal = sellerItems.reduce((s, p) => s + p.price * p.quantity, 0);
+          if (result.coupon.minOrderAmount && sellerSubtotal < result.coupon.minOrderAmount) {
+            setCouponError('Bu kupon için minimum satıcı ürün tutarı karşılanmıyor.');
+            setCouponLoading(false);
+            return;
+          }
+          setDiscountAmount(calcDiscount(result.coupon, sellerSubtotal));
+        } else {
+          setDiscountAmount(calcDiscount(result.coupon, effectiveSubtotal));
+        }
         setAppliedCoupon(result.coupon);
-        setDiscountAmount(calcDiscount(result.coupon, subtotal));
         setCouponCode('');
       } else {
         setCouponError(result.error === 'coupon.min_order' ? 'Minimum sipariş tutarı karşılanmıyor' : 'Geçersiz veya süresi dolmuş kupon');
@@ -270,18 +306,37 @@ export function CheckoutPage() {
     }
   };
 
-  const handlePaymentSuccess = async (paymentIntentId: string) => {
-    if (firebaseUser) {
-      const orderItems = cartProducts.map(p => ({
-        productId: p.id,
-        sellerId: p.sellerId,
-        name: p.title,
-        image: p.images[0],
-        price: p.price,
-        quantity: p.quantity,
-        subtotal: p.price * p.quantity,
-      }));
+  // Shared order processing — validates stock, creates order, decrements stock
+  const processOrder = async (status: 'paid' | 'pending', paymentIntentId: string): Promise<Order | null> => {
+    if (!firebaseUser) return null;
+    setStockError(null);
+    setStockValidating(true);
 
+    const orderItems = cartProducts.map(p => ({
+      productId: p.id,
+      sellerId: p.sellerId,
+      name: p.title,
+      image: p.images[0],
+      price: p.price,
+      quantity: p.quantity,
+      subtotal: p.price * p.quantity,
+    }));
+
+    // Validate stock BEFORE creating order
+    const stockCheck = await validateCartStock(
+      cartProducts.map(p => ({ productId: p.id, quantity: p.quantity }))
+    );
+
+    if (!stockCheck.passed) {
+      const failureMsgs = stockCheck.failures.map(f =>
+        `"${f.productId.slice(0,8)}..." — mevcut: ${f.available}, istenen: ${f.requested}`
+      );
+      setStockError(`Stok yetersiz! ${failureMsgs.join(' | ')}`);
+      setStockValidating(false);
+      return null;
+    }
+
+    try {
       const order = await createOrder({
         userId: firebaseUser.uid,
         userEmail: firebaseUser.email ?? '',
@@ -292,15 +347,18 @@ export function CheckoutPage() {
         tax: totals.vat,
         total: totals.total,
         currency,
-        paymentMethod: 'stripe',
-        status: 'paid',
-        paymentStatus: 'succeeded',
+        paymentMethod: paymentIntentId.startsWith('mock_pi') ? 'manual' : 'stripe',
+        status,
+        paymentStatus: status === 'paid' ? 'succeeded' : 'pending',
         stripePaymentIntentId: paymentIntentId,
         shippingAddress: address,
       });
-      setConfirmedOrderId(order.id);
-      setConfirmedOrder(order);
-      await decreaseProductStock(cartProducts.map(p => ({ productId: p.id, quantity: p.quantity })));
+
+      // Decrement stock atomically (throws if any item has insufficient stock)
+      await decreaseProductStock(
+        cartProducts.map(p => ({ productId: p.id, quantity: p.quantity }))
+      );
+
       if (appliedCoupon) await incrementCouponUsage(appliedCoupon.id);
       if (saveAddress && !selectedAddressId) {
         await addAddress(firebaseUser.uid, {
@@ -316,10 +374,28 @@ export function CheckoutPage() {
         });
       }
       sendOrderConfirmationEmail(order);
-    }
 
-    clearCart();
-    setStep(3);
+      setStockValidating(false);
+      return order;
+    } catch (err: any) {
+      if (err?.message?.startsWith('STOCK_ERROR:')) {
+        setStockError(err.message.replace('STOCK_ERROR:', '').trim());
+      } else {
+        setStockError('Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+      }
+      setStockValidating(false);
+      return null;
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentIntentId: string) => {
+    const order = await processOrder('paid', paymentIntentId);
+    if (order) {
+      setConfirmedOrderId(order.id);
+      setConfirmedOrder(order);
+      clearCart();
+      setStep(3);
+    }
   };
 
   const elementsOptions = clientSecret && !isMock
@@ -599,59 +675,31 @@ export function CheckoutPage() {
                     total={totals.total}
                     currency={currency}
                     onConfirm={async () => {
-                      if (firebaseUser) {
-                        const orderItems = cartProducts.map(p => ({
-                          productId: p.id,
-                          sellerId: p.sellerId,
-                          name: p.title,
-                          image: p.images[0],
-                          price: p.price,
-                          quantity: p.quantity,
-                          subtotal: p.price * p.quantity,
-                        }));
-                        const order = await createOrder({
-                          userId: firebaseUser.uid,
-                          userEmail: firebaseUser.email ?? '',
-                          items: orderItems,
-                          sellerIds: [...new Set(orderItems.map(i => i.sellerId))],
-                          subtotal: totals.subtotal,
-                          shipping: totals.shipping,
-                          tax: totals.vat,
-                          total: totals.total,
-                          currency,
-                          paymentMethod: 'manual',
-                          status: 'pending',
-                          paymentStatus: 'pending',
-                          stripePaymentIntentId: '',
-                          shippingAddress: address,
-                        });
+                      const order = await processOrder('pending', '');
+                      if (order) {
                         setConfirmedOrderId(order.id);
                         setConfirmedOrder(order);
-                        await decreaseProductStock(cartProducts.map(p => ({ productId: p.id, quantity: p.quantity })));
-                        if (appliedCoupon) await incrementCouponUsage(appliedCoupon.id);
-                        if (saveAddress && !selectedAddressId) {
-                          await addAddress(firebaseUser.uid, {
-                            label: address.city || 'Ev',
-                            fullName: address.fullName,
-                            line1: address.line1,
-                            line2: address.line2,
-                            city: address.city,
-                            state: address.state,
-                            postalCode: address.postalCode,
-                            country: address.country,
-                            phone: address.phone,
-                          });
-                        }
-                        sendOrderConfirmationEmail(order);
+                        clearCart();
+                        setStep(3);
                       }
-                      clearCart();
-                      setStep(3);
                     }}
                     onBack={() => setStep(1)}
                     onError={(msg) => setPaymentError(msg)}
                   />
                 )}
 
+                {stockValidating && (
+                  <div className="mt-4 flex items-center gap-2 bg-blue-50 border border-blue-200 px-4 py-3 rounded-xl">
+                    <Loader2 size={16} className="animate-spin text-blue-500" />
+                    <p className="text-xs font-bold text-blue-700">Stok kontrol ediliyor...</p>
+                  </div>
+                )}
+                {stockError && (
+                  <div className="mt-4 bg-red-50 border-2 border-red-400 px-4 py-3 rounded-xl">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1">Stok Hatası</p>
+                    <p className="text-xs font-bold text-red-700">{stockError}</p>
+                  </div>
+                )}
                 {paymentError && (
                   <p className="mt-4 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl">{paymentError}</p>
                 )}
@@ -758,6 +806,27 @@ export function CheckoutPage() {
                   </div>
                 ))}
               </div>
+              {/* Cart Campaign Discounts (auto-applied) */}
+              {cartCampaigns.length > 0 && (
+                <div className="mb-4 space-y-2">
+                  {cartCampaigns.map((cc, idx) => (
+                    <div key={idx} className="bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black text-green-700">{cc.campaign.name}</span>
+                        <span className="text-[10px] font-black text-green-600">-{cc.discountAmount.toFixed(2)} ₺</span>
+                      </div>
+                    </div>
+                  ))}
+                  {cartGifts.map((gift, idx) => (
+                    <div key={idx} className="bg-purple-50 border border-purple-200 rounded-xl px-3 py-2 flex items-center gap-2">
+                      <span>🎁</span>
+                      <span className="text-[10px] font-black text-purple-700">{gift.name} x{gift.quantity}</span>
+                      <span className="text-[9px] text-purple-500 ml-auto">Hediye</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Coupon Code */}
               <div className="mb-4">
                 {!appliedCoupon ? (
@@ -792,6 +861,12 @@ export function CheckoutPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-green-600 font-bold">Kupon İndirimi</span>
                     <span className="font-black text-green-600">-{discountAmount.toFixed(2)} ₺</span>
+                  </div>
+                )}
+                {cartCampaignDiscount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600 font-bold">Sepet Kampanyası</span>
+                    <span className="font-black text-green-600">-{cartCampaignDiscount.toFixed(2)} ₺</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">

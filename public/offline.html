@@ -22,31 +22,34 @@
         max-width: 420px;
       }
       .icon {
-        width: 96px;
-        height: 96px;
+        width: 96px; height: 96px;
         margin: 0 auto 24px;
         background: linear-gradient(135deg, #7c3aed, #1A1033);
         border-radius: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 48px;
-        font-weight: 900;
-        color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 40px; font-weight: 900; color: #fff;
       }
-      h1 { font-size: 24px; margin-bottom: 12px; }
-      p { font-size: 16px; color: #666; line-height: 1.6; margin-bottom: 32px; }
+      .badge {
+        display: inline-block;
+        background: #fbbf24; color: #1A1033;
+        font-size: 10px; font-weight: 900; text-transform: uppercase;
+        letter-spacing: 0.2em;
+        padding: 4px 12px; border-radius: 999px;
+        margin-bottom: 16px;
+      }
+      h1 { font-size: 24px; margin-bottom: 8px; }
+      p { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 24px; }
+      .status { font-size: 11px; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
+      .features { text-align: left; background: #fff; border-radius: 20px; padding: 20px; margin-bottom: 24px; }
+      .features h3 { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #1A1033; margin-bottom: 12px; }
+      .features li { font-size: 12px; color: #666; padding: 6px 0; list-style: none; display: flex; align-items: center; gap: 8px; }
+      .features li::before { content: '✓'; color: #22c55e; font-weight: 900; }
       .retry-btn {
         display: inline-block;
-        background: #7c3aed;
-        color: #fff;
-        border: none;
-        padding: 14px 32px;
-        border-radius: 12px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
+        background: #7c3aed; color: #fff; border: none;
+        padding: 14px 32px; border-radius: 12px;
+        font-size: 14px; font-weight: 700;
+        cursor: pointer; transition: background 0.2s;
       }
       .retry-btn:hover { background: #6d28d9; }
       .retry-btn:active { background: #5b21b6; }
@@ -54,16 +57,32 @@
   </head>
   <body>
     <div class="container">
-      <div class="icon">M</div>
+      <div class="icon">BO</div>
+      <div class="badge">Offline Mode</div>
       <h1>Bağlantı Kesildi</h1>
-      <p>İnternet bağlantınızı kontrol edin ve tekrar deneyin. Sayfa daha önce ziyaret ettiğiniz sayfaları önbellekten gösterebilir.</p>
-      <button class="retry-btn" onclick="window.location.reload()">Tekrar Dene</button>
+      <p class="status">Cihazınız şu anda çevrimdışı</p>
+      <div class="features">
+        <h3>Çevrimdışı Kullanılabilir</h3>
+        <ul>
+          <li>Sepetiniz kaydedildi</li>
+          <li>Son görüntülenen ürünler</li>
+          <li>Daha önce ziyaret edilen sayfalar</li>
+        </ul>
+      </div>
+      <button class="retry-btn" onclick="window.location.reload()">Tekrar Bağlan</button>
     </div>
     <script>
-      // Auto-retry when back online
       window.addEventListener('online', function() {
         window.location.reload();
       });
+      // Show last sync time if available
+      try {
+        var lastVisit = localStorage.getItem('last_online_visit');
+        if (lastVisit) {
+          var p = document.querySelector('p.status');
+          p.textContent = 'Son çevrimiçi: ' + new Date(parseInt(lastVisit)).toLocaleString('tr-TR');
+        }
+      } catch(e) {}
     </script>
   </body>
 </html>

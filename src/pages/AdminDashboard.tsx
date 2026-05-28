@@ -10,7 +10,7 @@ import {
   Map, Globe2, Sparkles, Languages, Sun, Moon, Receipt, 
   TicketPercent, FolderOpen, PieChart as PieIcon,
   ShoppingBasket, RefreshCcw, Megaphone, Tag, Newspaper,
-  Scale, MessageCircle, Share2, Menu
+  Scale, MessageCircle, Share2, Menu, Webhook,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -35,10 +35,12 @@ import { AdminReviews } from './AdminReviews';
 import { AdminSettings } from './AdminSettings';
 import { AdminFinance } from './AdminFinance';
 import { AdminCampaigns } from './AdminCampaigns';
+import { AdminTiers } from './AdminTiers';
 import { AdminReports } from './AdminReports';
 import { AdminAnalytics } from './AdminAnalytics';
 import { AdminSupport } from './AdminSupport';
 import { AdminChat } from './AdminChat';
+import { AdminWebhooks } from './AdminWebhooks';
 
 // --- MOCK DATA ---
 const SALES_PERFORMANCE = [
@@ -226,6 +228,7 @@ export function AdminDashboard() {
           <SidebarItem id="returns" label="İade Talepleri" icon={RefreshCcw} active={activeTab === 'returns'} onClick={setActiveTab} />
           <SidebarItem id="campaigns" label="Kampanyalar" icon={Megaphone} active={activeTab === 'campaigns'} onClick={setActiveTab} />
           <SidebarItem id="coupons" label="Kupon & İndirim" icon={Tag} active={activeTab === 'coupons'} onClick={setActiveTab} />
+          <SidebarItem id="tiers" label="Satıcı Kademeleri" icon={Star} active={activeTab === 'tiers'} onClick={setActiveTab} />
           <SidebarItem id="cms" label="İçerik Stüdyosu" icon={Newspaper} active={activeTab === 'cms'} onClick={setActiveTab} />
           <div className="my-4 h-px bg-white/5 mx-6" />
           <SidebarItem id="payments" label="Ödeme Sistemleri" icon={CreditCard} active={activeTab === 'payments'} onClick={setActiveTab} />
@@ -238,6 +241,7 @@ export function AdminDashboard() {
           <SidebarItem id="languages" label="Dil Yönetimi" icon={Languages} active={activeTab === 'languages'} onClick={setActiveTab} />
           <SidebarItem id="settings" label="Site Ayarları" icon={Settings} active={activeTab === 'settings'} onClick={setActiveTab} />
           <SidebarItem id="integrations" label="Entegrasyonlar" icon={Share2} active={activeTab === 'integrations'} onClick={setActiveTab} />
+          <SidebarItem id="webhooks" label="Webhook'lar" icon={Webhook} active={activeTab === 'webhooks'} onClick={setActiveTab} />
           <SidebarItem id="ai" label="Yapay Zeka Analizi" icon={Sparkles} active={activeTab === 'ai'} onClick={setActiveTab} />
         </nav>
 
@@ -324,6 +328,8 @@ export function AdminDashboard() {
               <AdminFinance />
            ) : activeTab === 'campaigns' ? (
               <AdminCampaigns />
+           ) : activeTab === 'tiers' ? (
+              <AdminTiers />
            ) : activeTab === 'reports' ? (
               <AdminReports />
            ) : activeTab === 'analytics' ? (
@@ -332,6 +338,8 @@ export function AdminDashboard() {
               <AdminSupport />
            ) : activeTab === 'livechat' ? (
               <AdminChat />
+           ) : activeTab === 'webhooks' ? (
+              <AdminWebhooks />
            ) : (
              <>
                {/* Top KPIs Row - Premium Cards */}

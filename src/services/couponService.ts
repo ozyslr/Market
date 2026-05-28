@@ -89,3 +89,68 @@ export function calcDiscount(coupon: Coupon, subtotal: number): number {
   }
   return Math.min(coupon.discountValue, subtotal);
 }
+
+// ─── Seller Coupons ─────────────────────────────────────────────────────────
+
+export async function getCouponsBySeller(sellerId: string): Promise<Coupon[]> {
+  try {
+    const q = query(collection(db, COL), where('sellerId', '==', sellerId));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Coupon));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, COL);
+    return [];
+  }
+}
+
+/**
+ * Create a seller-scoped coupon. The code is prefixed with seller ID
+ * to prevent collisions across sellers.
+ */
+export async function createSellerCoupon(
+  sellerId: string,
+  data: Omit<Coupon, 'id' | 'usedCount' | 'createdAt' | 'sellerId'>,
+): Promise<Coupon> {
+  try {
+    const id = crypto.randomUUID();
+    const coupon: Coupon = {
+      ...data, id, sellerId, usedCount: 0,
+      createdAt: new Date().toISOString(),
+    };
+    await setDoc(doc(db, COL, id), coupon);
+    return coupon;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, COL);
+    throw error;
+  }
+}
+
+/** Only allow updates if the coupon belongs to this seller. */
+export async function updateSellerCoupon(
+  sellerId: string,
+  couponId: string,
+  data: Partial<Coupon>,
+): Promise<void> {
+  try {
+    const snap = await getDocs(query(collection(db, COL), where('sellerId', '==', sellerId)));
+    const belongs = snap.docs.some(d => d.id === couponId);
+    if (!belongs) throw new Error('Bu kupon size ait değil.');
+    await updateDoc(doc(db, COL, couponId), { ...data, updatedAt: new Date().toISOString() });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `${COL}/${couponId}`);
+    throw error;
+  }
+}
+
+/** Only allow delete if the coupon belongs to this seller. */
+export async function deleteSellerCoupon(sellerId: string, couponId: string): Promise<void> {
+  try {
+    const snap = await getDocs(query(collection(db, COL), where('sellerId', '==', sellerId)));
+    const belongs = snap.docs.some(d => d.id === couponId);
+    if (!belongs) throw new Error('Bu kupon size ait değil.');
+    await deleteDoc(doc(db, COL, couponId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `${COL}/${couponId}`);
+    throw error;
+  }
+}

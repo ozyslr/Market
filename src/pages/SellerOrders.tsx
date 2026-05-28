@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Package, Truck, CheckCircle, Clock, AlertTriangle,
   Search, Filter, MoreVertical, MapPin, Globe,
   ArrowRight, Download, BarChart2, MessageSquare,
   ShieldCheck, ExternalLink, RefreshCw, Zap, Loader2,
-  RotateCcw, ThumbsUp, ThumbsDown,
+  RotateCcw, ThumbsUp, ThumbsDown, Square, CheckSquare, X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { getOrdersBySeller, updateOrderStatus } from '@/services/orderService';
+import { getOrdersBySeller, subscribeOrdersBySeller, updateOrderStatus, batchUpdateOrders } from '@/services/orderService';
 import { getReturnRequests, updateReturnStatus, ReturnRequest } from '@/services/returnService';
+import { createNotification } from '@/services/notificationService';
+import { createCargoShipment, getTrackingStatus, getAvailableCarriers, CargoProviderName } from '@/services/cargoService';
+import type { ShipmentRequest, TrackingResponse } from '@/services/cargoService';
+import { autoGenerateInvoice } from '@/services/invoiceService';
 import { Order } from '@/types/order';
 import { TableRowSkeleton } from '@/components/ui/Skeleton';
 
@@ -26,6 +30,9 @@ export function SellerOrdersPage() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [carrier, setCarrier] = useState('PTT');
   const [shipping, setShipping] = useState(false);
+  const [prevOrderIds, setPrevOrderIds] = useState<Set<string>>(new Set());
+  const [newOrderCount, setNewOrderCount] = useState(0);
+  const [realtimeActive, setRealtimeActive] = useState(false);
 
   // Returns state
   const [showReturns, setShowReturns] = useState(false);
@@ -34,12 +41,102 @@ export function SellerOrdersPage() {
   const [selectedReturn, setSelectedReturn] = useState<ReturnRequest | null>(null);
   const [processingReturn, setProcessingReturn] = useState(false);
 
+  // Batch selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchShipOpen, setBatchShipOpen] = useState(false);
+  const [batchCarrier, setBatchCarrier] = useState('PTT');
+  const [batchTracking, setBatchTracking] = useState('');
+  const [batchShipping, setBatchShipping] = useState(false);
+
+  const shippableOrders = useMemo(
+    () => orders.filter(o => o.status === 'pending' || o.status === 'processing'),
+    [orders]
+  );
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === shippableOrders.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(shippableOrders.map(o => o.id)));
+    }
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleBatchShip = async () => {
+    if (selectedIds.size === 0) return;
+    setBatchShipping(true);
+    const updates = Array.from(selectedIds).map(orderId => ({
+      orderId,
+      status: 'shipped' as const,
+      trackingNumber: batchTracking.trim() || undefined,
+      carrier: batchCarrier,
+    }));
+    const result = await batchUpdateOrders(updates);
+    // onSnapshot will automatically update the UI with new statuses
+    setBatchShipping(false);
+    setBatchShipOpen(false);
+    setSelectedIds(new Set());
+    if (result.successCount > 0) {
+      createNotification(
+        firebaseUser!.uid,
+        'order_status',
+        'Toplu Kargo Onaylandı',
+        `${result.successCount} sipariş kargoya verildi.`,
+        '/seller/orders',
+      );
+    }
+  };
+
   useEffect(() => {
     if (!firebaseUser) { setLoading(false); return; }
-    getOrdersBySeller(firebaseUser.uid).then(data => {
-      setOrders(data);
-      setLoading(false);
-    });
+
+    setLoading(true);
+    const unsubscribe = subscribeOrdersBySeller(
+      firebaseUser.uid,
+      (realtimeOrders) => {
+        setOrders(realtimeOrders);
+        setLoading(false);
+        setRealtimeActive(true);
+
+        // Detect new orders (ones that weren't in previous snapshot)
+        if (prevOrderIds.size > 0) {
+          const currentIds = new Set(realtimeOrders.map(o => o.id));
+          const newOrders = realtimeOrders.filter(o => !prevOrderIds.has(o.id));
+          if (newOrders.length > 0) {
+            setNewOrderCount(prev => prev + newOrders.length);
+            // Notify seller about new orders
+            newOrders.forEach(order => {
+              createNotification(
+                firebaseUser.uid,
+                'order_status',
+                'Yeni Sipariş!',
+                `${order.shippingAddress?.fullName || 'Müşteri'} — ${order.total.toFixed(2)} ${order.currency}`,
+                `/seller/orders`,
+              );
+            });
+          }
+          setPrevOrderIds(currentIds);
+        } else {
+          // First load — seed the ID set
+          setPrevOrderIds(new Set(realtimeOrders.map(o => o.id)));
+        }
+      },
+      (err) => {
+        console.error('Seller orders subscription error:', err);
+        setLoading(false);
+      },
+    );
+
+    return () => { unsubscribe(); };
   }, [firebaseUser]);
 
   // Load returns
@@ -60,25 +157,73 @@ export function SellerOrdersPage() {
     .filter(o => new Date(o.createdAt).getTime() > now - 86_400_000)
     .reduce((sum, o) => sum + o.total, 0);
 
+  // Tracking view state
+  const [trackingTarget, setTrackingTarget] = useState<{ provider: CargoProviderName; trackingNumber: string } | null>(null);
+  const [trackingData, setTrackingData] = useState<TrackingResponse | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+
   const handleShip = async () => {
-    if (!shipTarget) return;
+    if (!shipTarget || !firebaseUser) return;
     setShipping(true);
     try {
-      await updateOrderStatus(shipTarget.id, 'shipped', {
-        trackingNumber: trackingNumber.trim() || undefined,
-        carrier,
-        shippedAt: new Date().toISOString(),
-      });
-      setOrders(prev => prev.map(o =>
-        o.id === shipTarget.id
-          ? { ...o, status: 'shipped', trackingNumber, carrier, shippedAt: new Date().toISOString() }
-          : o
-      ));
-      setShipTarget(null);
-      setTrackingNumber('');
+      const shipmentReq: ShipmentRequest = {
+        orderId: shipTarget.id,
+        senderName: firebaseUser.email || 'Satıcı',
+        senderAddress: 'Mağaza Adresi',
+        senderCity: 'İstanbul',
+        senderPhone: '',
+        receiverName: shipTarget.shippingAddress?.fullName || '',
+        receiverAddress: shipTarget.shippingAddress?.line1 || '',
+        receiverCity: shipTarget.shippingAddress?.city || '',
+        receiverPhone: shipTarget.shippingAddress?.phone || '',
+        packageCount: shipTarget.items.length,
+        declaredValue: shipTarget.total,
+      };
+
+      const result = await createCargoShipment(carrier as CargoProviderName, shipmentReq);
+
+      if (result.success) {
+        await updateOrderStatus(shipTarget.id, 'shipped', {
+          trackingNumber: result.trackingNumber,
+          carrier,
+          shippedAt: new Date().toISOString(),
+        });
+        setShipTarget(null);
+        setTrackingNumber('');
+
+        // Auto-generate e-invoice
+        autoGenerateInvoice(
+          shipTarget.id,
+          firebaseUser.uid,
+          shipTarget.createdAt,
+          shipTarget.items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price, subtotal: i.subtotal })),
+          shipTarget.shippingAddress?.fullName || shipTarget.userEmail,
+          shipTarget.shippingAddress ? `${shipTarget.shippingAddress.line1}, ${shipTarget.shippingAddress.city}` : '',
+          shipTarget.total,
+          shipTarget.currency || 'TRY',
+        );
+
+        createNotification(
+          firebaseUser.uid, 'order_status',
+          'Kargo Oluşturuldu',
+          `${carrier} — ${result.trackingNumber} — Tahmini teslimat: ${result.estimatedDelivery ? new Date(result.estimatedDelivery).toLocaleDateString('tr-TR') : '—'}`,
+        );
+      }
+    } catch (err) {
+      console.error('Cargo shipment failed:', err);
     } finally {
       setShipping(false);
     }
+  };
+
+  const handleViewTracking = async (order: Order) => {
+    if (!order.trackingNumber || !order.carrier) return;
+    setTrackingTarget({ provider: order.carrier as CargoProviderName, trackingNumber: order.trackingNumber });
+    setTrackingLoading(true);
+    setTrackingData(null);
+    const result = await getTrackingStatus(order.carrier as CargoProviderName, order.trackingNumber);
+    setTrackingData(result);
+    setTrackingLoading(false);
   };
 
   const filteredOrders = orders.filter(o => {
@@ -100,6 +245,26 @@ export function SellerOrdersPage() {
               <span className="flex items-center gap-1 text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
                 <ShieldCheck size={10} /> Escrow Protection Active
               </span>
+              <span className={cn(
+                "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+                realtimeActive
+                  ? "bg-green-50 text-green-600 border border-green-200"
+                  : "bg-zinc-100 text-zinc-400"
+              )}>
+                <span className={cn(
+                  "w-2 h-2 rounded-full",
+                  realtimeActive ? "bg-green-500 animate-pulse" : "bg-zinc-300"
+                )} />
+                {realtimeActive ? 'Canlı' : 'Bağlanıyor...'}
+              </span>
+              {newOrderCount > 0 && (
+                <button
+                  onClick={() => { setFilter('all'); setNewOrderCount(0); }}
+                  className="px-3 py-1 bg-red-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full animate-pulse hover:bg-red-600 transition-all"
+                >
+                  {newOrderCount} Yeni Sipariş!
+                </button>
+              )}
             </div>
             <h1 className="text-5xl font-display font-black tracking-tighter text-brand-primary uppercase italic">
               Order Orchestration
@@ -110,8 +275,18 @@ export function SellerOrdersPage() {
              <button className="px-6 py-4 bg-white border border-brand-primary/5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:shadow-xl transition-all">
                <Download size={14} /> Manifest Export
              </button>
-             <button className="px-8 py-4 bg-brand-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl shadow-brand-primary/20 hover:bg-accent transition-all flex items-center gap-2">
-               <RefreshCw size={14} /> Batch Ship
+             <button
+               onClick={() => setBatchShipOpen(true)}
+               disabled={selectedIds.size === 0}
+               className={cn(
+                 "px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all",
+                 selectedIds.size > 0
+                   ? "bg-accent text-white shadow-2xl shadow-accent/20 hover:opacity-90"
+                   : "bg-brand-primary/20 text-brand-primary/40 cursor-not-allowed"
+               )}
+             >
+               <Zap size={14} />
+               {selectedIds.size > 0 ? `${selectedIds.size} Siparişi Kargola` : 'Batch Ship'}
              </button>
           </div>
         </div>
@@ -188,12 +363,19 @@ export function SellerOrdersPage() {
               <table className="w-full text-left border-collapse">
                  <thead>
                     <tr className="bg-brand-secondary/30 text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/40">
-                       <th className="px-10 py-6">Identity</th>
-                       <th className="px-10 py-6">Buyer Artifacts</th>
-                       <th className="px-10 py-6">Destination Hub</th>
-                       <th className="px-10 py-6">Investment</th>
-                       <th className="px-10 py-6">Workflow Status</th>
-                       <th className="px-10 py-6"></th>
+                       <th className="px-6 py-6 w-12">
+                         <button onClick={toggleSelectAll} className="hover:text-accent transition-colors">
+                           {selectedIds.size > 0 && selectedIds.size === shippableOrders.length
+                             ? <CheckSquare size={18} className="text-accent" />
+                             : <Square size={18} />}
+                         </button>
+                       </th>
+                       <th className="px-4 py-6">Identity</th>
+                       <th className="px-4 py-6">Buyer Artifacts</th>
+                       <th className="px-4 py-6">Destination Hub</th>
+                       <th className="px-4 py-6">Investment</th>
+                       <th className="px-4 py-6">Workflow Status</th>
+                       <th className="px-6 py-6"></th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-brand-primary/5">
@@ -206,9 +388,21 @@ export function SellerOrdersPage() {
                         <Package size={36} className="mx-auto text-brand-primary/10 mb-3" />
                         <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Sipariş bulunamadı</p>
                       </td></tr>
-                    ) : filteredOrders.map((order) => (
-                      <tr key={order.id} className="group hover:bg-brand-secondary/20 transition-colors">
-                         <td className="px-10 py-6">
+                    ) : filteredOrders.map((order) => {
+                      const isShippable = order.status === 'pending' || order.status === 'processing';
+                      const isSelected = selectedIds.has(order.id);
+                      return (
+                      <tr key={order.id} className={cn("group transition-colors", isSelected ? "bg-accent/5" : "hover:bg-brand-secondary/20")}>
+                         <td className="px-6 py-6">
+                           {isShippable && (
+                             <button onClick={() => toggleSelect(order.id)} className="hover:text-accent transition-colors">
+                               {isSelected
+                                 ? <CheckSquare size={18} className="text-accent" />
+                                 : <Square size={18} className="text-brand-primary/20 group-hover:text-brand-primary/50" />}
+                             </button>
+                           )}
+                         </td>
+                         <td className="px-4 py-6">
                             <div>
                                <p className="font-black text-brand-primary">{order.id.slice(0, 8)}…</p>
                                <p className="text-[10px] font-bold text-brand-primary/30 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString()}</p>
@@ -266,16 +460,22 @@ export function SellerOrdersPage() {
                                    Kargoya Ver
                                  </button>
                                )}
+                               {order.status === 'shipped' && order.trackingNumber && (
+                                 <button
+                                   onClick={() => handleViewTracking(order)}
+                                   className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all"
+                                 >
+                                   Takip Et
+                                 </button>
+                               )}
                                <button className="px-4 py-2 border border-brand-primary/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-all">
                                   Details
-                               </button>
-                               <button className="p-2 hover:bg-accent hover:text-white rounded-lg transition-all shadow-sm">
-                                  <MoreVertical size={18} />
                                </button>
                             </div>
                          </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                  </tbody>
               </table>
            </div>
@@ -283,7 +483,9 @@ export function SellerOrdersPage() {
            {/* Pagination / Batch Actions */}
            <div className="p-8 bg-brand-secondary/10 flex items-center justify-between">
               <div className="flex items-center gap-6">
-                 <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">Selected 0 items</p>
+                 <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
+                   {selectedIds.size > 0 ? `${selectedIds.size} sipariş seçildi` : 'Selected 0 items'}
+                 </p>
                  <select className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none border-none cursor-pointer">
                     <option>Global Bulk Actions</option>
                     <option>Print Shipping Labels</option>
@@ -324,7 +526,7 @@ export function SellerOrdersPage() {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-brand-secondary/20 text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/40">
-                      <th className="px-8 py-5">Sipariş</th>
+                      <th className="px-8 py-5">İade Kodu</th>
                       <th className="px-8 py-5">Ürün</th>
                       <th className="px-8 py-5">Sebep</th>
                       <th className="px-8 py-5">Tarih</th>
@@ -334,11 +536,12 @@ export function SellerOrdersPage() {
                   </thead>
                   <tbody className="divide-y divide-brand-primary/5">
                     {returns.map(r => (
-                      <tr key={r.id} className="hover:bg-brand-secondary/20 transition-colors group">
+                      <tr key={r.id} className={cn("transition-colors group", r.autoApproved ? "bg-green-50/30 hover:bg-green-50/50" : "hover:bg-brand-secondary/20")}>
                         <td className="px-8 py-5">
-                          <span className="font-mono font-bold text-brand-primary text-sm">
-                            #{r.orderId.slice(-6).toUpperCase()}
-                          </span>
+                          <div>
+                            <span className="font-mono font-black text-accent text-sm">{r.returnCode || '—'}</span>
+                            <p className="text-[10px] font-bold text-brand-primary/30">#{r.orderId.slice(-6).toUpperCase()}</p>
+                          </div>
                         </td>
                         <td className="px-8 py-5">
                           <p className="font-bold text-brand-primary text-sm">{r.items.map(i => i.name).join(', ')}</p>
@@ -351,15 +554,30 @@ export function SellerOrdersPage() {
                           {new Date(r.createdAt).toLocaleDateString('tr-TR')}
                         </td>
                         <td className="px-8 py-5">
-                          <span className={cn(
-                            'px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest',
-                            r.status === 'requested' ? 'bg-amber-50 text-amber-600' :
-                            r.status === 'approved' ? 'bg-green-50 text-green-600' :
-                            r.status === 'rejected' ? 'bg-red-50 text-red-600' :
-                            r.status === 'received' ? 'bg-blue-50 text-blue-600' :
-                            r.status === 'refunded' ? 'bg-purple-50 text-purple-600' :
-                            'bg-gray-50 text-gray-500'
-                          )}>{r.status}</span>
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              'px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest',
+                              r.status === 'requested' ? 'bg-amber-50 text-amber-600' :
+                              r.status === 'approved' ? 'bg-green-50 text-green-600' :
+                              r.status === 'rejected' ? 'bg-red-50 text-red-600' :
+                              r.status === 'received' ? 'bg-blue-50 text-blue-600' :
+                              r.status === 'refunded' ? 'bg-purple-50 text-purple-600' :
+                              'bg-gray-50 text-gray-500'
+                            )}>
+                              {r.status === 'requested' ? 'Bekliyor' :
+                               r.status === 'approved' ? 'Onaylandı' :
+                               r.status === 'rejected' ? 'Reddedildi' :
+                               r.status === 'received' ? 'Teslim Alındı' :
+                               r.status === 'refunded' ? 'İade Edildi' :
+                               r.status === 'pickup_scheduled' ? 'Kargo Planlandı' :
+                               r.status === 'closed' ? 'Kapandı' : r.status}
+                            </span>
+                            {r.autoApproved && (
+                              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[9px] font-black uppercase rounded-full" title={r.autoApprovalReason}>
+                                Oto
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-8 py-5">
                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -432,11 +650,29 @@ export function SellerOrdersPage() {
                   selectedReturn.status === 'approved' ? 'bg-green-50 text-green-600' :
                   selectedReturn.status === 'rejected' ? 'bg-red-50 text-red-600' :
                   selectedReturn.status === 'refunded' ? 'bg-purple-50 text-purple-600' :
+                  selectedReturn.status === 'received' ? 'bg-blue-50 text-blue-600' :
                   'bg-gray-50 text-gray-500'
-                )}>{selectedReturn.status}</span>
+                )}>
+                  {selectedReturn.status === 'requested' ? 'Bekliyor' :
+                   selectedReturn.status === 'approved' ? 'Onaylandı' :
+                   selectedReturn.status === 'rejected' ? 'Reddedildi' :
+                   selectedReturn.status === 'received' ? 'Teslim Alındı' :
+                   selectedReturn.status === 'refunded' ? 'İade Edildi' :
+                   selectedReturn.status === 'pickup_scheduled' ? 'Kargo Planlandı' :
+                   selectedReturn.status === 'closed' ? 'Kapandı' : selectedReturn.status}
+                </span>
               </div>
 
               <div className="space-y-3">
+                {selectedReturn.returnCode && (
+                  <div className="flex items-center gap-3 bg-accent/5 border border-accent/20 rounded-2xl p-4">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-accent/60">İade Kodu</span>
+                    <span className="text-xl font-display font-black text-accent tracking-widest">{selectedReturn.returnCode}</span>
+                    {selectedReturn.autoApproved && (
+                      <span className="ml-auto px-3 py-1 bg-green-500 text-white text-[9px] font-black uppercase rounded-full">Otomatik Onay</span>
+                    )}
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-brand-primary/50 font-bold">Sipariş</span>
                   <span className="font-black font-mono">#{selectedReturn.orderId.slice(-8).toUpperCase()}</span>
@@ -445,18 +681,69 @@ export function SellerOrdersPage() {
                   <span className="text-brand-primary/50 font-bold">Talep Tarihi</span>
                   <span className="font-black">{new Date(selectedReturn.createdAt).toLocaleDateString('tr-TR')}</span>
                 </div>
+                {selectedReturn.returnWindowExpiry && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-brand-primary/50 font-bold">İade Süresi</span>
+                    <span className={cn("font-bold", new Date(selectedReturn.returnWindowExpiry) > new Date() ? "text-green-600" : "text-red-500")}>
+                      {new Date(selectedReturn.returnWindowExpiry).toLocaleDateString('tr-TR')}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-brand-primary/50 font-bold">Müşteri</span>
                   <span className="font-black">{selectedReturn.userEmail}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-brand-primary/50 font-bold">İade Tutarı</span>
+                  <span className="font-black text-accent">{(selectedReturn.refundAmount ?? 0).toFixed(2)} ₺</span>
                 </div>
                 <div className="pt-3 border-t border-brand-primary/5">
                   <p className="text-xs font-bold text-brand-primary/50 mb-1 uppercase tracking-widest">İade Sebebi</p>
                   <p className="text-sm font-bold">{selectedReturn.reason}</p>
                 </div>
+                {selectedReturn.autoApprovalReason && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+                    <p className="text-[10px] font-bold text-green-700">{selectedReturn.autoApprovalReason}</p>
+                  </div>
+                )}
                 {selectedReturn.details && (
                   <div className="pt-2">
                     <p className="text-xs font-bold text-brand-primary/50 mb-1 uppercase tracking-widest">Açıklama</p>
                     <p className="text-sm">{selectedReturn.details}</p>
+                  </div>
+                )}
+                {/* Timeline */}
+                {selectedReturn.timeline && selectedReturn.timeline.length > 0 && (
+                  <div className="pt-3 border-t border-brand-primary/5">
+                    <p className="text-xs font-bold text-brand-primary/50 mb-3 uppercase tracking-widest">Süreç</p>
+                    <div className="space-y-2">
+                      {selectedReturn.timeline.map((entry, idx) => (
+                        <div key={idx} className="flex gap-3">
+                          <div className="flex flex-col items-center">
+                            <div className={cn(
+                              "w-2 h-2 rounded-full mt-1.5",
+                              idx === 0 ? "bg-accent" : "bg-brand-primary/20"
+                            )} />
+                            {idx < (selectedReturn.timeline?.length ?? 0) - 1 && (
+                              <div className="w-px flex-1 bg-brand-primary/10 mt-1" />
+                            )}
+                          </div>
+                          <div className="flex-1 pb-2">
+                            <p className="text-[11px] font-black text-brand-primary">
+                              {entry.status === 'requested' ? 'Talep Oluşturuldu' :
+                               entry.status === 'approved' ? 'Onaylandı' :
+                               entry.status === 'rejected' ? 'Reddedildi' :
+                               entry.status === 'received' ? 'Teslim Alındı' :
+                               entry.status === 'refunded' ? 'İade Tamamlandı' :
+                               entry.status === 'pickup_scheduled' ? 'Kargo Planlandı' :
+                               entry.status === 'closed' ? 'Kapatıldı' : entry.status}
+                            </p>
+                            {entry.note && <p className="text-[10px] text-brand-primary/50">{entry.note}</p>}
+                            <p className="text-[9px] text-brand-primary/30">{new Date(entry.timestamp).toLocaleString('tr-TR')}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -550,6 +837,106 @@ export function SellerOrdersPage() {
            </div>
         </div>
       </div>
+
+      {/* Tracking Modal */}
+      {trackingTarget && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl space-y-5 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-display font-black text-brand-primary uppercase italic">Kargo Takip</h3>
+              <button onClick={() => { setTrackingTarget(null); setTrackingData(null); }} className="p-2 hover:bg-brand-secondary rounded-xl transition-colors">
+                <X size={20} className="text-brand-primary/40" />
+              </button>
+            </div>
+            <div className="bg-brand-secondary/30 rounded-2xl p-4">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-brand-primary/40 font-bold">{trackingTarget.provider}</span>
+                <span className="font-black font-mono text-brand-primary">{trackingTarget.trackingNumber}</span>
+              </div>
+            </div>
+            {trackingLoading ? (
+              <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>
+            ) : trackingData?.success ? (
+              <div className="space-y-1">
+                <div className={cn(
+                  "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest mb-4",
+                  trackingData.delivered ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"
+                )}>
+                  {trackingData.delivered ? 'Teslim Edildi' : trackingData.currentStatus}
+                  {trackingData.estimatedDelivery && !trackingData.delivered && (
+                    <span className="ml-2 font-bold">· Tahmini: {new Date(trackingData.estimatedDelivery).toLocaleDateString('tr-TR')}</span>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {trackingData.events.map((event, idx) => (
+                    <div key={idx} className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className={cn("w-2.5 h-2.5 rounded-full mt-1.5", idx === 0 ? "bg-accent" : idx === trackingData.events.length - 1 ? "bg-green-500" : "bg-brand-primary/20")} />
+                        {idx < trackingData.events.length - 1 && <div className="w-px flex-1 bg-brand-primary/10 mt-1" />}
+                      </div>
+                      <div className="flex-1 pb-2">
+                        <p className="text-xs font-black text-brand-primary">{event.status}</p>
+                        <p className="text-[10px] text-brand-primary/50">{event.description}</p>
+                        <p className="text-[9px] text-brand-primary/30 flex items-center gap-2">
+                          {event.location && <span>{event.location}</span>}
+                          <span>{new Date(event.timestamp).toLocaleString('tr-TR')}</span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {trackingData.labelUrl && (
+                  <a href={trackingData.labelUrl} target="_blank" rel="noopener noreferrer"
+                    className="block w-full text-center py-3 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all mt-4">
+                    Kargo Etiketini İndir
+                  </a>
+                )}
+              </div>
+            ) : trackingData ? (
+              <p className="text-center py-8 text-red-500 font-bold text-sm">{trackingData.error || 'Takip bilgisi alınamadı'}</p>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {/* Batch Ship Modal */}
+      {batchShipOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl space-y-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-display font-black text-brand-primary uppercase italic">Toplu Kargo</h3>
+              <button onClick={() => setBatchShipOpen(false)} className="p-2 hover:bg-brand-secondary rounded-xl transition-colors">
+                <X size={20} className="text-brand-primary/40" />
+              </button>
+            </div>
+            <div className="bg-accent/5 border border-accent/20 rounded-2xl p-4">
+              <p className="text-sm font-black text-brand-primary">{selectedIds.size} sipariş</p>
+              <p className="text-[10px] font-bold text-brand-primary/50 uppercase tracking-widest">toplu olarak kargoya verilecek</p>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">Kargo Firması</label>
+              <select value={batchCarrier} onChange={e => setBatchCarrier(e.target.value)}
+                className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10">
+                {CARRIERS.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">Takip No Öneki (opsiyonel)</label>
+              <input value={batchTracking} onChange={e => setBatchTracking(e.target.value)}
+                placeholder="örn. BATCH-2026-"
+                className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10 placeholder:text-brand-primary/20" />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setBatchShipOpen(false)}
+                className="flex-1 py-3 bg-brand-secondary text-brand-primary rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-secondary/70 transition-all">İptal</button>
+              <button onClick={handleBatchShip} disabled={batchShipping || selectedIds.size === 0}
+                className="flex-1 py-3 bg-accent text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-accent/20 hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                {batchShipping ? <><Loader2 size={14} className="animate-spin" /> Gönderiliyor…</> : <>{selectedIds.size} Siparişi Kargola</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Ship Modal */}
       {shipTarget && (
