@@ -1098,6 +1098,24 @@ async function startServer() {
     res.json({});
   });
 
+  // Firebase Hosting auto-config — served natively by Firebase Hosting in production;
+  // this dev-server route mirrors it so firebase-messaging-sw.js works without hardcoded keys.
+  app.get('/__/firebase/init.js', (_req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.send(`
+if (typeof firebase !== 'undefined') {
+  firebase.initializeApp({
+    apiKey: ${JSON.stringify(process.env.VITE_FIREBASE_API_KEY || '')},
+    authDomain: ${JSON.stringify(process.env.VITE_FIREBASE_AUTH_DOMAIN || '')},
+    projectId: ${JSON.stringify(process.env.VITE_FIREBASE_PROJECT_ID || '')},
+    storageBucket: ${JSON.stringify(process.env.VITE_FIREBASE_STORAGE_BUCKET || '')},
+    messagingSenderId: ${JSON.stringify(process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '')},
+    appId: ${JSON.stringify(process.env.VITE_FIREBASE_APP_ID || '')},
+  });
+}
+`);
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     try {

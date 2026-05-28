@@ -1,20 +1,15 @@
 /**
  * Firebase Cloud Messaging Service Worker
  * Handles background push notifications when the app is closed or in background.
+ *
+ * Firebase config is loaded from /__/firebase/init.js which is served automatically
+ * by Firebase Hosting in production, and by the dev server locally (server.ts).
+ * This avoids hardcoding API keys in source control.
  */
 
-// Import Firebase from CDN in service worker context
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
-
-firebase.initializeApp({
-  apiKey: "AIzaSyBp0U-s1M46M1GBeVWkBaNgYHkLxPkBaVQ",
-  authDomain: "market-ecommerce-app.firebaseapp.com",
-  projectId: "market-ecommerce-app",
-  storageBucket: "market-ecommerce-app.firebasestorage.app",
-  messagingSenderId: "1096280426288",
-  appId: "1:1096280426288:web:3f5e6c7d8b9a0f1e2d3c4b",
-});
+importScripts('/__/firebase/init.js');
 
 const messaging = firebase.messaging();
 
@@ -42,13 +37,11 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Check if there's already an open window
       for (const client of clientList) {
         if (client.url.includes(url) && 'focus' in client) {
           return client.focus();
         }
       }
-      // Open new window
       if (clients.openWindow) {
         return clients.openWindow(url);
       }
