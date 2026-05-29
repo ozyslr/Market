@@ -1,9 +1,40 @@
 import React from 'react';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck, ShieldAlert, Package, TrendingDown, Star, Truck, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '@/context/NotificationContext';
 import { useAuth } from '@/context/AuthContext';
+import { NotificationType } from '@/services/notificationService';
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'az önce';
+  if (m < 60) return `${m}dk önce`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}sa önce`;
+  return `${Math.floor(h / 24)}g önce`;
+}
+
+const TYPE_ICON: Record<NotificationType, React.ElementType> = {
+  admin_alert: ShieldAlert,
+  order_status: Package,
+  price_drop: TrendingDown,
+  back_in_stock: Truck,
+  review_approved: Star,
+  payout: Truck,
+  moderation: Settings,
+};
+
+const TYPE_COLOR: Record<NotificationType, string> = {
+  admin_alert: 'text-red-500',
+  order_status: 'text-blue-500',
+  price_drop: 'text-green-500',
+  back_in_stock: 'text-indigo-500',
+  review_approved: 'text-yellow-500',
+  payout: 'text-emerald-500',
+  moderation: 'text-orange-500',
+};
 
 interface NotificationsPanelProps {
   show: boolean;
@@ -66,22 +97,31 @@ export function NotificationsPanel({ show, onToggle, onClose }: NotificationsPan
                     <p className="text-xs font-bold">Bildirim yok</p>
                   </div>
                 ) : (
-                  notifications.map(n => (
-                    <button
-                      key={n.id}
-                      onClick={() => {
-                        if (!n.read) markRead(n.id);
-                        if (n.link) { navigate(n.link); onClose(); }
-                      }}
-                      className={`w-full text-left px-4 py-3 hover:bg-brand-secondary/50 dark:hover:bg-zinc-900 transition-colors flex items-start gap-3 ${!n.read ? 'bg-accent/5' : ''}`}
-                    >
-                      <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${!n.read ? 'bg-accent' : 'bg-transparent'}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-bold text-brand-primary dark:text-white leading-tight">{n.title}</p>
-                        <p className="text-[10px] text-brand-primary/60 dark:text-white/60 mt-0.5 leading-tight">{n.message}</p>
-                      </div>
-                    </button>
-                  ))
+                  notifications.map(n => {
+                    const Icon = TYPE_ICON[n.type] ?? Bell;
+                    const iconColor = TYPE_COLOR[n.type] ?? 'text-accent';
+                    return (
+                      <button
+                        key={n.id}
+                        onClick={() => {
+                          if (!n.read) markRead(n.id);
+                          if (n.link) { navigate(n.link); onClose(); }
+                        }}
+                        className={`w-full text-left px-4 py-3 hover:bg-brand-secondary/50 dark:hover:bg-zinc-900 transition-colors flex items-start gap-3 ${!n.read ? 'bg-accent/5' : ''}`}
+                      >
+                        <span className={`mt-0.5 shrink-0 ${iconColor}`}>
+                          <Icon size={15} />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-[11px] font-bold text-brand-primary dark:text-white leading-tight">{n.title}</p>
+                            <span className="text-[9px] text-brand-primary/40 dark:text-white/40 whitespace-nowrap shrink-0">{relativeTime(n.createdAt)}</span>
+                          </div>
+                          <p className="text-[10px] text-brand-primary/60 dark:text-white/60 mt-0.5 leading-tight">{n.message}</p>
+                        </div>
+                      </button>
+                    );
+                  })
                 )}
               </div>
             </motion.div>

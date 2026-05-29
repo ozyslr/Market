@@ -12,6 +12,7 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { UserProfile, UserRole } from '../types';
+import { notifyAdmins } from '../services/notificationService';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -67,6 +68,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             };
             await setDoc(doc(db, 'users', fUser.uid), newUser);
             setUser(newUser);
+            notifyAdmins(
+              'admin_alert',
+              'Yeni Üye Kaydı',
+              `${newUser.name} (${newUser.email}) sisteme kaydoldu.`,
+              '/admin',
+            ).catch(() => {});
           }
         } catch (error) {
           console.error("Error fetching user profile:", error);

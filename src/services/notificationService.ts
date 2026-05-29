@@ -10,7 +10,8 @@ export type NotificationType =
   | 'back_in_stock'
   | 'review_approved'
   | 'payout'
-  | 'moderation';
+  | 'moderation'
+  | 'admin_alert';
 
 export interface Notification {
   id: string;
@@ -45,7 +46,19 @@ export async function createNotification(
   } catch { /* push service unavailable */ }
 }
 
-export async function getUserNotifications(userId: string, maxCount = 20): Promise<Notification[]> {
+export async function notifyAdmins(
+  type: NotificationType,
+  title: string,
+  message: string,
+  link?: string,
+): Promise<void> {
+  try {
+    const snap = await getDocs(query(collection(db, 'users'), where('role', '==', 'admin')));
+    await Promise.all(snap.docs.map(d => createNotification(d.id, type, title, message, link)));
+  } catch { /* admin notification failure must never block the caller */ }
+}
+
+export async function getUserNotifications(userId: string, maxCount = 50): Promise<Notification[]> {
   try {
     const q = query(
       collection(db, 'notifications'),

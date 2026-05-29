@@ -1,5 +1,6 @@
 import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc, query, where, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { notifyAdmins } from './notificationService';
 
 export interface SellerApplication {
   id: string;
@@ -35,6 +36,12 @@ export async function submitApplication(data: Omit<SellerApplication, 'id' | 'cr
       status: 'pending',
       createdAt: new Date().toISOString(),
     });
+    notifyAdmins(
+      'admin_alert',
+      'Yeni Satıcı Başvurusu',
+      `${data.storeName} — ${data.userEmail} satıcı olmak için başvurdu.`,
+      '/admin',
+    ).catch(() => {});
     return id;
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, COL);
