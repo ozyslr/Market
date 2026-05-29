@@ -18,6 +18,7 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLocationStore } from '@/context/LocationContext';
 import { getCategories } from '@/services/productService';
+import { getOrdersByUser } from '@/services/orderService';
 import { Category } from '@/types';
 
 import { TopTicker } from './TopTicker';
@@ -47,6 +48,7 @@ export function Navbar() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [activeOrdersCount, setActiveOrdersCount] = useState<number | null>(null);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -54,6 +56,14 @@ export function Navbar() {
   useEffect(() => {
     getCategories().then(data => { setCategories(data); });
   }, []);
+
+  useEffect(() => {
+    if (!user) { setActiveOrdersCount(null); return; }
+    const ACTIVE_STATUSES = ['pending', 'processing', 'shipped', 'paid', 'confirmed'];
+    getOrdersByUser(user.id).then(orders => {
+      setActiveOrdersCount(orders.filter(o => ACTIVE_STATUSES.includes(o.status)).length);
+    }).catch(() => setActiveOrdersCount(0));
+  }, [user?.id]);
 
   const [isScrolled, setIsScrolled] = useState(false);
   useEffect(() => {
@@ -250,9 +260,9 @@ export function Navbar() {
                         <p className="text-xs opacity-60 line-clamp-1 mb-2">{user.email}</p>
                         <div className="flex items-center gap-2">
                           <div className="flex-1 h-1.5 bg-brand-primary/10 rounded-full overflow-hidden">
-                            <div className="h-full bg-accent rounded-full w-[70%]" />
+                            <div className="h-full bg-accent rounded-full w-[5%]" />
                           </div>
-                          <span className="text-[9px] font-bold text-brand-primary/60">3.5k Puan</span>
+                          <span className="text-[9px] font-bold text-brand-primary/60">0 Puan</span>
                         </div>
                       </div>
                     </Link>
@@ -263,17 +273,24 @@ export function Navbar() {
                           <Wallet size={16} className="text-accent group-hover/stat:rotate-12 transition-transform" />
                           <ArrowUpRight size={14} className="text-white/40" />
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-white/60 block mb-1">Cüzdan Bakiyesi</span>
-                        <span className="text-xl font-display font-black">2.450,00 ₺</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white/60 block mb-1">Toplam Harcama</span>
+                        <span className="text-xl font-display font-black">
+                          {user.currency === 'GBP' ? '£' : user.currency === 'USD' ? '$' : '₺'}
+                          {(user.spentTotal ?? 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
                       </div>
-                      <div className="p-4 rounded-2xl border border-brand-primary/10 dark:border-white/10 hover:border-accent hover:bg-accent/5 transition-colors group/stat cursor-pointer flex flex-col justify-between">
+                      <Link to="/profile?tab=orders" className="p-4 rounded-2xl border border-brand-primary/10 dark:border-white/10 hover:border-accent hover:bg-accent/5 transition-colors group/stat flex flex-col justify-between">
                         <div className="flex justify-between items-start mb-2">
                           <Package size={16} className="text-brand-primary dark:text-white group-hover/stat:text-accent transition-colors" />
-                          <span className="w-5 h-5 bg-mercora-red text-white rounded-full flex items-center justify-center text-[9px] font-bold">1</span>
+                          {activeOrdersCount !== null && activeOrdersCount > 0 && (
+                            <span className="w-5 h-5 bg-accent text-white rounded-full flex items-center justify-center text-[9px] font-bold">{activeOrdersCount > 9 ? '9+' : activeOrdersCount}</span>
+                          )}
                         </div>
                         <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 block mb-1">Aktif Sipariş</span>
-                        <span className="text-xs font-bold leading-tight">Yarın Teslim Edilecek</span>
-                      </div>
+                        <span className="text-xs font-bold leading-tight">
+                          {activeOrdersCount === null ? '…' : activeOrdersCount === 0 ? 'Sipariş yok' : `${activeOrdersCount} aktif`}
+                        </span>
+                      </Link>
                     </div>
 
                     <div className="grid grid-cols-2 gap-x-8 gap-y-6 pt-2 border-t border-brand-primary/5">

@@ -172,15 +172,15 @@ export function AdminDashboard() {
            <div className="w-24 h-24 bg-accent/10 rounded-[2.5rem] flex items-center justify-center text-accent mx-auto mb-10 shadow-xl shadow-accent/10">
               <ShieldCheck size={48} strokeWidth={1.5} />
            </div>
-           <h1 className="text-3xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-4">Command Center</h1>
+           <h1 className="text-3xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-4">Yönetim Paneli</h1>
            <p className="text-[11px] font-bold text-[#1A1033]/30 uppercase tracking-[0.2em] mb-12 leading-relaxed">
-             Secure authentication required for MERCORA core systems.
+             Benim Olan yönetim sistemine erişmek için kimlik doğrulaması gereklidir.
            </p>
-           <button 
+           <button
              onClick={login}
              className="w-full py-5 bg-[#1A1033] text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl shadow-black/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
            >
-             Initialize Access <Zap size={18} fill="currentColor" />
+             Giriş Yap <Zap size={18} fill="currentColor" />
            </button>
         </div>
       </div>

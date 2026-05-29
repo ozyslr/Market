@@ -374,7 +374,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             <div className="mt-3 p-3 bg-zinc-800 rounded-lg space-y-0.5">
               <p className="text-xs text-blue-400 font-medium truncate">{form.title || 'Ürün Adı'}</p>
               <p className="text-xs text-green-500 truncate">
-                mercora.com/product/{(form.title || 'urun').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50)}
+                benimolan.com/product/{(form.title || 'urun').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50)}
               </p>
               <p className="text-xs text-zinc-400 line-clamp-2">
                 {form.metaDescription || form.description || 'Meta açıklama önizlemesi...'}

@@ -28,8 +28,8 @@ function buildOrderEmailHtml(order: Order): string {
 
         <!-- Header -->
         <tr><td style="background:#1A1033;padding:32px 40px;">
-          <h1 style="margin:0;color:#fff;font-size:28px;font-weight:900;letter-spacing:-1px;font-style:italic;">MERCORA</h1>
-          <p style="margin:4px 0 0;color:rgba(255,255,255,0.4);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">Global Marketplace</p>
+          <h1 style="margin:0;color:#fff;font-size:28px;font-weight:900;letter-spacing:-1px;font-style:italic;">BENİM OLAN</h1>
+          <p style="margin:4px 0 0;color:rgba(255,255,255,0.4);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">Alışveriş Platformu</p>
         </td></tr>
 
         <!-- Success Banner -->
@@ -84,7 +84,7 @@ function buildOrderEmailHtml(order: Order): string {
 
           <!-- CTA -->
           <div style="margin-top:32px;text-align:center;">
-            <a href="https://mercora.com/orders/${order.id}"
+            <a href="https://benimolan.com/orders/${order.id}"
                style="display:inline-block;padding:14px 32px;background:#7C3AED;color:#fff;text-decoration:none;border-radius:12px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:2px;">
               Siparişi Takip Et
             </a>

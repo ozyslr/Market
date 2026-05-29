@@ -50,7 +50,7 @@ const KPICard = ({ label, value, growth, icon: Icon, color, bg }: any) => (
            {growth.startsWith('+') ? <ArrowUpRight size={14} className="inline mr-1" /> : <ArrowDownRight size={14} className="inline mr-1" />}
            {growth}
         </span>
-        <span className="text-[#1A1033]/20 tracking-widest whitespace-nowrap">vs Last Week</span>
+        <span className="text-[#1A1033]/20 tracking-widest whitespace-nowrap">Geçen haftaya göre</span>
       </div>
       <div className="h-8 w-24">
         <ResponsiveContainer width="100%" height="100%">
@@ -266,10 +266,10 @@ export function SellerDashboard() {
 
                        <div className="bg-accent rounded-[3.5rem] p-12 text-white shadow-2xl shadow-accent/20 flex-1 flex flex-col relative group">
                           <DollarSign size={120} className="absolute -bottom-10 -right-10 text-white/10 group-hover:rotate-12 transition-transform duration-700" />
-                          <p className="text-[11px] font-black uppercase tracking-[0.4em] opacity-60 mb-8 italic">Available Balance</p>
+                          <p className="text-[11px] font-black uppercase tracking-[0.4em] opacity-60 mb-8 italic">Mevcut Bakiye</p>
                           <h4 className="text-5xl font-display font-black tracking-tighter mb-4">£4,850.00</h4>
-                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest italic">Cleared & Ready for Settlement</p>
-                          <button className="w-full mt-auto py-5 bg-white text-[#1A1033] rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all">Withdraw Payout</button>
+                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest italic">Onaylandı & Ödemeye Hazır</p>
+                          <button className="w-full mt-auto py-5 bg-white text-[#1A1033] rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all">Ödeme Talep Et</button>
                        </div>
                     </div>
                   </div>
@@ -325,9 +325,9 @@ export function SellerDashboard() {
                   {/* Market Intelligence Row */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                      {[
-                       { icon: TrendingUp, label: 'Trend Sentinel', title: 'Audio Surge', desc: 'Demand for "Studio Gear" up 245% in London corridor.', color: 'text-accent' },
-                       { icon: ShieldCheck, label: 'Compliance Hub', title: 'IOSS Update', desc: 'VAT verification completed for all EU sales nodes.', color: 'text-blue-500' },
-                       { icon: Zap, label: 'System status', title: 'Global Sync', desc: 'Store artifacts fully distributed across 12 nodes.', color: 'text-green-500' },
+                       { icon: TrendingUp, label: 'Trend Analizi', title: 'Ses Dalgası', desc: '"Stüdyo Ekipmanları" için talep son haftada %245 arttı.', color: 'text-accent' },
+                       { icon: ShieldCheck, label: 'Uyum Merkezi', title: 'Vergi Güncellemesi', desc: 'Tüm AB satışları için KDV doğrulaması tamamlandı.', color: 'text-blue-500' },
+                       { icon: Zap, label: 'Sistem Durumu', title: 'Senkronizasyon', desc: 'Mağaza verileri tüm sunuculara başarıyla dağıtıldı.', color: 'text-green-500' },
                      ].map((item, i) => (
                        <div key={i} className="bg-white p-10 rounded-[3rem] border border-[#F8F8FA] shadow-sm hover:shadow-xl transition-all group">
                           <div className={cn("w-14 h-14 rounded-2xl bg-[#F8F8FA] flex items-center justify-center mb-8 shadow-sm group-hover:scale-110 transition-transform", item.color)}>
@@ -352,8 +352,8 @@ export function SellerDashboard() {
                        <div className="w-full max-w-md space-y-10 scale-110">
                           <div className="flex justify-between items-end">
                              <div>
-                                <p className="text-xs font-black uppercase text-[#1A1033]/50 text-left">Processing Node Batch</p>
-                                <p className="text-[10px] font-bold text-[#1A1033]/30 italic text-left mt-1">Artifact_Inventory_2026_Q2.json</p>
+                                <p className="text-xs font-black uppercase text-[#1A1033]/50 text-left">Toplu İşlem Devam Ediyor</p>
+                                <p className="text-[10px] font-bold text-[#1A1033]/30 italic text-left mt-1">Envanter_2026_Q2.json</p>
                              </div>
                              <p className="text-4xl font-display font-black text-accent tracking-tighter">{uploadProgress}%</p>
                           </div>
@@ -366,7 +366,7 @@ export function SellerDashboard() {
                           </div>
                           <div className="flex items-center justify-center gap-3 text-accent animate-pulse">
                              <Sparkles size={18} />
-                             <span className="text-[11px] font-black uppercase tracking-[0.3em]">AI Mapping in Progress...</span>
+                             <span className="text-[11px] font-black uppercase tracking-[0.3em]">Yapay Zeka Eşleniyor...</span>
                           </div>
                        </div>
                      ) : (
@@ -374,15 +374,15 @@ export function SellerDashboard() {
                           <div className="w-28 h-28 bg-accent/5 rounded-[3rem] flex items-center justify-center text-accent mb-12 shadow-2xl shadow-accent/5">
                              <Upload size={48} strokeWidth={1.5} />
                           </div>
-                          <h2 className="text-4xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-6">Bulk Ingestion</h2>
+                          <h2 className="text-4xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-6">Toplu Yükleme</h2>
                           <p className="max-w-md text-[#1A1033]/40 text-sm font-medium italic leading-relaxed mb-12">
-                             Drop your merchant data JSON or CSV from Shopify, Amazon, or Etsy. Our AI Sentinels will automatically map categories, HS-Codes, and generate premium copy.
+                             Shopify, Amazon veya Etsy'den JSON veya CSV verilerinizi buraya bırakın. Yapay zeka kategorileri, HS kodlarını otomatik olarak eşler ve ürün açıklamalarını oluşturur.
                           </p>
-                          <button 
+                          <button
                              onClick={simulateUpload}
                              className="px-16 py-6 bg-[#1A1033] text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl shadow-black/30 hover:bg-accent hover:scale-105 transition-all"
                           >
-                             Select Hub Dataset
+                             Dosya Seç
                           </button>
                        </div>
                      )}
@@ -391,21 +391,21 @@ export function SellerDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                      <div className="bg-[#1A1033] rounded-[3.5rem] p-12 text-white relative overflow-hidden group">
                         <Sparkles size={160} className="absolute -bottom-20 -left-20 text-white/5 opacity-50 group-hover:scale-125 transition-transform duration-1000" />
-                        <h4 className="text-2xl font-display font-black uppercase italic mb-6 relative z-10">AI Auto-Capture</h4>
-                        <p className="text-white/50 text-sm leading-relaxed italic mb-10 relative z-10">Our neural engine automatically expands product tags, creates global SEO snippets, and translates your listings for all 12 MERCORA hubs.</p>
-                        <button className="px-8 py-4 bg-white/5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white/10 relative z-10">Review Engine Specs</button>
+                        <h4 className="text-2xl font-display font-black uppercase italic mb-6 relative z-10">Yapay Zeka Otomatik Yakalama</h4>
+                        <p className="text-white/50 text-sm leading-relaxed italic mb-10 relative z-10">Yapay zeka motorumuz ürün etiketlerini genişletir, SEO açıklamaları oluşturur ve listelerinizi platformumuz için otomatik olarak optimize eder.</p>
+                        <button className="px-8 py-4 bg-white/5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white/10 relative z-10">Detayları Gör</button>
                      </div>
                      <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm relative overflow-hidden group">
                         <Package size={160} className="absolute -bottom-20 -right-20 text-[#1A1033]/5 group-hover:scale-125 transition-transform duration-1000" />
-                        <h4 className="text-2xl font-display font-black uppercase italic mb-6 text-[#1A1033]">Node Sync Stats</h4>
+                        <h4 className="text-2xl font-display font-black uppercase italic mb-6 text-[#1A1033]">Senkronizasyon İstatistikleri</h4>
                         <div className="grid grid-cols-2 gap-8 relative z-10">
                            <div>
-                              <p className="text-[10px] font-black text-[#1A1033]/30 uppercase tracking-widest mb-1">Total Capacity</p>
-                              <p className="text-2xl font-display font-black text-[#1A1033]">50,000 SKUs</p>
+                              <p className="text-[10px] font-black text-[#1A1033]/30 uppercase tracking-widest mb-1">Toplam Kapasite</p>
+                              <p className="text-2xl font-display font-black text-[#1A1033]">50.000 SKU</p>
                            </div>
                            <div>
-                              <p className="text-[10px] font-black text-[#1A1033]/30 uppercase tracking-widest mb-1">Daily Limit</p>
-                              <p className="text-2xl font-display font-black text-accent">Unlimited</p>
+                              <p className="text-[10px] font-black text-[#1A1033]/30 uppercase tracking-widest mb-1">Günlük Limit</p>
+                              <p className="text-2xl font-display font-black text-accent">Sınırsız</p>
                            </div>
                         </div>
                      </div>
@@ -497,8 +497,8 @@ export function SellerDashboard() {
              ) : (
                 <div className="text-center py-40 bg-white border border-[#F8F8FA] rounded-[5rem] shadow-sm">
                    <Activity size={48} className="mx-auto text-accent mb-10 animate-pulse" />
-                   <h3 className="text-3xl font-display font-black uppercase italic text-[#1A1033]/20 tracking-widest">Global Node <span className="text-accent">Loading...</span></h3>
-                   <p className="text-[11px] font-black text-[#1A1033]/20 uppercase tracking-[0.4em] mt-6">Streaming Store Data from Master Matrix</p>
+                   <h3 className="text-3xl font-display font-black uppercase italic text-[#1A1033]/20 tracking-widest">Veriler <span className="text-accent">Yükleniyor...</span></h3>
+                   <p className="text-[11px] font-black text-[#1A1033]/20 uppercase tracking-[0.4em] mt-6">Mağaza verileri getiriliyor</p>
                 </div>
              )}
            </AnimatePresence>

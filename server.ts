@@ -45,7 +45,7 @@ async function startServer() {
   // CORS — allow our own origin for API calls
   app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-      ? (process.env.APP_URL || 'https://mercora.app')
+      ? (process.env.APP_URL || 'https://benimolan.com')
       : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Stripe-Signature'],
@@ -74,6 +74,9 @@ async function startServer() {
           "https://*.picsum.photos",
           "https://via.placeholder.com",
           "https://*.placeholder.com",
+          "https://api.dicebear.com",
+          "https://www.googletagmanager.com",
+          "https://www.facebook.com",
         ],
         connectSrc: ["'self'",
           "https://api.stripe.com",
@@ -214,7 +217,7 @@ async function startServer() {
         const itemCount = items.reduce((s: number, i: any) => s + (i.quantity || 0), 0);
 
         // Build cart URL
-        const appUrl = process.env.APP_URL || 'https://mercora.app';
+        const appUrl = process.env.APP_URL || 'https://benimolan.com';
 
         // Build abandoned cart email HTML
         const emailHtml = `
