@@ -315,7 +315,7 @@ export function Navbar() {
                           <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Canlı Destek
                         </button>
                         <Link to="/support" onClick={() => setIsAccountMenuOpen(false)} className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link">
-                          <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Yeni Destek Talebi
+                          <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Destek Talebi
                         </Link>
                       </div>
                       <div className="flex flex-col gap-3">

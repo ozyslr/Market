@@ -125,20 +125,7 @@ export function LiveChatWidget() {
 
   return (
     <>
-      {/* Floating Button */}
-      {viewState === 'closed' && (
-        <motion.button
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleOpen}
-          className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-[#F9423A] text-white rounded-full shadow-2xl shadow-[#F9423A]/30 flex items-center justify-center hover:bg-orange-600 transition-colors cursor-pointer"
-          aria-label="Canlı desteği aç"
-        >
-          <MessageCircle size={28} strokeWidth={2.5} />
-        </motion.button>
-      )}
+      {/* Floating button removed — widget opens only via Hesabım → Canlı Destek */}
 
       {/* Minimized Bar */}
       <AnimatePresence>
