@@ -63,10 +63,16 @@ export function LiveChatWidget() {
     }
   }, [viewState]);
 
-  const handleOpen = async () => {
+  const handleOpen = useCallback(async () => {
     setViewState('open');
     await ensureSession();
-  };
+  }, [ensureSession]);
+
+  // Allow external callers (e.g. Navbar) to open the widget via a custom event
+  useEffect(() => {
+    window.addEventListener('open-live-chat', handleOpen);
+    return () => window.removeEventListener('open-live-chat', handleOpen);
+  }, [handleOpen]);
 
   const handleSend = async () => {
     const text = inputText.trim();
