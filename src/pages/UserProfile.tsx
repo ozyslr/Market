@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
-import { MOCK_USER, MOCK_PRODUCTS, MOCK_SELLERS } from '@/mockData';
+import { MOCK_PRODUCTS, MOCK_SELLERS } from '@/mockData';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -111,14 +111,10 @@ const OrderCard: React.FC<{ order: Order; expanded?: boolean }> = ({ order, expa
 }
 
 export function UserProfilePage() {
-  const { user: authUser, firebaseUser } = useAuth();
+  const { user: authUser, firebaseUser, loading: authLoading } = useAuth();
   const { t, lang } = useLanguage();
   const { wishlist, loading: wishlistLoading } = useWishlist();
   const { followedSellers, toggleFollow, loading: followsLoading } = useFollows();
-
-  if (!authUser) return <Navigate to="/auth" replace />;
-
-  const user = { ...MOCK_USER, name: authUser.name, email: authUser.email };
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<ProfileTab>(
@@ -176,13 +172,29 @@ export function UserProfilePage() {
     setSearchParams({ tab });
   }
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-secondary/30 dark:bg-zinc-950">
+        <div className="w-10 h-10 border-2 border-brand-primary/20 border-t-accent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!authUser) return <Navigate to="/" replace />;
+
+  const totalSpent = orders.reduce((sum, o) => sum + (o.total ?? 0), 0);
+  const activeOrdersCount = orders.filter(o =>
+    ['pending', 'processing', 'shipped', 'paid'].includes(o.status)
+  ).length;
+  const userRole = authUser.role;
+
   const wishlistProducts = MOCK_PRODUCTS.filter(p => wishlist.includes(p.id));
   const filteredOrders: Order[] = statusFilter === 'all'
     ? orders
     : orders.filter(o => o.status === (statusFilter as OrderStatus));
 
-  const avatarSrc = (authUser as { photoURL?: string } | null)?.photoURL
-    ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`;
+  const avatarSrc = authUser.photoURL
+    || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authUser.name)}`;
 
   return (
     <div className="min-h-screen bg-brand-secondary/30 dark:bg-zinc-950">
@@ -193,7 +205,7 @@ export function UserProfilePage() {
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               <div className="w-20 h-20 rounded-2xl bg-brand-secondary dark:bg-zinc-800 overflow-hidden border-2 border-white dark:border-zinc-700 shadow-lg">
-                <img src={avatarSrc} alt={user.name} className="w-full h-full object-cover" loading="lazy" />
+                <img src={avatarSrc} alt={authUser.name} className="w-full h-full object-cover" loading="lazy" />
               </div>
               <button
                 onClick={() => changeTab('settings')}
@@ -207,24 +219,24 @@ export function UserProfilePage() {
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h1 className="text-2xl font-display font-black tracking-tight text-brand-primary dark:text-white">
-                  {user.name}
+                  {authUser.name}
                 </h1>
                 <span className="px-2.5 py-0.5 bg-accent/10 text-accent text-[10px] font-black uppercase tracking-widest rounded-full">
-                  {user.role === 'admin' ? 'Admin' : user.role === 'seller' ? 'Satıcı' : 'Prime'}
+                  {userRole === 'admin' ? 'Admin' : userRole === 'seller' ? 'Satıcı' : 'Üye'}
                 </span>
               </div>
               <p className="text-sm text-brand-primary/50 dark:text-zinc-400">
-                {user.email} • {user.country}
+                {authUser.email}
               </p>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-4 gap-4 sm:gap-6 shrink-0">
               {[
-                { label: t('profile.totalSpent'),  value: `$${(user.spentTotal ?? 0).toLocaleString()}`, color: 'text-green-500' },
-                { label: t('profile.activeOrders'), value: String(user.orders?.length ?? 0),             color: 'text-blue-500' },
-                { label: t('profile.savedItems'),   value: String(wishlist.length),                      color: 'text-red-400' },
-                { label: t('profile.rewardPoints'), value: '4,250',                                      color: 'text-accent' },
+                { label: t('profile.totalSpent'),  value: ordersLoading ? '…' : `$${totalSpent.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'text-green-500' },
+                { label: t('profile.activeOrders'), value: ordersLoading ? '…' : String(activeOrdersCount), color: 'text-blue-500' },
+                { label: t('profile.savedItems'),   value: String(wishlist.length),                          color: 'text-red-400' },
+                { label: t('profile.rewardPoints'), value: '0',                                              color: 'text-accent' },
               ].map((s, i) => (
                 <div key={i} className="text-center">
                   <p className={cn('text-xl font-black leading-none mb-0.5', s.color)}>{s.value}</p>
