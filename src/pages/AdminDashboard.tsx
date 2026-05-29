@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, ShoppingBag, TrendingUp, AlertCircle, 
   CheckCircle2, Clock, ShieldCheck, Shield, BarChart3,
