@@ -363,7 +363,6 @@ const initialTranslations: Record<string, Record<string, string>> = {
     'product.in_stock': 'In Stock',
     'product.add_to_cart': 'Add to Cart',
     'product.view_details': 'View Details',
-    'product.reviews': 'Reviews',
   },
   tr: {
     'nav.deals': "Günün Fırsatları",
@@ -704,7 +703,6 @@ const initialTranslations: Record<string, Record<string, string>> = {
     'product.in_stock': 'Stokta Var',
     'product.add_to_cart': 'Sepete Ekle',
     'product.view_details': 'Detayları Gör',
-    'product.reviews': 'Yorumlar',
   },
   de: {
     'nav.deals': "Tagesangebote",

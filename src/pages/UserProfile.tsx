@@ -6,7 +6,7 @@ import {
   Store, CreditCard,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { MOCK_USER, MOCK_PRODUCTS, MOCK_SELLERS } from '@/mockData';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -115,7 +115,10 @@ export function UserProfilePage() {
   const { t, lang } = useLanguage();
   const { wishlist, loading: wishlistLoading } = useWishlist();
   const { followedSellers, toggleFollow, loading: followsLoading } = useFollows();
-  const user = authUser ? { ...MOCK_USER, name: authUser.name, email: authUser.email } : MOCK_USER;
+
+  if (!authUser) return <Navigate to="/auth" replace />;
+
+  const user = { ...MOCK_USER, name: authUser.name, email: authUser.email };
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<ProfileTab>(

@@ -185,7 +185,11 @@ export function Navbar() {
             </div>
 
             {/* Favorites */}
-            <Link to="/profile?tab=favorites" className="hidden lg:flex items-center gap-2 group p-2 hover:text-mercora-red transition-colors text-brand-primary dark:text-white">
+            <button
+              type="button"
+              onClick={() => user ? navigate('/profile?tab=favorites') : setIsAuthModalOpen(true)}
+              className="hidden lg:flex items-center gap-2 group p-2 hover:text-mercora-red transition-colors text-brand-primary dark:text-white"
+            >
               <div className="relative">
                 <Heart size={20} className="group-hover:-translate-y-1 transition-transform" />
                 {favoriteBadge && (
@@ -195,7 +199,7 @@ export function Navbar() {
                 )}
               </div>
               <span className="text-xs font-bold whitespace-nowrap">Favorilerim</span>
-            </Link>
+            </button>
 
             {/* Account Dropdown */}
             <div
