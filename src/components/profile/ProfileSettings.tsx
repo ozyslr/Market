@@ -168,10 +168,20 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
 
       {/* Profil Bilgileri */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
         <button onClick={() => toggleCard('profile')}
           className="w-full flex items-center justify-between p-5 text-left">
           <div className="flex items-center gap-3">
-            <img src={avatarSrc} className="w-11 h-11 rounded-full object-cover" alt={user?.name || 'Profil fotoğrafı'} loading="lazy" />
+            <div
+              className="relative group cursor-pointer shrink-0"
+              onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
+              aria-label="Profil fotoğrafını değiştir"
+            >
+              <img src={avatarSrc} className="w-11 h-11 rounded-full object-cover" alt={user?.name || 'Profil fotoğrafı'} loading="lazy" />
+              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera size={12} className="text-white" />
+              </div>
+            </div>
             <div>
               <p className="font-bold text-sm text-[#1A1033] dark:text-white">{user?.name}</p>
               <p className="text-[10px] text-zinc-400">{user?.email}</p>
@@ -184,17 +194,6 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
               <form onSubmit={handleSaveProfile} className="px-5 pb-5 space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <img src={avatarSrc} className="w-16 h-16 rounded-full object-cover" alt={user?.name || 'Profil fotoğrafı'} loading="lazy" />
-                    <button type="button" onClick={() => fileInputRef.current?.click()}
-                      className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#1A1033] dark:bg-zinc-700 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-900">
-                      <Camera size={10} className="text-white" />
-                    </button>
-                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
-                  </div>
-                  <p className="text-[10px] text-zinc-400">{t('profile.changePhoto')}</p>
-                </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Ad Soyad</label>
                   <input value={displayName} onChange={e => setDisplayName(e.target.value)}

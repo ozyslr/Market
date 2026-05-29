@@ -307,6 +307,9 @@ export function Navbar() {
                         <Link to="/profile?tab=reviews" className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link">
                           <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Değerlendirmelerim
                         </Link>
+                        <Link to="/support" onClick={() => setIsAccountMenuOpen(false)} className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link">
+                          <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Canlı Destek
+                        </Link>
                       </div>
                       <div className="flex flex-col gap-3">
                         <span className="text-[10px] uppercase font-black tracking-[0.2em] text-brand-primary/30 dark:text-white/30 flex items-center gap-1.5">
