@@ -43,35 +43,8 @@ export default defineConfig(({mode}) => {
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
           navigateFallback: '/offline.html',
-          navigateFallbackDenylist: [/\/api\//, /\/__\//],
+          navigateFallbackDenylist: [/\/api\//, /\/__\//, /\.well-known\//],
           runtimeCaching: [
-            {
-              urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'firestore-cache',
-                networkTimeoutSeconds: 5,
-                expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
-                backgroundSync: { name: 'firestore-sync' },
-              },
-            },
-            {
-              urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'storage-cache',
-                expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 7 },
-              },
-            },
-            {
-              urlPattern: /^https:\/\/identitytoolkit\.googleapis\.com\/.*/i,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'auth-cache',
-                networkTimeoutSeconds: 5,
-                expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 },
-              },
-            },
             {
               urlPattern: /\.(?:png|jpg|jpeg|gif|webp|svg|ico)$/i,
               handler: 'CacheFirst',

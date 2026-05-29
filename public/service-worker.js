@@ -180,7 +180,8 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isApiRequest(url)) {
-    event.respondWith(networkFirstStrategy(request, DYNAMIC_CACHE));
+    // API requests MUST bypass cache entirely — Firestore streaming cannot be cloned
+    event.respondWith(fetch(request));
   } else if (isImageRequest(url)) {
     event.respondWith(cacheFirstStrategy(request, IMAGE_CACHE));
   } else if (isFontRequest(url)) {

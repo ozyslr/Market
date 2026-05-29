@@ -42,6 +42,7 @@ import { AdminSupport } from './AdminSupport';
 import { AdminChat } from './AdminChat';
 import { AdminWebhooks } from './AdminWebhooks';
 import { AdminAuditLog } from './AdminAuditLog';
+import { AdminIntegrations } from './AdminIntegrations';
 
 // --- MOCK DATA ---
 const SALES_PERFORMANCE = [
@@ -124,11 +125,31 @@ const SidebarItem = ({ id, label, icon: Icon, active, onClick }: any) => (
 );
 
 export function AdminDashboard() {
-  const { user, login } = useAuth();
+  const { user, firebaseUser, login } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [realKpis, setRealKpis] = useState({ totalUsers: 0, totalProducts: 0, totalOrders: 0, totalSellers: 0 });
+  const [realRevenue, setRealRevenue] = useState({ revenue: 0, completedOrders: 0 });
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { collection, getDocs } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase');
+        const [u, p, o, s] = await Promise.all([
+          getDocs(collection(db, 'users')), getDocs(collection(db, 'products')),
+          getDocs(collection(db, 'orders')), getDocs(collection(db, 'sellers')),
+        ]);
+        setRealKpis({ totalUsers: u.size, totalProducts: p.size, totalOrders: o.size, totalSellers: s.size });
+        let rev = 0, comp = 0;
+        o.forEach(d => { const data = d.data(); if (data.status === 'delivered') { rev += data.total || 0; comp++; } });
+        setRealRevenue({ revenue: rev, completedOrders: comp });
+      } catch {}
+    };
+    load();
+  }, []);
 
   const handleSeed = async () => {
     setSeeding(true);
@@ -253,8 +274,8 @@ export function AdminDashboard() {
                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" className="w-full h-full rounded-full bg-white/10" alt="Admin avatarı" loading="lazy" />
               </div>
               <div className="flex-1 min-w-0">
-                 <p className="text-[11px] font-black text-white truncate">Oğuz Özyaşar</p>
-                 <p className="text-[9px] font-bold text-[#F9423A] uppercase tracking-widest">Süper Yetkili</p>
+                 <p className="text-[11px] font-black text-white truncate">{user?.name || firebaseUser?.displayName || 'Admin'}</p>
+                 <p className="text-[9px] font-bold text-[#F9423A] uppercase tracking-widest">{user?.role === 'admin' ? 'Yönetici' : user?.role || 'Admin'}</p>
               </div>
               <button className="text-white/20 hover:text-[#F9423A] transition-colors">
                  <LogOut size={16} />
@@ -344,14 +365,18 @@ export function AdminDashboard() {
               <AdminWebhooks />
            ) : activeTab === 'audit' ? (
               <AdminAuditLog />
+           ) : activeTab === 'integrations' ? (
+              <AdminIntegrations />
+           ) : activeTab === 'ai' ? (
+              <div className="p-8 text-center text-[#1A1033]/40">AI analiz paneli yapım aşamasında</div>
            ) : (
              <>
                {/* Top KPIs Row - Premium Cards */}
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <KPICard label="Toplam Satış Hacmi (GMV)" value="24.560.850 ₺" growth="+18.6%" icon={CreditCard} color="#F9423A" bg="bg-gradient-to-tr from-[#F9423A] to-orange-500" />
-              <KPICard label="Tamamlanan Sipariş" value="18.392" growth="+14.3%" icon={ShoppingBasket} color="#10B981" bg="bg-gradient-to-tr from-[#10B981] to-[#34D399]" />
-              <KPICard label="Aktif Kullanıcı" value="128.430" growth="+22.8%" icon={Users} color="#3B82F6" bg="bg-gradient-to-tr from-[#3B82F6] to-[#60A5FA]" />
-              <KPICard label="Onaylı Mağaza" value="2.145" growth="+15.7%" icon={Briefcase} color="#F59E0B" bg="bg-gradient-to-tr from-[#F59E0B] to-[#FBBF24]" />
+              <KPICard label="Toplam Satış Hacmi (GMV)" value={`${realRevenue.revenue.toLocaleString('tr-TR')} ₺`} growth={realRevenue.completedOrders > 0 ? '+' : ''} icon={CreditCard} color="#F9423A" bg="bg-gradient-to-tr from-[#F9423A] to-orange-500" />
+              <KPICard label="Tamamlanan Sipariş" value={realRevenue.completedOrders.toLocaleString('tr-TR')} growth="" icon={ShoppingBasket} color="#10B981" bg="bg-gradient-to-tr from-[#10B981] to-[#34D399]" />
+              <KPICard label="Toplam Kullanıcı" value={realKpis.totalUsers.toLocaleString('tr-TR')} growth="" icon={Users} color="#3B82F6" bg="bg-gradient-to-tr from-[#3B82F6] to-[#60A5FA]" />
+              <KPICard label="Toplam Satıcı" value={realKpis.totalSellers.toLocaleString('tr-TR')} growth="" icon={Briefcase} color="#F59E0B" bg="bg-gradient-to-tr from-[#F59E0B] to-[#FBBF24]" />
             </div>
 
            {/* Second Row: Large Analytics View */}
@@ -651,8 +676,8 @@ export function AdminDashboard() {
               <div className="w-12 h-12 bg-[#F9423A] rounded-2xl flex items-center justify-center text-white mb-6">
                  <ShieldCheck size={24} />
               </div>
-              <p className="text-[11px] font-black uppercase tracking-[0.5em] mb-2 leading-none">TrendAl Enterprise System</p>
-              <p className="text-[9px] font-bold uppercase tracking-[0.2em]">Platform Yönetim Stüdyosu v4.2.0 • 2026</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.5em] mb-2 leading-none">Benim Olan</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em]">Admin Kontrol Paneli • 2026</p>
            </div>
            </>
            )}

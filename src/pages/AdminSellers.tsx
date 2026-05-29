@@ -354,6 +354,11 @@ export function AdminSellers() {
                         )}>
                         {status === 'active' ? <ShieldOff size={14} /> : <ShieldCheck size={14} />}
                       </button>
+                      <Link to={`/seller/dashboard?asSeller=${seller.userId || seller.id}`}
+                        className="px-3 py-1.5 rounded-lg bg-accent/10 text-accent text-[9px] font-black uppercase hover:bg-accent/20 transition-all"
+                        title="Satıcı Panelini Gör">
+                        Satıcı Paneli
+                      </Link>
                       <button
                         onClick={() => setSelectedSeller(seller)}
                         className="p-1.5 rounded-lg bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/10 transition-all"
