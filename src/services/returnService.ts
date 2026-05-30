@@ -152,6 +152,18 @@ export async function getReturnRequests(sellerId: string, status?: ReturnStatus)
   }
 }
 
+export async function getUserReturnRequests(userId: string): Promise<ReturnRequest[]> {
+  try {
+    const ref = collection(db, COL);
+    const q = query(ref, where('userId', '==', userId), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as ReturnRequest));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, COL);
+    return [];
+  }
+}
+
 export async function getAllReturnRequests(status?: ReturnStatus): Promise<ReturnRequest[]> {
   try {
     const ref = collection(db, COL);

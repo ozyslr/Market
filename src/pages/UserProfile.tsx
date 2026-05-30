@@ -6,13 +6,15 @@ import {
   Store, CreditCard,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { MOCK_PRODUCTS, MOCK_SELLERS } from '@/mockData';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useFollows } from '@/context/FollowsContext';
+import { ReturnRequestModal } from '@/components/profile/ReturnRequestModal';
 import { getOrdersByUser } from '@/services/orderService';
 import { Order, OrderStatus } from '@/types/order';
 import { ProfileSettings } from '@/components/profile/ProfileSettings';
@@ -57,6 +59,17 @@ const STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
 const OrderCard: React.FC<{ order: Order; expanded?: boolean }> = ({ order, expanded = false }) => {
   const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
   const StatusIcon = cfg.icon as React.ElementType;
+  const navigate = useNavigate();
+  const { addItem } = useCart();
+  const [showReturn, setShowReturn] = useState(false);
+
+  const handleReorder = () => {
+    order.items.forEach(item => addItem(item.productId, item.quantity));
+    navigate('/cart');
+  };
+
+  // İade yalnızca teslim edilmiş siparişlerde mümkün
+  const canReturn = order.status === 'delivered';
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-brand-primary/5 hover:border-accent/20 transition-all">
@@ -99,13 +112,31 @@ const OrderCard: React.FC<{ order: Order; expanded?: boolean }> = ({ order, expa
       )}
 
       <div className="flex gap-2">
-        <button className="flex-1 py-2 bg-brand-secondary dark:bg-zinc-800 text-brand-primary dark:text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-all">
+        <button
+          onClick={() => navigate(`/orders/${order.id}`)}
+          className="flex-1 py-2 bg-brand-secondary dark:bg-zinc-800 text-brand-primary dark:text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-all"
+        >
           Takip Et
         </button>
-        <button className="flex-1 py-2 border border-brand-primary/10 dark:border-zinc-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/60 dark:text-zinc-400 hover:border-accent hover:text-accent transition-all">
+        <button
+          onClick={handleReorder}
+          className="flex-1 py-2 border border-brand-primary/10 dark:border-zinc-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/60 dark:text-zinc-400 hover:border-accent hover:text-accent transition-all"
+        >
           Tekrar Satın Al
         </button>
+        {canReturn && (
+          <button
+            onClick={() => setShowReturn(true)}
+            className="flex-1 py-2 border border-brand-primary/10 dark:border-zinc-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/60 dark:text-zinc-400 hover:border-accent hover:text-accent transition-all"
+          >
+            İade Talebi
+          </button>
+        )}
       </div>
+
+      {showReturn && (
+        <ReturnRequestModal order={order} onClose={() => setShowReturn(false)} />
+      )}
     </div>
   );
 }
