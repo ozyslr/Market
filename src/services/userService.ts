@@ -1,6 +1,9 @@
-import { collection, query, getDocs, doc, deleteDoc, updateDoc, serverTimestamp, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, query, getDoc, getDocs, doc, deleteDoc, updateDoc, serverTimestamp, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { User, UserProfile, Seller, Address } from '../types';
+
+/** Maximum number of saved addresses allowed per user. */
+export const MAX_ADDRESSES = 6;
 
 export async function getUsers() {
   try {
@@ -93,12 +96,20 @@ export async function updateProfilePhoto(userId: string, photoURL: string): Prom
 export async function addAddress(userId: string, address: Omit<Address, 'id'>): Promise<Address> {
   const newAddress: Address = { ...address, id: crypto.randomUUID() };
   try {
+    const snap = await getDoc(doc(db, 'users', userId));
+    const current = (snap.data()?.addresses as Address[] | undefined) ?? [];
+    if (current.length >= MAX_ADDRESSES) {
+      throw new Error(`MAX_ADDRESSES_REACHED:${MAX_ADDRESSES}`);
+    }
     await updateDoc(doc(db, 'users', userId), {
       addresses: arrayUnion(newAddress),
       updatedAt: serverTimestamp(),
     });
     return newAddress;
   } catch (error) {
+    if (error instanceof Error && error.message.startsWith('MAX_ADDRESSES_REACHED')) {
+      throw error;
+    }
     handleFirestoreError(error, OperationType.UPDATE, `users/${userId}`);
     throw error;
   }

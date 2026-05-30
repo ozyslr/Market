@@ -3,7 +3,7 @@ import {
   Package, Heart, MapPin, Settings, Star, ShoppingBag,
   TrendingUp, Wallet, Zap, LayoutDashboard, ArrowRight,
   Camera, Clock, Truck, CheckCircle2, XCircle, RefreshCw, RotateCcw,
-  Store, CreditCard,
+  Store, CreditCard, Plus, Minus, Trash2,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
@@ -146,6 +146,7 @@ export function UserProfilePage() {
   const { t, lang } = useLanguage();
   const { wishlist, loading: wishlistLoading } = useWishlist();
   const { followedSellers, toggleFollow, loading: followsLoading } = useFollows();
+  const { items: cartItems, updateQuantity, removeItem } = useCart();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<ProfileTab>(
@@ -220,6 +221,13 @@ export function UserProfilePage() {
   const userRole = authUser.role;
 
   const wishlistProducts = MOCK_PRODUCTS.filter(p => wishlist.includes(p.id));
+  const cartLineItems = cartItems
+    .map(it => {
+      const product = MOCK_PRODUCTS.find(p => p.id === it.productId);
+      return product ? { item: it, product } : null;
+    })
+    .filter((x): x is { item: typeof cartItems[number]; product: typeof MOCK_PRODUCTS[number] } => x !== null);
+  const cartTotal = cartLineItems.reduce((s, { item, product }) => s + product.price * item.quantity, 0);
   const filteredOrders: Order[] = statusFilter === 'all'
     ? orders
     : orders.filter(o => o.status === (statusFilter as OrderStatus));
@@ -304,6 +312,53 @@ export function UserProfilePage() {
         {/* ── OVERVIEW ─────────────────────────────────── */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+
+            {/* Sepetim — hızlı erişim mini-widget */}
+            {cartLineItems.length > 0 && (
+              <section className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-brand-primary/5">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-base font-display font-black tracking-tight text-brand-primary dark:text-white uppercase flex items-center gap-2">
+                    <ShoppingBag size={16} className="text-accent" /> {t('cart.title', 'Sepetim')}
+                  </h2>
+                  <Link to="/cart" className="text-[11px] font-black uppercase tracking-widest text-accent flex items-center gap-1 hover:gap-2 transition-all">
+                    Tümünü Gör <ArrowRight size={11} />
+                  </Link>
+                </div>
+                <div className="space-y-3">
+                  {cartLineItems.map(({ item, product }) => (
+                    <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex items-center gap-3">
+                      <Link to={`/product/${product.slug}`} className="w-14 h-14 rounded-xl bg-brand-secondary/40 dark:bg-zinc-800 overflow-hidden shrink-0">
+                        <img src={product.images[0]} alt={product.title} className="w-full h-full object-contain" loading="lazy" />
+                      </Link>
+                      <div className="flex-1 min-w-0">
+                        <Link to={`/product/${product.slug}`} className="text-xs font-bold text-brand-primary dark:text-white line-clamp-1 hover:text-accent transition-colors">{product.title}</Link>
+                        <p className="text-[11px] font-black text-accent mt-0.5">{product.price.toFixed(2)} TL</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-brand-secondary/40 dark:bg-zinc-800 rounded-lg p-1">
+                        <button onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)} disabled={item.quantity <= 1} aria-label="Azalt" className="w-6 h-6 rounded-md bg-white dark:bg-zinc-700 flex items-center justify-center disabled:opacity-30 hover:text-accent transition-colors">
+                          <Minus size={12} />
+                        </button>
+                        <span className="text-xs font-black text-brand-primary dark:text-white w-5 text-center">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)} aria-label="Arttır" className="w-6 h-6 rounded-md bg-white dark:bg-zinc-700 flex items-center justify-center hover:text-accent transition-colors">
+                          <Plus size={12} />
+                        </button>
+                      </div>
+                      <button onClick={() => removeItem(item.productId, item.variantId)} aria-label={t('cart.remove', 'Kaldır')} className="w-7 h-7 rounded-lg flex items-center justify-center text-brand-primary/30 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between mt-5 pt-4 border-t border-brand-primary/5">
+                  <span className="text-[11px] font-black uppercase tracking-widest text-brand-primary/50 dark:text-white/50">{t('cart.total', 'Toplam')}</span>
+                  <span className="text-lg font-display font-black text-brand-primary dark:text-white">{cartTotal.toFixed(2)} TL</span>
+                </div>
+                <Link to="/cart" className="mt-4 w-full py-3 bg-accent text-white rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-accent/90 transition-colors">
+                  {t('cart.checkout', 'Ödemeye Geç')} <ArrowRight size={13} />
+                </Link>
+              </section>
+            )}
+
             <section className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-brand-primary/5">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-base font-display font-black tracking-tight text-brand-primary dark:text-white uppercase">

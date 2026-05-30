@@ -6,7 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 import { createSetupIntent, setupPaymentMethod } from '../../services/oneClickCheckoutService';
 import { useLanguage } from '../../context/LanguageContext';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+const stripePromise = loadStripe(stripePublishableKey);
 
 function SetupForm({ onSuccess }: { onSuccess: () => void }) {
   const stripe = useStripe();
@@ -74,14 +75,25 @@ export function SavedPaymentMethod() {
   const { t } = useLanguage();
   const [showForm, setShowForm] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [loadingIntent, setLoadingIntent] = useState(false);
+  const [setupError, setSetupError] = useState<string | null>(null);
 
   const openSetupForm = async () => {
     if (!firebaseUser) return;
+    if (!stripePublishableKey) {
+      setSetupError(t('payment.configMissing', 'Ödeme sistemi yapılandırılmamış. Lütfen daha sonra tekrar deneyin.'));
+      return;
+    }
+    setLoadingIntent(true);
+    setSetupError(null);
     const result = await createSetupIntent(firebaseUser);
     if (result.clientSecret) {
       setClientSecret(result.clientSecret);
       setShowForm(true);
+    } else {
+      setSetupError(result.error || t('payment.setupFailed', 'Ödeme formu yüklenemedi. Lütfen tekrar deneyin.'));
     }
+    setLoadingIntent(false);
   };
 
   const hasSavedCard = !!(user?.defaultPaymentMethodId);
@@ -109,9 +121,10 @@ export function SavedPaymentMethod() {
           </div>
           <button
             onClick={openSetupForm}
-            className="text-xs text-accent hover:underline font-medium"
+            disabled={loadingIntent}
+            className="text-xs text-accent hover:underline font-medium disabled:opacity-50"
           >
-            {t('payment.change', 'Değiştir')}
+            {loadingIntent ? t('payment.loading', 'Yükleniyor...') : t('payment.change', 'Değiştir')}
           </button>
         </div>
       )}
@@ -119,11 +132,16 @@ export function SavedPaymentMethod() {
       {!hasSavedCard && !showForm && (
         <button
           onClick={openSetupForm}
-          className="w-full py-3 border-2 border-dashed border-brand-primary/20 rounded-xl text-sm text-brand-primary/60 dark:text-zinc-400 hover:border-accent hover:text-accent transition-colors flex items-center justify-center gap-2"
+          disabled={loadingIntent}
+          className="w-full py-3 border-2 border-dashed border-brand-primary/20 rounded-xl text-sm text-brand-primary/60 dark:text-zinc-400 hover:border-accent hover:text-accent transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} />
-          {t('payment.addCard', 'Kart Ekle')}
+          {loadingIntent ? t('payment.loading', 'Yükleniyor...') : t('payment.addCard', 'Kart Ekle')}
         </button>
+      )}
+
+      {setupError && (
+        <p className="text-sm text-red-500" role="alert">{setupError}</p>
       )}
 
       {showForm && clientSecret && (

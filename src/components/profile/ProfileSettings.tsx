@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, MapPin, Lock, Bell, Plus, Trash2, Edit2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Camera, MapPin, Lock, Bell, Plus, Trash2, Edit2, ChevronDown, ChevronUp, Phone, ShoppingBag, Heart, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -12,6 +12,7 @@ import {
   deleteAddress,
   setDefaultAddress,
   updateProfilePhoto,
+  MAX_ADDRESSES,
 } from '@/services/userService';
 import { uploadProfilePhoto } from '@/services/storageService';
 import { sendPasswordResetEmail, updateProfile } from 'firebase/auth';
@@ -35,6 +36,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
 
   const [displayName, setDisplayName] = useState(user?.name ?? '');
   const [country, setCountry] = useState(user?.country ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -47,6 +49,8 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
   const [addressForm, setAddressForm] = useState<AddressFormState>({ ...EMPTY_ADDRESS, setAsDefault: false });
   const [savingAddress, setSavingAddress] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [addressError, setAddressError] = useState<string | null>(null);
+  const atAddressLimit = addresses.length >= MAX_ADDRESSES;
 
   const [resetSent, setResetSent] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
@@ -78,7 +82,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
         setPhotoFile(null);
         setPhotoPreview(null);
       }
-      await updateUser(firebaseUser.uid, { name: displayName, country });
+      await updateUser(firebaseUser.uid, { name: displayName, country, phone } as any);
       await refreshUser();
     } finally {
       setSavingProfile(false);
@@ -86,6 +90,11 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
   }
 
   function startAddAddress() {
+    if (atAddressLimit) {
+      setAddressError(t('profile.address.limitReached', `En fazla ${MAX_ADDRESSES} adres kaydedebilirsiniz.`));
+      return;
+    }
+    setAddressError(null);
     setEditingAddress(null);
     setAddressForm({ ...EMPTY_ADDRESS, setAsDefault: addresses.length === 0 });
     setShowAddForm(true);
@@ -107,6 +116,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
     e.preventDefault();
     if (!firebaseUser) return;
     setSavingAddress(true);
+    setAddressError(null);
     try {
       const { setAsDefault, ...addrData } = addressForm;
       if (editingAddress) {
@@ -119,6 +129,12 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
       }
       await refreshUser();
       cancelAddressForm();
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('MAX_ADDRESSES_REACHED')) {
+        setAddressError(t('profile.address.limitReached', `En fazla ${MAX_ADDRESSES} adres kaydedebilirsiniz.`));
+      } else {
+        setAddressError(t('profile.address.saveFailed', 'Adres kaydedilemedi. Lütfen tekrar deneyin.'));
+      }
     } finally {
       setSavingAddress(false);
     }
@@ -163,8 +179,59 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
   const avatarSrc = photoPreview ?? user?.photoURL
     ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name ?? 'user')}`;
 
+  // Profil tamamlanma oranı — kullanıcıyı eksik alanları doldurmaya teşvik eder.
+  const completionChecks = [
+    { label: 'Ad Soyad', done: !!user?.name },
+    { label: 'E-posta', done: !!user?.email },
+    { label: 'Fotoğraf', done: !!user?.photoURL },
+    { label: 'Ülke', done: !!user?.country },
+    { label: 'Telefon', done: !!user?.phone },
+    { label: 'Adres', done: addresses.length > 0 },
+  ];
+  const completion = Math.round((completionChecks.filter(c => c.done).length / completionChecks.length) * 100);
+  const missing = completionChecks.filter(c => !c.done).map(c => c.label);
+
+  const stats = [
+    { icon: ShoppingBag, label: 'Sipariş', value: user?.orders?.length ?? 0, color: 'text-accent' },
+    { icon: MapPin, label: 'Adres', value: addresses.length, color: 'text-violet-600' },
+    { icon: Heart, label: 'Favori', value: user?.savedItems?.length ?? 0, color: 'text-rose-500' },
+  ];
+
   return (
     <div className="space-y-3 max-w-xl">
+
+      {/* Profil tamamlanma + istatistik özeti */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="relative shrink-0">
+            <img src={avatarSrc} className="w-14 h-14 rounded-2xl object-cover" alt={user?.name || 'Profil fotoğrafı'} loading="lazy" />
+            {completion === 100 && (
+              <CheckCircle2 size={18} className="absolute -bottom-1 -end-1 text-green-500 fill-white dark:fill-zinc-900" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm text-[#1A1033] dark:text-white truncate">{user?.name}</p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <div className="flex-1 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-accent to-yellow-500 rounded-full transition-all" style={{ width: `${completion}%` }} />
+              </div>
+              <span className="text-[11px] font-black text-[#1A1033] dark:text-white shrink-0">%{completion}</span>
+            </div>
+            {missing.length > 0 && (
+              <p className="text-[10px] text-zinc-400 mt-1 truncate">Eksik: {missing.join(', ')}</p>
+            )}
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {stats.map(s => (
+            <div key={s.label} className="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-3 text-center">
+              <s.icon size={16} className={cn('mx-auto mb-1', s.color)} />
+              <p className="text-base font-black text-[#1A1033] dark:text-white leading-none">{s.value}</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mt-1">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Profil Bilgileri */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
@@ -203,6 +270,15 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Ülke</label>
                   <input value={country} onChange={e => setCountry(e.target.value)}
                     className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Telefon</label>
+                  <div className="relative">
+                    <Phone size={14} className="absolute start-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+                    <input value={phone} onChange={e => setPhone(e.target.value)} type="tel" inputMode="tel"
+                      placeholder="+90 5xx xxx xx xx"
+                      className="w-full ps-10 pe-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white" />
+                  </div>
                 </div>
                 <button type="submit" disabled={savingProfile}
                   className="flex items-center gap-2 px-6 py-2.5 bg-[#1A1033] dark:bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50">
@@ -356,11 +432,21 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
                   )}
                 </AnimatePresence>
 
+                {addressError && (
+                  <p className="text-[11px] font-bold text-red-500" role="alert">{addressError}</p>
+                )}
+
                 {!showAddForm && (
-                  <button onClick={startAddAddress}
-                    className="w-full py-3 border-2 border-dashed border-violet-200 dark:border-violet-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-violet-500 flex items-center justify-center gap-2 hover:border-violet-400 transition-all">
-                    <Plus size={14} /> {t('profile.address.add')}
-                  </button>
+                  atAddressLimit ? (
+                    <p className="text-[10px] font-bold text-zinc-400 text-center py-2">
+                      {t('profile.address.limitReached', `En fazla ${MAX_ADDRESSES} adres kaydedebilirsiniz.`)}
+                    </p>
+                  ) : (
+                    <button onClick={startAddAddress}
+                      className="w-full py-3 border-2 border-dashed border-violet-200 dark:border-violet-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-violet-500 flex items-center justify-center gap-2 hover:border-violet-400 transition-all">
+                      <Plus size={14} /> {t('profile.address.add')}
+                    </button>
+                  )
                 )}
               </div>
             </motion.div>
