@@ -227,6 +227,10 @@ export function SellerOrdersPage() {
     const result = await getTrackingStatus(order.carrier as CargoProviderName, order.trackingNumber);
     setTrackingData(result);
     setTrackingLoading(false);
+    // Kargo teslim edildiyse sipariş durumunu otomatik güncelle (abonelik UI'yi tazeler)
+    if (result.delivered && order.status === 'shipped') {
+      updateOrderStatus(order.id, 'delivered').catch(() => {});
+    }
   };
 
   const filteredOrders = orders.filter(o => {

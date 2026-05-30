@@ -192,7 +192,16 @@ export async function updateOrderStatus(
     if (msg) {
       const order = await getOrderById(orderId);
       if (order?.userId) {
-        await createNotification(order.userId, 'order_status', msg.title, msg.message, `/orders/${orderId}`);
+        // Kargoya verildiğinde takip bilgisini bildirime ekle
+        let message = msg.message;
+        if (status === 'shipped') {
+          const carrier = (extra?.carrier as string) || order.carrier;
+          const tracking = (extra?.trackingNumber as string) || order.trackingNumber;
+          if (carrier && tracking) {
+            message = `${carrier} ile yola çıktı. Takip No: ${tracking}`;
+          }
+        }
+        await createNotification(order.userId, 'order_status', msg.title, message, `/orders/${orderId}`);
       }
     }
   } catch (error) {

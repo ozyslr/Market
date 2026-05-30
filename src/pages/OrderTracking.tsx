@@ -5,7 +5,7 @@ import {
   Phone, User, ExternalLink, ChevronRight, AlertCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getOrderById } from '@/services/orderService';
+import { getOrderById, updateOrderStatus } from '@/services/orderService';
 import { getTrackingStatus } from '@/services/cargoService';
 import type { Order } from '@/types/order';
 import type { TrackingResponse, CargoProviderName } from '@/services/cargoService';
@@ -52,7 +52,14 @@ export function OrderTracking() {
       if (o?.trackingNumber && o?.carrier) {
         setTrackingLoading(true);
         getTrackingStatus(o.carrier as CargoProviderName, o.trackingNumber)
-          .then(setTracking)
+          .then(t => {
+            setTracking(t);
+            // Kargo teslim edildiyse sipariş durumunu otomatik güncelle
+            if (t.delivered && o.status === 'shipped') {
+              updateOrderStatus(o.id, 'delivered').catch(() => {});
+              setOrder(prev => prev ? { ...prev, status: 'delivered' } : prev);
+            }
+          })
           .finally(() => setTrackingLoading(false));
       }
     });
