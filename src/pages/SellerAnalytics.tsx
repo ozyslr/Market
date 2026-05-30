@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import {
   TrendingUp, DollarSign, ShoppingCart, Activity, Users, RefreshCcw,
   Loader2, ChevronRight, Package, AlertCircle, BarChart3, ArrowUpRight,
-  ArrowDownRight, Percent,
+  ArrowDownRight, Percent, Download,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -168,6 +168,43 @@ export default function SellerAnalyticsPage() {
       .finally(() => setLoading(false));
   }, [user?.id, period]);
 
+  const exportCSV = () => {
+    if (!data) return;
+    // CSV alanlarını kaçır (virgül/tırnak/yeni satır güvenliği)
+    const esc = (v: string | number) => {
+      const s = String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines: string[] = [];
+    lines.push('Bölüm,Metrik,Değer');
+    lines.push([esc('Genel'), esc('Toplam Sipariş'), esc(data.overview.totalOrders)].join(','));
+    lines.push([esc('Genel'), esc('Toplam Gelir'), esc(data.overview.totalRevenue)].join(','));
+    lines.push([esc('Genel'), esc('Ortalama Sepet'), esc(data.overview.averageOrderValue)].join(','));
+    lines.push([esc('Genel'), esc('Tekil Müşteri'), esc(data.customerMetrics.uniqueCustomers)].join(','));
+    lines.push([esc('Genel'), esc('Tekrar Eden Müşteri'), esc(data.customerMetrics.repeatCustomers)].join(','));
+    lines.push([esc('Genel'), esc('İade Oranı (%)'), esc(data.customerMetrics.returnRate)].join(','));
+    lines.push('');
+    lines.push('En Çok Satan Ürünler');
+    lines.push(['Ürün', 'Satış Adedi', 'Gelir'].map(esc).join(','));
+    for (const p of data.topProducts) {
+      lines.push([esc(p.name), esc(p.unitsSold), esc(p.revenue)].join(','));
+    }
+    lines.push('');
+    lines.push('Günlük Gelir');
+    lines.push(['Tarih', 'Gelir'].map(esc).join(','));
+    for (const d of data.revenueOverTime) {
+      lines.push([esc(d.date), esc(d.revenue)].join(','));
+    }
+    // BOM ekle — Excel'de Türkçe karakterler doğru görünsün
+    const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `analitik-${period}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (error) {
     return (
       <div className="min-h-screen bg-[#F8F8FA] p-6 lg:p-10">
@@ -203,22 +240,34 @@ export default function SellerAnalyticsPage() {
             </p>
           </div>
 
-          {/* Period selector */}
-          <div className="flex items-center gap-1 bg-white rounded-xl border border-[#1A1033]/5 p-1">
-            {(Object.entries(PERIOD_LABELS) as [Period, string][]).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setPeriod(key)}
-                className={cn(
-                  'px-3.5 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all',
-                  period === key
-                    ? 'bg-[#1A1033] text-white shadow-sm'
-                    : 'text-[#1A1033]/40 hover:text-[#1A1033]/70',
-                )}
-              >
-                {label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            {/* Period selector */}
+            <div className="flex items-center gap-1 bg-white rounded-xl border border-[#1A1033]/5 p-1">
+              {(Object.entries(PERIOD_LABELS) as [Period, string][]).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setPeriod(key)}
+                  className={cn(
+                    'px-3.5 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all',
+                    period === key
+                      ? 'bg-[#1A1033] text-white shadow-sm'
+                      : 'text-[#1A1033]/40 hover:text-[#1A1033]/70',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* CSV export */}
+            <button
+              onClick={exportCSV}
+              disabled={!data}
+              className="flex items-center gap-2 px-3.5 py-2.5 bg-white rounded-xl border border-[#1A1033]/5 text-[11px] font-black uppercase tracking-wider text-[#1A1033]/60 hover:text-[#1A1033] hover:border-[#1A1033]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              title="CSV olarak dışa aktar"
+            >
+              <Download size={14} /> CSV
+            </button>
           </div>
         </div>
 
