@@ -53,8 +53,8 @@ export function InvoiceModal({ order, onClose }: InvoiceModalProps) {
             {/* Logo + Invoice Number */}
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-3xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
-                  BENIM OLAN
+                <h1 className="text-3xl font-bold tracking-tight text-[#1A1033]">
+                  Benim Olan
                 </h1>
                 <p className="text-[10px] font-bold text-[#1A1033]/40 uppercase tracking-widest mt-0.5">
                   Global Marketplace

@@ -100,11 +100,8 @@ export function Navbar() {
           </button>
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group shrink-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent rounded-xl flex items-center justify-center text-white rotate-3 group-hover:rotate-0 transition-transform shadow-lg shadow-accent/20">
-              <Zap size={20} className="sm:size-[24px]" fill="currentColor" />
-            </div>
-            <span className="font-display font-bold text-xl sm:text-3xl tracking-tighter uppercase italic text-brand-primary dark:text-white">BENIM OLAN</span>
+          <Link to="/" className="flex items-center group shrink-0">
+            <span className="font-bold text-xl sm:text-3xl tracking-tight text-brand-primary dark:text-white">Benim Olan</span>
           </Link>
 
           {/* Mobile Header Icons (Right side) */}

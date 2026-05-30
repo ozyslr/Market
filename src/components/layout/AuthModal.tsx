@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Zap, User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { X, User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
@@ -79,10 +79,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <X size={16} />
               </button>
               <div className="flex items-center gap-3 mb-4 relative z-10">
-                <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg">
-                  <Zap size={20} fill="currentColor" />
-                </div>
-                <span className="font-display font-black text-xl uppercase italic tracking-tighter">BENIM OLAN</span>
+                <span className="font-bold text-xl tracking-tight text-current">Benim Olan</span>
               </div>
               <div className="flex gap-1 bg-white/10 p-1 rounded-2xl relative z-10">
                 <button

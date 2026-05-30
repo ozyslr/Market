@@ -52,7 +52,7 @@ export function Footer() {
               <div className="w-10 h-10 bg-mercora-red rounded-xl flex items-center justify-center text-white scale-100 group-hover:scale-110 transition-transform shadow-lg">
                 <ShoppingBagIcon />
               </div>
-              <span className="font-display font-black text-3xl tracking-tighter uppercase italic text-brand-primary dark:text-white">TrendAl</span>
+              <span className="font-bold text-2xl tracking-tight text-brand-primary dark:text-white">Benim Olan</span>
             </Link>
             <p className="text-xs text-brand-primary/50 dark:text-white/50 leading-relaxed font-medium mb-6 pe-8">
               Türkiye'nin yenilikçi, hızlı ve her zaman avantajlı e-ticaret platformu. Aradığın her şey burada.
@@ -77,12 +77,12 @@ export function Footer() {
 
           {[
             {
-              title: 'TrendAl',
+              title: 'Benim Olan',
               links: ['Biz Kimiz', 'Kariyer', 'İletişim', 'Sürdürülebilirlik', 'Güvenli Alışveriş']
             },
             {
               title: 'Hakkımızda',
-              links: ['Müşteri Hizmetleri', 'TrendAl Blog', 'Yatırımcı İlişkileri', 'Kampanyalar', 'Hediye Kartı']
+              links: ['Müşteri Hizmetleri', 'Benim Olan Blog', 'Yatırımcı İlişkileri', 'Kampanyalar', 'Hediye Kartı']
             },
             {
               title: 'Yardım',
@@ -90,7 +90,7 @@ export function Footer() {
             },
             {
               title: 'Satış Yap',
-              links: ['Satıcı Platformu', 'TrendAl Akademi', 'Reklam Ver', 'İş Ortaklığı', 'Seller Center']
+              links: ['Satıcı Platformu', 'Benim Olan Akademi', 'Reklam Ver', 'İş Ortaklığı', 'Seller Center']
             }
           ].map((section, i) => (
             <div key={i}>
@@ -132,8 +132,8 @@ export function Footer() {
         </div>
         
         <div className="mt-8 text-center text-[10px] text-brand-primary/40 dark:text-white/40 font-medium pb-20 md:pb-0">
-          <p>© 2026 TrendAl E-Ticaret A.Ş. Her Hakkı Saklıdır.</p>
-          <p className="mt-1">Kayıtlı Elektronik Posta Adresi: trendal@hs01.kep.tr | Mersis No: 0123456789000001</p>
+          <p>© 2026 Benim Olan E-Ticaret A.Ş. Her Hakkı Saklıdır.</p>
+          <p className="mt-1">Kayıtlı Elektronik Posta Adresi: benimolan@hs01.kep.tr | Mersis No: 0123456789000001</p>
         </div>
       </div>
     </footer>

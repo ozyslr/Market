@@ -122,9 +122,9 @@ export function CartPage() {
           {/* Main Cart Section */}
           <div className="flex-1 space-y-6 lg:space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 lg:mb-8">
-              <h1 className="text-3xl lg:text-4xl font-display font-black tracking-tighter text-brand-primary uppercase italic leading-none">Shopping Global <br className="hidden md:block" /> <span className="text-accent underline decoration-brand-primary decoration-4 underline-offset-4">Artifacts</span></h1>
+              <h1 className="text-3xl lg:text-4xl font-bold tracking-tight text-brand-primary leading-none">{t('cart.title', 'Sepetim')}</h1>
               <span className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-white rounded-full border border-brand-primary/5 shadow-sm w-fit">
-                {items.length} Items in Bay
+                {items.length} {t('cart.items_count', 'Ürün')}
               </span>
             </div>
 

@@ -231,7 +231,7 @@ export function AdminDashboard() {
                 </div>
              </div>
              <div>
-                <h2 className="text-xl lg:text-2xl font-display font-black text-white italic tracking-tighter leading-none">TrendAl</h2>
+                <h2 className="text-xl lg:text-2xl font-bold text-white tracking-tight leading-none">Benim Olan</h2>
                 <p className="text-[8px] lg:text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mt-1">Yönetici Modülü</p>
              </div>
           </div>
