@@ -140,9 +140,14 @@ function getOrInitMessaging(): Messaging | null {
  */
 export async function queuePushNotification(userId: string, title: string, body: string, url?: string): Promise<void> {
   try {
+    // /api/send-push artık kimlik doğrulaması gerektiriyor — Firebase ID token ekle
+    const { getAuth } = await import('firebase/auth');
+    const current = getAuth().currentUser;
+    if (!current) return; // imzasız istek gönderme
+    const token = await current.getIdToken();
     await fetch('/api/send-push', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ userId, title, body, url }),
     });
   } catch { /* non-blocking */ }

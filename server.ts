@@ -57,7 +57,9 @@ async function startServer() {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'",
+        scriptSrc: ["'self'", "'unsafe-inline'", // inline gerekli: GTM/analytics snippet'leri
+          // 'unsafe-eval' yalnızca geliştirmede (Vite HMR) — production'da kaldırıldı (XSS sertleştirme)
+          ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-eval'"] : []),
           "https://js.stripe.com",
           "https://*.iyzipay.com",
           "https://www.googletagmanager.com",
@@ -141,14 +143,58 @@ async function startServer() {
     try {
       const decoded = await adminAuth.verifyIdToken(token);
       req.uid = decoded.uid;
+      req.userEmail = decoded.email;
       next();
     } catch {
       res.status(401).json({ error: 'Invalid token' });
     }
   }
 
+  // ─── Admin Role Guard ───────────────────────────────────────────────────────
+  // Firebase token doğrular VE Firestore'da role == 'admin' olduğunu kontrol eder.
+  async function verifyAdmin(req: any, res: any, next: any) {
+    const header = (req.headers.authorization as string) || '';
+    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    if (!adminAuth || !adminDb) return res.status(503).json({ error: 'Auth not configured' });
+    try {
+      const decoded = await adminAuth.verifyIdToken(token);
+      const userSnap = await adminDb.collection('users').doc(decoded.uid).get();
+      const role = userSnap.data()?.role;
+      if (role !== 'admin' && decoded.email !== 'ozyslr@gmail.com') {
+        return res.status(403).json({ error: 'Forbidden — admin access required' });
+      }
+      req.uid = decoded.uid;
+      next();
+    } catch {
+      res.status(401).json({ error: 'Invalid token' });
+    }
+  }
+
+  // ─── Cron Secret Guard ──────────────────────────────────────────────────────
+  // Otomatik/zamanlanmış endpoint'ler için. Harici cron, şu başlığı göndermeli:
+  //   X-Cron-Secret: <CRON_SECRET>
+  function verifyCronSecret(req: any, res: any, next: any) {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(503).json({ error: 'CRON_SECRET not configured' });
+    const provided = (req.headers['x-cron-secret'] as string) || '';
+    if (provided.length !== secret.length || provided !== secret) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    next();
+  }
+
+  // ─── Lightweight Input Validators ────────────────────────────────────────────
+  const isFiniteNumber = (v: any): boolean => typeof v === 'number' && Number.isFinite(v);
+  const isNonEmptyString = (v: any, max = 5000): boolean =>
+    typeof v === 'string' && v.length > 0 && v.length <= max;
+  // Aynı kullanıcının aynı ürün setini içeren isteğinden kararlı bir imza üretir
+  // (dakika çözünürlüğünde) — hızlı çift tıklamada mükerrer ödeme/sipariş önler.
+  const itemsSignature = (items: any[]): string =>
+    items.map((i) => `${i.productId}:${i.variantId || ''}:${i.quantity}`).sort().join('|');
+
   // ─── Abandoned Cart Email ──────────────────────────────────────────────────
-  app.post("/api/abandoned-cart/check", async (req, res) => {
+  app.post("/api/abandoned-cart/check", verifyCronSecret, async (req, res) => {
     try {
       if (!adminDb) {
         return res.status(503).json({ error: 'Firebase Admin not configured' });
@@ -369,6 +415,17 @@ async function startServer() {
   app.post("/api/create-payment-intent", async (req, res) => {
     const { amount, currency = "gbp", orderId } = req.body;
 
+    // ── Input validation ──────────────────────────────────────────────
+    if (!isFiniteNumber(amount) || amount <= 0 || amount > 1_000_000) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
+    if (typeof currency !== 'string' || currency.length > 5) {
+      return res.status(400).json({ error: 'Invalid currency' });
+    }
+    if (orderId !== undefined && !isNonEmptyString(orderId, 128)) {
+      return res.status(400).json({ error: 'Invalid orderId' });
+    }
+
     const stripeKey = process.env.STRIPE_SECRET_KEY;
 
     if (!stripeKey || stripeKey === "YOUR_STRIPE_SECRET_KEY") {
@@ -385,7 +442,7 @@ async function startServer() {
         currency,
         automatic_payment_methods: { enabled: true },
         metadata: { orderId: orderId || '' },
-      });
+      }, orderId ? { idempotencyKey: `pi_${orderId}` } : undefined);
 
       res.json({ clientSecret: paymentIntent.client_secret });
     } catch (error: any) {
@@ -458,7 +515,19 @@ async function startServer() {
       items: Array<{ productId: string; variantId?: string; quantity: number }>;
       currency: string;
     };
-    if (!items?.length) return res.status(400).json({ error: 'No items provided' });
+    if (!Array.isArray(items) || !items.length || items.length > 100) {
+      return res.status(400).json({ error: 'No items provided' });
+    }
+    for (const it of items) {
+      if (!isNonEmptyString(it?.productId, 128) ||
+          !isFiniteNumber(it?.quantity) || it.quantity <= 0 || it.quantity > 1000 ||
+          (it.variantId !== undefined && !isNonEmptyString(it.variantId, 128))) {
+        return res.status(400).json({ error: 'Invalid item in request' });
+      }
+    }
+    if (typeof currency !== 'string' || currency.length > 5) {
+      return res.status(400).json({ error: 'Invalid currency' });
+    }
 
     try {
       const uid: string = req.uid;
@@ -504,21 +573,60 @@ async function startServer() {
       const tax = parseFloat((subtotal * 0.2).toFixed(2));
       const total = parseFloat((subtotal + shipping + tax).toFixed(2));
 
-      // ── Charge off-session ────────────────────────────────────────────
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(total * 100),
-        currency,
-        customer: stripeCustomerId,
-        payment_method: defaultPaymentMethodId,
-        confirm: true,
-        off_session: true,
-      });
+      // ── Reserve stock atomically BEFORE charging (prevents overselling) ──
+      try {
+        await adminDb.runTransaction(async (tx) => {
+          const refs = items.map((it) => adminDb!.collection('products').doc(it.productId));
+          const snaps = await Promise.all(refs.map((r) => tx.get(r)));
+          for (let i = 0; i < items.length; i++) {
+            const available = snaps[i].data()?.stock ?? 0;
+            if (available < items[i].quantity) throw new Error(`INSUFFICIENT_STOCK:${items[i].productId}`);
+          }
+          for (let i = 0; i < items.length; i++) {
+            tx.update(refs[i], { stock: FieldValue.increment(-items[i].quantity) });
+          }
+        });
+      } catch (e: any) {
+        if (String(e?.message).startsWith('INSUFFICIENT_STOCK')) {
+          return res.status(409).json({ status: 'failed', errorMessage: 'Yetersiz stok', detail: e.message });
+        }
+        throw e;
+      }
+
+      // ── Release reserved stock if the charge does not complete ──────────
+      const releaseStock = async () => {
+        try {
+          const batch = adminDb!.batch();
+          for (const it of items) {
+            batch.update(adminDb!.collection('products').doc(it.productId), { stock: FieldValue.increment(it.quantity) });
+          }
+          await batch.commit();
+        } catch (e) { console.warn('Stock release failed:', e); }
+      };
+
+      // ── Charge off-session (idempotent on rapid double-submit) ──────────
+      let paymentIntent: Stripe.PaymentIntent;
+      try {
+        paymentIntent = await stripe.paymentIntents.create({
+          amount: Math.round(total * 100),
+          currency,
+          customer: stripeCustomerId,
+          payment_method: defaultPaymentMethodId,
+          confirm: true,
+          off_session: true,
+        }, { idempotencyKey: `oc:${uid}:${itemsSignature(items)}:${Math.floor(Date.now() / 60000)}` });
+      } catch (chargeErr) {
+        await releaseStock();
+        throw chargeErr;
+      }
 
       if (paymentIntent.status === 'requires_action') {
+        await releaseStock();
         return res.json({ status: 'requires_action', clientSecret: paymentIntent.client_secret });
       }
 
       if (paymentIntent.status !== 'succeeded') {
+        await releaseStock();
         return res.json({ status: 'failed', errorMessage: 'Payment did not succeed' });
       }
 
@@ -543,12 +651,7 @@ async function startServer() {
         updatedAt: new Date().toISOString(),
       });
 
-      // ── Decrease stock ────────────────────────────────────────────────
-      for (const item of items) {
-        await adminDb.collection('products').doc(item.productId).update({
-          stock: FieldValue.increment(-item.quantity),
-        });
-      }
+      // (Stok zaten şarjdan önce atomik olarak rezerve edildi — burada tekrar düşülmez)
 
       // ── Clear cart ────────────────────────────────────────────────────
       await adminDb.collection('carts').doc(uid).delete();
@@ -609,20 +712,29 @@ async function startServer() {
               updatedAt: new Date().toISOString(),
             });
 
-            // On success, decrease stock and send confirmation email
+            // On success, decrease stock (atomik + idempotent) and send email
             if (result.paymentStatus === 'SUCCESS') {
-              const orderSnap = await orderRef.get();
-              const orderData = orderSnap.data();
-              if (orderData?.items) {
-                for (const item of orderData.items) {
-                  try {
-                    await adminDb.collection('products').doc(item.productId).update({
-                      stock: FieldValue.increment(-item.quantity),
-                    });
-                  } catch (e) {
-                    console.warn(`Failed to decrease stock for ${item.productId}:`, e);
-                  }
-                }
+              let orderData: any;
+              try {
+                await adminDb.runTransaction(async (tx) => {
+                  const oSnap = await tx.get(orderRef);
+                  const oData = oSnap.data();
+                  orderData = oData;
+                  // stockDecremented bayrağı set ise callback tekrar geldi → atla
+                  if (!oData || oData.stockDecremented) return;
+                  const orderItems = oData.items || [];
+                  const refs = orderItems.map((it: any) => adminDb!.collection('products').doc(it.productId));
+                  const snaps = await Promise.all(refs.map((r: any) => tx.get(r)));
+                  orderItems.forEach((it: any, idx: number) => {
+                    const available = snaps[idx].data()?.stock ?? 0;
+                    tx.update(refs[idx], { stock: FieldValue.increment(-Math.min(available, it.quantity || 0)) });
+                  });
+                  tx.update(orderRef, { stockDecremented: true });
+                });
+              } catch (e) {
+                console.warn('iyzico stok düşürme transaction hatası:', e);
+                const oSnap = await orderRef.get();
+                orderData = oSnap.data();
               }
               // Send confirmation email via Firebase Trigger Email
               if (orderData?.userEmail) {
@@ -984,10 +1096,15 @@ async function startServer() {
   });
 
   // POST /api/send-push — Send push notification to a user
-  app.post('/api/send-push', async (req, res) => {
+  app.post('/api/send-push', verifyFirebaseToken, async (req: any, res) => {
     try {
       const { userId, title, body, url } = req.body;
-      if (!userId || !title || !body) return res.status(400).json({ error: 'userId, title, body required' });
+      if (!isNonEmptyString(userId, 128) || !isNonEmptyString(title, 200) || !isNonEmptyString(body, 1000)) {
+        return res.status(400).json({ error: 'userId, title, body required (valid strings)' });
+      }
+      if (url !== undefined && !isNonEmptyString(url, 2000)) {
+        return res.status(400).json({ error: 'invalid url' });
+      }
 
       const tokenDoc = await adminDb.collection('pushTokens').doc(userId).get();
       if (!tokenDoc.exists) return res.json({ sent: false, reason: 'No push token' });
@@ -1025,7 +1142,7 @@ async function startServer() {
   // ─── Scheduled Auto-Payout Endpoint ───────────────────────────────────────
   // POST /api/process-scheduled-payouts
   // Called by external cron (e.g. cron-job.org) every Monday at 3 AM
-  app.post('/api/process-scheduled-payouts', async (_req, res) => {
+  app.post('/api/process-scheduled-payouts', verifyCronSecret, async (_req, res) => {
     try {
       const schedulesSnap = await adminDb.collection('payoutSchedules').get();
       const schedules = new Map<string, any>();
