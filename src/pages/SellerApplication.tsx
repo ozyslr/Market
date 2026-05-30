@@ -5,6 +5,10 @@ import { Store, CheckCircle, Loader2, ArrowLeft, Upload, FileText, Globe, Phone,
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { submitApplication } from '@/services/sellerApplicationService';
+import { uploadImage } from '@/lib/storage';
+
+const MAX_DOC_BYTES = 5 * 1024 * 1024; // 5 MB
+const ACCEPTED_DOC_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 
 const CATEGORIES = [
   'Elektronik', 'Moda', 'Ev & Yaşam', 'Spor & Outdoor',
@@ -32,6 +36,9 @@ export function SellerApplication() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [docs, setDocs] = useState<{ name: string; url: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [docError, setDocError] = useState('');
 
   const [form, setForm] = useState({
     storeName: '',
@@ -46,6 +53,32 @@ export function SellerApplication() {
   });
 
   const set = (k: keyof typeof form, v: any) => setForm(p => ({ ...p, [k]: v }));
+
+  const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file
+    if (!file || !user) return;
+    setDocError('');
+    if (!ACCEPTED_DOC_TYPES.includes(file.type)) {
+      setDocError('Yalnızca JPG, PNG, WEBP veya PDF yükleyebilirsiniz.');
+      return;
+    }
+    if (file.size > MAX_DOC_BYTES) {
+      setDocError('Dosya boyutu en fazla 5 MB olabilir.');
+      return;
+    }
+    setUploading(true);
+    try {
+      const url = await uploadImage(file, `kyc/${user.id}`);
+      setDocs(prev => [...prev, { name: file.name, url }]);
+    } catch {
+      setDocError('Belge yüklenemedi. Lütfen tekrar deneyin.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeDoc = (url: string) => setDocs(prev => prev.filter(d => d.url !== url));
   const toggleCategory = (cat: string) => {
     setForm(p => ({
       ...p,
@@ -66,6 +99,7 @@ export function SellerApplication() {
         ...form,
         slug: form.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         socialMedia: [],
+        kycDocuments: docs,
       });
       setSubmitted(true);
     } catch {
@@ -200,10 +234,51 @@ export function SellerApplication() {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-brand-primary/60 mb-1.5">
+                  KYC Belgeleri (kimlik / vergi levhası — opsiyonel)
+                </label>
+                <label className={cn(
+                  'flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl border border-dashed cursor-pointer transition-colors text-sm font-bold',
+                  uploading
+                    ? 'border-brand-primary/10 text-brand-primary/30 cursor-wait'
+                    : 'border-violet-300 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20'
+                )}>
+                  {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                  {uploading ? 'Yükleniyor…' : 'Belge Yükle (JPG, PNG, PDF · max 5 MB)'}
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp,.pdf"
+                    onChange={handleDocUpload}
+                    disabled={uploading}
+                    className="hidden"
+                  />
+                </label>
+                {docError && <p className="text-xs font-bold text-red-500 mt-1.5">{docError}</p>}
+                {docs.length > 0 && (
+                  <ul className="mt-2 space-y-1.5">
+                    {docs.map(d => (
+                      <li key={d.url} className="flex items-center gap-2 text-xs bg-zinc-50 dark:bg-zinc-800 rounded-lg px-3 py-2">
+                        <FileText size={14} className="text-violet-600 shrink-0" />
+                        <span className="flex-1 truncate font-bold text-brand-primary dark:text-white">{d.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeDoc(d.url)}
+                          className="text-brand-primary/40 hover:text-red-500 font-black"
+                          aria-label="Belgeyi kaldır"
+                        >
+                          ✕
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
               <div className="pt-4">
                 <button
                   onClick={() => setStep(2)}
-                  disabled={!form.storeName.trim() || !form.phone.trim()}
+                  disabled={!form.storeName.trim() || !form.phone.trim() || uploading}
                   className="w-full py-3.5 bg-violet-600 text-white font-black text-sm rounded-xl hover:bg-violet-700 transition-colors uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   Devam <ChevronRight size={16} />

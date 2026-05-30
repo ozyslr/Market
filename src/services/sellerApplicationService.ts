@@ -13,6 +13,8 @@ export interface SellerApplication {
   origin: string;
   taxId?: string;
   businessRegistration?: string;
+  /** KYC belgeleri (kimlik, vergi levhası vb.) — Firebase Storage URL'leri */
+  kycDocuments?: { name: string; url: string }[];
   website?: string;
   socialMedia?: { platform: string; url: string }[];
   productCategories: string[];

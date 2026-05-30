@@ -470,6 +470,22 @@ export function AdminSellers() {
                       <td className="py-3">
                         <span className="text-xs text-[#1A1033]">{app.userName}</span>
                         <span className="text-[10px] text-[#1A1033]/40 block">{app.userEmail}</span>
+                        {app.kycDocuments && app.kycDocuments.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {app.kycDocuments.map((d, i) => (
+                              <a
+                                key={d.url}
+                                href={d.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-1.5 py-0.5 rounded bg-violet-50 text-[9px] font-bold text-violet-600 hover:bg-violet-100 transition-colors"
+                                title={d.name}
+                              >
+                                KYC {i + 1}
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3">
                         <div className="flex flex-wrap gap-1">
