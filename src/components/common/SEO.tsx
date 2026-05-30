@@ -13,12 +13,13 @@ interface SEOProps {
   type?: string;
   image?: string;
   name?: string;
-  jsonLd?: Record<string, unknown>;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   /** Active language code (en, tr, de, ar) — enables hreflang alternates */
   lang?: string;
 }
 
 const LANGUAGES = ['tr', 'en', 'de', 'ar'];
+const DEFAULT_DESCRIPTION = "Benim Olan'da binlerce ürünü keşfedin. Moda, elektronik, ev & yaşam ve daha fazlası. Güvenli alışveriş, hızlı teslimat.";
 
 export const SEO: React.FC<SEOProps> = ({
   title,
@@ -31,7 +32,7 @@ export const SEO: React.FC<SEOProps> = ({
   lang = 'tr',
 }) => {
   const fullTitle = title ? `${title} | ${name}` : name;
-  const siteDescription = description || 'Global Artisan Marketplace';
+  const siteDescription = description || DEFAULT_DESCRIPTION;
   const canonicalUrl = canonical
     ? `https://benimolan.com${canonical.startsWith('/') ? canonical : `/${canonical}`}`
     : typeof window !== 'undefined'
@@ -79,8 +80,10 @@ export const SEO: React.FC<SEOProps> = ({
       <JsonLd data={organizationSchema()} />
       <JsonLd data={websiteSchema('https://benimolan.com/search?q={search_term_string}')} />
 
-      {/* Page-specific schema */}
-      {jsonLd && <JsonLd data={jsonLd} />}
+      {/* Page-specific schema(s) */}
+      {Array.isArray(jsonLd)
+        ? jsonLd.map((schema, i) => <JsonLd key={i} data={schema} />)
+        : jsonLd && <JsonLd data={jsonLd} />}
     </>
   );
 };

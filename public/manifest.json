@@ -1,7 +1,7 @@
 {
   "name": "Benim Olan — Alışverişin Yeni Adresi",
   "short_name": "Benim Olan",
-  "description": "Global Artisan Marketplace — El işçiliği ve özel tasarım ürünler",
+  "description": "Benim Olan'da binlerce ürünü keşfedin. Moda, elektronik, ev & yaşam ve daha fazlası. Güvenli alışveriş, hızlı teslimat.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

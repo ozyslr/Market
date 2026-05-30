@@ -9,7 +9,7 @@ export function organizationSchema() {
     name: 'Benim Olan',
     url: 'https://benimolan.com',
     logo: 'https://benimolan.com/logo.png',
-    description: 'Global Artisan Marketplace — El işçiliği ve özel tasarım ürünler',
+    description: "Benim Olan'da binlerce ürünü keşfedin. Moda, elektronik, ev & yaşam ve daha fazlası. Güvenli alışveriş, hızlı teslimat.",
     sameAs: [
       'https://facebook.com/benimolan',
       'https://instagram.com/benimolan',
@@ -37,7 +37,7 @@ export function websiteSchema(searchActionUrl?: string) {
     '@type': 'WebSite',
     name: 'Benim Olan',
     url: 'https://benimolan.com',
-    description: 'Global Artisan Marketplace — El işçiliği ve özel tasarım ürünler',
+    description: "Benim Olan'da binlerce ürünü keşfedin. Moda, elektronik, ev & yaşam ve daha fazlası. Güvenli alışveriş, hızlı teslimat.",
     inLanguage: ['tr', 'en', 'de', 'ar'],
   };
 

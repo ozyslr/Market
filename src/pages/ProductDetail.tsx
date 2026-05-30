@@ -303,19 +303,26 @@ export function ProductDetail() {
         image={product.images[0]}
         type="product"
         lang={lang}
-        jsonLd={productSchema({
-          name: product.title,
-          description: product.description,
-          image: product.images,
-          sku: product.id,
-          brand: product.brand || undefined,
-          price: product.price,
-          currency: product.currency ?? 'TRY',
-          availability: product.stock > 0 ? 'InStock' : 'OutOfStock',
-          ratingValue: product.rating || undefined,
-          reviewCount: product.reviewsCount || undefined,
-          url: `/product/${product.slug}`,
-        })}
+        jsonLd={[
+          productSchema({
+            name: product.title,
+            description: product.description,
+            image: product.images,
+            sku: product.id,
+            brand: product.brand || undefined,
+            price: product.price,
+            currency: product.currency ?? 'TRY',
+            availability: product.stock > 0 ? 'InStock' : 'OutOfStock',
+            ratingValue: product.rating || undefined,
+            reviewCount: product.reviewsCount || undefined,
+            url: `/product/${product.slug}`,
+          }),
+          breadcrumbSchema([
+            { name: 'Ana Sayfa', url: '/' },
+            { name: product.categoryId, url: `/search?category=${product.categoryId}` },
+            { name: product.title, url: `/product/${product.slug}` },
+          ]),
+        ]}
       />
       <div className="max-w-[1440px] mx-auto px-4 md:px-8">
 
