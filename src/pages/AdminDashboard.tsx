@@ -35,6 +35,7 @@ import { AdminReviews } from './AdminReviews';
 import { AdminSettings } from './AdminSettings';
 import { AdminFinance } from './AdminFinance';
 import { AdminCampaigns } from './AdminCampaigns';
+import { AdminDeals } from './AdminDeals';
 import { AdminTiers } from './AdminTiers';
 import { AdminReports } from './AdminReports';
 import { AdminAnalytics } from './AdminAnalytics';
@@ -249,6 +250,7 @@ export function AdminDashboard() {
           <div className="my-4 h-px bg-white/5 mx-6" />
           <SidebarItem id="returns" label="İade Talepleri" icon={RefreshCcw} active={activeTab === 'returns'} onClick={setActiveTab} />
           <SidebarItem id="campaigns" label="Kampanyalar" icon={Megaphone} active={activeTab === 'campaigns'} onClick={setActiveTab} />
+          <SidebarItem id="deals" label="Fırsatı Yakala" icon={Zap} active={activeTab === 'deals'} onClick={setActiveTab} />
           <SidebarItem id="coupons" label="Kupon & İndirim" icon={Tag} active={activeTab === 'coupons'} onClick={setActiveTab} />
           <SidebarItem id="tiers" label="Satıcı Kademeleri" icon={Star} active={activeTab === 'tiers'} onClick={setActiveTab} />
           <SidebarItem id="cms" label="İçerik Stüdyosu" icon={Newspaper} active={activeTab === 'cms'} onClick={setActiveTab} />
@@ -351,6 +353,8 @@ export function AdminDashboard() {
               <AdminFinance />
            ) : activeTab === 'campaigns' ? (
               <AdminCampaigns />
+           ) : activeTab === 'deals' ? (
+              <AdminDeals />
            ) : activeTab === 'tiers' ? (
               <AdminTiers />
            ) : activeTab === 'reports' ? (

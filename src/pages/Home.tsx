@@ -14,11 +14,12 @@ import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/context/LanguageContext';
-import { Product, Category, HomepageSection } from '@/types';
+import { Product, Category, HomepageSection, FeaturedDeal } from '@/types';
 import { SEO } from '@/components/common/SEO';
 import { getProducts, getCategories } from '@/services/productService';
 import { getHomepageSections, DEFAULT_SECTIONS } from '@/services/cmsService';
 import { getFeaturedProducts } from '@/services/featuredService';
+import { getActiveDeals } from '@/services/dealService';
 import { useAuth } from '@/context/AuthContext';
 import { getRecentViewedIds } from '@/services/behaviorService';
 import { getAllRecommendations, RecommendationGroup } from '@/services/recommendationService';
@@ -135,6 +136,11 @@ export function Home() {
   const [recentlyViewed, setRecentlyViewed] = useState<typeof MOCK_PRODUCTS>([]);
   const [recommendationGroups, setRecommendationGroups] = useState<RecommendationGroup[]>([]);
   const [recsLoading, setRecsLoading] = useState(false);
+  const [deals, setDeals] = useState<FeaturedDeal[]>([]);
+
+  useEffect(() => {
+    getActiveDeals().then(setDeals).catch(() => {});
+  }, []);
 
   useEffect(() => {
     getFeaturedProducts().then(prods => {
@@ -323,25 +329,48 @@ export function Home() {
            
            {/* Deals section takes 25% on large screens */}
            <div className="hidden lg:flex w-full lg:w-1/4 flex-col gap-4">
-              <div className="bg-[#F9423A] rounded-[2rem] p-6 text-white h-full flex flex-col items-center justify-center text-center relative overflow-hidden group">
-                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center mix-blend-overlay opacity-20 group-hover:scale-110 transition-transform duration-700"></div>
-                 <h3 className="text-3xl font-display font-black uppercase italic mb-2 relative z-10">FIRSATI YAKALA</h3>
-                 <CountdownTimer hours={8} minutes={15} seconds={40} />
-                 
-                 <div className="mt-8 bg-white text-brand-primary p-4 rounded-2xl w-full text-start relative z-10 shadow-2xl group-hover:-translate-y-2 transition-transform">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[#F9423A] mb-1 block">Sınırlı Stok</span>
-                    <h4 className="text-sm font-bold truncate mb-2">Apple AirPods Pro 2</h4>
-                    <div className="flex items-end justify-between">
-                       <div>
-                          <span className="text-xs line-through text-brand-primary/40 block">₺8.999</span>
-                          <span className="text-lg font-black text-[#F9423A]">₺6.499</span>
-                       </div>
-                       <button className="w-8 h-8 bg-brand-primary text-white rounded-lg flex items-center justify-center hover:bg-accent transition-colors">
-                          <ChevronRight size={16} />
-                       </button>
+              {(() => {
+                 const heroDeal = deals[0];
+                 return (
+                    <div className="bg-[#F9423A] rounded-[2rem] p-6 text-white h-full flex flex-col items-center justify-center text-center relative overflow-hidden group">
+                       <div
+                          className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-20 group-hover:scale-110 transition-transform duration-700"
+                          style={{ backgroundImage: `url('${heroDeal?.image || 'https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&q=80&w=400'}')` }}
+                       ></div>
+                       <h3 className="text-3xl font-display font-black uppercase italic mb-2 relative z-10">FIRSATI YAKALA</h3>
+                       <CountdownTimer endTime={heroDeal?.endsAt || undefined} hours={8} minutes={15} seconds={40} />
+
+                       {heroDeal ? (
+                          <Link
+                             to={`/product/${heroDeal.productId}`}
+                             className="mt-8 bg-white text-brand-primary p-4 rounded-2xl w-full text-start relative z-10 shadow-2xl group-hover:-translate-y-2 transition-transform block"
+                          >
+                             {heroDeal.badge && (
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[#F9423A] mb-1 block">{heroDeal.badge}</span>
+                             )}
+                             <h4 className="text-sm font-bold truncate mb-2">{heroDeal.title}</h4>
+                             <div className="flex items-end justify-between">
+                                <div>
+                                   {heroDeal.oldPrice != null && (
+                                      <span className="text-xs line-through text-brand-primary/40 block">₺{heroDeal.oldPrice.toLocaleString('tr-TR')}</span>
+                                   )}
+                                   {heroDeal.price != null && (
+                                      <span className="text-lg font-black text-[#F9423A]">₺{heroDeal.price.toLocaleString('tr-TR')}</span>
+                                   )}
+                                </div>
+                                <span className="w-8 h-8 bg-brand-primary text-white rounded-lg flex items-center justify-center group-hover:bg-accent transition-colors">
+                                   <ChevronRight size={16} />
+                                </span>
+                             </div>
+                          </Link>
+                       ) : (
+                          <div className="mt-8 bg-white/15 backdrop-blur-sm p-4 rounded-2xl w-full text-center relative z-10">
+                             <p className="text-xs font-bold">Yakında yeni fırsatlar!</p>
+                          </div>
+                       )}
                     </div>
-                 </div>
-              </div>
+                 );
+              })()}
            </div>
         </div>
       </section>

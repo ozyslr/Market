@@ -31,3 +31,10 @@ export async function uploadCategoryImage(categoryId: string, file: File): Promi
   await uploadBytes(storageRef, resized, { contentType: 'image/jpeg' });
   return getDownloadURL(storageRef);
 }
+
+export async function uploadDealImage(dealId: string, file: File): Promise<string> {
+  const resized = await resizeImage(file, 800);
+  const storageRef = ref(storage, `dealImages/${dealId}`);
+  await uploadBytes(storageRef, resized, { contentType: 'image/jpeg' });
+  return getDownloadURL(storageRef);
+}

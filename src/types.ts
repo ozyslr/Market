@@ -350,6 +350,22 @@ export interface CartCampaign {
   giftProduct?: { id: string; name: string; image: string; quantity: number } | null;
 }
 
+export interface FeaturedDeal {
+  id: string;
+  productId: string;
+  image: string;
+  title: string;
+  badge?: string;
+  oldPrice?: number;
+  price?: number;
+  endsAt: string;
+  order: number;
+  active: boolean;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface ProductQuestion {
   id: string;
   productId: string;
