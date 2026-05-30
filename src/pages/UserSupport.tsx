@@ -256,8 +256,8 @@ export function UserSupport() {
                       <div className={cn(
                         'max-w-[80%] rounded-2xl px-4 py-3 text-sm',
                         msg.role === 'user'
-                          ? 'bg-accent text-white rounded-br-sm'
-                          : 'bg-[#F8F8FA] text-[#1A1033] rounded-bl-sm'
+                          ? 'bg-accent text-white rounded-ee-sm'
+                          : 'bg-[#F8F8FA] text-[#1A1033] rounded-es-sm'
                       )}>
                         <p className="leading-relaxed">{msg.text}</p>
                         <p className={cn('text-[9px] mt-1 opacity-60')}>

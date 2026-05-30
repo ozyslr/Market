@@ -223,8 +223,8 @@ export function LiveChatWidget() {
                         className={cn(
                           'max-w-[80%] px-5 py-3 text-sm leading-relaxed',
                           isAdmin
-                            ? 'bg-white text-brand-primary rounded-2xl rounded-tl-md shadow-sm border border-gray-100'
-                            : 'bg-[#F9423A] text-white rounded-2xl rounded-tr-md shadow-sm',
+                            ? 'bg-white text-brand-primary rounded-2xl rounded-ss-md shadow-sm border border-gray-100'
+                            : 'bg-[#F9423A] text-white rounded-2xl rounded-se-md shadow-sm',
                         )}
                       >
                         <p>{msg.text}</p>

@@ -726,7 +726,7 @@ export function ProductDetail() {
                       </React.Fragment>
                     ))}
                   </div>
-                  <div className="w-full xl:w-auto flex-1 xl:border-s xl:border-brand-primary/5 xl:pl-8 text-center xl:text-left">
+                  <div className="w-full xl:w-auto flex-1 xl:border-s xl:border-brand-primary/5 xl:ps-8 text-center xl:text-start">
                      <p className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest mb-1">Toplam Fiyat</p>
                      <p className="text-2xl md:text-3xl font-display font-black text-accent italic">£{(product.price + boughtTogether.reduce((acc, curr) => acc + curr.price, 0)).toFixed(2)}</p>
                      <button className="mt-4 w-full xl:w-auto px-8 lg:px-12 py-4 lg:py-3 bg-brand-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-black transition-all">Listeyi Sepete Ekle</button>

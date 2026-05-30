@@ -76,7 +76,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
         >
           <Link to={`/product/${product.slug}`} {...(openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="block w-full h-full relative">
             {product.promotionStatus === 'active' && (
-              <div className="absolute top-0 start-0 z-30 px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold rounded-br-md shadow-xs">
+              <div className="absolute top-0 start-0 z-30 px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold rounded-ee-md shadow-xs">
                 REKLAM
               </div>
             )}

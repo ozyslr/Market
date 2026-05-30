@@ -3,7 +3,7 @@ import { X, ChevronRight, UserPlus, LogOut, Sun, Moon, Zap } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useLanguage } from '@/context/LanguageContext';
+import { useLanguage, isRTL } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { Category } from '@/types';
@@ -21,6 +21,10 @@ export function MobileMenu({ isOpen, onClose, categories, onOpenAuth }: MobileMe
   const { user, logout } = useAuth();
   const { lang, setLang, availableLanguages } = useLanguage();
 
+  // Panel is anchored to the inline-start edge (start-0), which is the right side in RTL,
+  // so it must slide in from the right (+100%) rather than the left when the document is RTL.
+  const offscreenX = isRTL(lang) ? '100%' : '-100%';
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -37,9 +41,9 @@ export function MobileMenu({ isOpen, onClose, categories, onOpenAuth }: MobileMe
             role="dialog"
             aria-modal="true"
             aria-label="Mobil menü"
-            initial={{ x: '-100%' }}
+            initial={{ x: offscreenX }}
             animate={{ x: 0 }}
-            exit={{ x: '-100%' }}
+            exit={{ x: offscreenX }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed top-0 start-0 bottom-0 w-full max-w-[320px] bg-white dark:bg-zinc-950 z-[10001] shadow-2xl flex flex-col"
             onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}

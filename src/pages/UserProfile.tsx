@@ -489,7 +489,7 @@ export function UserProfilePage() {
                   return (
                     <div key={product.id} className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-brand-primary/5 dark:border-white/5 shadow-sm flex flex-col justify-between hover:border-accent/20 transition-all relative overflow-hidden">
                       {hasDropped && (
-                        <div className="absolute top-0 end-0 bg-green-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl flex items-center gap-1">
+                        <div className="absolute top-0 end-0 bg-green-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-es-xl flex items-center gap-1">
                           <span>↓</span> {t('profile.priceDropped')}
                         </div>
                       )}

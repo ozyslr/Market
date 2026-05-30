@@ -135,7 +135,7 @@ export function Hero() {
       </div>
 
       {/* Nav Controls - Arrows */}
-      <div className="absolute top-1/2 -translate-y-1/2 start-2 md:left-4 end-2 md:right-4 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+      <div className="absolute top-1/2 -translate-y-1/2 start-2 md:start-4 end-2 md:end-4 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
          <button onClick={prev} className="w-10 h-10 md:w-12 md:h-12 bg-white/50 dark:bg-zinc-700/50 hover:bg-white dark:hover:bg-zinc-700 rounded-full flex items-center justify-center text-brand-primary dark:text-white transition-all shadow-lg pointer-events-auto"><ChevronLeft size={24} /></button>
          <button onClick={next} className="w-10 h-10 md:w-12 md:h-12 bg-white/50 dark:bg-zinc-700/50 hover:bg-white dark:hover:bg-zinc-700 rounded-full flex items-center justify-center text-brand-primary dark:text-white transition-all shadow-lg pointer-events-auto"><ChevronRight size={24} /></button>
       </div>

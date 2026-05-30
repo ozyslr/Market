@@ -292,7 +292,7 @@ export function SellerFinance() {
                     <input type="checkbox" checked={payoutSchedule.autoPayoutEnabled}
                       onChange={toggleAutoPayout} disabled={scheduleLoading}
                       className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-accent/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-accent after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-accent/30 rounded-full peer ltr:peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-accent after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
                   </label>
                 </div>
 

@@ -146,6 +146,26 @@
     animation-direction: reverse;
   }
 
+  /* RTL: mirror horizontal directional icons (chevrons/arrows) so "next/back"
+     point the correct way. Vertical (up/down) icons are intentionally excluded.
+     Add the `rtl-keep` class to any directional icon that must NOT flip. */
+  [dir="rtl"] .lucide-chevron-left,
+  [dir="rtl"] .lucide-chevron-right,
+  [dir="rtl"] .lucide-chevrons-left,
+  [dir="rtl"] .lucide-chevrons-right,
+  [dir="rtl"] .lucide-arrow-left,
+  [dir="rtl"] .lucide-arrow-right,
+  [dir="rtl"] .lucide-move-left,
+  [dir="rtl"] .lucide-move-right {
+    transform: scaleX(-1);
+  }
+  [dir="rtl"] .lucide-chevron-left.rtl-keep,
+  [dir="rtl"] .lucide-chevron-right.rtl-keep,
+  [dir="rtl"] .lucide-arrow-left.rtl-keep,
+  [dir="rtl"] .lucide-arrow-right.rtl-keep {
+    transform: none;
+  }
+
   .dark input, .dark select, .dark textarea {
     @apply bg-zinc-900 border-zinc-800 text-white focus:border-accent/50!;
   }
