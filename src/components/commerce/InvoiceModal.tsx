@@ -32,7 +32,7 @@ export function InvoiceModal({ order, onClose }: InvoiceModalProps) {
       `}</style>
 
       {/* Overlay */}
-      <div id="invoice-modal-overlay" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div id="invoice-modal-overlay" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose} role="dialog" aria-modal="true" aria-label="Fatura" onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}>
         <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
           {/* Modal Header */}
           <div className="flex items-center justify-between px-8 py-5 border-b border-[#1A1033]/5">
@@ -42,7 +42,7 @@ export function InvoiceModal({ order, onClose }: InvoiceModalProps) {
                 className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-accent/90 transition-colors">
                 <Printer size={13} /> Yazdır / PDF
               </button>
-              <button onClick={onClose} className="p-2 text-[#1A1033]/30 hover:text-[#1A1033] transition-colors">
+              <button onClick={onClose} aria-label="Kapat" className="p-2 text-[#1A1033]/30 hover:text-[#1A1033] transition-colors">
                 <X size={18} />
               </button>
             </div>

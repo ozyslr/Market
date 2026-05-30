@@ -1,10 +1,15 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface LanguagePack {
   code: string;
   name: string;
   flag: string;
 }
+
+// Languages that read right-to-left; the document direction flips for these.
+export const RTL_LANGUAGES = ['ar', 'he', 'fa', 'ur'];
+
+export const isRTL = (lang: string) => RTL_LANGUAGES.includes(lang);
 
 export const initialAvailableLanguages: LanguagePack[] = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -1385,9 +1390,20 @@ const initialTranslations: Record<string, Record<string, string>> = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Language>('tr');
+  const [lang, setLang] = useState<Language>(() => {
+    if (typeof window === 'undefined') return 'tr';
+    return window.localStorage.getItem('lang') || 'tr';
+  });
   const [availableLanguages, setAvailableLanguages] = useState<LanguagePack[]>(initialAvailableLanguages);
   const [translations, setTranslations] = useState<Record<string, Record<string, string>>>(initialTranslations);
+
+  // Persist the choice and keep <html lang>/<html dir> in sync (RTL support).
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    window.localStorage.setItem('lang', lang);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = isRTL(lang) ? 'rtl' : 'ltr';
+  }, [lang]);
 
   const t = (key: string, fallback?: string) => {
     return translations[lang]?.[key] || initialTranslations['en']?.[key] || fallback || key;

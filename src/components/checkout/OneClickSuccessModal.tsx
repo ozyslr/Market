@@ -33,12 +33,14 @@ export function OneClickSuccessModal({ orderId, total, currency, onClose }: Prop
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      role="dialog" aria-modal="true" aria-label="Sipariş onayı"
+      onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}>
       <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl relative animate-in fade-in zoom-in-95">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Close"
+          aria-label="Kapat"
         >
           <X size={20} />
         </button>

@@ -103,7 +103,9 @@ export function ShareModal({
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-full bg-white dark:bg-zinc-900 rounded-t-3xl p-6 pb-8">
+            <div className="w-full bg-white dark:bg-zinc-900 rounded-t-3xl p-6 pb-8"
+              role="dialog" aria-modal="true" aria-label="Paylaş"
+              onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}>
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-sm font-black uppercase tracking-widest text-brand-primary dark:text-white">
@@ -216,6 +218,10 @@ export function ShareModal({
             onClick={onClose}
           >
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Paylaş"
+              onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
               className="bg-white dark:bg-zinc-900 rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl"
               initial={{ y: 20, scale: 0.95, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}

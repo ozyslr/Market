@@ -92,6 +92,7 @@ export const ReturnRequestModal: React.FC<Props> = ({ order, onClose, onSubmitte
         animate={{ opacity: 1, scale: 1 }}
         className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={e => e.stopPropagation()}
+        onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
         role="dialog"
         aria-modal="true"
         aria-label="İade talebi oluştur"

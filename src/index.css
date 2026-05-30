@@ -141,6 +141,11 @@
     animation: marquee 30s linear infinite;
   }
 
+  /* RTL: marquee should scroll toward the start (right) so it reads naturally */
+  [dir="rtl"] .animate-marquee {
+    animation-direction: reverse;
+  }
+
   .dark input, .dark select, .dark textarea {
     @apply bg-zinc-900 border-zinc-800 text-white focus:border-accent/50!;
   }

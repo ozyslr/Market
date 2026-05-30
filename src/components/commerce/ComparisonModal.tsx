@@ -42,6 +42,10 @@ export function ComparisonModal({ isOpen, onClose }: ComparisonModalProps) {
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
             <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Ürün karşılaştırma"
+              onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
               className="bg-white dark:bg-zinc-900 rounded-[2rem] shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col pointer-events-auto border border-brand-primary/5 dark:border-white/5 overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
