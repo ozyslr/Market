@@ -9,6 +9,8 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb, adminAuth } from "./src/lib/firebase-admin.js";
+import { isFiniteNumber, isNonEmptyString, itemsSignature } from "./src/lib/serverValidators.js";
+import { createAuthMiddlewares } from "./src/lib/authMiddleware.js";
 
 dotenv.config();
 
@@ -134,64 +136,13 @@ async function startServer() {
   app.use('/api/setup-payment-method', paymentLimiter);
   app.use('/api/one-click-checkout', paymentLimiter);
 
-  // ─── Auth Middleware Helper ─────────────────────────────────────────────────
-  async function verifyFirebaseToken(req: any, res: any, next: any) {
-    const header = (req.headers.authorization as string) || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    if (!adminAuth) return res.status(503).json({ error: 'Auth not configured' });
-    try {
-      const decoded = await adminAuth.verifyIdToken(token);
-      req.uid = decoded.uid;
-      req.userEmail = decoded.email;
-      next();
-    } catch {
-      res.status(401).json({ error: 'Invalid token' });
-    }
-  }
-
-  // ─── Admin Role Guard ───────────────────────────────────────────────────────
-  // Firebase token doğrular VE Firestore'da role == 'admin' olduğunu kontrol eder.
-  async function verifyAdmin(req: any, res: any, next: any) {
-    const header = (req.headers.authorization as string) || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    if (!adminAuth || !adminDb) return res.status(503).json({ error: 'Auth not configured' });
-    try {
-      const decoded = await adminAuth.verifyIdToken(token);
-      const userSnap = await adminDb.collection('users').doc(decoded.uid).get();
-      const role = userSnap.data()?.role;
-      if (role !== 'admin' && decoded.email !== 'ozyslr@gmail.com') {
-        return res.status(403).json({ error: 'Forbidden — admin access required' });
-      }
-      req.uid = decoded.uid;
-      next();
-    } catch {
-      res.status(401).json({ error: 'Invalid token' });
-    }
-  }
-
-  // ─── Cron Secret Guard ──────────────────────────────────────────────────────
-  // Otomatik/zamanlanmış endpoint'ler için. Harici cron, şu başlığı göndermeli:
-  //   X-Cron-Secret: <CRON_SECRET>
-  function verifyCronSecret(req: any, res: any, next: any) {
-    const secret = process.env.CRON_SECRET;
-    if (!secret) return res.status(503).json({ error: 'CRON_SECRET not configured' });
-    const provided = (req.headers['x-cron-secret'] as string) || '';
-    if (provided.length !== secret.length || provided !== secret) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    next();
-  }
+  // ─── Auth Middleware ─────────────────────────────────────────────────────────
+  // verifyFirebaseToken / verifyAdmin / verifyCronSecret → src/lib/authMiddleware.ts
+  const { verifyFirebaseToken, verifyAdmin, verifyCronSecret } =
+    createAuthMiddlewares(adminAuth, adminDb);
 
   // ─── Lightweight Input Validators ────────────────────────────────────────────
-  const isFiniteNumber = (v: any): boolean => typeof v === 'number' && Number.isFinite(v);
-  const isNonEmptyString = (v: any, max = 5000): boolean =>
-    typeof v === 'string' && v.length > 0 && v.length <= max;
-  // Aynı kullanıcının aynı ürün setini içeren isteğinden kararlı bir imza üretir
-  // (dakika çözünürlüğünde) — hızlı çift tıklamada mükerrer ödeme/sipariş önler.
-  const itemsSignature = (items: any[]): string =>
-    items.map((i) => `${i.productId}:${i.variantId || ''}:${i.quantity}`).sort().join('|');
+  // isFiniteNumber / isNonEmptyString / itemsSignature → src/lib/serverValidators.ts
 
   // ─── Abandoned Cart Email ──────────────────────────────────────────────────
   app.post("/api/abandoned-cart/check", verifyCronSecret, async (req, res) => {
