@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAllOrders, updateOrderStatus } from '@/services/orderService';
+import { getAllOrders, updateOrderStatus, issueRefund } from '@/services/orderService';
 import { Order } from '@/types/order';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -8,6 +8,7 @@ export function AdminReturns() {
   const [returns, setReturns] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     getAllOrders().then(orders => {
@@ -18,9 +19,17 @@ export function AdminReturns() {
 
   const handleAction = async (orderId: string, action: 'refunded' | 'cancelled') => {
     setUpdating(orderId);
+    setError(null);
     try {
-      await updateOrderStatus(orderId, action);
+      if (action === 'refunded') {
+        // Gerçek para iadesi sunucu üzerinden (Stripe) yapılır; sipariş orada işaretlenir.
+        await issueRefund(orderId);
+      } else {
+        await updateOrderStatus(orderId, action);
+      }
       setReturns(prev => prev.map(o => o.id === orderId ? { ...o, status: action } : o));
+    } catch (e: any) {
+      setError(e?.message || 'İşlem başarısız');
     } finally {
       setUpdating(null);
     }
@@ -37,6 +46,10 @@ export function AdminReturns() {
   return (
     <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm">
       <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-8">İade Talepleri</h3>
+
+      {error && (
+        <p className="mb-6 text-xs font-bold text-red-600 bg-red-50 rounded-xl px-4 py-3">{error}</p>
+      )}
 
       {returns.length === 0 ? (
         <p className="text-center py-16 text-[#1A1033]/30 font-bold">İade talebi bulunmuyor</p>

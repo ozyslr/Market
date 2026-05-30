@@ -200,6 +200,27 @@ export async function updateOrderStatus(
   }
 }
 
+/**
+ * Issue a real refund for an order via the admin-protected server endpoint.
+ * Sends the caller's Firebase ID token; the server verifies admin role and
+ * processes the Stripe refund, then marks the order refunded.
+ * @param amount Optional partial-refund amount (major units). Omit for full refund.
+ */
+export async function issueRefund(orderId: string, amount?: number): Promise<{ refundId: string | null; amount: number }> {
+  const { getAuth } = await import('firebase/auth');
+  const current = getAuth().currentUser;
+  if (!current) throw new Error('Oturum bulunamadı');
+  const token = await current.getIdToken();
+  const res = await fetch('/api/refund', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ orderId, ...(amount !== undefined ? { amount } : {}) }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || data?.error || 'İade işlemi başarısız');
+  return { refundId: data.refundId ?? null, amount: data.amount ?? 0 };
+}
+
 export interface BatchOrderUpdate {
   orderId: string;
   status: OrderStatus;

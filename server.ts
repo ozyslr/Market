@@ -667,6 +667,38 @@ async function startServer() {
         createdAt: new Date().toISOString(),
       });
 
+      // ── Send order confirmation email via Firebase Trigger Email ──────
+      if (email) {
+        try {
+          const appUrl = process.env.APP_URL || `http://localhost:${PORT}`;
+          const rows = orderItems.map((i: any) =>
+            `<tr><td style="padding:8px 0;font-size:13px;color:#1A1033;">${i.name} × ${i.quantity}</td>` +
+            `<td style="padding:8px 0;font-size:13px;color:#1A1033;text-align:right;font-weight:700;">${currency} ${(i.price * i.quantity).toFixed(2)}</td></tr>`
+          ).join('');
+          await adminDb.collection('mail').add({
+            to: email,
+            message: {
+              subject: `Siparişiniz Alındı — #${orderRef.id.slice(0, 8).toUpperCase()}`,
+              html: `<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;font-family:Arial,sans-serif;">
+  <tr><td style="padding:32px 40px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:16px;">✅</div>
+    <h2 style="margin:0 0 8px;font-size:20px;font-weight:900;color:#1A1033;">Siparişiniz onaylandı!</h2>
+    <p style="margin:0 0 24px;font-size:13px;color:#666;">Sipariş No: <strong>#${orderRef.id.slice(0, 8).toUpperCase()}</strong></p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;margin-bottom:16px;">${rows}</table>
+    <p style="margin:0 0 24px;font-size:15px;font-weight:900;color:#1A1033;text-align:right;">Toplam: ${currency} ${total.toFixed(2)}</p>
+    <a href="${appUrl}/profile?tab=orders" style="display:inline-block;padding:14px 36px;background:#7C3AED;color:#fff;text-decoration:none;border-radius:12px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:2px;">Siparişimi Görüntüle</a>
+  </td></tr>
+  <tr><td style="padding:24px 40px;background:#F8F8FA;text-align:center;border-top:1px solid #eee;">
+    <p style="margin:0;font-size:10px;color:#bbb;font-weight:700;text-transform:uppercase;letter-spacing:2px;">Benim Olan · Bu email otomatik gönderilmiştir</p>
+  </td></tr>
+</table>`,
+            },
+          });
+        } catch (e) {
+          console.warn('one-click-checkout: confirmation email failed:', e);
+        }
+      }
+
       res.json({ status: 'succeeded', orderId: orderRef.id, total });
     } catch (error: any) {
       // Handle Stripe card errors (declined, etc.)
@@ -675,6 +707,80 @@ async function startServer() {
       }
       console.error('one-click-checkout error:', error);
       res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // ─── Refund (admin only) ────────────────────────────────────────────────
+  app.post('/api/refund', verifyAdmin, async (req: any, res) => {
+    try {
+      if (!adminDb) return res.status(503).json({ error: 'Firestore not configured' });
+      const { orderId, amount } = req.body || {};
+      if (!isNonEmptyString(orderId, 128)) {
+        return res.status(400).json({ error: 'orderId is required' });
+      }
+      if (amount !== undefined && (!isFiniteNumber(amount) || amount <= 0)) {
+        return res.status(400).json({ error: 'amount must be a positive number' });
+      }
+
+      const orderRef = adminDb.collection('orders').doc(orderId);
+      const orderSnap = await orderRef.get();
+      if (!orderSnap.exists) return res.status(404).json({ error: 'Order not found' });
+      const order = orderSnap.data() as any;
+
+      if (order.status === 'refunded') {
+        return res.status(409).json({ error: 'Order already refunded' });
+      }
+
+      // Partial refund must not exceed the order total
+      const orderTotal = order.total ?? order.totalAmount ?? 0;
+      if (amount !== undefined && amount > orderTotal) {
+        return res.status(400).json({ error: 'Refund amount exceeds order total' });
+      }
+
+      let refundId: string | null = null;
+      if (order.paymentMethod === 'stripe' && order.stripePaymentIntentId) {
+        const refund = await stripe.refunds.create({
+          payment_intent: order.stripePaymentIntentId,
+          ...(amount !== undefined ? { amount: Math.round(amount * 100) } : {}),
+        });
+        refundId = refund.id;
+      } else if (order.paymentMethod === 'iyzico') {
+        // iyzico iadesi her ödeme kalemi için paymentTransactionId gerektirir —
+        // şimdilik manuel iade gerektiğini bildir, sipariş yine de işaretlenmez.
+        return res.status(422).json({
+          error: 'iyzico_manual_refund_required',
+          message: 'iyzico iadeleri panelden manuel yapılmalıdır.',
+        });
+      } else {
+        return res.status(422).json({ error: 'No refundable payment reference on this order' });
+      }
+
+      const now = new Date().toISOString();
+      await orderRef.update({
+        status: 'refunded',
+        refundId,
+        refundAmount: amount ?? orderTotal,
+        refundedAt: now,
+        updatedAt: now,
+      });
+
+      // Notify buyer
+      if (order.userId) {
+        await adminDb.collection('notifications').add({
+          userId: order.userId,
+          type: 'order_status',
+          title: 'İadeniz Tamamlandı',
+          message: `#${orderId.slice(0, 8).toUpperCase()} numaralı siparişiniz için ${(amount ?? orderTotal).toFixed(2)} ${order.currency || 'TRY'} iade edildi.`,
+          link: `/profile?tab=orders`,
+          read: false,
+          createdAt: now,
+        });
+      }
+
+      res.json({ status: 'refunded', orderId, refundId, amount: amount ?? orderTotal });
+    } catch (error: any) {
+      console.error('refund error:', error);
+      res.status(500).json({ error: error.message || 'Refund failed' });
     }
   });
 
