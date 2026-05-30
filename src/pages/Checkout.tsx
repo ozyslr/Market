@@ -22,6 +22,14 @@ import type { CartCampaign } from '@/types';
 import type { Address, Coupon } from '@/types';
 import { cn } from '@/lib/utils';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
+import { getAllShippingRates, getAvailableCarriers } from '@/services/cargoService';
+import type { ShippingRate, CargoProviderName } from '@/services/cargoService';
+import { useExchangeRate } from '@/hooks/useExchangeRate';
+
+const CARRIER_LABELS: Record<string, string> = Object.fromEntries(
+  getAvailableCarriers().map(c => [c.name, c.label]),
+);
+const CURRENCY_SYMBOLS: Record<string, string> = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
 
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
 const stripePromise =
@@ -205,7 +213,42 @@ export function CheckoutPage() {
 
   const subtotal = cartProducts.reduce((s, p) => s + p.price * p.quantity, 0);
   const totalDiscount = discountAmount + cartCampaignDiscount;
-  const totals = calculateTotal(Math.max(0, subtotal - totalDiscount), 12, market, true);
+
+  // ─── Dinamik kargo ücreti (market para birimine çevrilir) ────────────────────
+  // useExchangeRate `${currency}/TRY` → 1 birim para biriminin kaç TL olduğu.
+  const { rate: tryPerUnit } = useExchangeRate(`${currency}/TRY`);
+  const [shipRates, setShipRates] = useState<ShippingRate[]>([]);
+  const [selectedCarrier, setSelectedCarrier] = useState<CargoProviderName | null>(null);
+  const [ratesLoading, setRatesLoading] = useState(false);
+  const curSym = CURRENCY_SYMBOLS[currency] ?? currency + ' ';
+
+  // Kargo ücretleri TL bazlıdır → market para birimine çevir.
+  const convertTRY = (tryAmount: number) =>
+    currency === 'TRY' ? tryAmount : tryPerUnit > 0 ? tryAmount / tryPerUnit : tryAmount;
+
+  useEffect(() => {
+    const destCity = address.city.trim();
+    if (!destCity || cartProducts.length === 0) { setShipRates([]); return; }
+    const weight = Math.max(1, cartProducts.reduce((s, p) => s + p.quantity, 0));
+    let cancelled = false;
+    setRatesLoading(true);
+    getAllShippingRates('İstanbul', destCity, weight)
+      .then(rates => {
+        if (cancelled) return;
+        setShipRates(rates);
+        // Henüz seçim yoksa en ucuzu (liste artan sıralı) öne al.
+        setSelectedCarrier(prev =>
+          prev && rates.some(r => r.provider === prev) ? prev : rates[0]?.provider ?? null);
+      })
+      .finally(() => { if (!cancelled) setRatesLoading(false); });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address.city, cartProducts.length]);
+
+  const selectedRate = shipRates.find(r => r.provider === selectedCarrier) ?? shipRates[0];
+  // Kargo henüz yüklenmediyse önceki sabit değere (12) düş.
+  const shippingInCurrency = selectedRate ? convertTRY(selectedRate.cost) : 12;
+  const totals = calculateTotal(Math.max(0, subtotal - totalDiscount), shippingInCurrency, market, true);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -352,6 +395,7 @@ export function CheckoutPage() {
         paymentStatus: status === 'paid' ? 'succeeded' : 'pending',
         stripePaymentIntentId: paymentIntentId,
         shippingAddress: address,
+        ...(selectedCarrier ? { carrier: selectedCarrier } : {}),
       });
 
       // Decrement stock atomically (throws if any item has insufficient stock)
@@ -852,6 +896,49 @@ export function CheckoutPage() {
                 {couponError && <p className="text-[10px] text-red-500 font-bold mt-1">{couponError}</p>}
               </div>
 
+              {/* Kargo seçimi (dinamik, market para birimine çevrilmiş) */}
+              {(ratesLoading || shipRates.length > 0) && (
+                <div className="mb-4 pt-4 border-t border-[#1A1033]/5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 mb-3 flex items-center gap-1.5">
+                    <Truck size={12} className="text-accent" /> Kargo Seçimi
+                  </p>
+                  {ratesLoading ? (
+                    <div className="flex items-center gap-2 px-3 py-3 bg-[#F8F8FA] rounded-xl">
+                      <Loader2 size={14} className="animate-spin text-accent" />
+                      <span className="text-[11px] font-bold text-[#1A1033]/50">Kargo ücretleri hesaplanıyor...</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {shipRates.map(rate => {
+                        const active = selectedCarrier === rate.provider;
+                        return (
+                          <button key={rate.provider} type="button"
+                            onClick={() => setSelectedCarrier(rate.provider)}
+                            className={cn(
+                              'w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border-2 transition-all text-left',
+                              active ? 'border-accent bg-accent/5' : 'border-[#1A1033]/10 bg-[#F8F8FA] hover:border-accent/40'
+                            )}>
+                            <span className="flex items-center gap-2 min-w-0">
+                              <span className={cn(
+                                'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0',
+                                active ? 'border-accent bg-accent' : 'border-[#1A1033]/20'
+                              )}>
+                                {active && <Check size={9} className="text-white" />}
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block text-[11px] font-black text-[#1A1033] truncate">{CARRIER_LABELS[rate.provider] ?? rate.provider}</span>
+                                <span className="block text-[9px] font-bold text-[#1A1033]/40">{rate.estimatedDays} iş günü</span>
+                              </span>
+                            </span>
+                            <span className="text-[11px] font-black text-[#1A1033] shrink-0">{curSym}{convertTRY(rate.cost).toFixed(2)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-4 mb-6 pt-4 border-t border-[#1A1033]/5">
                 <div className="flex justify-between text-sm">
                   <span className="text-[#1A1033]/40 font-bold">Subtotal</span>
@@ -871,7 +958,7 @@ export function CheckoutPage() {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-[#1A1033]/40 font-bold">Logistics</span>
-                  <span className="font-black text-[#1A1033]">£{totals.shipping.toFixed(2)}</span>
+                  <span className="font-black text-[#1A1033]">{curSym}{totals.shipping.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-[#1A1033]/40 font-bold">VAT</span>
