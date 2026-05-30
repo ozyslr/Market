@@ -78,7 +78,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300" aria-label="Ana navigasyon">
+    <nav className="fixed top-0 start-0 end-0 z-50 transition-all duration-300" aria-label="Ana navigasyon">
       <TopTicker />
 
       {/* Main Header */}
@@ -108,16 +108,16 @@ export function Navbar() {
           </Link>
 
           {/* Mobile Header Icons (Right side) */}
-          <div className="flex sm:hidden items-center gap-1 md:gap-3 ml-auto">
-            <div className="flex items-center gap-1 xl:gap-2 mr-2">
+          <div className="flex sm:hidden items-center gap-1 md:gap-3 ms-auto">
+            <div className="flex items-center gap-1 xl:gap-2 me-2">
               <div className="relative p-2" onClick={() => setIsMenuOpen(true)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsMenuOpen(true); } }} aria-label={t('nav.language') || 'Dil'}>
                 <Globe size={20} className="text-brand-primary dark:text-white" />
-                <span className="absolute -top-1 -right-1 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-brand-primary shadow-lg">{lang.toUpperCase()}</span>
+                <span className="absolute -top-1 -end-1 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-brand-primary shadow-lg">{lang.toUpperCase()}</span>
               </div>
             </div>
             <Link to="/cart" className="relative p-2" aria-label={t('nav.cart') || 'Sepet'}>
               <ShoppingBag size={22} className="text-brand-primary dark:text-white" />
-              <span className="absolute -top-1 -right-1 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-brand-primary shadow-lg">3</span>
+              <span className="absolute -top-1 -end-1 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-brand-primary shadow-lg">3</span>
             </Link>
           </div>
 
@@ -138,7 +138,7 @@ export function Navbar() {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-4 lg:gap-6 shrink-0 ml-auto">
+          <div className="flex items-center gap-4 lg:gap-6 shrink-0 ms-auto">
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent flex items-center justify-center text-brand-primary dark:text-white"
@@ -163,11 +163,11 @@ export function Navbar() {
                 aria-haspopup="true"
               >
                 <Globe size={20} className="group-hover:text-accent transition-colors" />
-                <span className="absolute -top-1 -right-1 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-lg shadow-accent/20 uppercase">{lang}</span>
+                <span className="absolute -top-1 -end-1 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-lg shadow-accent/20 uppercase">{lang}</span>
               </button>
               {isLangMenuOpen && (
                 <div
-                  className="absolute top-[calc(100%)] right-0 w-48 bg-white dark:bg-zinc-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] rounded-2xl border border-brand-primary/10 p-2 z-[10000]"
+                  className="absolute top-[calc(100%)] end-0 w-48 bg-white dark:bg-zinc-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] rounded-2xl border border-brand-primary/10 p-2 z-[10000]"
                   role="menu"
                   aria-label={t('nav.language') || 'Dil seç'}
                   onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setIsLangMenuOpen(false); } }}
@@ -181,7 +181,7 @@ export function Navbar() {
                       onClick={() => { setLang(l.code as any); setIsLangMenuOpen(false); }}
                       onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setIsLangMenuOpen(false); } }}
                       role="menuitem"
-                      className={cn("w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-between group/lang", lang === l.code ? "bg-accent/10 text-accent" : "hover:bg-brand-secondary dark:hover:bg-zinc-900 text-brand-primary dark:text-white")}
+                      className={cn("w-full text-start px-3 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-between group/lang", lang === l.code ? "bg-accent/10 text-accent" : "hover:bg-brand-secondary dark:hover:bg-zinc-900 text-brand-primary dark:text-white")}
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-lg">{l.flag}</span>
@@ -203,7 +203,7 @@ export function Navbar() {
               <div className="relative">
                 <Heart size={20} className="group-hover:-translate-y-1 transition-transform" />
                 {favoriteBadge && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-0.5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-sm leading-none">
+                  <span className="absolute -top-1.5 -end-1.5 min-w-[18px] h-[18px] px-0.5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-sm leading-none">
                     {favoriteBadge}
                   </span>
                 )}
@@ -236,7 +236,7 @@ export function Navbar() {
               </button>
               {isAccountMenuOpen && (
                 <div
-                  className="absolute top-[calc(100%)] right-0 w-[460px] bg-white dark:bg-zinc-950 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] rounded-[2.5rem] border border-brand-primary/10 p-8 text-brand-primary dark:text-white cursor-auto z-[10000]"
+                  className="absolute top-[calc(100%)] end-0 w-[460px] bg-white dark:bg-zinc-950 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] rounded-[2.5rem] border border-brand-primary/10 p-8 text-brand-primary dark:text-white cursor-auto z-[10000]"
                   role="menu"
                   aria-label="Hesap menüsü"
                   onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setIsAccountMenuOpen(false); } }}
@@ -244,7 +244,7 @@ export function Navbar() {
                 {user ? (
                   <div className="flex flex-col gap-6">
                     <Link to="/profile" className="flex items-center gap-5 p-5 bg-gradient-to-br from-brand-secondary/50 to-white dark:from-zinc-900 dark:to-zinc-950 border border-brand-primary/5 dark:border-white/5 rounded-3xl relative overflow-hidden hover:opacity-90 transition-opacity cursor-pointer">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-[40px] -mr-16 -mt-16" />
+                      <div className="absolute top-0 end-0 w-32 h-32 bg-accent/10 rounded-full blur-[40px] -me-16 -mt-16" />
                       {user.photoURL ? (
                         <img src={user.photoURL} alt={user.name} className="w-16 h-16 rounded-3xl object-cover shadow-[0_10px_20px_-10px_rgba(249,66,58,0.5)] relative z-10 shrink-0" referrerPolicy="no-referrer" loading="lazy" />
                       ) : (
@@ -310,7 +310,7 @@ export function Navbar() {
                         <button
                           type="button"
                           onClick={() => { setIsAccountMenuOpen(false); window.dispatchEvent(new CustomEvent('open-live-chat')); }}
-                          className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link text-left"
+                          className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link text-start"
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Canlı Destek
                         </button>
@@ -414,7 +414,7 @@ export function Navbar() {
               <div className="relative text-brand-primary dark:text-white group-hover:text-mercora-red transition-colors">
                 <ShoppingBag size={22} className="group-hover:-translate-y-1 transition-transform" />
                 {itemCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-mercora-red text-white rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm">{itemCount}</span>
+                  <span className="absolute -top-1.5 -end-1.5 w-4 h-4 bg-mercora-red text-white rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm">{itemCount}</span>
                 )}
               </div>
               <div className="hidden lg:block leading-none">
@@ -433,7 +433,7 @@ export function Navbar() {
             >
               <MapPin size={14} className="text-accent shrink-0" />
               <span className="truncate">{selectedLocation}</span>
-              <ChevronRight size={14} className="ml-auto opacity-40 shrink-0" />
+              <ChevronRight size={14} className="ms-auto opacity-40 shrink-0" />
             </div>
           </div>
           <form onSubmit={(e) => { e.preventDefault(); const q = (e.target as any).querySelector('input')?.value; if (q?.trim()) navigate(`/search?q=${encodeURIComponent(q)}`); }} className="relative group" role="search" aria-label="Ürün ara">
@@ -441,9 +441,9 @@ export function Navbar() {
               type="text"
               placeholder={t('nav.search_placeholder')}
               aria-label={t('nav.search_placeholder') || 'Ürün ara'}
-              className="w-full h-11 px-4 pr-12 rounded-xl text-sm font-black transition-all outline-none border shadow-sm bg-white dark:bg-zinc-900 border-brand-primary/10 text-brand-primary dark:text-white placeholder:text-brand-primary/40"
+              className="w-full h-11 px-4 pe-12 rounded-xl text-sm font-black transition-all outline-none border shadow-sm bg-white dark:bg-zinc-900 border-brand-primary/10 text-brand-primary dark:text-white placeholder:text-brand-primary/40"
             />
-            <button type="submit" className="absolute right-0 h-full px-4 text-accent" aria-label="Ara">
+            <button type="submit" className="absolute end-0 h-full px-4 text-accent" aria-label="Ara">
               <Search size={18} strokeWidth={3} />
             </button>
           </form>

@@ -31,7 +31,7 @@ export function VariantSwatches({
       <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">
         {attributeName}
         {selectedValue && (
-          <span className="ml-2 text-brand-primary normal-case font-bold">: {selectedValue}</span>
+          <span className="ms-2 text-brand-primary normal-case font-bold">: {selectedValue}</span>
         )}
       </p>
       <div className="flex flex-wrap gap-2">

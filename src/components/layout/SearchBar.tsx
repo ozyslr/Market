@@ -36,7 +36,7 @@ export function SearchBar() {
           setSearchQuery(val);
           setSuggestions(searchProducts(val));
         }}
-        className="w-full h-full px-4 pr-14 rounded-xl text-sm font-bold bg-white dark:bg-zinc-900 border border-brand-primary/10 text-brand-primary dark:text-white placeholder:text-brand-primary/40 focus:border-accent focus:shadow-[0_0_20px_rgba(109,40,217,0.15)] outline-none transition-all"
+        className="w-full h-full px-4 pe-14 rounded-xl text-sm font-bold bg-white dark:bg-zinc-900 border border-brand-primary/10 text-brand-primary dark:text-white placeholder:text-brand-primary/40 focus:border-accent focus:shadow-[0_0_20px_rgba(109,40,217,0.15)] outline-none transition-all"
       />
 
       {/* Search Suggestions Dropdown */}
@@ -54,10 +54,10 @@ export function SearchBar() {
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.98 }}
-              className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] rounded-2xl border border-brand-primary/5 p-6 z-[1000] overflow-hidden"
+              className="absolute top-full start-0 end-0 mt-2 bg-white dark:bg-zinc-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] rounded-2xl border border-brand-primary/5 p-6 z-[1000] overflow-hidden"
             >
               <div className="grid grid-cols-12 gap-8">
-                <div className="col-span-12 md:col-span-4 border-b md:border-b-0 md:border-r border-brand-primary/5 pb-6 md:pb-0 md:pr-8">
+                <div className="col-span-12 md:col-span-4 border-b md:border-b-0 md:border-e border-brand-primary/5 pb-6 md:pb-0 md:pr-8">
                   <div>
                     <div className="flex items-center gap-2 mb-6">
                       <TrendingUp size={14} className="text-accent" />
@@ -78,7 +78,7 @@ export function SearchBar() {
                             setSearchQuery(item.text);
                             navigate(`/search?q=${encodeURIComponent(item.text)}`);
                           }}
-                          className="flex items-center gap-2 px-3 py-2 bg-brand-secondary hover:bg-accent group rounded-xl transition-all text-left"
+                          className="flex items-center gap-2 px-3 py-2 bg-brand-secondary hover:bg-accent group rounded-xl transition-all text-start"
                         >
                           <item.icon size={12} className="text-brand-primary/30 group-hover:text-white transition-colors" />
                           <span className="text-[10px] font-bold text-brand-primary group-hover:text-white transition-colors truncate">{item.text}</span>
@@ -129,12 +129,12 @@ export function SearchBar() {
 
       <Link
         to="/visual-search"
-        className="absolute right-14 h-full px-3 flex items-center justify-center text-brand-primary/30 hover:text-accent transition-colors"
+        className="absolute end-14 h-full px-3 flex items-center justify-center text-brand-primary/30 hover:text-accent transition-colors"
         aria-label="Görsel ile ara"
       >
         <Camera size={18} strokeWidth={2} />
       </Link>
-      <button type="submit" className="absolute right-0 h-full px-6 bg-accent rounded-r-xl text-white hover:bg-accent-dark transition-all flex items-center justify-center shadow-lg shadow-accent/20" aria-label={t('nav.search') || 'Ara'}>
+      <button type="submit" className="absolute end-0 h-full px-6 bg-accent rounded-e-xl text-white hover:bg-accent-dark transition-all flex items-center justify-center shadow-lg shadow-accent/20" aria-label={t('nav.search') || 'Ara'}>
         <Search size={22} strokeWidth={3} />
       </button>
     </form>

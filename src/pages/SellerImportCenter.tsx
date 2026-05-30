@@ -384,7 +384,7 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
                 <thead>
                   <tr className="text-xs text-zinc-500 border-b border-zinc-700">
                     {['Feed Adı', 'Tür', 'Toplam', 'Başarılı', 'Başarısız', 'Durum', 'Tarih'].map(h => (
-                      <th key={h} className="text-left px-5 py-3 font-medium">{h}</th>
+                      <th key={h} className="text-start px-5 py-3 font-medium">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -530,7 +530,7 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
               <p className="text-sm text-zinc-300 mb-4">
                 <span className="text-emerald-400 font-bold">{bulkPreview.length} ürün</span> yüklenmeye hazır
                 {bulkErrors.length > 0 && (
-                  <span className="text-yellow-400 ml-2">({bulkErrors.length} hata var)</span>
+                  <span className="text-yellow-400 ms-2">({bulkErrors.length} hata var)</span>
                 )}
               </p>
               {bulkUploading && (
@@ -592,7 +592,7 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-sm font-semibold text-white">
                   Adım 2 — Alan Eşleştirme
-                  <span className="ml-2 text-xs text-zinc-500">({feedFields.length} alan algılandı)</span>
+                  <span className="ms-2 text-xs text-zinc-500">({feedFields.length} alan algılandı)</span>
                 </h3>
                 <button onClick={handleAiMatch} disabled={aiMatching}
                   className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-lg disabled:opacity-50 transition-colors">
@@ -697,7 +697,7 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
                       <summary className="text-xs text-yellow-400 cursor-pointer">
                         {job.errors.length} hata görüntüle
                       </summary>
-                      <ul className="mt-1 space-y-0.5 pl-3">
+                      <ul className="mt-1 space-y-0.5 ps-3">
                         {job.errors.map((e, i) => (
                           <li key={i} className="text-xs text-red-300">Satır {e.line}: {e.message}</li>
                         ))}
@@ -763,16 +763,16 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-zinc-500 border-b border-zinc-700">
-                  <th className="text-left pb-2 pr-4 font-medium">Alan</th>
-                  <th className="text-left pb-2 pr-4 font-medium">Zorunlu</th>
-                  <th className="text-left pb-2 font-medium">Açıklama</th>
+                  <th className="text-start pb-2 pe-4 font-medium">Alan</th>
+                  <th className="text-start pb-2 pe-4 font-medium">Zorunlu</th>
+                  <th className="text-start pb-2 font-medium">Açıklama</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-700/30">
                 {SYSTEM_FIELDS.map(f => (
                   <tr key={f.key}>
-                    <td className="py-1.5 pr-4 font-mono text-emerald-400">{f.key}</td>
-                    <td className="py-1.5 pr-4 text-center">{f.required ? '✓' : '—'}</td>
+                    <td className="py-1.5 pe-4 font-mono text-emerald-400">{f.key}</td>
+                    <td className="py-1.5 pe-4 text-center">{f.required ? '✓' : '—'}</td>
                     <td className="py-1.5 text-zinc-400">{f.label}</td>
                   </tr>
                 ))}

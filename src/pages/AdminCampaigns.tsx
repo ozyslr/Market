@@ -189,7 +189,7 @@ export function AdminCampaigns() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#F8F8FA]">
-              <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Kampanya</th>
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Kampanya</th>
               <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">İndirim</th>
               <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Hedef</th>
               <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Tarih Aralığı</th>

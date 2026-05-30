@@ -143,7 +143,7 @@ export function UserSupport() {
                     key={ticket.id}
                     onClick={() => { setSelectedTicket(ticket); setShowNewForm(false); }}
                     className={cn(
-                      'w-full text-left bg-white rounded-2xl p-4 border transition-all hover:border-accent/30',
+                      'w-full text-start bg-white rounded-2xl p-4 border transition-all hover:border-accent/30',
                       selectedTicket?.id === ticket.id ? 'border-accent shadow-sm' : 'border-[#1A1033]/5'
                     )}
                   >
@@ -156,7 +156,7 @@ export function UserSupport() {
                         {sc.label}
                       </span>
                       <span className="text-[9px] text-[#1A1033]/40">{CATEGORY_LABELS[ticket.category]}</span>
-                      <span className={cn('ml-auto text-[9px] font-black uppercase', PRIORITY_COLOR[ticket.priority])}>
+                      <span className={cn('ms-auto text-[9px] font-black uppercase', PRIORITY_COLOR[ticket.priority])}>
                         {ticket.priority === 'high' ? '⚡ Yüksek' : ticket.priority === 'medium' ? 'Orta' : 'Düşük'}
                       </span>
                     </div>

@@ -16,7 +16,7 @@ export function CookieConsent() {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed bottom-0 left-0 right-0 z-[15000] p-4 sm:p-6"
+        className="fixed bottom-0 start-0 end-0 z-[15000] p-4 sm:p-6"
       >
         <div className="max-w-3xl mx-auto bg-white dark:bg-zinc-950 border border-brand-primary/10 dark:border-white/10 rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden">
           {/* Main bar */}

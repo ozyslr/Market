@@ -178,7 +178,7 @@ export function CartPage() {
                     exit={{ opacity: 0, scale: 0.95 }}
                     className="bg-white rounded-4xl p-6 md:p-8 border border-brand-primary/5 shadow-sm group hover:border-accent/40 transition-all flex flex-col md:flex-row gap-8 relative overflow-hidden"
                   >
-                    <div className="absolute top-0 left-0 w-2 h-full bg-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute top-0 start-0 w-2 h-full bg-accent opacity-0 group-hover:opacity-100 transition-opacity" />
                     
                     {/* Image Area */}
                     <Link to={`/product/${product.slug}`} className="w-full md:w-48 aspect-square bg-brand-secondary/50 rounded-2xl p-4 overflow-hidden shrink-0">
@@ -250,7 +250,7 @@ export function CartPage() {
                           {(() => {
                             const unitPrice = product.variant?.price ?? product.price;
                             return (
-                              <div className="text-right">
+                              <div className="text-end">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/20 mb-1">Unit Price: £{unitPrice.toFixed(2)}</p>
                                 <p className="text-2xl font-display font-black text-brand-primary">£{(unitPrice * product.quantity).toFixed(2)}</p>
                               </div>
@@ -276,7 +276,7 @@ export function CartPage() {
 
             {/* AI Cross Sell Segment */}
             <div className="bg-brand-primary rounded-[3.5rem] p-10 text-white relative overflow-hidden">
-               <Sparkles size={300} className="absolute -bottom-20 -right-20 text-white/5 pointer-events-none" />
+               <Sparkles size={300} className="absolute -bottom-20 -end-20 text-white/5 pointer-events-none" />
                <div className="relative z-10">
                  <div className="flex items-center gap-3 mb-8">
                    <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
@@ -306,7 +306,7 @@ export function CartPage() {
           <div className="w-full lg:w-[400px] shrink-0">
             <div className="sticky top-32 space-y-6">
               <div className="bg-white rounded-[3rem] p-10 border border-brand-primary/5 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-full -translate-y-4 translate-x-4 blur-xl" />
+                <div className="absolute top-0 end-0 w-24 h-24 bg-accent/5 rounded-full -translate-y-4 translate-x-4 blur-xl" />
                 
                 <h3 className="text-xl font-black uppercase tracking-widest mb-10 pb-6 border-b border-brand-primary/5">Artifact Summary</h3>
                 
@@ -341,7 +341,7 @@ export function CartPage() {
                        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/20 mb-1">Final Investment</p>
                        <p className="text-4xl font-display font-black text-brand-primary tracking-tighter">£{totals.total.toFixed(2)}</p>
                     </div>
-                    <div className="text-right text-[10px] font-black uppercase tracking-widest text-accent">
+                    <div className="text-end text-[10px] font-black uppercase tracking-widest text-accent">
                        Free Returns
                     </div>
                   </div>

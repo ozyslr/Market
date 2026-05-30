@@ -120,7 +120,7 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
         {review.categoryRatings &&
           Object.entries(review.categoryRatings).map(([key, val]) =>
             val && val > 0 ? (
-              <span key={key} className="ml-2 text-[9px] font-bold text-brand-primary/40 bg-brand-secondary/50 px-2 py-0.5 rounded-lg">
+              <span key={key} className="ms-2 text-[9px] font-bold text-brand-primary/40 bg-brand-secondary/50 px-2 py-0.5 rounded-lg">
                 {CATEGORY_LABELS[key] ?? key}: {val}/5
               </span>
             ) : null,
@@ -272,7 +272,7 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
 
       {/* Satıcı yanıt formu */}
       {showReplyForm && (
-        <div className="mt-3 ml-4 flex gap-2">
+        <div className="mt-3 ms-4 flex gap-2">
           <input
             value={replyText}
             onChange={e => setReplyText(e.target.value)}
@@ -298,7 +298,7 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
 
       {/* Satıcı yanıtı */}
       {localResponse && (
-        <div className="mt-3 ml-4 pl-3 border-l-2 border-accent/30 bg-accent/5 rounded-r-xl py-2 pr-3">
+        <div className="mt-3 ms-4 ps-3 border-s-2 border-accent/30 bg-accent/5 rounded-e-xl py-2 pe-3">
           <div className="flex items-center gap-1.5 mb-1">
             <Store size={11} className="text-accent" />
             <span className="text-[9px] font-black uppercase text-accent tracking-widest">Satıcı Yanıtı</span>
@@ -317,7 +317,7 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
           onClick={() => setLightboxPhoto(null)}
         >
           <button
-            className="absolute top-4 right-4 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            className="absolute top-4 end-4 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
             onClick={() => setLightboxPhoto(null)}
           >
             <X size={18} />

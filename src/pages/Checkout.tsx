@@ -505,13 +505,13 @@ export function CheckoutPage() {
                           {savedAddresses.map(addr => (
                             <button key={addr.id} type="button" onClick={() => selectSavedAddress(addr)}
                               className={cn(
-                                'relative text-left px-4 py-3.5 rounded-2xl border-2 transition-all text-xs group',
+                                'relative text-start px-4 py-3.5 rounded-2xl border-2 transition-all text-xs group',
                                 selectedAddressId === addr.id
                                   ? 'border-accent bg-accent/5 shadow-sm'
                                   : 'border-[#1A1033]/10 bg-[#F8F8FA] hover:border-accent/40'
                               )}>
                               {selectedAddressId === addr.id && (
-                                <span className="absolute top-3 right-3 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
+                                <span className="absolute top-3 end-3 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
                                   <Check size={10} className="text-white" />
                                 </span>
                               )}
@@ -519,7 +519,7 @@ export function CheckoutPage() {
                                 <MapPin size={10} className="text-accent shrink-0" />
                                 <span className="font-black text-[#1A1033] text-[11px]">{addr.label}</span>
                                 {addr.id === defaultAddressId && (
-                                  <span className="ml-1 text-[8px] font-black uppercase tracking-widest bg-accent/10 text-accent px-1.5 py-0.5 rounded-full">Varsayılan</span>
+                                  <span className="ms-1 text-[8px] font-black uppercase tracking-widest bg-accent/10 text-accent px-1.5 py-0.5 rounded-full">Varsayılan</span>
                                 )}
                               </div>
                               <p className="text-[#1A1033]/50 font-medium leading-tight">{addr.line1}</p>
@@ -633,7 +633,7 @@ export function CheckoutPage() {
 
                 {/* Escrow notice */}
                 <div className="bg-[#F8F8FA] p-6 rounded-2xl mb-6 border border-[#1A1033]/5 relative overflow-hidden">
-                  <ShieldCheck className="absolute -right-4 -bottom-4 text-accent/5 size-32" />
+                  <ShieldCheck className="absolute -end-4 -bottom-4 text-accent/5 size-32" />
                   <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-2">Escrow Protection</p>
                   <p className="text-sm font-medium text-[#1A1033]/60 relative z-10">Your funds are held securely until the artifact is delivered and verified by you.</p>
                 </div>
@@ -865,7 +865,7 @@ export function CheckoutPage() {
                     <div key={idx} className="bg-purple-50 border border-purple-200 rounded-xl px-3 py-2 flex items-center gap-2">
                       <span>🎁</span>
                       <span className="text-[10px] font-black text-purple-700">{gift.name} x{gift.quantity}</span>
-                      <span className="text-[9px] text-purple-500 ml-auto">Hediye</span>
+                      <span className="text-[9px] text-purple-500 ms-auto">Hediye</span>
                     </div>
                   ))}
                 </div>
@@ -915,7 +915,7 @@ export function CheckoutPage() {
                           <button key={rate.provider} type="button"
                             onClick={() => setSelectedCarrier(rate.provider)}
                             className={cn(
-                              'w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border-2 transition-all text-left',
+                              'w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border-2 transition-all text-start',
                               active ? 'border-accent bg-accent/5' : 'border-[#1A1033]/10 bg-[#F8F8FA] hover:border-accent/40'
                             )}>
                             <span className="flex items-center gap-2 min-w-0">

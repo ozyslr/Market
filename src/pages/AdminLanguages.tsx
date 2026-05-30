@@ -61,7 +61,7 @@ export function AdminLanguages() {
              </div>
              <h2 className="text-3xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">{t('admin.languages.title')}</h2>
            </div>
-           <p className="text-xs font-bold text-brand-primary/40 dark:text-white/40 uppercase tracking-widest pl-13">{t('admin.languages.subtitle')}</p>
+           <p className="text-xs font-bold text-brand-primary/40 dark:text-white/40 uppercase tracking-widest ps-13">{t('admin.languages.subtitle')}</p>
         </div>
         <button className="px-6 py-3 bg-accent text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform flex items-center gap-2" onClick={saveTranslations}>
            <Save size={16} /> Değişiklikleri Kaydet
@@ -125,7 +125,7 @@ export function AdminLanguages() {
                            <h3 className="text-xl font-display font-black uppercase tracking-tighter">[{editingLang}] Çeviri Stüdyosu</h3>
                         </div>
                      </div>
-                     <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar-sidebar">
+                     <div className="space-y-4 max-h-[600px] overflow-y-auto pe-4 custom-scrollbar-sidebar">
                         {Object.keys(localTranslations['en'] || {}).map((key) => (
                            <div key={key} className="flex flex-col gap-2 p-4 rounded-2xl bg-brand-secondary/30 dark:bg-zinc-950 border border-brand-primary/5">
                               <p className="text-[10px] font-black font-mono text-brand-primary/40 dark:text-white/40">{key}</p>

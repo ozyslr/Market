@@ -84,7 +84,7 @@ export function AdminAuditLog() {
           );
         })}
         <button onClick={() => setLogs(prev => [...prev].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()))}
-          className="ml-auto px-3 py-1.5 bg-[#F8F8FA] rounded-xl text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 flex items-center gap-1">
+          className="ms-auto px-3 py-1.5 bg-[#F8F8FA] rounded-xl text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 flex items-center gap-1">
           <Clock size={12} /> Yenile
         </button>
       </div>

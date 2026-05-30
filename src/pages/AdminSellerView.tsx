@@ -111,7 +111,7 @@ export function AdminSellerView() {
               {seller.origin && <span>Menşei: {seller.origin}</span>}
             </div>
           </div>
-          <div className="text-right flex-shrink-0">
+          <div className="text-end flex-shrink-0">
             <p className="text-2xl font-bold text-emerald-400">{totalRevenue.toLocaleString('tr-TR')} ₺</p>
             <p className="text-xs text-zinc-500 mt-0.5">Toplam Ciro</p>
           </div>
@@ -207,10 +207,10 @@ export function AdminSellerView() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-zinc-500 border-b border-zinc-800 text-xs">
-                    <th className="text-left px-5 py-3 font-semibold">Sipariş ID</th>
-                    <th className="text-left px-5 py-3 font-semibold">Tarih</th>
-                    <th className="text-left px-5 py-3 font-semibold">Durum</th>
-                    <th className="text-right px-5 py-3 font-semibold">Tutar</th>
+                    <th className="text-start px-5 py-3 font-semibold">Sipariş ID</th>
+                    <th className="text-start px-5 py-3 font-semibold">Tarih</th>
+                    <th className="text-start px-5 py-3 font-semibold">Durum</th>
+                    <th className="text-end px-5 py-3 font-semibold">Tutar</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -232,7 +232,7 @@ export function AdminSellerView() {
                           {o.status}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-right font-semibold">
+                      <td className="px-5 py-3 text-end font-semibold">
                         {o.total.toLocaleString('tr-TR')} ₺
                       </td>
                     </tr>

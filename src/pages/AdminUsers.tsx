@@ -147,12 +147,12 @@ export function AdminUsers() {
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">Kullanıcı Yönetimi</h3>
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Ara..."
-            className="pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-xs w-52 outline-none focus:border-accent"
+            className="ps-8 pe-3 py-2 border border-gray-200 rounded-xl text-xs w-52 outline-none focus:border-accent"
           />
         </div>
       </div>
@@ -173,7 +173,7 @@ export function AdminUsers() {
             {chip.label}
           </button>
         ))}
-        <span className="ml-auto text-[10px] font-bold text-gray-400 self-center">{filteredUsers.length} kullanıcı</span>
+        <span className="ms-auto text-[10px] font-bold text-gray-400 self-center">{filteredUsers.length} kullanıcı</span>
       </div>
 
       {isLoading ? (
@@ -182,7 +182,7 @@ export function AdminUsers() {
         </div>
       ) : (
         <div className="overflow-x-auto no-scrollbar">
-          <table className="w-full text-left">
+          <table className="w-full text-start">
             <thead>
               <tr className="border-b border-brand-primary/5">
                 {['Kullanıcı', 'Email', 'Rol', 'Durum', 'Ülke', 'İşlemler'].map(h => (
@@ -210,7 +210,7 @@ export function AdminUsers() {
                         value={u.role}
                         onChange={e => handleRoleChange(u.id, e.target.value as UserRole)}
                         className={cn(
-                          'appearance-none pl-2 pr-6 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border cursor-pointer outline-none',
+                          'appearance-none ps-2 pe-6 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border cursor-pointer outline-none',
                           {
                             'bg-red-50 text-red-600 border-red-200': u.role === 'admin',
                             'bg-purple-50 text-purple-600 border-purple-200': u.role === 'moderator',
@@ -221,7 +221,7 @@ export function AdminUsers() {
                       >
                         {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                       </select>
-                      <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+                      <ChevronDown size={10} className="absolute end-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
                     </div>
                   </td>
                   <td className="px-6 py-5">{statusBadge(u)}</td>
@@ -246,7 +246,7 @@ export function AdminUsers() {
 
       {/* Detay Yan Paneli */}
       {selectedUser && (
-        <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-2xl z-50 p-6 overflow-y-auto border-l border-gray-100">
+        <div className="fixed inset-y-0 end-0 w-96 bg-white shadow-2xl z-50 p-6 overflow-y-auto border-s border-gray-100">
           <button onClick={() => setSelectedUser(null)} className="mb-5 text-xs text-gray-400 hover:text-accent flex items-center gap-1">
             <X size={12} /> Kapat
           </button>
@@ -296,7 +296,7 @@ export function AdminUsers() {
                     <p className="text-[10px] font-black text-gray-700">{o.id}</p>
                     <p className="text-[9px] text-gray-400">{new Date(o.date).toLocaleDateString('tr-TR')}</p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-end">
                     <p className="text-[10px] font-bold text-gray-700">{o.amount.toLocaleString('tr-TR')} ₺</p>
                     <span className={cn('text-[9px] font-black', {
                       'text-green-600': o.status === 'Teslim Edildi',

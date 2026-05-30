@@ -23,9 +23,9 @@ function MaskedInput({ value, onChange, placeholder }: { value: string; onChange
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full pr-10 px-4 py-2.5 bg-[#F8F8FA] rounded-xl text-xs font-mono border border-transparent focus:border-accent/20 outline-none"
+        className="w-full pe-10 px-4 py-2.5 bg-[#F8F8FA] rounded-xl text-xs font-mono border border-transparent focus:border-accent/20 outline-none"
       />
-      <button type="button" onClick={() => setShow(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1A1033]/30 hover:text-[#1A1033] transition-colors">
+      <button type="button" onClick={() => setShow(s => !s)} className="absolute end-3 top-1/2 -translate-y-1/2 text-[#1A1033]/30 hover:text-[#1A1033] transition-colors">
         {show ? <EyeOff size={14} /> : <Eye size={14} />}
       </button>
     </div>
@@ -241,7 +241,7 @@ export function AdminPayments() {
               <button
                 onClick={() => setAddingKey(addingKey === tpl.key ? null : tpl.key)}
                 className={cn(
-                  'w-full text-left p-6 rounded-[2rem] border transition-all group',
+                  'w-full text-start p-6 rounded-[2rem] border transition-all group',
                   addingKey === tpl.key
                     ? 'border-accent/30 bg-accent/5 shadow-lg'
                     : 'border-[#F8F8FA] bg-white hover:border-[#1A1033]/10 hover:shadow-md'

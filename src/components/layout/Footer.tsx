@@ -54,20 +54,20 @@ export function Footer() {
               </div>
               <span className="font-display font-black text-3xl tracking-tighter uppercase italic text-brand-primary dark:text-white">TrendAl</span>
             </Link>
-            <p className="text-xs text-brand-primary/50 dark:text-white/50 leading-relaxed font-medium mb-6 pr-8">
+            <p className="text-xs text-brand-primary/50 dark:text-white/50 leading-relaxed font-medium mb-6 pe-8">
               Türkiye'nin yenilikçi, hızlı ve her zaman avantajlı e-ticaret platformu. Aradığın her şey burada.
             </p>
             <div className="flex flex-col gap-3">
                <button className="flex items-center gap-3 bg-black text-white px-4 py-2 rounded-xl hover:scale-105 transition-transform w-[160px]">
                   <AppleIcon />
-                  <div className="text-left flex flex-col items-start leading-none">
+                  <div className="text-start flex flex-col items-start leading-none">
                      <span className="text-[9px]">App Store'dan</span>
                      <span className="text-xs font-bold">İndirin</span>
                   </div>
                </button>
                <button className="flex items-center gap-3 bg-black text-white px-4 py-2 rounded-xl hover:scale-105 transition-transform w-[160px]">
                   <PlayIcon />
-                  <div className="text-left flex flex-col items-start leading-none">
+                  <div className="text-start flex flex-col items-start leading-none">
                      <span className="text-[9px]">Google Play'den</span>
                      <span className="text-xs font-bold">Alın</span>
                   </div>

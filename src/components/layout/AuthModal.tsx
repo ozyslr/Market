@@ -70,12 +70,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[420px] bg-white dark:bg-zinc-950 z-[12001] shadow-2xl rounded-[2.5rem] overflow-hidden border border-brand-primary/5 dark:border-white/5"
+            className="fixed top-1/2 start-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[420px] bg-white dark:bg-zinc-950 z-[12001] shadow-2xl rounded-[2.5rem] overflow-hidden border border-brand-primary/5 dark:border-white/5"
             onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
           >
             <div className="relative bg-gradient-to-br from-brand-primary to-zinc-800 p-8 pb-6 text-white overflow-hidden">
-              <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent/20 rounded-full blur-[40px]" />
-              <button onClick={onClose} className="absolute top-5 right-5 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors z-10" aria-label="Kapat">
+              <div className="absolute -top-10 -end-10 w-40 h-40 bg-accent/20 rounded-full blur-[40px]" />
+              <button onClick={onClose} className="absolute top-5 end-5 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors z-10" aria-label="Kapat">
                 <X size={16} />
               </button>
               <div className="flex items-center gap-3 mb-4 relative z-10">
@@ -103,39 +103,39 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <form onSubmit={handleSubmit} className="p-8 space-y-4">
               {mode === 'register' && (
                 <div className="relative">
-                  <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-primary/30" />
+                  <User size={16} className="absolute start-4 top-1/2 -translate-y-1/2 text-brand-primary/30" />
                   <input
                     type="text"
                     placeholder={t('form.fullname')}
                     value={name}
                     onChange={e => setName(e.target.value)}
                     required
-                    className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-brand-primary/10 dark:border-white/10 bg-brand-secondary/30 dark:bg-zinc-900 text-sm font-bold text-brand-primary dark:text-white placeholder:text-brand-primary/30 focus:border-accent outline-none transition-all"
+                    className="w-full ps-10 pe-4 py-3.5 rounded-2xl border border-brand-primary/10 dark:border-white/10 bg-brand-secondary/30 dark:bg-zinc-900 text-sm font-bold text-brand-primary dark:text-white placeholder:text-brand-primary/30 focus:border-accent outline-none transition-all"
                   />
                 </div>
               )}
               <div className="relative">
-                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-primary/30" />
+                <Mail size={16} className="absolute start-4 top-1/2 -translate-y-1/2 text-brand-primary/30" />
                 <input
                   type="email"
                   placeholder={t('form.email')}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
-                  className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-brand-primary/10 dark:border-white/10 bg-brand-secondary/30 dark:bg-zinc-900 text-sm font-bold text-brand-primary dark:text-white placeholder:text-brand-primary/30 focus:border-accent outline-none transition-all"
+                  className="w-full ps-10 pe-4 py-3.5 rounded-2xl border border-brand-primary/10 dark:border-white/10 bg-brand-secondary/30 dark:bg-zinc-900 text-sm font-bold text-brand-primary dark:text-white placeholder:text-brand-primary/30 focus:border-accent outline-none transition-all"
                 />
               </div>
               <div className="relative">
-                <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-primary/30" />
+                <Lock size={16} className="absolute start-4 top-1/2 -translate-y-1/2 text-brand-primary/30" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder={t('form.password')}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  className="w-full pl-10 pr-12 py-3.5 rounded-2xl border border-brand-primary/10 dark:border-white/10 bg-brand-secondary/30 dark:bg-zinc-900 text-sm font-bold text-brand-primary dark:text-white placeholder:text-brand-primary/30 focus:border-accent outline-none transition-all"
+                  className="w-full ps-10 pe-12 py-3.5 rounded-2xl border border-brand-primary/10 dark:border-white/10 bg-brand-secondary/30 dark:bg-zinc-900 text-sm font-bold text-brand-primary dark:text-white placeholder:text-brand-primary/30 focus:border-accent outline-none transition-all"
                 />
-                <button type="button" onClick={() => setShowPassword(p => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-primary/30 hover:text-brand-primary transition-colors">
+                <button type="button" onClick={() => setShowPassword(p => !p)} className="absolute end-4 top-1/2 -translate-y-1/2 text-brand-primary/30 hover:text-brand-primary transition-colors">
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>

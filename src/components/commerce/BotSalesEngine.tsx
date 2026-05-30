@@ -43,7 +43,7 @@ export function BotSalesEngine() {
   }, []);
 
   return (
-    <div className="fixed bottom-10 left-10 z-[10000] flex flex-col gap-4 pointer-events-none">
+    <div className="fixed bottom-10 start-10 z-[10000] flex flex-col gap-4 pointer-events-none">
       <AnimatePresence>
         {notifications.map((n) => (
           <motion.div

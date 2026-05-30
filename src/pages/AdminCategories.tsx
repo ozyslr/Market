@@ -133,7 +133,7 @@ export function AdminCategories() {
               {children.length > 0
                 ? <FolderOpen size={14} className="text-purple-400 shrink-0" />
                 : <Folder size={14} className="text-[#1A1033]/20 shrink-0" />}
-              <span className="font-bold text-sm text-[#1A1033]">{cat.icon && <span className="mr-1">{cat.icon}</span>}{cat.name}</span>
+              <span className="font-bold text-sm text-[#1A1033]">{cat.icon && <span className="me-1">{cat.icon}</span>}{cat.name}</span>
             </div>
           </td>
           <td className="px-6 py-4">
@@ -210,7 +210,7 @@ export function AdminCategories() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
+              <table className="w-full text-start">
                 <thead>
                   <tr className="bg-[#F8F8FA] text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40">
                     <th className="px-6 py-4">Kategori</th>
@@ -247,7 +247,7 @@ export function AdminCategories() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsFormOpen(false)} />
           <div className="relative bg-white rounded-4xl p-8 w-full max-w-lg shadow-2xl">
-            <button onClick={() => setIsFormOpen(false)} className="absolute top-5 right-5 text-[#1A1033]/30 hover:text-[#1A1033]">
+            <button onClick={() => setIsFormOpen(false)} className="absolute top-5 end-5 text-[#1A1033]/30 hover:text-[#1A1033]">
               <X size={18} />
             </button>
             <h3 className="text-xl font-display font-black uppercase italic mb-6">

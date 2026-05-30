@@ -205,7 +205,7 @@ export function VisualSearch() {
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-purple-600/40 to-transparent rounded-[2rem]" />
-                <div className="absolute -bottom-3 -right-3 w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center shadow-xl">
+                <div className="absolute -bottom-3 -end-3 w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center shadow-xl">
                   <Sparkles size={20} className="text-white animate-pulse" />
                 </div>
               </div>

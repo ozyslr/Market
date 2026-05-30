@@ -80,19 +80,19 @@ export function AdminFinance() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#F8F8FA]">
-                  <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Satıcı ID</th>
-                  <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Satış</th>
-                  <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Komisyon</th>
-                  <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Net</th>
+                  <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Satıcı ID</th>
+                  <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Satış</th>
+                  <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Komisyon</th>
+                  <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Net</th>
                 </tr>
               </thead>
               <tbody>
                 {bySeller.map(row => (
                   <tr key={row.sellerId} className="border-b border-[#F8F8FA] hover:bg-[#F8F8FA]/50">
                     <td className="py-3 font-bold text-[#1A1033] text-xs">{row.sellerId.slice(0, 12)}...</td>
-                    <td className="py-3 text-right text-xs font-bold">{row.amount.toLocaleString('tr-TR')} ₺</td>
-                    <td className="py-3 text-right text-xs text-accent font-bold">{row.commission.toLocaleString('tr-TR')} ₺</td>
-                    <td className="py-3 text-right text-xs font-bold text-green-600">{(row.amount - row.commission).toLocaleString('tr-TR')} ₺</td>
+                    <td className="py-3 text-end text-xs font-bold">{row.amount.toLocaleString('tr-TR')} ₺</td>
+                    <td className="py-3 text-end text-xs text-accent font-bold">{row.commission.toLocaleString('tr-TR')} ₺</td>
+                    <td className="py-3 text-end text-xs font-bold text-green-600">{(row.amount - row.commission).toLocaleString('tr-TR')} ₺</td>
                   </tr>
                 ))}
               </tbody>

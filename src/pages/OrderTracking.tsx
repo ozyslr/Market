@@ -109,9 +109,9 @@ export function OrderTracking() {
 
           {/* Animated Route Visualization */}
           <div className="relative py-8">
-            <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-[#F8F8FA] rounded-full -translate-y-1/2" />
+            <div className="absolute top-1/2 start-0 end-0 h-1.5 bg-[#F8F8FA] rounded-full -translate-y-1/2" />
             <motion.div
-              className="absolute top-1/2 left-0 h-1.5 bg-accent rounded-full -translate-y-1/2"
+              className="absolute top-1/2 start-0 h-1.5 bg-accent rounded-full -translate-y-1/2"
               initial={{ width: '0%' }}
               animate={{ width: `${(currentStep / 4) * 100}%` }}
               transition={{ duration: 1.5, ease: 'easeOut' }}

@@ -157,10 +157,10 @@ export function AdminProducts() {
           )}
         </div>
         <div className="relative w-full sm:w-72">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1A1033]/30" />
+          <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-[#1A1033]/30" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Ürün veya marka ara..."
-            className="w-full pl-9 pr-4 py-2.5 bg-[#F8F8FA] rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/20" />
+            className="w-full ps-9 pe-4 py-2.5 bg-[#F8F8FA] rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/20" />
         </div>
       </div>
 
@@ -179,12 +179,12 @@ export function AdminProducts() {
           >
             {f.label}
             {f.value === 'pending' && pendingCount > 0 && (
-              <span className="ml-1.5 bg-yellow-400 text-[#1A1033] rounded-full px-1.5">{pendingCount}</span>
+              <span className="ms-1.5 bg-yellow-400 text-[#1A1033] rounded-full px-1.5">{pendingCount}</span>
             )}
           </button>
         ))}
         {aiScanning && (
-          <span className="ml-2 inline-flex items-center gap-1.5 text-[10px] font-bold text-accent">
+          <span className="ms-2 inline-flex items-center gap-1.5 text-[10px] font-bold text-accent">
             <Loader2 size={12} className="animate-spin" /> AI tarıyor... %{aiProgress}
           </span>
         )}
@@ -192,7 +192,7 @@ export function AdminProducts() {
           onClick={handleAiScan}
           disabled={aiScanning}
           className={cn(
-            'ml-auto px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5',
+            'ms-auto px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5',
             aiScanning
               ? 'bg-accent/10 text-accent/50 cursor-not-allowed'
               : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90'
@@ -236,15 +236,15 @@ export function AdminProducts() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#F8F8FA]">
-              <th className="pb-3 text-left w-8">
+              <th className="pb-3 text-start w-8">
                 <button onClick={selectAll} className="text-[#1A1033]/30 hover:text-accent">
                   {selected.size === filtered.length && filtered.length > 0 ? <CheckSquare size={16} /> : <Square size={16} />}
                 </button>
               </th>
-              <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Ürün</th>
-              <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Durum</th>
-              <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Fiyat</th>
-              <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Stok</th>
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Ürün</th>
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Durum</th>
+              <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Fiyat</th>
+              <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Stok</th>
               {FLAGS.map(f => (
                 <th key={f.key} className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
                   <f.icon size={12} className={cn('mx-auto', f.color)} />
@@ -281,7 +281,7 @@ export function AdminProducts() {
                       {badge.label}
                     </span>
                     {aiResults.has(product.id) && (
-                      <span className={cn('ml-1.5 px-2 py-1 rounded-lg text-[8px] font-black uppercase',
+                      <span className={cn('ms-1.5 px-2 py-1 rounded-lg text-[8px] font-black uppercase',
                         aiResults.get(product.id)!.verdict === 'approved' ? 'bg-green-100 text-green-600' :
                         aiResults.get(product.id)!.verdict === 'rejected' ? 'bg-red-100 text-red-500' :
                         'bg-amber-100 text-amber-600'
@@ -290,8 +290,8 @@ export function AdminProducts() {
                       </span>
                     )}
                   </td>
-                  <td className="py-3 text-right font-bold text-[#1A1033] text-xs">{product.price.toLocaleString('tr-TR')} ₺</td>
-                  <td className="py-3 text-right text-[10px] font-bold text-[#1A1033]/60">{product.stock}</td>
+                  <td className="py-3 text-end font-bold text-[#1A1033] text-xs">{product.price.toLocaleString('tr-TR')} ₺</td>
+                  <td className="py-3 text-end text-[10px] font-bold text-[#1A1033]/60">{product.stock}</td>
                   {FLAGS.map(f => {
                     const key = `${product.id}_${f.key}`;
                     const active = !!product[f.key];
@@ -358,7 +358,7 @@ export function AdminProducts() {
         <div className="fixed inset-0 z-200 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setRejectModal(null)} />
           <div className="relative bg-white rounded-4xl p-8 w-full max-w-md shadow-2xl">
-            <button onClick={() => setRejectModal(null)} className="absolute top-5 right-5 text-[#1A1033]/30 hover:text-[#1A1033]"><X size={18} /></button>
+            <button onClick={() => setRejectModal(null)} className="absolute top-5 end-5 text-[#1A1033]/30 hover:text-[#1A1033]"><X size={18} /></button>
             <h4 className="text-lg font-display font-black uppercase italic mb-1">Ürünü Reddet</h4>
             <p className="text-xs text-[#1A1033]/50 mb-5 line-clamp-2">{rejectModal.product.title}</p>
             <label className="block text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60 mb-2">Red Sebebi (Satıcıya bildirilir)</label>

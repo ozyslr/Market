@@ -97,7 +97,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative ml-auto w-full max-w-2xl h-full bg-zinc-900 flex flex-col shadow-2xl overflow-hidden">
+      <div className="relative ms-auto w-full max-w-2xl h-full bg-zinc-900 flex flex-col shadow-2xl overflow-hidden">
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-700 flex-shrink-0">
@@ -221,7 +221,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-zinc-800">
                   <img src={url} alt="Ürün görseli" className="w-full h-full object-cover" loading="lazy" />
                   <button onClick={() => update('images', form.images.filter((_, j) => j !== i))}
-                    className="absolute top-1 right-1 bg-red-600/80 hover:bg-red-600 rounded-full p-1">
+                    className="absolute top-1 end-1 bg-red-600/80 hover:bg-red-600 rounded-full p-1">
                     <Trash2 size={10} className="text-white" />
                   </button>
                 </div>
@@ -361,7 +361,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             <div>
               <label className="block text-xs text-zinc-400 mb-1">
                 Meta Açıklama
-                <span className={`ml-2 ${form.metaDescription.length > 160 ? 'text-red-400' : 'text-zinc-600'}`}>
+                <span className={`ms-2 ${form.metaDescription.length > 160 ? 'text-red-400' : 'text-zinc-600'}`}>
                   {form.metaDescription.length}/160
                 </span>
               </label>

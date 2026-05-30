@@ -129,7 +129,7 @@ export function SellerCertificates() {
           >
             {tab.label}
             {activeTab === tab.id && (
-              <motion.div layoutId="cert-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-400" />
+              <motion.div layoutId="cert-tab" className="absolute bottom-0 start-0 end-0 h-0.5 bg-emerald-400" />
             )}
           </button>
         ))}
@@ -246,7 +246,7 @@ export function SellerCertificates() {
                       }`}
                     >
                       <img src={p.images[0]} alt={p.title} className="w-8 h-8 object-contain rounded" loading="lazy" />
-                      <div className="text-left min-w-0">
+                      <div className="text-start min-w-0">
                         <p className="truncate">{p.title}</p>
                         <p className="text-[10px] text-zinc-500">{p.brand} · {p.originCountry}</p>
                       </div>

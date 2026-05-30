@@ -76,7 +76,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
         >
           <Link to={`/product/${product.slug}`} {...(openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="block w-full h-full relative">
             {product.promotionStatus === 'active' && (
-              <div className="absolute top-0 left-0 z-30 px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold rounded-br-md shadow-xs">
+              <div className="absolute top-0 start-0 z-30 px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold rounded-br-md shadow-xs">
                 REKLAM
               </div>
             )}
@@ -101,7 +101,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
           </Link>
           {/* Dot indicators — outside Link, above cart overlay */}
           {imgCount > 1 && (
-            <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-1 z-20 pointer-events-none">
+            <div className="absolute bottom-12 start-0 end-0 flex justify-center gap-1 z-20 pointer-events-none">
               {[...Array(imgCount)].map((_, i) => (
                 <span key={i} className={cn(
                   'w-1.5 h-1.5 rounded-full transition-colors duration-150',
@@ -114,7 +114,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
           {/* Wishlist toggle */}
           <button
             onClick={(e) => { e.preventDefault(); toggleWishlist(product.id); }}
-            className="absolute top-3 left-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm border border-brand-primary/5 transition-all duration-200 hover:scale-110 z-10"
+            className="absolute top-3 start-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm border border-brand-primary/5 transition-all duration-200 hover:scale-110 z-10"
           >
             <Heart size={14} className={isWishlisted(product.id) ? 'fill-red-500 text-red-500' : 'text-[#1A1033]/40'} />
           </button>
@@ -126,7 +126,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
               setShowQuickView(true);
             }}
             className={cn(
-              "absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-brand-primary shadow-sm border border-brand-primary/5 transition-all duration-300 hover:bg-accent hover:text-white group/view",
+              "absolute top-3 end-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-brand-primary shadow-sm border border-brand-primary/5 transition-all duration-300 hover:bg-accent hover:text-white group/view",
               isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 hidden md:flex"
             )}
           >
@@ -159,7 +159,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                {product.oldPrice && <span className="text-[10px] text-gray-400 line-through leading-none mb-0.5">{product.oldPrice.toFixed(2)} TL</span>}
                <div className="flex items-start text-brand-primary dark:text-white">
                   <span className="text-lg font-bold leading-none tracking-tight">{Math.floor(product.price)}</span>
-                  <span className="text-[10px] font-bold mt-0.5 ml-0.5 leading-none">,{Math.floor((product.price % 1) * 100).toString().padStart(2, '0')} TL</span>
+                  <span className="text-[10px] font-bold mt-0.5 ms-0.5 leading-none">,{Math.floor((product.price % 1) * 100).toString().padStart(2, '0')} TL</span>
                </div>
             </div>
 
@@ -203,7 +203,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
               {/* Close */}
               <button
                 onClick={() => { setShowQuickView(false); setQuickViewImgIdx(0); }}
-                className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-white/90 dark:bg-zinc-700 rounded-full text-gray-400 hover:text-accent shadow z-20 transition-colors"
+                className="absolute top-3 end-3 w-8 h-8 flex items-center justify-center bg-white/90 dark:bg-zinc-700 rounded-full text-gray-400 hover:text-accent shadow z-20 transition-colors"
               >
                 <X size={15} />
               </button>
@@ -212,7 +212,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
               <div className="w-full md:w-[58%] relative bg-[#F8F8FA] dark:bg-zinc-800 flex flex-col" style={{ minHeight: 380 }}>
                 {/* Free shipping badge */}
                 {product.estimatedDeliveryDays != null && product.estimatedDeliveryDays <= 3 && (
-                  <div className="absolute top-3 left-3 z-10 px-2 py-0.5 bg-[#26A541] text-white text-[9px] font-black uppercase rounded tracking-widest shadow-sm">
+                  <div className="absolute top-3 start-3 z-10 px-2 py-0.5 bg-[#26A541] text-white text-[9px] font-black uppercase rounded tracking-widest shadow-sm">
                     KARGO BEDAVA
                   </div>
                 )}
@@ -231,13 +231,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                     <>
                       <button
                         onClick={() => setQuickViewImgIdx(i => (i - 1 + product.images.length) % product.images.length)}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white dark:bg-zinc-700 rounded-full shadow flex items-center justify-center text-gray-400 hover:text-accent transition-colors"
+                        className="absolute start-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white dark:bg-zinc-700 rounded-full shadow flex items-center justify-center text-gray-400 hover:text-accent transition-colors"
                       >
                         <ChevronLeft size={18} />
                       </button>
                       <button
                         onClick={() => setQuickViewImgIdx(i => (i + 1) % product.images.length)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white dark:bg-zinc-700 rounded-full shadow flex items-center justify-center text-gray-400 hover:text-accent transition-colors"
+                        className="absolute end-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white dark:bg-zinc-700 rounded-full shadow flex items-center justify-center text-gray-400 hover:text-accent transition-colors"
                       >
                         <ChevronRight size={18} />
                       </button>
@@ -265,7 +265,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
               </div>
 
               {/* RIGHT: Product Details — 42% */}
-              <div className="w-full md:w-[42%] flex flex-col overflow-y-auto border-l border-gray-100 dark:border-zinc-700" style={{ maxHeight: '90vh' }}>
+              <div className="w-full md:w-[42%] flex flex-col overflow-y-auto border-s border-gray-100 dark:border-zinc-700" style={{ maxHeight: '90vh' }}>
                 <div className="flex flex-col flex-1 p-5">
                   {/* Category · Seller */}
                   <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-2">
@@ -306,7 +306,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                     )}
                     <div className="flex items-start text-[#E53935]">
                       <span className="text-2xl font-black leading-none tracking-tight">{Math.floor(product.price)}</span>
-                      <span className="text-xs font-black mt-0.5 ml-0.5">,{Math.floor((product.price % 1) * 100).toString().padStart(2, '0')} TL</span>
+                      <span className="text-xs font-black mt-0.5 ms-0.5">,{Math.floor((product.price % 1) * 100).toString().padStart(2, '0')} TL</span>
                     </div>
                   </div>
 

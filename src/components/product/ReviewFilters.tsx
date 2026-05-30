@@ -47,12 +47,12 @@ export function ReviewFilters({
     <div className="space-y-3 py-4 border-y border-brand-primary/5 dark:border-white/5">
       {/* Arama Barı */}
       <div className="relative mb-2">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-primary/30 dark:text-zinc-500" />
+        <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-primary/30 dark:text-zinc-500" />
         <input
           value={search}
           onChange={e => onSearch(e.target.value)}
           placeholder="Değerlendirmeler içinde ara..."
-          className="w-full pl-9 pr-4 py-2 bg-brand-secondary/30 dark:bg-zinc-800/40 rounded-xl text-xs outline-none focus:ring-2 ring-accent/20 border border-brand-primary/5 dark:border-white/5 text-brand-primary dark:text-white"
+          className="w-full ps-9 pe-4 py-2 bg-brand-secondary/30 dark:bg-zinc-800/40 rounded-xl text-xs outline-none focus:ring-2 ring-accent/20 border border-brand-primary/5 dark:border-white/5 text-brand-primary dark:text-white"
         />
       </div>
 

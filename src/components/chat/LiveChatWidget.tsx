@@ -134,7 +134,7 @@ export function LiveChatWidget() {
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-6 right-6 z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 cursor-pointer"
+            className="fixed bottom-6 end-6 z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 cursor-pointer"
             onClick={() => setViewState('open')}
           >
             <div className="flex items-center gap-3 px-5 py-4">
@@ -158,7 +158,7 @@ export function LiveChatWidget() {
             initial={{ y: 50, opacity: 0, scale: 0.95 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 50, opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
-            className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[600px] max-h-[calc(100vh-120px)] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
+            className="fixed bottom-6 end-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[600px] max-h-[calc(100vh-120px)] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="bg-[#1A1033] text-white px-6 py-5 flex items-center justify-between shrink-0">

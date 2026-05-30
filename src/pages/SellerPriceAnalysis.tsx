@@ -131,7 +131,7 @@ export function SellerPriceAnalysis() {
             <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60">Ürün Bazlı Analiz</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-start">
               <thead>
                 <tr className="bg-[#F8F8FA] text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
                   <th className="px-6 py-4">Ürün</th>

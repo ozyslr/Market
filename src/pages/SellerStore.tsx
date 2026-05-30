@@ -85,7 +85,7 @@ export function SellerStorePage() {
         <img src={seller.banner} alt={seller.name + ' banner'} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-secondary/80 to-transparent" />
         
-        <div className="absolute bottom-12 left-0 right-0">
+        <div className="absolute bottom-12 start-0 end-0">
           <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div className="flex items-center gap-6">
               <div className="w-32 h-32 bg-white rounded-[2.5rem] shadow-2xl p-6 ring-8 ring-white/10 overflow-hidden">
@@ -152,7 +152,7 @@ export function SellerStorePage() {
           </div>
 
           <div className="bg-brand-primary text-white rounded-[2.5rem] p-8 overflow-hidden relative group">
-            <Zap size={100} className="absolute -top-10 -right-10 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
+            <Zap size={100} className="absolute -top-10 -end-10 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
             <Award size={24} className="text-accent mb-4" />
             <h4 className="text-xl font-display font-black leading-tight mb-4 uppercase italic">Global Multi-Hub <br /> Seller</h4>
             <p className="text-xs text-white/60 font-medium leading-relaxed">This merchant stocks inventory in UK, Germany, and Dubai fulfillment centers for rapid global delivery.</p>
@@ -180,9 +180,9 @@ export function SellerStorePage() {
                     activeTab === tab.id ? "text-brand-primary" : "text-brand-primary/20 hover:text-brand-primary"
                   )}
                  >
-                   {tab.label} {tab.count !== null && <span className="ml-1 text-[10px] opacity-40">({tab.count})</span>}
+                   {tab.label} {tab.count !== null && <span className="ms-1 text-[10px] opacity-40">({tab.count})</span>}
                    {activeTab === tab.id && (
-                     <motion.div layoutId="activeTabSlot" className="absolute bottom-0 left-0 right-0 h-1 bg-accent rounded-full" />
+                     <motion.div layoutId="activeTabSlot" className="absolute bottom-0 start-0 end-0 h-1 bg-accent rounded-full" />
                    )}
                  </button>
                ))}
@@ -214,13 +214,13 @@ export function SellerStorePage() {
                 {/* Search & Filter Bar */}
                 <div className="flex flex-col md:flex-row gap-4">
                    <div className="relative flex-1">
-                      <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-primary/20" />
+                      <Search size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-brand-primary/20" />
                       <input
                         type="text"
                         placeholder="Search items in this workshop..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-white rounded-2xl border border-brand-primary/5 focus:ring-4 focus:ring-accent/5 outline-none font-medium text-sm transition-all"
+                        className="w-full ps-12 pe-4 py-4 bg-white rounded-2xl border border-brand-primary/5 focus:ring-4 focus:ring-accent/5 outline-none font-medium text-sm transition-all"
                       />
                    </div>
                    <select

@@ -109,7 +109,7 @@ export function AdminChat() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Session list */}
-        <div className="xl:col-span-1 space-y-1 max-h-[700px] overflow-y-auto pr-1">
+        <div className="xl:col-span-1 space-y-1 max-h-[700px] overflow-y-auto pe-1">
           {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>
           ) : sessions.length === 0 ? (
@@ -129,7 +129,7 @@ export function AdminChat() {
               key={session.id}
               onClick={() => setSelectedId(session.id)}
               className={cn(
-                'w-full text-left bg-white rounded-2xl p-4 border transition-all hover:border-accent/30',
+                'w-full text-start bg-white rounded-2xl p-4 border transition-all hover:border-accent/30',
                 selectedId === session.id ? 'border-accent shadow-sm' : 'border-[#F8F8FA]',
               )}
             >
@@ -249,14 +249,14 @@ export function AdminChat() {
                 key={session.id}
                 onClick={() => setSelectedId(session.id)}
                 className={cn(
-                  'w-full text-left px-4 py-3 rounded-xl text-sm transition-colors',
+                  'w-full text-start px-4 py-3 rounded-xl text-sm transition-colors',
                   selectedId === session.id ? 'bg-accent/5' : 'hover:bg-gray-50',
                 )}
               >
                 <span className="font-bold text-[#1A1033]/60">
                   {session.userName || session.userEmail || 'İsimsiz'}
                 </span>
-                <span className="text-[#1A1033]/30 ml-2 text-xs">{formatTime(session.createdAt)}</span>
+                <span className="text-[#1A1033]/30 ms-2 text-xs">{formatTime(session.createdAt)}</span>
               </button>
             ))}
           </div>

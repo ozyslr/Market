@@ -72,9 +72,9 @@ export function SellOnBenimOlan() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-6 overflow-hidden bg-brand-primary text-white">
-        <div className="absolute top-0 left-0 w-full h-full opacity-10">
-          <div className="absolute top-1/4 left-10 w-96 h-96 bg-accent rounded-full blur-[120px]" />
-          <div className="absolute bottom-1/4 right-10 w-96 h-96 bg-blue-500 rounded-full blur-[120px]" />
+        <div className="absolute top-0 start-0 w-full h-full opacity-10">
+          <div className="absolute top-1/4 start-10 w-96 h-96 bg-accent rounded-full blur-[120px]" />
+          <div className="absolute bottom-1/4 end-10 w-96 h-96 bg-blue-500 rounded-full blur-[120px]" />
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10 text-center">
@@ -170,7 +170,7 @@ export function SellOnBenimOlan() {
               },
             ].map((card, i) => (
               <div key={i} className="p-10 bg-white rounded-[3rem] border border-brand-primary/5 shadow-2xl relative overflow-hidden group">
-                <span className="absolute -top-10 -right-10 text-[10rem] font-display font-black text-brand-primary/5 group-hover:text-accent/10 transition-colors">{card.step}</span>
+                <span className="absolute -top-10 -end-10 text-[10rem] font-display font-black text-brand-primary/5 group-hover:text-accent/10 transition-colors">{card.step}</span>
                 <div className="relative z-10">
                   <h3 className="text-2xl font-display font-black uppercase mb-6 italic tracking-tighter">{card.title}</h3>
                   <p className="text-sm text-brand-primary/60 font-medium mb-10 leading-relaxed">{card.desc}</p>

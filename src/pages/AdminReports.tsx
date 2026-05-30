@@ -123,7 +123,7 @@ export function AdminReports() {
               <thead>
                 <tr className="border-b border-[#F8F8FA]">
                   {['Sipariş ID', 'Tarih', 'Alıcı', 'Tutar', 'Durum'].map(h => (
-                    <th key={h} className="text-left p-3 font-black text-[#1A1033]/40 uppercase text-[10px]">{h}</th>
+                    <th key={h} className="text-start p-3 font-black text-[#1A1033]/40 uppercase text-[10px]">{h}</th>
                   ))}
                 </tr>
               </thead>

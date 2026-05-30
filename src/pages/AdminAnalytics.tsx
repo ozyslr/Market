@@ -215,27 +215,27 @@ export function AdminAnalytics() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-brand-primary/5">
-                <th className="text-left py-2 pr-4 font-bold text-brand-primary/40">Tip</th>
-                <th className="text-left py-2 pr-4 font-bold text-brand-primary/40">Ürün ID</th>
-                <th className="text-left py-2 pr-4 font-bold text-brand-primary/40">Kullanıcı</th>
-                <th className="text-left py-2 pr-4 font-bold text-brand-primary/40">Oturum</th>
-                <th className="text-right py-2 font-bold text-brand-primary/40">Zaman</th>
+                <th className="text-start py-2 pe-4 font-bold text-brand-primary/40">Tip</th>
+                <th className="text-start py-2 pe-4 font-bold text-brand-primary/40">Ürün ID</th>
+                <th className="text-start py-2 pe-4 font-bold text-brand-primary/40">Kullanıcı</th>
+                <th className="text-start py-2 pe-4 font-bold text-brand-primary/40">Oturum</th>
+                <th className="text-end py-2 font-bold text-brand-primary/40">Zaman</th>
               </tr>
             </thead>
             <tbody>
               {events.slice(0, 20).map(ev => (
                 <tr key={ev.id} className="border-b border-brand-primary/5 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
-                  <td className="py-2 pr-4">
+                  <td className="py-2 pe-4">
                     <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-bold capitalize',
                       TYPE_COLORS[ev.type] || 'bg-zinc-100 text-zinc-600'
                     )}>
                       {TYPE_ICONS[ev.type]} {ev.type}
                     </span>
                   </td>
-                  <td className="py-2 pr-4 font-mono text-brand-primary dark:text-white">{ev.productId?.slice(0, 16)}</td>
-                  <td className="py-2 pr-4 text-brand-primary/50">{ev.userId ? ev.userId.slice(0, 12) : '—'}</td>
-                  <td className="py-2 pr-4 text-brand-primary/50">{ev.sessionId?.slice(0, 10) || '—'}</td>
-                  <td className="py-2 text-right text-brand-primary/40">
+                  <td className="py-2 pe-4 font-mono text-brand-primary dark:text-white">{ev.productId?.slice(0, 16)}</td>
+                  <td className="py-2 pe-4 text-brand-primary/50">{ev.userId ? ev.userId.slice(0, 12) : '—'}</td>
+                  <td className="py-2 pe-4 text-brand-primary/50">{ev.sessionId?.slice(0, 10) || '—'}</td>
+                  <td className="py-2 text-end text-brand-primary/40">
                     {ev.ts?.toDate?.().toLocaleString('tr-TR') || '—'}
                   </td>
                 </tr>

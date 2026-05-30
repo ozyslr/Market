@@ -154,7 +154,7 @@ export function CollectionPage() {
           <p className="text-xs font-bold text-brand-primary/40 dark:text-white/40 shrink-0">
             {loading ? '...' : `${displayProducts.length} ürün`}
           </p>
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="flex items-center gap-3 ms-auto">
             {/* Mobile filter toggle */}
             <button
               onClick={() => setMobileFilterOpen(true)}
@@ -232,7 +232,7 @@ export function CollectionPage() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'tween', duration: 0.25 }}
-              className="fixed left-0 top-0 bottom-0 w-72 bg-white dark:bg-zinc-900 z-50 overflow-y-auto p-4 lg:hidden"
+              className="fixed start-0 top-0 bottom-0 w-72 bg-white dark:bg-zinc-900 z-50 overflow-y-auto p-4 lg:hidden"
             >
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm font-black uppercase tracking-widest">Filtreler</span>

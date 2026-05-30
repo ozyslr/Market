@@ -221,7 +221,7 @@ export function SellerSettings() {
                     <input type="number" min={0} step={0.01}
                       value={region.val[region.key] ?? (region as any).default}
                       onChange={e => setForm((p: any) => ({ ...p, [region.key]: parseFloat(e.target.value) || 0 }))}
-                      className="w-20 text-right bg-white rounded-lg px-2 py-1 text-xs font-bold outline-none border border-transparent focus:border-accent/20" />
+                      className="w-20 text-end bg-white rounded-lg px-2 py-1 text-xs font-bold outline-none border border-transparent focus:border-accent/20" />
                     <span className="text-[10px] text-[#1A1033]/40">₺</span>
                   </div>
                 </div>

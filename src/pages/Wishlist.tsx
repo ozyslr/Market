@@ -50,7 +50,7 @@ export function Wishlist() {
           {t('wishlist.title')}
         </h1>
         {products.length > 0 && (
-          <span className="ml-2 px-2.5 py-0.5 bg-accent/10 text-accent rounded-full text-xs font-black">
+          <span className="ms-2 px-2.5 py-0.5 bg-accent/10 text-accent rounded-full text-xs font-black">
             {products.length}
           </span>
         )}
@@ -66,7 +66,7 @@ export function Wishlist() {
           {products.map(product => (
             <div key={product.id} className="relative">
               {priceDrops[product.id] && (
-                <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-green-500 text-white px-2 py-1 rounded-lg shadow-lg text-[9px] font-black uppercase tracking-wider">
+                <div className="absolute top-2 start-2 z-10 flex items-center gap-1 bg-green-500 text-white px-2 py-1 rounded-lg shadow-lg text-[9px] font-black uppercase tracking-wider">
                   <TrendingDown size={10} />
                   <span>{priceDrops[product.id].from} → {priceDrops[product.id].to} ₺</span>
                 </div>

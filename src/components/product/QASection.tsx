@@ -120,12 +120,12 @@ export function QASection({ productId, currentUserId, currentUserName, isSeller,
       {/* Arama */}
       {questions.length > 3 && (
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-primary/30 dark:text-zinc-500" />
+          <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-primary/30 dark:text-zinc-500" />
           <input
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             placeholder="Sorular içinde ara..."
-            className="w-full pl-9 pr-4 py-2.5 bg-[#F8F8FA] dark:bg-zinc-800 rounded-xl text-sm outline-none focus:ring-2 ring-accent/20 text-brand-primary dark:text-white"
+            className="w-full ps-9 pe-4 py-2.5 bg-[#F8F8FA] dark:bg-zinc-800 rounded-xl text-sm outline-none focus:ring-2 ring-accent/20 text-brand-primary dark:text-white"
           />
         </div>
       )}

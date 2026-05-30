@@ -139,7 +139,7 @@ export function LocationModal({ isOpen, onClose }: Props) {
                     key={addr.id}
                     onClick={() => handleSelectSavedAddress(addr)}
                     className={cn(
-                      'flex items-start gap-2.5 p-3.5 rounded-2xl border text-left transition-all',
+                      'flex items-start gap-2.5 p-3.5 rounded-2xl border text-start transition-all',
                       cityInput === addr.city && selectedMarket === (Object.keys(MARKET_OPTIONS).find(k => MARKET_OPTIONS[k].country === addr.country?.toUpperCase()) ?? 'UK')
                         ? 'border-accent bg-accent/5'
                         : 'border-[#1A1033]/5 hover:border-accent/30 bg-[#F8F8FA]',
@@ -176,11 +176,11 @@ export function LocationModal({ isOpen, onClose }: Props) {
                   )}
                 >
                   <span className="text-xl leading-none">{cfg.flag}</span>
-                  <div className="text-left">
+                  <div className="text-start">
                     <p className="text-[10px] font-black text-[#1A1033]">{key}</p>
                     <p className="text-[9px] text-[#1A1033]/40 font-bold">{cfg.currency}</p>
                   </div>
-                  {selectedMarket === key && <Check size={12} className="text-accent ml-auto" />}
+                  {selectedMarket === key && <Check size={12} className="text-accent ms-auto" />}
                 </button>
               ))}
             </div>

@@ -39,7 +39,7 @@ export function OneClickSuccessModal({ orderId, total, currency, onClose }: Prop
       <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl relative animate-in fade-in zoom-in-95">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute top-4 end-4 text-gray-400 hover:text-gray-600 transition-colors"
           aria-label="Kapat"
         >
           <X size={20} />
@@ -62,7 +62,7 @@ export function OneClickSuccessModal({ orderId, total, currency, onClose }: Prop
             </span>
           </p>
 
-          <div className="bg-gray-50 rounded-xl p-4 w-full text-left">
+          <div className="bg-gray-50 rounded-xl p-4 w-full text-start">
             <p className="text-sm text-gray-500">
               {t('checkout.success.totalAmount', 'Toplam Tutar')}
             </p>

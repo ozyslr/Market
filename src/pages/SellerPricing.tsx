@@ -207,7 +207,7 @@ export function SellerPricing() {
             <div>
               <label className="block text-xs text-zinc-400 mb-1">
                 Ayar Değeri {formAdjustType === 'percentage' ? '(%)' : '(₺)'}
-                <span className={cn('ml-2 text-xs', formAdjustValue < 0 ? 'text-red-400' : 'text-green-400')}>
+                <span className={cn('ms-2 text-xs', formAdjustValue < 0 ? 'text-red-400' : 'text-green-400')}>
                   {formAdjustValue < 0 ? 'İndirim' : 'Zam'}
                 </span>
               </label>

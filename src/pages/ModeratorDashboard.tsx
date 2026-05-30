@@ -71,13 +71,13 @@ function ModerationQueue() {
   return (
     <div className="flex gap-6 h-full">
       {/* List */}
-      <div className="w-80 shrink-0 space-y-2 overflow-y-auto pr-1">
+      <div className="w-80 shrink-0 space-y-2 overflow-y-auto pe-1">
         {products.map(p => (
           <button
             key={p.id}
             onClick={() => setSelected(p)}
             className={cn(
-              'w-full flex items-center gap-3 p-3 rounded-2xl border text-left transition-all',
+              'w-full flex items-center gap-3 p-3 rounded-2xl border text-start transition-all',
               selected?.id === p.id
                 ? 'border-purple-400 bg-purple-50'
                 : 'border-transparent bg-white hover:border-purple-200 hover:bg-purple-50/30'
@@ -153,7 +153,7 @@ function ModerationQueue() {
         <div className="fixed inset-0 z-200 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setNoteModal(null)} />
           <div className="relative bg-white rounded-4xl p-8 w-full max-w-md shadow-2xl">
-            <button onClick={() => setNoteModal(null)} className="absolute top-5 right-5 text-[#1A1033]/30 hover:text-[#1A1033]"><X size={18} /></button>
+            <button onClick={() => setNoteModal(null)} className="absolute top-5 end-5 text-[#1A1033]/30 hover:text-[#1A1033]"><X size={18} /></button>
             <h4 className="text-lg font-display font-black uppercase italic mb-1">
               {noteModal.type === 'reject' ? 'Ürünü Reddet' : 'Düzenleme İste'}
             </h4>
@@ -217,7 +217,7 @@ export function ModeratorDashboard() {
   return (
     <div className="min-h-screen bg-[#F8F8FA] flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-[#F8F8FA] flex flex-col py-8 px-4 shrink-0 shadow-sm">
+      <aside className="w-64 bg-white border-e border-[#F8F8FA] flex flex-col py-8 px-4 shrink-0 shadow-sm">
         <div className="flex items-center gap-2 mb-8 px-2">
           <div className="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center">
             <Shield size={16} className="text-purple-600" />
@@ -242,7 +242,7 @@ export function ModeratorDashboard() {
             >
               <Icon size={14} /> {label}
               {key === 'queue' && pendingCount > 0 && (
-                <span className="ml-auto bg-yellow-400 text-[#1A1033] text-[9px] font-black rounded-full px-1.5 py-0.5">{pendingCount}</span>
+                <span className="ms-auto bg-yellow-400 text-[#1A1033] text-[9px] font-black rounded-full px-1.5 py-0.5">{pendingCount}</span>
               )}
             </button>
           ))}

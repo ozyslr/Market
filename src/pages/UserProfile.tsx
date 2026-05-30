@@ -240,7 +240,7 @@ export function UserProfilePage() {
               </div>
               <button
                 onClick={() => changeTab('settings')}
-                className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-accent rounded-lg shadow-md flex items-center justify-center hover:scale-110 transition-transform"
+                className="absolute -bottom-1.5 -end-1.5 w-7 h-7 bg-accent rounded-lg shadow-md flex items-center justify-center hover:scale-110 transition-transform"
               >
                 <Camera size={12} className="text-white" />
               </button>
@@ -339,7 +339,7 @@ export function UserProfilePage() {
 
             {/* AI Insights */}
             <section className="bg-brand-primary dark:bg-zinc-800 rounded-3xl p-8 text-white relative overflow-hidden">
-              <Zap size={100} className="absolute -top-6 -right-6 text-white/5" />
+              <Zap size={100} className="absolute -top-6 -end-6 text-white/5" />
               <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                 <div>
                   <div className="flex items-center gap-2 mb-3">
@@ -489,7 +489,7 @@ export function UserProfilePage() {
                   return (
                     <div key={product.id} className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-brand-primary/5 dark:border-white/5 shadow-sm flex flex-col justify-between hover:border-accent/20 transition-all relative overflow-hidden">
                       {hasDropped && (
-                        <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl flex items-center gap-1">
+                        <div className="absolute top-0 end-0 bg-green-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl flex items-center gap-1">
                           <span>↓</span> {t('profile.priceDropped')}
                         </div>
                       )}

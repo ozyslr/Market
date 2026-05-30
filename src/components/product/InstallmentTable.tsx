@@ -28,7 +28,7 @@ export function InstallmentTable({ price, currency = 'gbp' }: InstallmentTablePr
       >
         <div className="flex items-center gap-2">
           <CreditCard size={16} className="text-accent" />
-          <div className="text-left">
+          <div className="text-start">
             <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40">Kredi Kartı</p>
             <p className="text-xs font-black text-brand-primary mt-0.5">Taksit Seçenekleri</p>
           </div>

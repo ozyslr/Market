@@ -62,7 +62,7 @@ export function MegaMenu({ isOpen, onClose, categories, activeCategory, setActiv
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 15 }}
-          className="absolute top-full left-0 right-0 bg-white dark:bg-zinc-950 border-t border-brand-primary/10 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.3)] p-0 overflow-hidden z-[1000]"
+          className="absolute top-full start-0 end-0 bg-white dark:bg-zinc-950 border-t border-brand-primary/10 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.3)] p-0 overflow-hidden z-[1000]"
           onMouseEnter={() => {}} // keep open
           onMouseLeave={onClose}
           onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
@@ -73,7 +73,7 @@ export function MegaMenu({ isOpen, onClose, categories, activeCategory, setActiv
         >
           <div className="max-w-[1700px] mx-auto flex min-h-[550px]">
             {/* Left: Category Sidebar */}
-            <div className="w-[300px] bg-zinc-50 dark:bg-zinc-900 border-r border-brand-primary/5 py-6">
+            <div className="w-[300px] bg-zinc-50 dark:bg-zinc-900 border-e border-brand-primary/5 py-6">
               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary/30 mb-4 px-8 underline underline-offset-8">{t('nav.categories_nav')}</h3>
               {categories.filter(c => !c.parentId).map(cat => {
                 const IconComponent = ICON_MAP[cat.icon as string] || Package;
@@ -83,9 +83,9 @@ export function MegaMenu({ isOpen, onClose, categories, activeCategory, setActiv
                     onMouseEnter={() => setActiveCategory(cat.id)}
                     onFocus={() => setActiveCategory(cat.id)}
                     className={cn(
-                      "w-full text-left px-8 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between group",
+                      "w-full text-start px-8 py-4 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between group",
                       activeCategory === cat.id
-                        ? "bg-white dark:bg-zinc-950 text-accent border-r-4 border-accent"
+                        ? "bg-white dark:bg-zinc-950 text-accent border-e-4 border-accent"
                         : "text-brand-primary/60 hover:text-brand-primary"
                     )}
                   >
@@ -163,7 +163,7 @@ export function MegaMenu({ isOpen, onClose, categories, activeCategory, setActiv
             </div>
 
             {/* Right: Visual Banners */}
-            <div className="w-[450px] bg-zinc-50 dark:bg-zinc-900 border-l border-brand-primary/5 p-8 overflow-y-auto no-scrollbar">
+            <div className="w-[450px] bg-zinc-50 dark:bg-zinc-900 border-s border-brand-primary/5 p-8 overflow-y-auto no-scrollbar">
               {activeCategory && (
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary/30 mb-4 px-2">

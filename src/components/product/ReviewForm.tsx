@@ -88,7 +88,7 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
               />
             </button>
           ))}
-          <span className="text-xs font-bold text-brand-primary/40 ml-2">
+          <span className="text-xs font-bold text-brand-primary/40 ms-2">
             {RATING_LABELS[displayRating]}
           </span>
         </div>
@@ -146,7 +146,7 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
               <button
                 type="button"
                 onClick={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}
-                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                className="absolute -top-1.5 -end-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
               >
                 <X size={10} />
               </button>

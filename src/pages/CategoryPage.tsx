@@ -180,7 +180,7 @@ export function CategoryPage() {
         <p className="text-xs font-bold text-brand-primary/40 dark:text-white/40 shrink-0">
           {loading ? '...' : `${sortedProducts.length} ürün`}
         </p>
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="flex items-center gap-3 ms-auto">
           {/* Filtrele → SearchResults */}
           <button
             onClick={() => navigate(`/search?categoryId=${id}`)}

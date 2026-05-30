@@ -354,20 +354,20 @@ export function SellerOrdersPage() {
               </div>
 
               <div className="flex-1 max-w-lg relative">
-                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-primary/20" />
+                 <Search size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-brand-primary/20" />
                  <input 
                   type="text" 
                   placeholder="Search buyer name, order serial, or destination..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-brand-secondary/30 rounded-2xl outline-none focus:ring-4 focus:ring-accent/5 text-sm font-medium transition-all"
+                  className="w-full ps-12 pe-4 py-3 bg-brand-secondary/30 rounded-2xl outline-none focus:ring-4 focus:ring-accent/5 text-sm font-medium transition-all"
                  />
               </div>
            </div>
 
            {/* Table */}
            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-start border-collapse">
                  <thead>
                     <tr className="bg-brand-secondary/30 text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/40">
                        <th className="px-6 py-6 w-12">
@@ -432,7 +432,7 @@ export function SellerOrdersPage() {
                                <span className="text-sm font-bold text-brand-primary">
                                  {order.shippingAddress ? `${order.shippingAddress.city}, ${order.shippingAddress.country}` : '—'}
                                </span>
-                               <span className="flex items-center gap-1 text-[9px] font-black text-blue-500 uppercase tracking-widest ml-2 px-1.5 py-0.5 bg-blue-50 rounded">
+                               <span className="flex items-center gap-1 text-[9px] font-black text-blue-500 uppercase tracking-widest ms-2 px-1.5 py-0.5 bg-blue-50 rounded">
                                   <Globe size={10} /> Express
                                </span>
                             </div>
@@ -530,7 +530,7 @@ export function SellerOrdersPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left">
+                <table className="w-full text-start">
                   <thead>
                     <tr className="bg-brand-secondary/20 text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/40">
                       <th className="px-8 py-5">İade Kodu</th>
@@ -676,7 +676,7 @@ export function SellerOrdersPage() {
                     <span className="text-[9px] font-black uppercase tracking-widest text-accent/60">İade Kodu</span>
                     <span className="text-xl font-display font-black text-accent tracking-widest">{selectedReturn.returnCode}</span>
                     {selectedReturn.autoApproved && (
-                      <span className="ml-auto px-3 py-1 bg-green-500 text-white text-[9px] font-black uppercase rounded-full">Otomatik Onay</span>
+                      <span className="ms-auto px-3 py-1 bg-green-500 text-white text-[9px] font-black uppercase rounded-full">Otomatik Onay</span>
                     )}
                   </div>
                 )}
@@ -798,7 +798,7 @@ export function SellerOrdersPage() {
         {/* Fulfillment Network Stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
            <div className="lg:col-span-2 bg-brand-primary text-white rounded-[3rem] p-10 overflow-hidden relative group">
-              <Globe size={150} className="absolute -bottom-10 -right-10 text-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+              <Globe size={150} className="absolute -bottom-10 -end-10 text-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
               <div className="relative z-10 flex flex-col md:flex-row gap-12">
                  <div className="flex-1">
                     <h3 className="text-2xl font-display font-black uppercase italic mb-6">Global Logistics Hub Health</h3>
@@ -871,7 +871,7 @@ export function SellerOrdersPage() {
                 )}>
                   {trackingData.delivered ? 'Teslim Edildi' : trackingData.currentStatus}
                   {trackingData.estimatedDelivery && !trackingData.delivered && (
-                    <span className="ml-2 font-bold">· Tahmini: {new Date(trackingData.estimatedDelivery).toLocaleDateString('tr-TR')}</span>
+                    <span className="ms-2 font-bold">· Tahmini: {new Date(trackingData.estimatedDelivery).toLocaleDateString('tr-TR')}</span>
                   )}
                 </div>
                 <div className="space-y-2">

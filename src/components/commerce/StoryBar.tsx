@@ -34,7 +34,7 @@ export function StoryBar() {
                     <Zap size={20} fill="currentColor" className="text-accent" />
                  </div>
               </div>
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase">Live</span>
+              <span className="absolute -top-1 -end-1 bg-red-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase">Live</span>
             </div>
             <span className="text-[9px] font-black uppercase text-brand-primary dark:text-white tracking-widest">{t('nav.deals')}</span>
           </Link>
@@ -63,7 +63,7 @@ export function StoryBar() {
                       <div className="absolute inset-0 bg-brand-primary/10 group-hover:bg-transparent transition-colors" />
                     </div>
                   </div>
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-brand-primary/5 flex items-center justify-center text-brand-primary/40 group-hover:text-accent group-hover:scale-110 transition-all">
+                  <div className="absolute -bottom-1 start-1/2 -translate-x-1/2 w-5 h-5 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-brand-primary/5 flex items-center justify-center text-brand-primary/40 group-hover:text-accent group-hover:scale-110 transition-all">
                     <IconComponent size={10} />
                   </div>
                 </div>

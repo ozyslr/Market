@@ -118,7 +118,7 @@ const SidebarItem = ({ id, label, icon: Icon, active, onClick }: any) => (
       active ? "bg-white/10 text-white shadow-xl shadow-black/20" : "text-white/40 hover:text-white"
     )}
   >
-    {active && <motion.div layoutId="activeNav" className="absolute left-0 w-1 h-6 bg-accent rounded-full" />}
+    {active && <motion.div layoutId="activeNav" className="absolute start-0 w-1 h-6 bg-accent rounded-full" />}
     <Icon size={18} className={cn("transition-colors", active ? "text-accent" : "group-hover:text-white/60")} />
     <span className="text-[11px] font-black uppercase tracking-[0.1em]">{label}</span>
   </button>
@@ -220,7 +220,7 @@ export function AdminDashboard() {
 
       {/* Sidebar - Apple/Shopify Modern Dark */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 lg:relative w-[300px] h-full bg-zinc-950 flex flex-col z-50 transition-transform duration-300 transform shrink-0",
+        "fixed inset-y-0 start-0 lg:relative w-[300px] h-full bg-zinc-950 flex flex-col z-50 transition-transform duration-300 transform shrink-0",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         <div className="p-8 lg:p-10 mb-4 flex items-center justify-between">
@@ -300,21 +300,21 @@ export function AdminDashboard() {
 
            <div className="flex-1 max-w-xl hidden md:block">
               <div className="relative group">
-                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-brand-primary/20 dark:text-white/20 group-focus-within:text-[#F9423A] transition-colors" size={18} />
+                 <Search className="absolute start-6 top-1/2 -translate-y-1/2 text-brand-primary/20 dark:text-white/20 group-focus-within:text-[#F9423A] transition-colors" size={18} />
                  <input 
                    type="text" 
                    placeholder="Arama yapın... (⌘K)" 
-                   className="w-full pl-16 pr-10 bg-zinc-50 dark:bg-zinc-900 border border-brand-primary/5 dark:border-white/5 rounded-2xl text-sm font-bold shadow-sm outline-none focus:ring-4 ring-[#F9423A]/10 transition-all py-3 lg:py-3.5 lg:rounded-[1.5rem]"
+                   className="w-full ps-16 pe-10 bg-zinc-50 dark:bg-zinc-900 border border-brand-primary/5 dark:border-white/5 rounded-2xl text-sm font-bold shadow-sm outline-none focus:ring-4 ring-[#F9423A]/10 transition-all py-3 lg:py-3.5 lg:rounded-[1.5rem]"
                  />
               </div>
            </div>
            
-           <div className="flex items-center gap-2 lg:gap-8 border-l border-brand-primary/10 pl-4 lg:pl-8 shrink-0">
+           <div className="flex items-center gap-2 lg:gap-8 border-s border-brand-primary/10 ps-4 lg:pl-8 shrink-0">
               <div className="hidden sm:flex items-center gap-4 text-brand-primary dark:text-white">
                 <button className="p-3 opacity-30 hover:opacity-100 hover:text-[#F9423A] transition-all"><Sun size={20} strokeWidth={2.5} /></button>
                 <button className="p-3 opacity-30 hover:opacity-100 hover:text-[#F9423A] transition-all relative">
                    <Bell size={20} strokeWidth={2.5} />
-                   <span className="absolute top-2.5 right-2.5 w-4 h-4 bg-[#F9423A] text-[8px] font-black text-white rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-950">12</span>
+                   <span className="absolute top-2.5 end-2.5 w-4 h-4 bg-[#F9423A] text-[8px] font-black text-white rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-950">12</span>
                 </button>
               </div>
               <button className="flex items-center gap-2 px-3 py-2 lg:px-4 lg:py-2.5 bg-white dark:bg-zinc-900 border border-brand-primary/5 dark:border-white/5 rounded-xl lg:rounded-2xl text-[9px] lg:text-[10px] font-black uppercase tracking-widest shadow-sm text-brand-primary dark:text-white">
@@ -471,7 +471,7 @@ export function AdminDashboard() {
                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                              <span className="text-[10px] font-black uppercase text-[#1A1033]/40 tracking-widest leading-none">{item.name}</span>
                           </div>
-                          <p className="text-sm font-black text-[#1A1033] ml-4.5">{item.value.toLocaleString()} <span className="text-[10px] text-[#1A1033]/30 font-bold">({Math.round(item.value/18392*100)}%)</span></p>
+                          <p className="text-sm font-black text-[#1A1033] ms-4.5">{item.value.toLocaleString()} <span className="text-[10px] text-[#1A1033]/30 font-bold">({Math.round(item.value/18392*100)}%)</span></p>
                        </div>
                     ))}
                  </div>
@@ -530,7 +530,7 @@ export function AdminDashboard() {
                          <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start mb-1">
                                <h5 className="text-[13px] font-black text-[#1A1033] leading-none tracking-tight">{activity.title}</h5>
-                               <span className="text-[9px] font-bold text-[#1A1033]/20 uppercase whitespace-nowrap ml-4">{activity.time}</span>
+                               <span className="text-[9px] font-bold text-[#1A1033]/20 uppercase whitespace-nowrap ms-4">{activity.time}</span>
                             </div>
                             <p className="text-[11px] font-medium text-[#1A1033]/40 leading-relaxed italic">{activity.desc}</p>
                          </div>
@@ -552,7 +552,7 @@ export function AdminDashboard() {
                     <button className="text-[10px] font-black uppercase text-accent hover:underline">Tümü →</button>
                  </div>
                  <div className="overflow-x-auto no-scrollbar">
-                    <table className="w-full text-left">
+                    <table className="w-full text-start">
                        <thead>
                           <tr className="bg-[#F8F8FA] text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
                              <th className="px-12 py-6">Sipariş ID</th>
@@ -560,7 +560,7 @@ export function AdminDashboard() {
                              <th className="px-10 py-6">Ürün</th>
                              <th className="px-10 py-6">Tutar</th>
                              <th className="px-10 py-6 text-center">Durum</th>
-                             <th className="px-12 py-6 text-right">Tarih</th>
+                             <th className="px-12 py-6 text-end">Tarih</th>
                           </tr>
                        </thead>
                        <tbody className="text-xs">
@@ -583,7 +583,7 @@ export function AdminDashboard() {
                                     order.status === 'Shipping' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'
                                   )}>{order.status === 'Delivered' ? 'Teslim Edildi' : order.status === 'Shipping' ? 'Kargoda' : 'Hazırlanıyor'}</span>
                                </td>
-                               <td className="px-12 py-8 text-right font-black text-[#1A1033]/20">{order.date}</td>
+                               <td className="px-12 py-8 text-end font-black text-[#1A1033]/20">{order.date}</td>
                             </tr>
                           ))}
                        </tbody>
@@ -605,15 +605,15 @@ export function AdminDashboard() {
                             <div className="flex items-center gap-5">
                                <div className="w-16 h-16 bg-[#F8F8FA] rounded-[1.5rem] flex items-center justify-center relative overflow-hidden shadow-sm">
                                   <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={product.name || 'Product'} referrerPolicy="no-referrer" loading="lazy" />
-                                  <div className="absolute top-0 right-0 w-6 h-6 bg-[#1A1033] rotate-45 translate-x-3 -translate-y-3" />
-                                  <span className="absolute top-1 left-2 text-[10px] font-black text-[#1A1033]">{product.id}</span>
+                                  <div className="absolute top-0 end-0 w-6 h-6 bg-[#1A1033] rotate-45 translate-x-3 -translate-y-3" />
+                                  <span className="absolute top-1 start-2 text-[10px] font-black text-[#1A1033]">{product.id}</span>
                                </div>
                                <div>
                                   <h4 className="text-sm font-black text-[#1A1033] leading-none mb-2">{product.name}</h4>
                                   <p className="text-[10px] font-bold text-[#1A1033]/20 uppercase tracking-widest">{product.sales}</p>
                                </div>
                             </div>
-                            <div className="text-right">
+                            <div className="text-end">
                                <p className="text-sm font-black text-[#1A1033]">{product.price}</p>
                             </div>
                          </div>
@@ -660,7 +660,7 @@ export function AdminDashboard() {
                  initial={{ opacity: 0, y: 50 }}
                  animate={{ opacity: 1, y: 0 }}
                  exit={{ opacity: 0, y: 50 }}
-                 className="fixed bottom-12 right-12 z-50 bg-[#1A1033] text-white p-6 rounded-[2rem] shadow-2xl flex items-center gap-4 min-w-[300px]"
+                 className="fixed bottom-12 end-12 z-50 bg-[#1A1033] text-white p-6 rounded-[2rem] shadow-2xl flex items-center gap-4 min-w-[300px]"
                >
                  <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
                     <Database size={20} />

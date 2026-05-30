@@ -265,7 +265,7 @@ export function SearchResultsPage() {
                   animate={{ x: 0 }}
                   exit={{ x: '100%' }}
                   transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                  className="fixed inset-y-0 right-0 w-[85%] max-w-[320px] bg-white dark:bg-zinc-950 z-[70] lg:hidden flex flex-col shadow-2xl p-6"
+                  className="fixed inset-y-0 end-0 w-[85%] max-w-[320px] bg-white dark:bg-zinc-950 z-[70] lg:hidden flex flex-col shadow-2xl p-6"
                 >
                   <div className="flex items-center justify-between mb-8 pb-4 border-b border-brand-primary/5">
                     <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><Filter size={16} /> Curated Filters</h3>
@@ -308,7 +308,7 @@ export function SearchResultsPage() {
 
             {/* Strategic Banner */}
             <div className="bg-brand-primary rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
-               <Zap size={100} className="absolute -top-10 -right-10 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
+               <Zap size={100} className="absolute -top-10 -end-10 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
                <TrendingUp size={24} className="text-accent mb-4" />
                <h4 className="text-xl font-display font-black tracking-tight leading-tight mb-4 uppercase italic">Global <br /> Dynamic <br /> Insights</h4>
                <p className="text-xs text-white/60 font-medium leading-relaxed">We've identified a 15% increase in demand for these artifacts in your region. Act fast.</p>
@@ -492,12 +492,12 @@ function PriceRangeFilter({ unit, minKey, maxKey, searchParams, setSearchParams 
     <div className="grid grid-cols-2 gap-3">
       {([minKey, maxKey] as const).map((key, i) => (
         <div key={key} className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-brand-primary/20">{unit}</span>
+          <span className="absolute start-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-brand-primary/20">{unit}</span>
           <input
             type="number"
             placeholder={i === 0 ? 'Min' : 'Max'}
             defaultValue={searchParams.get(key) ?? ''}
-            className="w-full pl-6 pr-2 py-2 bg-brand-secondary/30 rounded-xl text-xs font-bold outline-none"
+            className="w-full ps-6 pe-2 py-2 bg-brand-secondary/30 rounded-xl text-xs font-bold outline-none"
             onBlur={e => {
               const val = e.target.value;
               const next = new URLSearchParams(searchParams);
@@ -539,7 +539,7 @@ function RatingFilter({ searchParams, setSearchParams }: {
               className={i < star ? 'fill-yellow-400 text-yellow-400' : 'text-brand-primary/10'}
             />
           ))}
-          <span className="ml-1 text-[10px]">{t('filter.andAbove')}</span>
+          <span className="ms-1 text-[10px]">{t('filter.andAbove')}</span>
         </button>
       ))}
     </div>
@@ -623,7 +623,7 @@ const FilterContent = ({
                 next.delete('tag');
                 setSearchParams(next);
               }}
-              className="flex items-center gap-2 text-xs font-bold text-accent hover:text-accent/80 transition-colors pb-2 mb-2 border-b border-brand-primary/5 w-full text-left"
+              className="flex items-center gap-2 text-xs font-bold text-accent hover:text-accent/80 transition-colors pb-2 mb-2 border-b border-brand-primary/5 w-full text-start"
             >
               <ArrowRight size={12} className="rotate-180 text-accent" />
               <span>{activeCategory?.parentId ? parentCategory?.name : t('nav.all_categories') || 'Tüm Kategoriler'}</span>
@@ -642,7 +642,7 @@ const FilterContent = ({
                     next.delete('tag');
                     setSearchParams(next);
                   }}
-                  className="flex items-center justify-between w-full text-left py-1.5 px-2.5 rounded-xl hover:bg-brand-primary/5 text-sm font-bold text-brand-primary/60 hover:text-brand-primary transition-all group"
+                  className="flex items-center justify-between w-full text-start py-1.5 px-2.5 rounded-xl hover:bg-brand-primary/5 text-sm font-bold text-brand-primary/60 hover:text-brand-primary transition-all group"
                 >
                   <span className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-brand-primary/20 group-hover:bg-accent transition-colors" />
@@ -661,7 +661,7 @@ const FilterContent = ({
                 <span className="w-2 h-2 rounded-sm bg-accent rotate-45" />
                 {activeCategory.name}
               </div>
-              <div className="pl-4 space-y-1 border-l border-brand-primary/10 ml-3.5">
+              <div className="ps-4 space-y-1 border-s border-brand-primary/10 ms-3.5">
                 {categories.filter(c => c.parentId === categoryId).map(subCat => (
                   <button
                     key={subCat.id}
@@ -671,7 +671,7 @@ const FilterContent = ({
                       next.delete('tag');
                       setSearchParams(next);
                     }}
-                    className="flex items-center justify-between w-full text-left py-1.5 px-2 rounded-xl hover:bg-brand-primary/5 text-xs font-bold text-brand-primary/60 hover:text-brand-primary transition-all group"
+                    className="flex items-center justify-between w-full text-start py-1.5 px-2 rounded-xl hover:bg-brand-primary/5 text-xs font-bold text-brand-primary/60 hover:text-brand-primary transition-all group"
                   >
                     <span>{subCat.name}</span>
                     <ArrowRight size={10} className="opacity-0 group-hover:opacity-100 text-accent transition-all transform translate-x-[-4px] group-hover:translate-x-0" />
@@ -691,7 +691,7 @@ const FilterContent = ({
                 <span className="w-2 h-2 rounded-sm bg-accent rotate-45" />
                 {activeCategory.name}
               </div>
-              <div className="pl-4 space-y-1 border-l border-accent/20 ml-3.5">
+              <div className="ps-4 space-y-1 border-s border-accent/20 ms-3.5">
                 {(activeCategory.items || []).map(item => {
                   const isSelected = searchParams.get('tag') === item.query;
                   return (
@@ -707,7 +707,7 @@ const FilterContent = ({
                         setSearchParams(next);
                       }}
                       className={cn(
-                        "flex items-center justify-between w-full text-left py-1.5 px-2 rounded-xl text-xs transition-all group",
+                        "flex items-center justify-between w-full text-start py-1.5 px-2 rounded-xl text-xs transition-all group",
                         isSelected 
                           ? "bg-accent/15 text-accent font-extrabold" 
                           : "hover:bg-brand-primary/5 text-brand-primary/60 font-bold hover:text-brand-primary"

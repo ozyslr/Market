@@ -60,7 +60,7 @@ export function InvoiceModal({ order, onClose }: InvoiceModalProps) {
                   Global Marketplace
                 </p>
               </div>
-              <div className="text-right">
+              <div className="text-end">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40">Fatura No</p>
                 <p className="text-lg font-black text-[#1A1033]">#{order.id.slice(0, 12).toUpperCase()}</p>
                 <p className="text-[10px] font-bold text-[#1A1033]/40 mt-1">{invoiceDate}</p>
@@ -93,10 +93,10 @@ export function InvoiceModal({ order, onClose }: InvoiceModalProps) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b-2 border-[#1A1033]/10">
-                  <th className="text-left py-2 text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 pb-3">Ürün</th>
+                  <th className="text-start py-2 text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 pb-3">Ürün</th>
                   <th className="text-center py-2 text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 pb-3">Adet</th>
-                  <th className="text-right py-2 text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 pb-3">Birim</th>
-                  <th className="text-right py-2 text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 pb-3">Toplam</th>
+                  <th className="text-end py-2 text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 pb-3">Birim</th>
+                  <th className="text-end py-2 text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 pb-3">Toplam</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1A1033]/5">
@@ -106,10 +106,10 @@ export function InvoiceModal({ order, onClose }: InvoiceModalProps) {
                       <span className="line-clamp-2">{item.name}</span>
                     </td>
                     <td className="py-3 text-center font-black text-[#1A1033]/60 text-[12px]">{item.quantity}</td>
-                    <td className="py-3 text-right font-black text-[#1A1033] text-[12px]">
+                    <td className="py-3 text-end font-black text-[#1A1033] text-[12px]">
                       {currencySymbol}{item.price.toFixed(2)}
                     </td>
-                    <td className="py-3 text-right font-black text-[#1A1033] text-[12px]">
+                    <td className="py-3 text-end font-black text-[#1A1033] text-[12px]">
                       {currencySymbol}{item.subtotal.toFixed(2)}
                     </td>
                   </tr>
@@ -118,7 +118,7 @@ export function InvoiceModal({ order, onClose }: InvoiceModalProps) {
             </table>
 
             {/* Totals */}
-            <div className="ml-auto w-64 space-y-2 pt-4 border-t border-[#1A1033]/10">
+            <div className="ms-auto w-64 space-y-2 pt-4 border-t border-[#1A1033]/10">
               <div className="flex justify-between text-[11px]">
                 <span className="text-[#1A1033]/50 font-bold">Ara Toplam</span>
                 <span className="font-black text-[#1A1033]">{currencySymbol}{order.subtotal.toFixed(2)}</span>

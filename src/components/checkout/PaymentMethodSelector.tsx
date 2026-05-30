@@ -36,7 +36,7 @@ export function PaymentMethodSelector({ selected, onChange, region }: PaymentMet
             type="button"
             onClick={() => onChange(opt.key)}
             className={cn(
-              'flex items-center gap-4 px-5 py-4 rounded-2xl border-2 transition-all text-left',
+              'flex items-center gap-4 px-5 py-4 rounded-2xl border-2 transition-all text-start',
               selected === opt.key
                 ? 'border-accent bg-accent/5 shadow-sm'
                 : 'border-[#1A1033]/10 bg-[#F8F8FA] hover:border-accent/40'

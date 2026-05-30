@@ -240,7 +240,7 @@ function SortableCategoryCard({ id, children }: { id: string; children: React.Re
       <div className="relative">
         <div
           {...listeners}
-          className="absolute top-2 left-2 z-10 cursor-grab active:cursor-grabbing p-1.5 rounded-md bg-white/80 text-[#1A1033]/40 hover:text-accent shadow-sm"
+          className="absolute top-2 start-2 z-10 cursor-grab active:cursor-grabbing p-1.5 rounded-md bg-white/80 text-[#1A1033]/40 hover:text-accent shadow-sm"
           title="Sıralamak için sürükle"
         >
           ⠿
@@ -429,7 +429,7 @@ export function AdminCMS() {
                       <div>
                         <h4 className="text-sm font-black text-[#1A1033] uppercase">{cat.name}</h4>
                         <p className="text-[10px] text-[#1A1033]/40 uppercase tracking-wide mt-1">
-                          Ana Menü {subs.length > 0 && <span className="ml-1 px-1.5 py-0.5 bg-accent/10 text-accent rounded-md">{subs.length} alt</span>}
+                          Ana Menü {subs.length > 0 && <span className="ms-1 px-1.5 py-0.5 bg-accent/10 text-accent rounded-md">{subs.length} alt</span>}
                         </p>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -643,7 +643,7 @@ export function AdminCMS() {
                       <div key={idx} className="flex items-start justify-between p-3 bg-[#F8F8FA] rounded-xl gap-2">
                         <div className="flex-1 min-w-0">
                           <span className="text-xs font-black text-[#1A1033]">{attr.label}</span>
-                          <span className="text-[10px] text-[#1A1033]/40 ml-2">({attr.key} · {attr.type})</span>
+                          <span className="text-[10px] text-[#1A1033]/40 ms-2">({attr.key} · {attr.type})</span>
                           {attr.options && attr.options.length > 0 && (
                             <p className="text-[10px] text-[#1A1033]/40 mt-0.5 truncate">{attr.options.map(o => o.value).join(', ')}</p>
                           )}

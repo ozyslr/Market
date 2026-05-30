@@ -433,13 +433,13 @@ export function SellerInventoryPage() {
                 {/* Search & Bulk Actions */}
                 <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-brand-primary/5 flex flex-col md:flex-row items-center justify-between gap-4">
                   <div className="relative flex-1 w-full">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-primary/20" size={18} />
+                    <Search className="absolute start-4 top-1/2 -translate-y-1/2 text-brand-primary/20" size={18} />
                     <input 
                       type="text" 
                       placeholder="Search inventory by serial, name, or HS code..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium focus:ring-2 focus:ring-accent/20 outline-none placeholder:text-brand-primary/20"
+                      className="w-full ps-12 pe-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium focus:ring-2 focus:ring-accent/20 outline-none placeholder:text-brand-primary/20"
                     />
                   </div>
                   <div className="flex items-center gap-2">
@@ -474,7 +474,7 @@ export function SellerInventoryPage() {
                           initial={{ opacity: 0, x: 20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 20 }}
-                          className="flex items-center gap-3 bg-brand-primary px-4 py-2 rounded-2xl shadow-xl ml-4"
+                          className="flex items-center gap-3 bg-brand-primary px-4 py-2 rounded-2xl shadow-xl ms-4"
                         >
                           <span className="text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">{selectedProducts.length} Selected</span>
                           <div className="w-px h-4 bg-white/10" />
@@ -514,7 +514,7 @@ export function SellerInventoryPage() {
                 {/* Inventory Table */}
                 <div className="bg-white rounded-[2.5rem] shadow-sm border border-brand-primary/5 overflow-hidden">
                    <div className="overflow-x-auto">
-                     <table className="w-full text-left border-collapse">
+                     <table className="w-full text-start border-collapse">
                        <thead>
                          <tr className="bg-brand-secondary/30 text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/40">
                            <th className="px-8 py-6">
@@ -528,7 +528,7 @@ export function SellerInventoryPage() {
                            <th className="px-8 py-6">Artifact Detail</th>
                            <th className="px-8 py-6">Compliance</th>
                            <th className="px-8 py-6">Stock Level</th>
-                           <th className="px-8 py-6 text-right">Pricing</th>
+                           <th className="px-8 py-6 text-end">Pricing</th>
                            <th className="px-8 py-6"></th>
                          </tr>
                        </thead>
@@ -629,13 +629,13 @@ export function SellerInventoryPage() {
                                  </div>
                                )}
                              </td>
-                             <td className="px-8 py-6 text-right" onClick={e => e.stopPropagation()}>
+                             <td className="px-8 py-6 text-end" onClick={e => e.stopPropagation()}>
                                {bulkEditMode ? (
                                  <input
                                    type="number" min={0} step="0.01"
                                    value={editValues[product.id]?.price ?? product.price}
                                    onChange={e => updateEditValue(product.id, 'price', parseFloat(e.target.value) || 0)}
-                                   className="w-24 px-2 py-1.5 bg-brand-secondary/30 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-accent/20 text-right"
+                                   className="w-24 px-2 py-1.5 bg-brand-secondary/30 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-accent/20 text-end"
                                  />
                                ) : (
                                  <span className="font-black text-brand-primary">${product.price}</span>
@@ -695,16 +695,16 @@ export function SellerInventoryPage() {
                   <table className="text-xs w-full">
                     <thead>
                       <tr className="text-brand-primary/30 border-b border-brand-primary/5">
-                        <th className="text-left pb-2 pr-4">Kolon</th>
-                        <th className="text-left pb-2 pr-4">Zorunlu</th>
-                        <th className="text-left pb-2">Açıklama</th>
+                        <th className="text-start pb-2 pe-4">Kolon</th>
+                        <th className="text-start pb-2 pe-4">Zorunlu</th>
+                        <th className="text-start pb-2">Açıklama</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-brand-primary/5">
                       {CSV_COLUMNS.map(col => (
                         <tr key={col.key}>
-                          <td className="py-1.5 pr-4 font-mono text-emerald-600">{col.key}</td>
-                          <td className="py-1.5 pr-4 text-center">{col.required ? '✓' : '—'}</td>
+                          <td className="py-1.5 pe-4 font-mono text-emerald-600">{col.key}</td>
+                          <td className="py-1.5 pe-4 text-center">{col.required ? '✓' : '—'}</td>
                           <td className="py-1.5 text-brand-primary/40">{col.hint}</td>
                         </tr>
                       ))}
@@ -778,7 +778,7 @@ export function SellerInventoryPage() {
                           animate={{ height: `${h}%` }}
                           className="flex-1 bg-brand-primary rounded-t-lg relative group cursor-pointer"
                         >
-                          <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-brand-primary text-white text-[9px] font-black rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="absolute -top-10 start-1/2 -translate-x-1/2 px-2 py-1 bg-brand-primary text-white text-[9px] font-black rounded opacity-0 group-hover:opacity-100 transition-opacity">
                             {h}k
                           </div>
                         </motion.div>
@@ -790,7 +790,7 @@ export function SellerInventoryPage() {
                 </div>
 
                 <div className="bg-brand-primary text-white rounded-[3rem] p-10 overflow-hidden relative">
-                   <Zap size={100} className="absolute -top-10 -right-10 text-white/5" />
+                   <Zap size={100} className="absolute -top-10 -end-10 text-white/5" />
                    <h3 className="text-xl font-display font-black mb-12 uppercase italic">AI Demand Pulse</h3>
                    <div className="space-y-8">
                      {[
@@ -806,7 +806,7 @@ export function SellerInventoryPage() {
                              <p className="text-[10px] text-white/40 uppercase tracking-widest">{item.demand} Demand</p>
                            </div>
                          </div>
-                         <div className="text-right">
+                         <div className="text-end">
                            <p className="text-xl font-display font-black">{item.growth}</p>
                            <p className="text-[9px] text-white/40 uppercase tracking-widest text-accent">MoM Projection</p>
                          </div>
@@ -842,13 +842,13 @@ export function SellerInventoryPage() {
             >
               <button 
                 onClick={() => setViewingProduct(null)}
-                className="absolute top-6 right-6 w-10 h-10 bg-brand-secondary rounded-full flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all z-20"
+                className="absolute top-6 end-6 w-10 h-10 bg-brand-secondary rounded-full flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all z-20"
               >
                 <X size={20} />
               </button>
 
               <div className="flex-1 bg-brand-secondary/50 p-12 flex items-center justify-center relative">
-                 <div className="absolute top-8 left-8">
+                 <div className="absolute top-8 start-8">
                    <span className="px-3 py-1 bg-white border border-brand-primary/5 text-brand-primary/40 text-[9px] font-black uppercase tracking-widest rounded-full">Artifact Render</span>
                  </div>
                  <img src={viewingProduct.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt={viewingProduct.title} loading="lazy" />

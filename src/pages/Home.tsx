@@ -94,7 +94,7 @@ const ProductRow = ({ title, products, showViewAll = true }: { title: string; pr
          {showLeftArrow && (
            <button 
              onClick={() => scroll('left')}
-             className="absolute -left-5 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white dark:bg-zinc-800 rounded-full shadow-2xl border border-brand-primary/5 flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all hidden md:group-hover/row:flex"
+             className="absolute -start-5 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white dark:bg-zinc-800 rounded-full shadow-2xl border border-brand-primary/5 flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all hidden md:group-hover/row:flex"
            >
               <ChevronLeft size={24} />
            </button>
@@ -102,7 +102,7 @@ const ProductRow = ({ title, products, showViewAll = true }: { title: string; pr
          
          <button 
            onClick={() => scroll('right')}
-           className="absolute -right-5 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white dark:bg-zinc-800 rounded-full shadow-2xl border border-brand-primary/5 flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all hidden md:group-hover/row:flex"
+           className="absolute -end-5 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white dark:bg-zinc-800 rounded-full shadow-2xl border border-brand-primary/5 flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all hidden md:group-hover/row:flex"
          >
             <ChevronRight size={24} />
          </button>
@@ -268,13 +268,13 @@ export function Home() {
         <div className="max-w-[1700px] mx-auto px-4 md:px-6 relative group/menu">
            <div className="relative">
               <button 
-                className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-zinc-800 rounded-full shadow-xl border border-brand-primary/5 hidden md:group-hover/menu:flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all"
+                className="absolute -start-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-zinc-800 rounded-full shadow-xl border border-brand-primary/5 hidden md:group-hover/menu:flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all"
                 onClick={() => document.getElementById('iconic-menu-scroll')?.scrollBy({ left: -300, behavior: 'smooth' })}
               >
                  <ChevronLeft size={20} />
               </button>
               <button 
-                className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-zinc-800 rounded-full shadow-xl border border-brand-primary/5 hidden md:group-hover/menu:flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all"
+                className="absolute -end-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-zinc-800 rounded-full shadow-xl border border-brand-primary/5 hidden md:group-hover/menu:flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all"
                 onClick={() => document.getElementById('iconic-menu-scroll')?.scrollBy({ left: 300, behavior: 'smooth' })}
               >
                  <ChevronRight size={20} />
@@ -328,7 +328,7 @@ export function Home() {
                  <h3 className="text-3xl font-display font-black uppercase italic mb-2 relative z-10">FIRSATI YAKALA</h3>
                  <CountdownTimer hours={8} minutes={15} seconds={40} />
                  
-                 <div className="mt-8 bg-white text-brand-primary p-4 rounded-2xl w-full text-left relative z-10 shadow-2xl group-hover:-translate-y-2 transition-transform">
+                 <div className="mt-8 bg-white text-brand-primary p-4 rounded-2xl w-full text-start relative z-10 shadow-2xl group-hover:-translate-y-2 transition-transform">
                     <span className="text-[10px] font-black uppercase tracking-widest text-[#F9423A] mb-1 block">Sınırlı Stok</span>
                     <h4 className="text-sm font-bold truncate mb-2">Apple AirPods Pro 2</h4>
                     <div className="flex items-end justify-between">
@@ -364,14 +364,14 @@ export function Home() {
               {showFlashLeft && (
                 <button
                   onClick={() => scrollFlash('left')}
-                  className="absolute -left-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white dark:bg-zinc-800 rounded-full shadow-xl border border-brand-primary/10 flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all hidden md:group-hover/flash:flex"
+                  className="absolute -start-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white dark:bg-zinc-800 rounded-full shadow-xl border border-brand-primary/10 flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all hidden md:group-hover/flash:flex"
                 >
                   <ChevronLeft size={20} />
                 </button>
               )}
               <button
                 onClick={() => scrollFlash('right')}
-                className="absolute -right-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white dark:bg-zinc-800 rounded-full shadow-xl border border-brand-primary/10 flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all hidden md:group-hover/flash:flex"
+                className="absolute -end-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white dark:bg-zinc-800 rounded-full shadow-xl border border-brand-primary/10 flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all hidden md:group-hover/flash:flex"
               >
                 <ChevronRight size={20} />
               </button>
@@ -492,7 +492,7 @@ export function Home() {
                  <h2 className="text-2xl font-display font-black text-brand-primary dark:text-white uppercase italic tracking-tighter mb-6 leading-tight">{t('hero.deals_every_day') || 'YENİ SEZON BEBEK MODASI'}</h2>
                  <button className="px-6 py-3 bg-accent text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-accent-dark transition-all shadow-lg">{t('global.discover') || 'KEŞFET'}</button>
               </div>
-              <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=300" className="absolute -bottom-10 -right-10 w-48 rotate-12 group-hover:rotate-0 transition-transform duration-700 opacity-40 group-hover:opacity-100" referrerPolicy="no-referrer" alt="" aria-hidden="true" loading="lazy" />
+              <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=300" className="absolute -bottom-10 -end-10 w-48 rotate-12 group-hover:rotate-0 transition-transform duration-700 opacity-40 group-hover:opacity-100" referrerPolicy="no-referrer" alt="" aria-hidden="true" loading="lazy" />
            </section>
            <section className="bg-brand-secondary/50 dark:bg-zinc-800/20 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800 relative group overflow-hidden">
                <div className="relative z-10">

@@ -350,7 +350,7 @@ export function SellerFinance() {
 
               {transactions.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left">
+                  <table className="w-full text-start">
                     <thead>
                       <tr className="border-b border-[#1A1033]/5">
                         {['Tür', 'Açıklama', 'Tarih', 'Durum', 'Tutar'].map(h => (
@@ -402,7 +402,7 @@ export function SellerFinance() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left">
+                  <table className="w-full text-start">
                     <thead>
                       <tr className="border-b border-[#1A1033]/5">
                         {['Sipariş No', 'Tarih', 'Durum', 'Brüt', 'Komisyon', 'Net'].map(h => (
@@ -449,7 +449,7 @@ export function SellerFinance() {
                   <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60">Çekim Geçmişi</h2>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left">
+                  <table className="w-full text-start">
                     <thead>
                       <tr className="border-b border-[#1A1033]/5">
                         {['Tutar', 'Ücret', 'Net', 'Yöntem', 'Durum', 'Tarih'].map(h => (

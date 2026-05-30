@@ -30,7 +30,7 @@ export function OtherSellers({ sellers, onAddToCart }: OtherSellersProps) {
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-brand-secondary/30 transition-colors"
       >
         <div>
-          <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 text-left">Diğer Satıcılar</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 text-start">Diğer Satıcılar</p>
           <p className="text-xs font-bold text-brand-primary mt-0.5">{sellers.length} satıcı</p>
         </div>
         {expanded ? <ChevronUp size={16} className="text-brand-primary/40" /> : <ChevronDown size={16} className="text-brand-primary/40" />}
@@ -47,7 +47,7 @@ export function OtherSellers({ sellers, onAddToCart }: OtherSellersProps) {
                   <span className="text-[10px] text-brand-primary/50">{seller.rating.toFixed(1)}</span>
                 </div>
               </div>
-              <div className="text-right shrink-0">
+              <div className="text-end shrink-0">
                 <p className="text-sm font-black text-brand-primary">
                   {seller.currency === 'gbp' ? '£' : '₺'}{seller.price.toFixed(2)}
                 </p>

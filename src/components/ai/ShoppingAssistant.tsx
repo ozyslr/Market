@@ -75,7 +75,7 @@ export function ShoppingAssistant() {
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end">
+    <div className="fixed bottom-8 end-8 z-[100] flex flex-col items-end">
       <AnimatePresence>
         {isOpen && !isMinimized && (
           <motion.div
@@ -86,7 +86,7 @@ export function ShoppingAssistant() {
           >
             {/* Header */}
             <div className="p-6 bg-brand-primary text-white relative flex items-center justify-between shrink-0">
-              <Zap size={100} className="absolute -top-10 -right-10 text-white/5 rotate-12" />
+              <Zap size={100} className="absolute -top-10 -end-10 text-white/5 rotate-12" />
               <div className="flex items-center gap-4 relative z-10">
                 <div className="w-12 h-12 bg-accent rounded-2xl flex items-center justify-center shadow-lg animate-pulse">
                   <BrainCircuit size={24} className="text-white" />
@@ -156,7 +156,7 @@ export function ShoppingAssistant() {
 
             {/* Input */}
             <div className="p-4 border-t border-brand-primary/5 shrink-0">
-              <div className="flex items-center gap-2 bg-brand-secondary rounded-2xl p-1.5 pl-4">
+              <div className="flex items-center gap-2 bg-brand-secondary rounded-2xl p-1.5 ps-4">
                 <input
                   value={input}
                   onChange={e => setInput(e.target.value)}
@@ -188,7 +188,7 @@ export function ShoppingAssistant() {
           <BrainCircuit size={18} className="text-accent" />
           <span className="text-xs font-black uppercase tracking-widest">Asistan</span>
           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
-          <button onClick={e => { e.stopPropagation(); setIsOpen(false); }} className="ml-2 p-1 hover:bg-white/10 rounded"><X size={14} /></button>
+          <button onClick={e => { e.stopPropagation(); setIsOpen(false); }} className="ms-2 p-1 hover:bg-white/10 rounded"><X size={14} /></button>
         </motion.div>
       )}
 

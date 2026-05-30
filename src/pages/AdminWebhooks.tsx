@@ -242,7 +242,7 @@ export function AdminWebhooks() {
       {/* Test Result Toast */}
       {testResult && (
         <div className={cn(
-          "fixed bottom-6 right-6 rounded-2xl p-4 shadow-xl z-50",
+          "fixed bottom-6 end-6 rounded-2xl p-4 shadow-xl z-50",
           testResult.success ? "bg-green-500 text-white" : "bg-red-500 text-white"
         )}>
           <p className="text-xs font-black">

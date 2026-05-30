@@ -20,7 +20,7 @@ export function ComparisonBar({ onOpen }: ComparisonBarProps) {
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           role="region"
           aria-label="Ürün karşılaştırma çubuğu"
-          className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-brand-primary/10 dark:border-white/10 px-4 py-3 flex items-center gap-3"
+          className="fixed bottom-20 md:bottom-6 start-1/2 -translate-x-1/2 z-40 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-brand-primary/10 dark:border-white/10 px-4 py-3 flex items-center gap-3"
         >
           {/* Thumbnail slots */}
           <div className="flex items-center gap-2">
@@ -39,7 +39,7 @@ export function ComparisonBar({ onOpen }: ComparisonBarProps) {
                     type="button"
                     onClick={() => removeItem(item.id)}
                     aria-label={`${item.title} karşılaştırmadan çıkar`}
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-brand-primary dark:bg-white text-white dark:text-brand-primary rounded-full flex items-center justify-center hover:bg-accent transition-colors"
+                    className="absolute -top-1 -end-1 w-4 h-4 bg-brand-primary dark:bg-white text-white dark:text-brand-primary rounded-full flex items-center justify-center hover:bg-accent transition-colors"
                   >
                     <X size={8} />
                   </button>

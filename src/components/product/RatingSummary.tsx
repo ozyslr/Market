@@ -96,7 +96,7 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
                 isActive ? 'bg-accent/10' : 'hover:bg-brand-secondary/50 dark:hover:bg-zinc-800/50',
               )}
             >
-              <span className="text-[10px] font-black w-4 text-brand-primary/60 dark:text-zinc-400 text-right">{star}</span>
+              <span className="text-[10px] font-black w-4 text-brand-primary/60 dark:text-zinc-400 text-end">{star}</span>
               <Star size={11} fill="#FBBF24" className="text-yellow-400 shrink-0" />
               <div className="flex-1 h-2.5 bg-brand-secondary dark:bg-zinc-800 rounded-full overflow-hidden border border-brand-primary/5 dark:border-white/5">
                 <div
@@ -104,7 +104,7 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className="text-[10px] font-bold w-8 text-brand-primary/40 dark:text-zinc-500 text-right">{count}</span>
+              <span className="text-[10px] font-bold w-8 text-brand-primary/40 dark:text-zinc-500 text-end">{count}</span>
             </button>
           );
         })}
@@ -143,7 +143,7 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
             onClick={e => e.stopPropagation()}
           >
             <button
-              className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/10 hover:bg-black/20 text-brand-primary dark:text-white rounded-full flex items-center justify-center transition-colors"
+              className="absolute top-4 end-4 z-10 w-10 h-10 bg-black/10 hover:bg-black/20 text-brand-primary dark:text-white rounded-full flex items-center justify-center transition-colors"
               onClick={() => setSelectedPhotoReview(null)}
             >
               <X size={18} />
@@ -170,7 +170,7 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
                           className={i < selectedPhotoReview.review.rating ? 'text-accent' : 'text-brand-primary/10 dark:text-white/10'}
                         />
                       ))}
-                      <span className="text-[10px] text-brand-primary/30 dark:text-zinc-500 ml-2">
+                      <span className="text-[10px] text-brand-primary/30 dark:text-zinc-500 ms-2">
                         {selectedPhotoReview.review.createdAt.split('T')[0]}
                       </span>
                     </div>

@@ -39,7 +39,7 @@ const KPICard = ({ label, value, growth, icon: Icon, color, bg }: any) => (
       <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110", bg)}>
         <Icon size={26} strokeWidth={2.5} />
       </div>
-      <div className="text-right">
+      <div className="text-end">
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1A1033]/30 mb-1">{label}</p>
         <h3 className="text-3xl font-display font-black text-[#1A1033] tracking-tighter leading-none">{value}</h3>
       </div>
@@ -47,7 +47,7 @@ const KPICard = ({ label, value, growth, icon: Icon, color, bg }: any) => (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-1.5 font-black text-[10px] uppercase">
         <span className={cn(growth.startsWith('+') ? "text-green-500" : "text-red-500")}>
-           {growth.startsWith('+') ? <ArrowUpRight size={14} className="inline mr-1" /> : <ArrowDownRight size={14} className="inline mr-1" />}
+           {growth.startsWith('+') ? <ArrowUpRight size={14} className="inline me-1" /> : <ArrowDownRight size={14} className="inline me-1" />}
            {growth}
         </span>
         <span className="text-[#1A1033]/20 tracking-widest whitespace-nowrap">Geçen haftaya göre</span>
@@ -135,16 +135,16 @@ export function SellerDashboard() {
 
            <div className="flex-1 max-w-xl hidden md:block">
               <div className="relative group">
-                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-brand-primary/20 dark:text-white/20 group-focus-within:text-[#F9423A] transition-colors" size={18} />
+                 <Search className="absolute start-6 top-1/2 -translate-y-1/2 text-brand-primary/20 dark:text-white/20 group-focus-within:text-[#F9423A] transition-colors" size={18} />
                  <input 
                    type="text" 
                    placeholder="Ürün, Sipariş veya SKU Ara..." 
-                   className="w-full pl-16 pr-10 py-3 bg-zinc-50 dark:bg-zinc-900 border border-brand-primary/5 dark:border-white/5 rounded-2xl text-sm font-bold shadow-sm outline-none focus:ring-4 ring-[#F9423A]/10 transition-all lg:py-4 lg:rounded-[1.75rem] text-brand-primary dark:text-white"
+                   className="w-full ps-16 pe-10 py-3 bg-zinc-50 dark:bg-zinc-900 border border-brand-primary/5 dark:border-white/5 rounded-2xl text-sm font-bold shadow-sm outline-none focus:ring-4 ring-[#F9423A]/10 transition-all lg:py-4 lg:rounded-[1.75rem] text-brand-primary dark:text-white"
                  />
               </div>
            </div>
            
-           <div className="flex items-center gap-2 lg:gap-8 border-l border-brand-primary/10 pl-4 lg:pl-8 shrink-0">
+           <div className="flex items-center gap-2 lg:gap-8 border-s border-brand-primary/10 ps-4 lg:pl-8 shrink-0">
               <button className="p-2 lg:p-3.5 text-brand-primary/30 dark:text-white/30 hover:text-[#F9423A] transition-all bg-white dark:bg-zinc-900 border border-brand-primary/5 dark:border-white/5 rounded-xl lg:rounded-2xl shadow-sm"><Bell className="w-5 h-5 lg:w-[22px] lg:h-[22px]" strokeWidth={2.5} /></button>
               <button className="px-4 py-2 lg:px-8 lg:py-4 bg-[#F9423A] text-white rounded-xl lg:rounded-[1.5rem] text-[9px] lg:text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-[#F9423A]/20 hover:scale-105 transition-all flex items-center gap-2 lg:gap-3 hover:bg-orange-600">
                  <span className="hidden xs:inline">Yeni Ürün Ekle</span> <Plus size={16} />
@@ -237,7 +237,7 @@ export function SellerDashboard() {
 
                     <div className="lg:col-span-4 flex flex-col gap-10">
                        <div className="bg-[#1A1033] rounded-[3.5rem] p-12 text-white relative overflow-hidden group">
-                          <Smartphone size={300} className="absolute -bottom-20 -right-20 text-white/5 opacity-40 group-hover:scale-125 transition-transform duration-1000 pointer-events-none" />
+                          <Smartphone size={300} className="absolute -bottom-20 -end-20 text-white/5 opacity-40 group-hover:scale-125 transition-transform duration-1000 pointer-events-none" />
                           <h3 className="text-2xl font-display font-black uppercase italic mb-10 relative z-10">Cihaz Dağılımı</h3>
                           <div className="space-y-10 relative z-10">
                              {(analytics?.deviceBreakdown ?? [
@@ -265,7 +265,7 @@ export function SellerDashboard() {
                        </div>
 
                        <div className="bg-accent rounded-[3.5rem] p-12 text-white shadow-2xl shadow-accent/20 flex-1 flex flex-col relative group">
-                          <DollarSign size={120} className="absolute -bottom-10 -right-10 text-white/10 group-hover:rotate-12 transition-transform duration-700" />
+                          <DollarSign size={120} className="absolute -bottom-10 -end-10 text-white/10 group-hover:rotate-12 transition-transform duration-700" />
                           <p className="text-[11px] font-black uppercase tracking-[0.4em] opacity-60 mb-8 italic">Mevcut Bakiye</p>
                           <h4 className="text-5xl font-display font-black tracking-tighter mb-4">£4,850.00</h4>
                           <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest italic">Onaylandı & Ödemeye Hazır</p>
@@ -289,10 +289,10 @@ export function SellerDashboard() {
                         <table className="w-full">
                           <thead>
                             <tr className="border-b border-brand-primary/5">
-                              <th className="pb-4 text-left text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Ürün</th>
+                              <th className="pb-4 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Ürün</th>
                               <th className="pb-4 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Görüntülenme</th>
                               <th className="pb-4 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Satış</th>
-                              <th className="pb-4 text-right text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Gelir</th>
+                              <th className="pb-4 text-end text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Gelir</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -313,7 +313,7 @@ export function SellerDashboard() {
                                     {p.sales} adet
                                   </span>
                                 </td>
-                                <td className="py-5 text-right text-sm font-black text-brand-primary">{formatCurrency(p.revenue)}</td>
+                                <td className="py-5 text-end text-sm font-black text-brand-primary">{formatCurrency(p.revenue)}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -352,8 +352,8 @@ export function SellerDashboard() {
                        <div className="w-full max-w-md space-y-10 scale-110">
                           <div className="flex justify-between items-end">
                              <div>
-                                <p className="text-xs font-black uppercase text-[#1A1033]/50 text-left">Toplu İşlem Devam Ediyor</p>
-                                <p className="text-[10px] font-bold text-[#1A1033]/30 italic text-left mt-1">Envanter_2026_Q2.json</p>
+                                <p className="text-xs font-black uppercase text-[#1A1033]/50 text-start">Toplu İşlem Devam Ediyor</p>
+                                <p className="text-[10px] font-bold text-[#1A1033]/30 italic text-start mt-1">Envanter_2026_Q2.json</p>
                              </div>
                              <p className="text-4xl font-display font-black text-accent tracking-tighter">{uploadProgress}%</p>
                           </div>
@@ -390,13 +390,13 @@ export function SellerDashboard() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                      <div className="bg-[#1A1033] rounded-[3.5rem] p-12 text-white relative overflow-hidden group">
-                        <Sparkles size={160} className="absolute -bottom-20 -left-20 text-white/5 opacity-50 group-hover:scale-125 transition-transform duration-1000" />
+                        <Sparkles size={160} className="absolute -bottom-20 -start-20 text-white/5 opacity-50 group-hover:scale-125 transition-transform duration-1000" />
                         <h4 className="text-2xl font-display font-black uppercase italic mb-6 relative z-10">Yapay Zeka Otomatik Yakalama</h4>
                         <p className="text-white/50 text-sm leading-relaxed italic mb-10 relative z-10">Yapay zeka motorumuz ürün etiketlerini genişletir, SEO açıklamaları oluşturur ve listelerinizi platformumuz için otomatik olarak optimize eder.</p>
                         <button className="px-8 py-4 bg-white/5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white/10 relative z-10">Detayları Gör</button>
                      </div>
                      <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm relative overflow-hidden group">
-                        <Package size={160} className="absolute -bottom-20 -right-20 text-[#1A1033]/5 group-hover:scale-125 transition-transform duration-1000" />
+                        <Package size={160} className="absolute -bottom-20 -end-20 text-[#1A1033]/5 group-hover:scale-125 transition-transform duration-1000" />
                         <h4 className="text-2xl font-display font-black uppercase italic mb-6 text-[#1A1033]">Senkronizasyon İstatistikleri</h4>
                         <div className="grid grid-cols-2 gap-8 relative z-10">
                            <div>
@@ -464,11 +464,11 @@ export function SellerDashboard() {
                               <table className="w-full text-sm">
                                 <thead>
                                   <tr className="border-b border-[#F8F8FA]">
-                                    <th className="px-8 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Sipariş No</th>
-                                    <th className="px-8 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Tarih</th>
-                                    <th className="px-8 py-4 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Tutar</th>
-                                    <th className="px-8 py-4 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Komisyon</th>
-                                    <th className="px-8 py-4 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Net</th>
+                                    <th className="px-8 py-4 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Sipariş No</th>
+                                    <th className="px-8 py-4 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Tarih</th>
+                                    <th className="px-8 py-4 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Tutar</th>
+                                    <th className="px-8 py-4 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Komisyon</th>
+                                    <th className="px-8 py-4 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Net</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -479,9 +479,9 @@ export function SellerDashboard() {
                                       <tr key={o.id} className="border-b border-[#F8F8FA] hover:bg-[#F8F8FA]/50">
                                         <td className="px-8 py-4 font-bold text-xs text-[#1A1033]">{o.id.slice(0, 10)}...</td>
                                         <td className="px-8 py-4 text-xs text-[#1A1033]/50">{new Date(o.createdAt).toLocaleDateString('tr-TR')}</td>
-                                        <td className="px-8 py-4 text-right text-xs font-bold">{amt.toLocaleString('tr-TR')} ₺</td>
-                                        <td className="px-8 py-4 text-right text-xs text-[#F9423A] font-bold">{com.toLocaleString('tr-TR')} ₺</td>
-                                        <td className="px-8 py-4 text-right text-xs font-bold text-green-600">{(amt - com).toLocaleString('tr-TR')} ₺</td>
+                                        <td className="px-8 py-4 text-end text-xs font-bold">{amt.toLocaleString('tr-TR')} ₺</td>
+                                        <td className="px-8 py-4 text-end text-xs text-[#F9423A] font-bold">{com.toLocaleString('tr-TR')} ₺</td>
+                                        <td className="px-8 py-4 text-end text-xs font-bold text-green-600">{(amt - com).toLocaleString('tr-TR')} ₺</td>
                                       </tr>
                                     );
                                   })}

@@ -170,7 +170,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
       <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
         <button onClick={() => toggleCard('profile')}
-          className="w-full flex items-center justify-between p-5 text-left">
+          className="w-full flex items-center justify-between p-5 text-start">
           <div className="flex items-center gap-3">
             <div
               className="relative group cursor-pointer shrink-0"
@@ -218,7 +218,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
       {/* Teslimat Adreslerim */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
         <button onClick={() => toggleCard('addresses')}
-          className="w-full flex items-center justify-between p-5 text-left">
+          className="w-full flex items-center justify-between p-5 text-start">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center">
               <MapPin size={18} className="text-violet-600" />
@@ -371,7 +371,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
       {/* Güvenlik */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
         <button onClick={() => toggleCard('security')}
-          className="w-full flex items-center justify-between p-5 text-left">
+          className="w-full flex items-center justify-between p-5 text-start">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
               <Lock size={18} className="text-amber-500" />
@@ -406,7 +406,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
       {/* Bildirimler */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
         <button onClick={() => toggleCard('notifications')}
-          className="w-full flex items-center justify-between p-5 text-left">
+          className="w-full flex items-center justify-between p-5 text-start">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
               <Bell size={18} className="text-green-500" />

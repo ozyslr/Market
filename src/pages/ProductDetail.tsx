@@ -363,7 +363,7 @@ export function ProductDetail() {
                     <button aria-label="Paylaş" className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5">
                       <Share2 size={20} />
                     </button>
-                    <div className="absolute right-full top-0 mr-3 flex items-center gap-2 opacity-0 -translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-300">
+                    <div className="absolute end-full top-0 me-3 flex items-center gap-2 opacity-0 -translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-300">
                       <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" aria-label="Facebook'ta paylaş" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1877F2] hover:scale-110 transition-transform">
                         <Facebook size={18} />
                       </a>
@@ -546,10 +546,10 @@ export function ProductDetail() {
                     <p className="text-[9px] font-black uppercase text-orange-600 mb-2">Kupon Kodu</p>
                     <button
                       onClick={() => navigator.clipboard.writeText(activeCoupons[0].code)}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 border-2 border-dashed border-orange-300 rounded-lg hover:border-accent hover:bg-accent/5 transition-all group text-left"
+                      className="w-full flex items-center gap-2 px-3 py-1.5 border-2 border-dashed border-orange-300 rounded-lg hover:border-accent hover:bg-accent/5 transition-all group text-start"
                     >
                       <span className="text-xs font-black text-orange-700">{activeCoupons[0].code}</span>
-                      <Copy size={10} className="text-orange-400 ml-auto group-hover:text-accent transition-colors" />
+                      <Copy size={10} className="text-orange-400 ms-auto group-hover:text-accent transition-colors" />
                     </button>
                   </div>
                 )}
@@ -570,7 +570,7 @@ export function ProductDetail() {
                       <div key={attr}>
                         <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">
                           {attr.charAt(0).toUpperCase() + attr.slice(1)}
-                          {selectedAttrs[attr] && <span className="ml-2 text-brand-primary normal-case font-bold">: {selectedAttrs[attr]}</span>}
+                          {selectedAttrs[attr] && <span className="ms-2 text-brand-primary normal-case font-bold">: {selectedAttrs[attr]}</span>}
                         </p>
                         <VariantSwatches
                           attributeName={attr}
@@ -726,7 +726,7 @@ export function ProductDetail() {
                       </React.Fragment>
                     ))}
                   </div>
-                  <div className="w-full xl:w-auto flex-1 xl:border-l xl:border-brand-primary/5 xl:pl-8 text-center xl:text-left">
+                  <div className="w-full xl:w-auto flex-1 xl:border-s xl:border-brand-primary/5 xl:pl-8 text-center xl:text-left">
                      <p className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest mb-1">Toplam Fiyat</p>
                      <p className="text-2xl md:text-3xl font-display font-black text-accent italic">£{(product.price + boughtTogether.reduce((acc, curr) => acc + curr.price, 0)).toFixed(2)}</p>
                      <button className="mt-4 w-full xl:w-auto px-8 lg:px-12 py-4 lg:py-3 bg-brand-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-black transition-all">Listeyi Sepete Ekle</button>
@@ -753,7 +753,7 @@ export function ProductDetail() {
                 )}
               >
                 {tab.label}
-                {activeTab === tab.id && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1 bg-accent" />}
+                {activeTab === tab.id && <motion.div layoutId="tab-underline" className="absolute bottom-0 start-0 end-0 h-1 bg-accent" />}
               </button>
             ))}
           </div>

@@ -514,7 +514,7 @@ export default function SellerAnalyticsPage() {
 
                 {data.topProducts.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                    <table className="w-full text-start">
                       <thead>
                         <tr className="border-b border-[#1A1033]/5">
                           {['Urun', 'Adet', 'Gelir'].map(h => (

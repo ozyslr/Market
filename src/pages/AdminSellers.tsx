@@ -205,10 +205,10 @@ export function AdminSellers() {
           {pendingKycCount > 0 && <p className="text-xs font-bold text-yellow-600 mt-0.5">{pendingKycCount} satıcı KYC onayı bekliyor</p>}
         </div>
         <div className="relative w-full sm:w-64">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1A1033]/30" />
+          <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-[#1A1033]/30" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder={adminTab === 'sellers' ? 'Mağaza adı ara...' : 'Başvuru ara...'}
-            className="w-full pl-9 pr-4 py-2.5 bg-[#F8F8FA] rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/20" />
+            className="w-full ps-9 pe-4 py-2.5 bg-[#F8F8FA] rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/20" />
         </div>
       </div>
 
@@ -246,13 +246,13 @@ export function AdminSellers() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#F8F8FA]">
-              <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Mağaza</th>
-              <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">KYC</th>
-              <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Komisyon</th>
-              <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Durum</th>
-              <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Rating</th>
-              <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Performans</th>
-              <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">İşlemler</th>
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Mağaza</th>
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">KYC</th>
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Komisyon</th>
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Durum</th>
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Rating</th>
+              <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Performans</th>
+              <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">İşlemler</th>
             </tr>
           </thead>
           <tbody>
@@ -327,7 +327,7 @@ export function AdminSellers() {
                       <span className="text-[10px] text-[#1A1033]/40">({seller.reviewsCount})</span>
                     </div>
                   </td>
-                  <td className="py-3 text-right">
+                  <td className="py-3 text-end">
                     {perfScores[seller.id] ? (
                       <span className={cn(
                         'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest',
@@ -338,7 +338,7 @@ export function AdminSellers() {
                       )}>
                         <Medal size={10} />
                         {perfScores[seller.id].level}
-                        <span className="ml-0.5 opacity-60">{perfScores[seller.id].overall}</span>
+                        <span className="ms-0.5 opacity-60">{perfScores[seller.id].overall}</span>
                       </span>
                     ) : (
                       <span className="text-[9px] text-[#1A1033]/30">—</span>
@@ -452,13 +452,13 @@ export function AdminSellers() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#F8F8FA]">
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Mağaza</th>
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Satıcı</th>
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Kategoriler</th>
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Deneyim</th>
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Hedef</th>
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Durum</th>
-                    <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">İşlem</th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Mağaza</th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Satıcı</th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Kategoriler</th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Deneyim</th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Hedef</th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Durum</th>
+                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">İşlem</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -508,7 +508,7 @@ export function AdminSellers() {
                           {app.status === 'pending' ? 'Bekliyor' : app.status === 'approved' ? 'Onaylı' : 'Red'}
                         </span>
                       </td>
-                      <td className="py-3 text-right">
+                      <td className="py-3 text-end">
                         {app.status === 'pending' && (
                           <div className="flex items-center justify-end gap-1">
                             <button
@@ -550,12 +550,12 @@ export function AdminSellers() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#F8F8FA]">
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Kural Adı</th>
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Oran</th>
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Min/Max</th>
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Kategori Override</th>
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Durum</th>
-                    <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">İşlem</th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Kural Adı</th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Oran</th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Min/Max</th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Kategori Override</th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">Durum</th>
+                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">İşlem</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -583,7 +583,7 @@ export function AdminSellers() {
                           rule.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                         )}>{rule.isActive ? 'Aktif' : 'Pasif'}</span>
                       </td>
-                      <td className="py-3 text-right">
+                      <td className="py-3 text-end">
                         <button onClick={() => setEditingRule(rule)}
                           className="p-1.5 rounded-lg bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/10 transition-all">
                           <Edit2 size={12} />

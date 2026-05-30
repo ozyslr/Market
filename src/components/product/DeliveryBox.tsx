@@ -38,7 +38,7 @@ export function DeliveryBox({ locationLabel, onChangeLocation, hasExpressShippin
         <div className="w-9 h-9 bg-brand-secondary/40 rounded-xl flex items-center justify-center text-accent shrink-0">
           <MapPin size={16} />
         </div>
-        <div className="flex-1 text-left min-w-0">
+        <div className="flex-1 text-start min-w-0">
           <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40">Teslimat Adresi</p>
           <p className="text-xs font-black text-brand-primary mt-0.5 truncate">{locationLabel}</p>
         </div>

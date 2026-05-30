@@ -127,10 +127,10 @@ export function SellerInvoices() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <p className="text-lg font-display font-black text-[#1A1033] text-right">
+                    <p className="text-lg font-display font-black text-[#1A1033] text-end">
                       {invoice.totalAmount.toFixed(2)} <span className="text-xs">{invoice.currency}</span>
                     </p>
-                    <div className="flex items-center gap-1 ml-2">
+                    <div className="flex items-center gap-1 ms-2">
                       {(invoice.status === 'draft' || invoice.status === 'rejected') && (
                         <button onClick={() => handleSendToGib(invoice.id!)} disabled={sendingId === invoice.id}
                           className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all disabled:opacity-50"

@@ -437,15 +437,15 @@ export default function AdCampaigns() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-800 bg-zinc-900/50">
-                    <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Kampanya</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">CPC</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Bütçe</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Harcama</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Gösterim</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Tıklama</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">TO</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Durum</th>
-                    <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">İşlem</th>
+                    <th className="text-start px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Kampanya</th>
+                    <th className="text-start px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">CPC</th>
+                    <th className="text-start px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Bütçe</th>
+                    <th className="text-start px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Harcama</th>
+                    <th className="text-start px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Gösterim</th>
+                    <th className="text-start px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Tıklama</th>
+                    <th className="text-start px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">TO</th>
+                    <th className="text-start px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Durum</th>
+                    <th className="text-end px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">İşlem</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -472,7 +472,7 @@ export default function AdCampaigns() {
                             {statusLabel(c.status)}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-end">
                           {canToggle && (
                             <button
                               onClick={() => handleToggle(c)}

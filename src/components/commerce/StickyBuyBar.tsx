@@ -33,7 +33,7 @@ export function StickyBuyBar({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-brand-primary/5 shadow-2xl px-4 py-3"
+          className="md:hidden fixed bottom-0 start-0 end-0 z-40 bg-white border-t border-brand-primary/5 shadow-2xl px-4 py-3"
           role="region"
           aria-label="Hızlı satın al"
         >

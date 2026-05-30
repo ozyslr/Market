@@ -46,13 +46,13 @@ export function ProductVerification() {
         <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-zinc-800 shadow-sm p-6 md:p-8 mb-8">
           <form onSubmit={handleSearch} className="flex gap-3">
             <div className="flex-1 relative">
-              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <Search size={16} className="absolute start-4 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 type="text"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Sertifika ID veya seri numarası girin (örn: MRC-XXXX-XXXX)"
-                className="w-full pl-10 pr-4 py-3.5 bg-brand-secondary/30 dark:bg-zinc-800 rounded-xl border border-brand-primary/5 dark:border-zinc-700 outline-none focus:ring-4 ring-accent/10 text-sm font-bold transition-all"
+                className="w-full ps-10 pe-4 py-3.5 bg-brand-secondary/30 dark:bg-zinc-800 rounded-xl border border-brand-primary/5 dark:border-zinc-700 outline-none focus:ring-4 ring-accent/10 text-sm font-bold transition-all"
               />
             </div>
             <button

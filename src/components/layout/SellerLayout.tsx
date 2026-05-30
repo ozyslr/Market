@@ -144,7 +144,7 @@ export default function SellerLayout() {
 
   return (
     <div className="flex h-screen bg-zinc-950 text-white overflow-hidden">
-      <aside role="navigation" aria-label="Satıcı paneli navigasyonu" className="w-[240px] flex-shrink-0 flex flex-col bg-zinc-900 border-r border-zinc-800">
+      <aside role="navigation" aria-label="Satıcı paneli navigasyonu" className="w-[240px] flex-shrink-0 flex flex-col bg-zinc-900 border-e border-zinc-800">
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
           <div className="flex items-center gap-2">
             <Store size={18} className="text-emerald-400" />

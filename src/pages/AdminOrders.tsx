@@ -148,10 +148,10 @@ export function AdminOrders() {
             ))}
           </div>
           <div className="relative flex-1 max-w-sm md:ml-auto">
-            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1033]/20" />
+            <Search size={14} className="absolute start-4 top-1/2 -translate-y-1/2 text-[#1A1033]/20" />
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="ID veya e-posta ara..."
-              className="w-full pl-10 pr-4 py-2.5 bg-[#F8F8FA] rounded-xl text-xs font-medium outline-none" />
+              className="w-full ps-10 pe-4 py-2.5 bg-[#F8F8FA] rounded-xl text-xs font-medium outline-none" />
           </div>
         </div>
 
@@ -168,7 +168,7 @@ export function AdminOrders() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-start">
               <thead>
                 <tr className="bg-[#F8F8FA] text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
                   <th className="px-4 py-5 w-10">
@@ -224,10 +224,10 @@ export function AdminOrders() {
                           {order.status}
                           {updatingId === order.id ? <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" /> : <ChevronDown size={10} />}
                         </span>
-                        <div className="absolute top-full left-0 mt-1 bg-white rounded-2xl shadow-2xl border border-[#F8F8FA] py-2 z-20 hidden group-hover/status:block min-w-[130px]">
+                        <div className="absolute top-full start-0 mt-1 bg-white rounded-2xl shadow-2xl border border-[#F8F8FA] py-2 z-20 hidden group-hover/status:block min-w-[130px]">
                           {ALL_STATUSES.map(s => (
                             <button key={s} onClick={() => handleStatusChange(order.id, s)}
-                              className={cn('w-full px-4 py-2 text-left text-[10px] font-black uppercase tracking-widest hover:bg-[#F8F8FA] transition-colors',
+                              className={cn('w-full px-4 py-2 text-start text-[10px] font-black uppercase tracking-widest hover:bg-[#F8F8FA] transition-colors',
                                 order.status === s ? 'text-[#1A1033]' : 'text-[#1A1033]/40')}>
                               {s}
                             </button>

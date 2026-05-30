@@ -1,4 +1,4 @@
-# Mercora — Kodlama Standartları
+# Benim Olan — Kodlama Standartları
 
 ## TypeScript
 - `any` yasak — her zaman tip tanımla

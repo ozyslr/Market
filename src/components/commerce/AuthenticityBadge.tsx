@@ -86,7 +86,7 @@ export function AuthenticityBadge({ productId, productTitle, productImage, selle
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
-              className="absolute top-full left-0 mt-2 z-20 w-72 p-4 bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-xl"
+              className="absolute top-full start-0 mt-2 z-20 w-72 p-4 bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-xl"
               onClick={e => e.stopPropagation()}
             >
               <CertificateDetail

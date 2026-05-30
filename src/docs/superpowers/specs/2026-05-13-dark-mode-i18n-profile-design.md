@@ -1,4 +1,4 @@
-# Mercora — Dark Mode Fix + i18n + User Profile Enhancements
+# Benim Olan — Dark Mode Fix + i18n + User Profile Enhancements
 
 > **Context:** Three parallel UX gaps blocking production quality:
 > 1. Dark mode switches but hardcoded hex colors (e.g. `#F9423A`, `bg-white`) in Navbar/Hero/Footer break visual consistency.

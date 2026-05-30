@@ -86,7 +86,7 @@ export function AdminSupport() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Ticket list */}
-        <div className="xl:col-span-1 space-y-2 max-h-[700px] overflow-y-auto pr-1">
+        <div className="xl:col-span-1 space-y-2 max-h-[700px] overflow-y-auto pe-1">
           {filtered.length === 0 ? (
             <div className="bg-white rounded-2xl border border-[#F8F8FA] py-12 text-center text-[#1A1033]/30 text-sm font-bold">
               <MessageCircle size={28} className="mx-auto mb-2 opacity-30" />
@@ -96,7 +96,7 @@ export function AdminSupport() {
             const sc = STATUS_CONFIG[ticket.status] ?? STATUS_CONFIG.open;
             return (
               <button key={ticket.id} onClick={() => setSelected(ticket)}
-                className={cn('w-full text-left bg-white rounded-2xl p-4 border transition-all hover:border-accent/30',
+                className={cn('w-full text-start bg-white rounded-2xl p-4 border transition-all hover:border-accent/30',
                   selected?.id === ticket.id ? 'border-accent shadow-sm' : 'border-[#F8F8FA]')}>
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <p className="text-[11px] font-black text-[#1A1033] leading-tight line-clamp-2">{ticket.subject}</p>
@@ -105,7 +105,7 @@ export function AdminSupport() {
                 <div className="flex items-center gap-2">
                   <span className="text-[9px] text-[#1A1033]/40">{CATEGORY_LABELS[ticket.category] ?? ticket.category}</span>
                   {ticket.userEmail && <span className="text-[9px] text-[#1A1033]/30 truncate">{ticket.userEmail}</span>}
-                  <span className={cn('ml-auto text-[9px] font-black uppercase shrink-0', PRIORITY_COLOR[ticket.priority])}>
+                  <span className={cn('ms-auto text-[9px] font-black uppercase shrink-0', PRIORITY_COLOR[ticket.priority])}>
                     {ticket.priority === 'high' ? '⚡ Yüksek' : ticket.priority === 'medium' ? 'Orta' : 'Düşük'}
                   </span>
                 </div>

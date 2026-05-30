@@ -99,7 +99,7 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
 
       {/* Cevap */}
       {localAnswer ? (
-        <div className="ml-5 pl-3 border-l-2 border-accent/30 mt-2">
+        <div className="ms-5 ps-3 border-s-2 border-accent/30 mt-2">
           <p className="text-xs font-bold text-brand-primary/70 dark:text-zinc-300">{localAnswer.text}</p>
           <p className="text-[10px] text-accent font-bold mt-1">
             {localAnswer.by}
@@ -111,12 +111,12 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
           {!showAnswerForm ? (
             <button
               onClick={() => setShowAnswerForm(true)}
-              className="ml-5 text-[10px] font-black text-accent hover:underline mt-1"
+              className="ms-5 text-[10px] font-black text-accent hover:underline mt-1"
             >
               Yanıtla
             </button>
           ) : (
-            <div className="ml-5 mt-2 flex gap-2">
+            <div className="ms-5 mt-2 flex gap-2">
               <input
                 value={answerText}
                 onChange={e => setAnswerText(e.target.value)}
@@ -141,7 +141,7 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
           )}
         </>
       ) : (
-        <p className="ml-5 text-[10px] text-brand-primary/20 dark:text-zinc-600 font-bold italic mt-1">
+        <p className="ms-5 text-[10px] text-brand-primary/20 dark:text-zinc-600 font-bold italic mt-1">
           Henüz cevaplanmadı
         </p>
       )}

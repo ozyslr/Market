@@ -60,7 +60,7 @@ export function NotificationsPanel({ show, onToggle, onClose }: NotificationsPan
       >
         <Bell size={20} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-mercora-red text-white rounded-full text-[9px] font-bold flex items-center justify-center shadow-sm">
+          <span className="absolute -top-1 -end-1 w-4 h-4 bg-mercora-red text-white rounded-full text-[9px] font-bold flex items-center justify-center shadow-sm">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -80,7 +80,7 @@ export function NotificationsPanel({ show, onToggle, onClose }: NotificationsPan
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.97 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-[calc(100%+8px)] w-80 bg-white dark:bg-zinc-950 border border-brand-primary/10 dark:border-white/10 rounded-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] z-[9999] overflow-hidden"
+              className="absolute end-0 top-[calc(100%+8px)] w-80 bg-white dark:bg-zinc-950 border border-brand-primary/10 dark:border-white/10 rounded-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] z-[9999] overflow-hidden"
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-brand-primary/5 dark:border-white/5">
                 <span className="text-xs font-black uppercase tracking-widest text-brand-primary dark:text-white">Bildirimler</span>
@@ -107,7 +107,7 @@ export function NotificationsPanel({ show, onToggle, onClose }: NotificationsPan
                           if (!n.read) markRead(n.id);
                           if (n.link) { navigate(n.link); onClose(); }
                         }}
-                        className={`w-full text-left px-4 py-3 hover:bg-brand-secondary/50 dark:hover:bg-zinc-900 transition-colors flex items-start gap-3 ${!n.read ? 'bg-accent/5' : ''}`}
+                        className={`w-full text-start px-4 py-3 hover:bg-brand-secondary/50 dark:hover:bg-zinc-900 transition-colors flex items-start gap-3 ${!n.read ? 'bg-accent/5' : ''}`}
                       >
                         <span className={`mt-0.5 shrink-0 ${iconColor}`}>
                           <Icon size={15} />

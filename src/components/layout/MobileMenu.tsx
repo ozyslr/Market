@@ -41,7 +41,7 @@ export function MobileMenu({ isOpen, onClose, categories, onOpenAuth }: MobileMe
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 left-0 bottom-0 w-full max-w-[320px] bg-white dark:bg-zinc-950 z-[10001] shadow-2xl flex flex-col"
+            className="fixed top-0 start-0 bottom-0 w-full max-w-[320px] bg-white dark:bg-zinc-950 z-[10001] shadow-2xl flex flex-col"
             onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
           >
             <div className="p-6 bg-brand-primary text-white flex items-center justify-between">
@@ -138,7 +138,7 @@ export function MobileMenu({ isOpen, onClose, categories, onOpenAuth }: MobileMe
                     onClick={() => setLang(l.code as any)}
                     className={cn("flex-1 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-colors border whitespace-nowrap min-w-[80px]", lang === l.code ? "bg-brand-primary text-white border-transparent" : "bg-transparent text-brand-primary dark:text-white border-brand-primary/10")}
                   >
-                    <span className="text-sm mr-2">{l.flag}</span>
+                    <span className="text-sm me-2">{l.flag}</span>
                     {l.code}
                   </button>
                 ))}

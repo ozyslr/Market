@@ -29,8 +29,8 @@ export function CampaignBanner({ className }: CampaignBannerProps) {
         >
           {/* Background sparkle */}
           <div className="absolute inset-0 opacity-10">
-            <div className="absolute -top-4 -right-4 w-16 h-16 bg-white rounded-full blur-2xl" />
-            <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-white rounded-full blur-xl" />
+            <div className="absolute -top-4 -end-4 w-16 h-16 bg-white rounded-full blur-2xl" />
+            <div className="absolute -bottom-4 -start-4 w-12 h-12 bg-white rounded-full blur-xl" />
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
