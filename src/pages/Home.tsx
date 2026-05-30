@@ -3,7 +3,8 @@ import {
   ChevronLeft, ChevronRight, ShoppingBag, 
   Flame, Percent, Trophy, Heart, Star,
   Smartphone, Sofa, Mountain, Shirt, Coffee,
-  TrendingUp, ShieldCheck, Lock
+  TrendingUp, ShieldCheck, Lock, ShoppingBasket,
+  Package, Clock, Baby, Dog, Home as HomeIcon
 } from 'lucide-react';
 import React, { useRef, useState, useEffect } from 'react';
 import { Hero } from '@/components/home/Hero';
@@ -13,700 +14,484 @@ import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/context/LanguageContext';
-import { fetchProducts } from '@/lib/apiProduct';
-import type { Product } from '@/types';
+import { Product, Category } from '@/types';
+import { SEO } from '@/components/common/SEO';
+import { getProducts, getCategories } from '@/services/productService';
+import { useCartStore } from '@/store/useCartStore';
 
-export function Home() {
-  const { t } = useLanguage();
-  const dealsRef = useRef<HTMLDivElement>(null);
-  const popularRef = useRef<HTMLDivElement>(null);
-  const [apiProducts, setApiProducts] = useState<Product[]>([]);
+const CountdownTimer = ({ hours = 5, minutes = 42, seconds = 18 }) => {
+  const [timeLeft, setTimeLeft] = useState(hours * 3600 + minutes * 60 + seconds);
 
   useEffect(() => {
-    fetchProducts({ limit: 40 }).then(p => {
-      if (p.length > 0) setApiProducts(p);
-    });
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  const scroll = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
-    if (ref.current) {
-      const scrollAmount = direction === 'left' ? -400 : 400;
-      ref.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  const h = Math.floor(timeLeft / 3600).toString().padStart(2, '0');
+  const m = Math.floor((timeLeft % 3600) / 60).toString().padStart(2, '0');
+  const s = (timeLeft % 60).toString().padStart(2, '0');
+
+  return (
+    <div className="flex items-center gap-1.5 text-brand-primary dark:text-white">
+      <span className="font-bold text-sm bg-brand-secondary/50 dark:bg-zinc-800 px-3 py-1.5 rounded-lg border border-brand-primary/5">Kalan Zaman</span>
+      <div className="bg-[#F9423A] text-white w-8 h-8 rounded flex items-center justify-center font-bold text-sm">{h}</div>
+      <span className="font-bold text-[#F9423A]">:</span>
+      <div className="bg-[#F9423A] text-white w-8 h-8 rounded flex items-center justify-center font-bold text-sm">{m}</div>
+      <span className="font-bold text-[#F9423A]">:</span>
+      <div className="bg-[#F9423A] text-white w-8 h-8 rounded flex items-center justify-center font-bold text-sm">{s}</div>
+    </div>
+  );
+};
+
+const ProductRow = ({ title, products, showViewAll = true, linkTo = "/search" }: { title: string; products: Product[]; showViewAll?: boolean; linkTo?: string }) => {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { t } = useLanguage();
+
+  const handleScroll = () => {
+    if (rowRef.current) {
+      setShowLeftArrow(rowRef.current.scrollLeft > 20);
     }
   };
 
-  const products = apiProducts.length > 0 ? apiProducts : MOCK_PRODUCTS;
-  const discountedProducts = products.filter(p => p.oldPrice);
-  const popularProducts = products.filter(p => p.rating >= 4.7);
-  const campingProducts = products.filter(p => p.categoryId === 'camping' || p.categoryId === 'sport-outdoor');
-  const beautyProducts = products.filter(p => p.categoryId === 'beauty');
-  const sportsProducts = products.filter(p => p.categoryId === 'sport-outdoor' || p.categoryId === 'sportswear');
-  const livingRoomProducts = products.filter(p => p.categoryId === 'home' || p.categoryId === 'living-room');
-
-  const homepageCategories = [
-    { name: t('category.camping'), key: 'camping', icon: Mountain, color: 'bg-violet-500' },
-    { name: 'Electronics', key: 'electronics', icon: Zap, color: 'bg-purple-700' },
-    { name: t('category.sportswear'), key: 'sportswear', icon: Shirt, color: 'bg-fuchsia-500' },
-    { name: t('category.living_room'), key: 'living-room', icon: Sofa, color: 'bg-purple-500' },
-    { name: t('category.makeup'), key: 'makeup', icon: Sparkles, color: 'bg-violet-400' },
-    { name: t('category.kitchen'), key: 'kitchen', icon: Coffee, color: 'bg-indigo-500' },
-    { name: 'Accessories', key: 'accessories', icon: Heart, color: 'bg-purple-400' },
-    { name: 'Fitness', key: 'fitness', icon: Trophy, color: 'bg-indigo-700' },
-  ];
-
-  const [heroSlide, setHeroSlide] = useState(0)
-  const heroSlides = [
-    { bg: 'from-violet-600 to-purple-900', title: 'Yeni Sezon Ürünler', subtitle: "En iyi fiyatlar Mercora'da", badge: 'YENİ', cta: 'Keşfet' },
-    { bg: 'from-purple-700 to-indigo-900', title: 'Elektronik Fırsatları', subtitle: "Teknoloji ürünlerde %40'a varan indirim", badge: 'FIRSAT', cta: 'Alışveriş Yap' },
-    { bg: 'from-fuchsia-600 to-purple-800', title: 'Ev & Yaşam', subtitle: 'Evinizi güzelleştirin', badge: 'TREND', cta: 'İncele' },
-  ]
-  const heroCategoryLinks = [
-    { name: 'Elektronik', icon: '📱', href: '/search?category=electronics' },
-    { name: 'Moda', icon: '👗', href: '/search?category=fashion' },
-    { name: 'Ev & Yaşam', icon: '🏠', href: '/search?category=home' },
-    { name: 'Spor', icon: '⚽', href: '/search?category=sports' },
-    { name: 'Kozmetik', icon: '💄', href: '/search?category=beauty' },
-    { name: 'Kitap', icon: '📚', href: '/search?category=books' },
-    { name: 'Oyuncak', icon: '🧸', href: '/search?category=toys' },
-    { name: 'Otomotiv', icon: '🚗', href: '/search?category=auto' },
-    { name: 'Pet Shop', icon: '🐾', href: '/search?category=pets' },
-    { name: 'Süpermarket', icon: '🛒', href: '/search?category=grocery' },
-    { name: 'Anne & Bebek', icon: '👶', href: '/search?category=baby' },
-    { name: 'Hobi', icon: '🎨', href: '/search?category=hobby' },
-  ]
-
-  useEffect(() => {
-    const t = setInterval(() => setHeroSlide(s => (s + 1) % heroSlides.length), 4000)
-    return () => clearInterval(t)
-  }, [])
+  const scroll = (direction: 'left' | 'right') => {
+    if (rowRef.current) {
+      const scrollAmount = direction === 'left' ? -600 : 600;
+      rowRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-brand-secondary">
-
-      {/* Hero Section — Category Sidebar + Carousel */}
-      <section className="max-w-screen-xl mx-auto px-4 pt-6 pb-4">
-        <div className="flex gap-0 rounded-2xl overflow-hidden border border-brand-primary/5 shadow-sm">
-          {/* Left Category Sidebar */}
-          <div className="hidden lg:flex flex-col w-52 shrink-0 bg-white border-r border-brand-primary/5">
-            {heroCategoryLinks.map((cat) => (
-              <Link
-                key={cat.name}
-                to={cat.href}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-brand-primary hover:bg-brand-secondary hover:text-accent transition-colors group"
-              >
-                <span className="text-base leading-none">{cat.icon}</span>
-                <span className="truncate">{cat.name}</span>
-                <span className="ml-auto text-brand-primary/20 group-hover:text-accent transition-colors">›</span>
-              </Link>
-            ))}
-          </div>
-
-          {/* Hero Carousel */}
-          <div className="relative flex-1 h-64 lg:h-80 overflow-hidden">
-            {heroSlides.map((slide, i) => (
-              <div
-                key={i}
-                className={`absolute inset-0 bg-gradient-to-br ${slide.bg} flex flex-col justify-center px-10 transition-opacity duration-700 ${i === heroSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-              >
-                <span className="inline-block bg-white/20 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-3 w-fit">
-                  {slide.badge}
-                </span>
-                <h2 className="text-3xl lg:text-4xl font-black text-white mb-2 leading-tight">{slide.title}</h2>
-                <p className="text-white/80 text-sm mb-6">{slide.subtitle}</p>
-                <Link
-                  to="/search"
-                  className="bg-white text-brand-primary font-black text-xs uppercase tracking-widest px-6 py-2.5 rounded-full hover:bg-brand-secondary transition-colors w-fit"
-                >
-                  {slide.cta} →
-                </Link>
-              </div>
-            ))}
-
-            {/* Navigation Dots */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-              {heroSlides.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setHeroSlide(i)}
-                  className={`h-2 rounded-full transition-all ${i === heroSlide ? 'bg-white w-6' : 'bg-white/40 w-2'}`}
-                />
-              ))}
-            </div>
-
-            {/* Prev/Next Arrows */}
-            <button
-              onClick={() => setHeroSlide(s => (s - 1 + heroSlides.length) % heroSlides.length)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white font-bold transition-colors"
-            >‹</button>
-            <button
-              onClick={() => setHeroSlide(s => (s + 1) % heroSlides.length)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white font-bold transition-colors"
-            >›</button>
-          </div>
-        </div>
-      </section>
-
-      {/* Promo Banner Row */}
-      <section className="max-w-screen-xl mx-auto px-4 pb-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Link to="/search?sort=discount" className="flex items-center gap-3 bg-accent-soft border border-accent/20 rounded-xl px-4 py-3 hover:bg-accent/10 transition-colors group">
-            <span className="text-2xl">🏷️</span>
-            <div>
-              <p className="font-black text-xs uppercase tracking-widest text-accent">Günün Fırsatları</p>
-              <p className="text-[10px] text-accent/70">%70'e varan indirim</p>
-            </div>
-          </Link>
-          <Link to="/search" className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 hover:bg-green-100 transition-colors">
-            <span className="text-2xl">🚚</span>
-            <div>
-              <p className="font-black text-xs uppercase tracking-widest text-green-700">Ücretsiz Kargo</p>
-              <p className="text-[10px] text-green-600">£50 üzeri tüm siparişlerde</p>
-            </div>
-          </Link>
-          <Link to="/search" className="flex items-center gap-3 bg-accent-soft border border-accent/20 rounded-xl px-4 py-3 hover:bg-accent/10 transition-colors group">
-            <span className="text-2xl">✨</span>
-            <div>
-              <p className="font-black text-xs uppercase tracking-widest text-accent">Yeni Gelenler</p>
-              <p className="text-[10px] text-accent/70">Bu hafta eklenen ürünler</p>
-            </div>
-          </Link>
-        </div>
-      </section>
-
-      <Hero />
-
-      {/* Category Icons Bar (Hepsiburada Style Circles) */}
-      <section className="bg-white py-5 px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-6 overflow-x-auto no-scrollbar pb-2">
-          {homepageCategories.map((cat, i) => (
-            <Link key={i} to={`/search?category=${cat.key}`} className="flex flex-col items-center gap-3 shrink-0 group">
-               <div className={cn("w-16 h-16 rounded-full flex items-center justify-center text-white shadow-xl group-hover:scale-110 transition-transform", cat.color)}>
-                 <cat.icon size={28} />
-               </div>
-               <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60 group-hover:text-brand-primary transition-colors">{cat.name}</span>
-            </Link>
+    <section className="space-y-6 relative">
+      <div className="flex items-center justify-between px-4 md:px-0">
+         <div className="flex items-center gap-3">
+            <h2 className="text-xl md:text-2xl font-display font-black tracking-tight text-brand-primary uppercase italic">{title}</h2>
+         </div>
+         {showViewAll && (
+           <button 
+             onClick={() => setIsExpanded(!isExpanded)}
+             className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 hover:text-accent transition-colors flex items-center gap-1"
+           >
+              {isExpanded ? "Daha Az Gör" : t('global.see_all')} <ChevronRight size={14} className={isExpanded ? "rotate-90 transition-transform" : "transition-transform"} />
+           </button>
+         )}
+      </div>
+      
+      {isExpanded ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 px-4 md:px-0">
+          {products.map(product => (
+             <div key={product.id} className="h-full">
+               <ProductCard product={product} />
+             </div>
           ))}
         </div>
-      </section>
-
-      {/* Category Shortcuts Bar */}
-      <section className="bg-white border-b border-brand-primary/5 py-4 sticky top-24 z-30 hidden md:block overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-8 whitespace-nowrap">
-          {CATEGORIES.map((cat) => (
-            <Link 
-              key={cat.id} 
-              to={`/search?category=${cat.id}`}
-              className="text-xs font-black uppercase tracking-widest text-brand-primary/60 hover:text-accent transition-colors flex items-center gap-2 group"
-            >
-              <div className="w-1.5 h-1.5 bg-brand-primary/10 rounded-full group-hover:bg-accent transition-colors" />
-              {cat.name}
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Main Content Hub */}
-      <main className="max-w-[1700px] mx-auto px-4 md:px-6 py-6 space-y-10">
-        
-        {/* Commercial Opportunity Board (Technical Dashboard Mood) */}
-        <section className="bg-brand-primary text-white py-10 px-6 rounded-[3rem] relative overflow-hidden">
-          <Globe size={400} className="absolute -top-20 -right-20 text-white/5 pointer-events-none" />
-          <div className="relative z-10">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="px-3 py-1 bg-accent text-white text-[10px] font-black uppercase tracking-widest rounded-full">{t('market.opportunity')}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-white/40 italic">Live Commercial Intelligence feed</span>
-                  </div>
-                </div>
-                <h2 className="text-4xl md:text-7xl font-display font-black tracking-tighter uppercase italic leading-none">{t('market.insight')}</h2>
-              </div>
-              <div className="flex items-center gap-8 border-l border-white/10 pl-8">
-                <div className="text-right">
-                    <p className="text-[10px] font-black uppercase text-white/40 mb-1">UK/TR Corridor</p>
-                    <p className="text-2xl font-display font-black text-green-500 tracking-tighter cursor-help" title="Bullish momentum on cross-border transactions">+4.2% <span className="text-xs">Vol</span></p>
-                </div>
-                <div className="text-right">
-                    <p className="text-[10px] font-black uppercase text-white/40 mb-1">Hub Clearance</p>
-                    <p className="text-2xl font-display font-black tracking-tighter">98.2 <span className="text-xs opacity-40">Mins</span></p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Ticker Column 1: Scarcity */}
-              <div className="bg-white/5 border border-white/5 rounded-[3.5rem] p-10 group hover:bg-white/10 transition-all border-l-4 border-l-red-500 backdrop-blur-3xl">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-white/40 italic flex items-center gap-2">
-                    <Zap size={14} className="text-red-500" /> {t('market.scarcity')}
-                  </h3>
-                  <Link to="/search" className="p-2 bg-white/5 rounded-full text-white/20 group-hover:text-white transition-all group-hover:bg-accent">
-                    <ArrowRight size={18} />
-                  </Link>
-                </div>
-                <div className="space-y-10">
-                  {products.slice(4, 7).map((p, i) => (
-                    <Link key={p.id} to={`/product/${p.slug}`} className="flex items-center justify-between group/item">
-                      <div className="flex items-center gap-5">
-                        <span className="text-xs font-black text-white/10 italic">0{i+1}</span>
-                        <div>
-                          <p className="text-sm font-black line-clamp-1 group-hover/item:text-accent transition-colors">{p.title}</p>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">London Hub · <span className="text-red-500 animate-pulse">2 left</span></p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-black text-red-500">£{p.price}</p>
-                        <TrendingUp size={12} className="text-red-500 opacity-0 group-hover/item:opacity-100 transition-opacity ml-auto" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Ticker Column 2: Rising Demand */}
-              <div className="bg-white/5 border border-white/5 rounded-[3.5rem] p-10 group hover:bg-white/10 transition-all border-l-4 border-l-green-500 backdrop-blur-3xl">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-white/40 italic flex items-center gap-2">
-                    <TrendingUp size={14} className="text-green-500" /> {t('market.trending')}
-                  </h3>
-                  <Link to="/search" className="p-2 bg-white/5 rounded-full text-white/20 group-hover:text-white transition-all group-hover:bg-accent">
-                    <ArrowRight size={18} />
-                  </Link>
-                </div>
-                <div className="space-y-10">
-                  {products.slice(9, 12).map((p, i) => (
-                    <Link key={p.id} to={`/product/${p.slug}`} className="flex items-center justify-between group/item">
-                      <div className="flex items-center gap-5">
-                        <span className="text-xs font-black text-white/10 italic">0{i+1}</span>
-                        <div>
-                          <p className="text-sm font-black line-clamp-1 group-hover/item:text-accent transition-colors">{p.title}</p>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">Market Heat: <span className="text-green-500">Extreme</span></p>
-                        </div>
-                      </div>
-                      <div className="text-right text-green-500">
-                        <p className="text-sm font-black">£{p.price}</p>
-                        <TrendingUp size={12} className="opacity-0 group-hover/item:opacity-100 transition-opacity ml-auto" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Column 3: Logistics Integrity */}
-              <div className="bg-accent rounded-[3.5rem] p-8 text-white relative overflow-hidden group shadow-2xl shadow-accent/20">
-                <Shield size={300} className="absolute -bottom-20 -right-20 text-white/10 pointer-events-none group-hover:rotate-12 transition-transform duration-1000" />
-                <div className="relative z-10 h-full flex flex-col pt-4">
-                  <div className="flex items-center gap-3 mb-8">
-                    <Zap size={20} className="text-white fill-white" />
-                    <h3 className="text-sm font-black uppercase tracking-[0.2em] italic">Export Integrity</h3>
-                  </div>
-                  <div className="flex-1 space-y-10">
-                    <div>
-                      <div className="flex justify-between items-center text-[10px] font-black uppercase mb-3 tracking-widest opacity-60">
-                        <span>Intl. Clearance Rate</span>
-                        <span>99.4%</span>
-                      </div>
-                      <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                        <motion.div 
-                          className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" 
-                          initial={{ width: 0 }} 
-                          whileInView={{ width: '99.4%' }} 
-                          transition={{ duration: 1.5, ease: 'easeOut' }}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                        <p className="text-sm font-bold leading-relaxed">Artisan artifacts moving from <span className="text-white underline decoration-white/20 underline-offset-4">Istanbul Hub</span> to UK mainland are optimized via AI-compliance engines, ensuring <span className="italic">Zero Friction</span> at borders.</p>
-                    </div>
-                    <button className="mt-auto w-full py-4 bg-brand-primary text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-accent transition-all shadow-xl active:scale-95">Explore Global Reach</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Flash Deals / İndirimli Ürünler */}
-        <section className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 border border-brand-primary/5 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
-          
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-red-500 mb-2">
-                <Flame size={20} fill="currentColor" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em]">Market Pulse Deals</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-display font-black tracking-tighter text-brand-primary uppercase italic text-balance">Flash Artifacts <br /> <span className="text-accent underline decoration-brand-primary decoration-4 underline-offset-8 italic">{t('flash.deals')}</span></h2>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 bg-brand-secondary/50 rounded-xl border border-brand-primary/5">
-                <span className="text-[10px] font-black uppercase text-brand-primary/40 text-nowrap">ENDS:</span>
-                <span className="text-sm font-mono font-black text-brand-primary">02:44:12</span>
-              </div>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => scroll(dealsRef, 'left')}
-                  className="p-3 border border-brand-primary/5 bg-white rounded-xl hover:bg-brand-primary hover:text-white transition-all shadow-sm"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <button 
-                  onClick={() => scroll(dealsRef, 'right')}
-                  className="p-3 border border-brand-primary/5 bg-white rounded-xl hover:bg-brand-primary hover:text-white transition-all shadow-sm"
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div 
-            ref={dealsRef}
-            className="flex gap-6 overflow-x-auto no-scrollbar pb-6"
-          >
-            {discountedProducts.map(product => (
-              <div key={product.id} className="w-[280px] md:w-[320px] shrink-0">
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Global Spotlight Bento */}
-        <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-2 aspect-video md:aspect-auto bg-brand-primary rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden group">
-            <div className="relative z-10 h-full flex flex-col justify-end">
-              <span className="text-accent font-bold uppercase tracking-widest text-[10px] mb-4">Product Spotlights</span>
-              <h3 className="text-4xl md:text-5xl font-display font-black leading-none mb-6 italic">Artisan <br />Electronics <br />Hub</h3>
-              <p className="text-white/40 text-sm mb-8 max-w-[240px]">London & Istanbul warehouses are restocked with 2026 tech artifacts.</p>
-              <button className="w-fit px-8 py-4 bg-accent text-white rounded-2xl font-bold flex items-center gap-2 group-hover:gap-4 transition-all uppercase text-[10px] tracking-widest">
-                Discover <ArrowRight size={20} />
-              </button>
-            </div>
-            <img 
-              src="https://placehold.co/800x800/1a1a2e/ffffff?text=Tech" 
-              className="absolute top-0 right-0 w-full h-full object-cover opacity-20 group-hover:scale-105 transition-transform duration-1000" 
-              alt="" 
-            />
-          </div>
-
-          <div className="md:col-span-1 bg-white border border-brand-primary/5 rounded-[2.5rem] p-8 flex flex-col justify-between group overflow-hidden relative">
-            <div className="relative z-10">
-              <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent mb-6 group-hover:scale-110 transition-transform">
-                <Percent size={24} />
-              </div>
-              <h3 className="text-2xl font-display font-black text-brand-primary uppercase italic">Premium <br />Offers</h3>
-              <p className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest mt-2">Up to 60% Global Off</p>
-            </div>
-            <div className="mt-8 relative z-10">
-               <Link to="/search" className="text-xs font-black uppercase tracking-widest text-accent flex items-center gap-2">See All <ArrowRight size={12} /></Link>
-            </div>
-            <Smartphone size={140} className="absolute -bottom-10 -right-10 text-brand-primary/5 rotate-12 group-hover:rotate-0 transition-all duration-700" />
-          </div>
-
-          <div className="md:col-span-1 bg-brand-secondary rounded-[2.5rem] p-8 text-brand-primary relative overflow-hidden group border border-brand-primary/5">
-            <div className="relative z-10">
-              <Trophy size={40} className="text-accent mb-6 fill-accent" />
-              <h3 className="text-2xl font-display font-black uppercase italic">Best of <br />Mercora</h3>
-              <p className="text-brand-primary/40 text-xs mt-2 font-medium">Top artifacts by curator vote.</p>
-            </div>
-            <div className="mt-12 grid grid-cols-2 gap-2 relative z-10">
-               {[1,2,3,4].map(i => (
-                 <div key={i} className="aspect-square bg-white rounded-xl shadow-sm border border-brand-primary/5 p-2 group-hover:scale-105 transition-all">
-                    <img src={`https://placehold.co/100x100/1a1a2e/ffffff?text=${i}`} className="w-full h-full object-contain" alt="" referrerPolicy="no-referrer" />
-                 </div>
-               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Selected from Popular Section */}
-        <section className="py-8">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-               <div className="w-1.5 h-10 bg-accent rounded-full" />
-               <h2 className="text-3xl md:text-4xl font-display font-black tracking-tighter text-brand-primary uppercase italic">{t('home.best_sellers')}</h2>
-            </div>
-            <Link to="/search" className="text-xs font-black uppercase tracking-widest text-brand-primary/40 hover:text-accent transition-colors flex items-center gap-2">
-              {t('global.see_all')} <ChevronRight size={14} />
-            </Link>
-          </div>
-          
-          <div 
-            ref={popularRef}
-            className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"
-          >
-            {popularProducts.slice(0, 10).map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-
-        {/* Global Categories Grid (Shopify Hub Style) */}
-        <section className="bg-brand-primary rounded-[3rem] p-8 md:p-16 text-white overflow-hidden relative">
-          <Globe size={400} className="absolute -top-20 -right-20 text-white/5 pointer-events-none" />
-          
-          <div className="relative z-10">
-            <h2 className="text-4xl md:text-5xl font-display font-black tracking-tighter mb-12 uppercase italic">{t('global.discover')}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-white">
-              {[
-                { name: t('category.camping'), id: 'camping', icon: Mountain },
-                { name: t('category.makeup'), id: 'makeup', icon: Sparkles },
-                { name: t('category.sportswear'), id: 'sportswear', icon: Shirt },
-                { name: t('category.accessories'), id: 'accessories', icon: Heart },
-                { name: t('category.living_room'), id: 'living-room', icon: Sofa },
-                { name: t('category.kitchen'), id: 'kitchen', icon: Coffee },
-              ].map((item, i) => (
-                <Link 
-                  key={i} 
-                  to={`/search?category=${item.id}`}
-                  className="bg-white/10 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] flex flex-col items-center gap-4 hover:bg-white hover:text-brand-primary transition-all group"
-                >
-                  <item.icon size={32} className="text-accent group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-center">{item.name}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Specific Category Spotlights: Camping / Spor */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div className="bg-white rounded-[2.5rem] p-8 border border-brand-primary/5 flex flex-col group">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-display font-black uppercase italic">{t('category.camping')}</h3>
-              <Link to="/search?category=camping" className="text-[10px] font-black uppercase tracking-widest text-accent">{t('global.see_all')}</Link>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-               {campingProducts.slice(0, 4).map(product => (
-                 <Link key={product.id} to={`/product/${product.slug}`} className="flex flex-col gap-3 group/item">
-                    <div className="aspect-square bg-brand-secondary/40 rounded-2xl p-4 overflow-hidden">
-                       <img src={product.images[0]} className="w-full h-full object-contain mix-blend-multiply group-hover/item:scale-110 transition-transform" alt="" referrerPolicy="no-referrer" />
-                    </div>
-                    <span className="text-xs font-bold text-brand-primary line-clamp-1">{product.title}</span>
-                    <span className="text-sm font-black text-accent">£{product.price}</span>
-                 </Link>
-               ))}
-            </div>
-          </div>
-
-          <div className="bg-pink-50 dark:bg-pink-950/20 rounded-[2.5rem] p-8 border border-pink-100 dark:border-pink-900/20 flex flex-col group">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-display font-black uppercase italic text-pink-950">{t('category.makeup')}</h3>
-              <Link to="/search?category=beauty" className="text-[10px] font-black uppercase tracking-widest text-pink-600">{t('global.see_all')}</Link>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-               {beautyProducts.slice(0, 4).map(product => (
-                 <Link key={product.id} to={`/product/${product.slug}`} className="flex flex-col gap-3 group/item">
-                    <div className="aspect-square bg-white rounded-2xl p-4 overflow-hidden shadow-sm group-hover/item:shadow-lg transition-all">
-                       <img src={product.images[0]} className="w-full h-full object-contain mix-blend-multiply group-hover/item:scale-110 transition-transform" alt="" referrerPolicy="no-referrer" />
-                    </div>
-                    <span className="text-xs font-bold text-pink-950 line-clamp-1">{product.title}</span>
-                    <span className="text-sm font-black text-pink-600">£{product.price}</span>
-                 </Link>
-               ))}
-            </div>
-          </div>
-
-          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-[2.5rem] p-8 border border-blue-100 dark:border-blue-900/20 flex flex-col group">
-             <div className="flex items-center justify-between mb-8 text-blue-900">
-                <h3 className="text-2xl font-display font-black uppercase italic">{t('category.sportswear')}</h3>
-                <Link to="/search?category=sportswear" className="text-[10px] font-black uppercase tracking-widest text-blue-600">{t('global.see_all')}</Link>
-             </div>
-             <div className="grid grid-cols-2 gap-4">
-                {sportsProducts.slice(0, 4).map(product => (
-                  <Link key={product.id} to={`/product/${product.slug}`} className="flex flex-col gap-3 group/item">
-                     <div className="aspect-square bg-white rounded-2xl p-4 overflow-hidden shadow-sm group-hover/item:shadow-lg transition-all">
-                        <img src={product.images[0]} className="w-full h-full object-contain mix-blend-multiply group-hover/item:scale-110 transition-transform" alt="" referrerPolicy="no-referrer" />
-                     </div>
-                     <span className="text-xs font-bold text-blue-900 line-clamp-1">{product.title}</span>
-                     <span className="text-sm font-black text-blue-600">£{product.price}</span>
-                  </Link>
-                ))}
-             </div>
-          </div>
-        </section>
-
-        {/* Products for Everyone (Grid Density) */}
-        <section className="bg-white rounded-[3.5rem] p-8 md:p-12 border border-brand-primary/5">
-           <div className="flex items-center gap-4 mb-10">
-              <div className="w-2 h-10 bg-brand-primary rounded-full" />
-              <h2 className="text-3xl font-display font-black tracking-tighter text-brand-primary uppercase italic">{t('home.for_everyone')}</h2>
-           </div>
+      ) : (
+        <div className="relative group/row">
+           {showLeftArrow && (
+             <button 
+               onClick={() => scroll('left')}
+               className="absolute -left-5 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white dark:bg-zinc-800 rounded-full shadow-2xl border border-brand-primary/5 flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all hidden md:group-hover/row:flex"
+             >
+                <ChevronLeft size={24} />
+             </button>
+           )}
            
-           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {products.slice(0, 24).map(p => (
-                <div key={p.id} className="group cursor-pointer">
-                   <Link to={`/product/${p.slug}`}>
-                    <div className="aspect-square bg-brand-secondary/30 rounded-3xl p-4 overflow-hidden mb-4 relative">
-                        <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform" alt="" referrerPolicy="no-referrer" />
-                        <div className="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-xl rounded-full flex items-center justify-center text-brand-primary/20 hover:text-accent transition-colors">
-                          <Heart size={14} />
-                        </div>
-                    </div>
-                    <h4 className="text-xs font-bold text-brand-primary line-clamp-1 mb-1">{p.title}</h4>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-black text-brand-primary">£{p.price}</span>
-                      {p.oldPrice && <span className="text-[10px] text-brand-primary/40 line-through">£{p.oldPrice}</span>}
-                    </div>
-                    <div className="flex items-center gap-1 mt-2">
-                        <Star size={10} fill="#FF5200" className="text-accent" />
-                        <span className="text-[9px] font-black text-brand-primary/40 leading-none">{p.rating} (300+)</span>
-                    </div>
-                   </Link>
-                </div>
-              ))}
-           </div>
-        </section>
+           <button 
+             onClick={() => scroll('right')}
+             className="absolute -right-5 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white dark:bg-zinc-800 rounded-full shadow-2xl border border-brand-primary/5 flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all hidden md:group-hover/row:flex"
+           >
+              <ChevronRight size={24} />
+           </button>
 
-        {/* Home & Living Highlight */}
-        <section className="bg-gradient-to-r from-cyan-50 dark:from-cyan-950/20 to-white dark:to-surface rounded-[3rem] p-8 md:p-12 border border-cyan-100 dark:border-cyan-900/20 flex flex-col md:flex-row items-center gap-12 overflow-hidden relative">
-           <div className="relative z-10 flex-1">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-600 mb-4 block">New Living Collection</span>
-              <h2 className="text-5xl font-display font-black tracking-tighter text-brand-primary uppercase italic mb-8">Living Room <br /> <span className="text-cyan-500">Artifacts</span></h2>
-              <div className="grid grid-cols-3 gap-6">
-                 {livingRoomProducts.slice(0, 3).map(p => (
-                   <Link key={p.id} to={`/product/${p.slug}`} className="group">
-                      <div className="w-full aspect-square bg-white rounded-2xl shadow-xl p-4 mb-4 overflow-hidden group-hover:-translate-y-2 transition-transform">
-                         <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt="" referrerPolicy="no-referrer" />
+           <div 
+             ref={rowRef}
+             onScroll={handleScroll}
+             className="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar pb-8 px-4 md:px-0"
+           >
+             {products.map(product => (
+               <div key={product.id} className="w-[180px] md:w-[240px] shrink-0">
+                 <ProductCard product={product} />
+               </div>
+             ))}
+           </div>
+        </div>
+      )}
+    </section>
+  );
+};
+
+export function Home() {
+  const { t } = useLanguage();
+  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const [categories, setCategories] = useState<Category[]>(CATEGORIES);
+  const [activeDealIndex, setActiveDealIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  
+  const [showAllDeals, setShowAllDeals] = useState(false);
+  const [showAllTechDeals, setShowAllTechDeals] = useState(false);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [fetchedProducts, fetchedCategories] = await Promise.all([
+          getProducts(),
+          getCategories()
+        ]);
+        setProducts(fetchedProducts);
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error("Home data load error:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const flashDeals = products.filter(p => p.oldPrice && p.oldPrice > p.price).slice(0, 6);
+
+  const nextDeal = () => {
+    if (flashDeals.length === 0) return;
+    setActiveDealIndex((prev) => (prev + 1) % flashDeals.length);
+  };
+  
+  const prevDeal = () => {
+    if (flashDeals.length === 0) return;
+    setActiveDealIndex((prev) => (prev - 1 + flashDeals.length) % flashDeals.length);
+  };
+
+  const currentDeal = flashDeals[activeDealIndex];
+
+  const popularProducts = products.filter(p => p.bestSeller || p.rating >= 4.7);
+  const electronicsProducts = products.filter(p => p.categoryId === 'electronics' && p.featured);
+  const fashionProducts = products.filter(p => p.categoryId === 'moda' || p.categoryId === 'fashion');
+  const flashDealProducts = products.filter(p => p.isFlashDeal);
+
+  return (
+    <div className="min-h-screen bg-brand-secondary dark:bg-brand-secondary transition-colors duration-300">
+      <SEO 
+        title={t('nav.home_page')} 
+        description="Mercora - The next-generation global commerce ecosystem connecting artisans to the world."
+      />
+      
+      {/* Trendyol Style Quick Categories (Stories) */}
+      <div className="bg-white dark:bg-zinc-900 shadow-sm border-b border-brand-primary/5 pb-2 md:pb-4 pt-4 md:pt-6 mb-4 md:mb-8">
+        <div className="max-w-[1700px] mx-auto px-4 md:px-6 relative group/menu">
+           <div className="relative">
+              <button 
+                className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-zinc-800 rounded-full shadow-xl border border-brand-primary/5 hidden md:group-hover/menu:flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all"
+                onClick={() => document.getElementById('iconic-menu-scroll')?.scrollBy({ left: -300, behavior: 'smooth' })}
+              >
+                 <ChevronLeft size={20} />
+              </button>
+              <button 
+                className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-zinc-800 rounded-full shadow-xl border border-brand-primary/5 hidden md:group-hover/menu:flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all"
+                onClick={() => document.getElementById('iconic-menu-scroll')?.scrollBy({ left: 300, behavior: 'smooth' })}
+              >
+                 <ChevronRight size={20} />
+              </button>
+
+              <div 
+                id="iconic-menu-scroll"
+                className="flex gap-4 md:gap-8 overflow-x-auto no-scrollbar pb-2 scroll-smooth"
+              >
+                 {[...categories, ...categories.slice(0, 5)].map((menu, i) => (
+                   <Link 
+                     key={i} 
+                     to={`/search?categoryId=${menu.id}`} 
+                     className="flex flex-col items-center gap-2 group cursor-pointer shrink-0 w-[72px] md:w-[90px]"
+                   >
+                      <div className="relative">
+                         <div className="w-[64px] h-[64px] md:w-[80px] md:h-[80px] rounded-full p-[3px] bg-gradient-to-tr from-accent via-[#FF8A00] to-yellow-400">
+                            <div className="w-full h-full rounded-full overflow-hidden border-2 border-white dark:border-zinc-900 bg-white">
+                               <img 
+                                 src={menu.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${menu.id}`} 
+                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+                                 alt={menu.name} 
+                                 referrerPolicy="no-referrer" 
+                               />
+                            </div>
+                         </div>
                       </div>
-                      <p className="text-[10px] font-black text-brand-primary/40 line-clamp-1 group-hover:text-cyan-600 transition-colors uppercase italic">{p.title}</p>
+                      <span className="text-[10px] md:text-xs font-semibold text-[#333] dark:text-zinc-300 text-center leading-tight line-clamp-2">
+                         {t(`category.${menu.id}`) !== `category.${menu.id}` ? t(`category.${menu.id}`) : menu.name}
+                      </span>
                    </Link>
                  ))}
               </div>
-              <button className="mt-12 px-10 py-4 bg-brand-primary text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-cyan-600 transition-all flex items-center gap-2">
-                 {t('global.see_all')} <ChevronRight size={18} />
-              </button>
            </div>
-           <div className="relative z-10 w-full md:w-1/3 aspect-square bg-white rounded-[2.5rem] shadow-2xl p-10 rotate-3 hover:rotate-0 transition-transform duration-700">
-              <img src="https://placehold.co/600x600/4a148c/ffffff?text=Living" className="w-full h-full object-cover rounded-xl" alt="" referrerPolicy="no-referrer" />
-              <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-3xl shadow-2xl">
-                 <p className="text-[10px] font-black text-brand-primary/40 uppercase mb-1">Starting from</p>
-                 <p className="text-3xl font-display font-black text-accent">£299.00</p>
-              </div>
-           </div>
-           <div className="absolute -top-20 -right-20 w-80 h-80 bg-cyan-200/20 blur-[100px] rounded-full" />
-        </section>
+        </div>
+      </div>
 
-        {/* Global Roadmap Grid */}
-        <section className="py-8 text-center space-y-10">
-           <div>
-             <h2 className="text-5xl font-display font-black tracking-tighter text-brand-primary mb-6 uppercase italic">Built for Global Commerce</h2>
-             <p className="text-brand-primary/40 max-w-2xl mx-auto font-medium">Why the world's finest artisans choose Mercora over legacy platforms.</p>
+      <section className="px-4 md:px-0 mb-8">
+        <div className="max-w-[1700px] mx-auto md:px-6 flex flex-col lg:flex-row gap-4 lg:gap-6 rounded-[2rem] overflow-hidden">
+           {/* Hero section takes 75% on large screens */}
+           <div className="w-full lg:w-3/4">
+              <Hero />
            </div>
            
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-brand-primary">
-              {[
-                { title: 'AI Tax Engine', desc: 'Real-time HS-Code classification.', icon: <Sparkles className="text-accent" size={32} /> },
-                { title: 'Multi-Escrow', desc: 'Funds released upon verified delivery.', icon: <Shield className="text-blue-500" size={32} /> },
-                { title: 'Logistics Hubs', desc: 'Istanbul, London & Frankfurt Restocked.', icon: <Globe className="text-green-500" size={32} /> }
-              ].map((f, i) => (
-                <div key={i} className="bg-white p-10 rounded-[3rem] border border-brand-primary/5 hover:-translate-y-2 transition-all">
-                   <div className="w-16 h-16 bg-brand-secondary rounded-2xl mx-auto mb-6 flex items-center justify-center">{f.icon}</div>
-                   <h3 className="text-xl font-display font-black uppercase italic mb-4">{f.title}</h3>
-                   <p className="text-brand-primary/60 text-sm leading-relaxed">{f.desc}</p>
+           {/* Deals section takes 25% on large screens */}
+           <div className="hidden lg:flex w-full lg:w-1/4 flex-col gap-4">
+              <div className="bg-[#F9423A] rounded-[2rem] p-6 text-white h-full flex flex-col items-center justify-center text-center relative overflow-hidden group">
+                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center mix-blend-overlay opacity-20 group-hover:scale-110 transition-transform duration-700"></div>
+                 <h3 className="text-3xl font-display font-black uppercase italic mb-2 relative z-10">FIRSATI YAKALA</h3>
+                 <CountdownTimer hours={8} minutes={15} seconds={40} />
+                 
+                 <div className="mt-8 bg-white text-brand-primary p-4 rounded-2xl w-full text-left relative z-10 shadow-2xl group-hover:-translate-y-2 transition-transform">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#F9423A] mb-1 block">{t('product.limited_stock') || 'Sınırlı Stok'}</span>
+                    <h4 className="text-sm font-bold truncate mb-2">{currentDeal?.title || 'Apple AirPods Pro 2'}</h4>
+                    <div className="flex items-end justify-between">
+                       <div>
+                          <span className="text-xs line-through text-brand-primary/40 block">{currentDeal?.currency || '₺'}{currentDeal?.oldPrice?.toFixed(2) || '8.999'}</span>
+                          <span className="text-lg font-black text-[#F9423A]">{currentDeal?.currency || '₺'}{currentDeal?.price?.toFixed(2) || '6.499'}</span>
+                       </div>
+                       {(() => {
+                          const dealItem = currentDeal ? useCartStore(state => state.items).find(item => item.product.id === currentDeal.id) : null;
+                          const dealQuantity = dealItem ? dealItem.quantity : 0;
+                          
+                          if (dealQuantity > 0) {
+                            return (
+                              <div 
+                                className="w-[84px] h-8 bg-brand-secondary/50 dark:bg-zinc-800 rounded-lg flex items-center justify-between px-1 border border-brand-primary/10"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                              >
+                                <button 
+                                  onClick={(e) => {
+                                    e.preventDefault(); e.stopPropagation();
+                                    import('@/store/useCartStore').then(module => {
+                                      const store = module.useCartStore.getState();
+                                      if (dealQuantity > 1) {
+                                        store.updateQuantity(currentDeal.id, dealQuantity - 1);
+                                      } else {
+                                        store.removeItem(currentDeal.id);
+                                      }
+                                    });
+                                  }}
+                                  className="w-6 h-6 flex items-center justify-center rounded bg-white dark:bg-zinc-700 text-brand-primary dark:text-white hover:bg-accent hover:text-white transition-colors shadow-sm text-sm font-bold"
+                                >
+                                  -
+                                </button>
+                                <span className="text-xs font-bold text-brand-primary dark:text-white">{dealQuantity}</span>
+                                <button 
+                                  onClick={(e) => {
+                                    e.preventDefault(); e.stopPropagation();
+                                    import('@/store/useCartStore').then(module => {
+                                      module.useCartStore.getState().addItem(currentDeal);
+                                    });
+                                  }}
+                                  className="w-6 h-6 flex items-center justify-center rounded bg-white dark:bg-zinc-700 text-brand-primary dark:text-white hover:bg-accent hover:text-white transition-colors shadow-sm text-sm font-bold"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            );
+                          }
+                          return (
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if(currentDeal) {
+                                  import('@/store/useCartStore').then(module => {
+                                    const store = module.useCartStore.getState();
+                                    store.addItem(currentDeal);
+                                    store.setIsOpen(true);
+                                  });
+                                }
+                              }}
+                              className="w-8 h-8 bg-brand-primary text-white rounded-lg flex items-center justify-center hover:bg-accent transition-colors"
+                            >
+                               <ChevronRight size={16} />
+                            </button>
+                          );
+                       })()}
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      </section>
+
+      <section className="pt-8 pb-6 px-4 md:px-6">
+        <div className="max-w-[1700px] mx-auto space-y-12">
+          {/* Flash Deals Row */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                 <h2 className="text-2xl font-display font-black tracking-tighter text-brand-primary dark:text-white uppercase italic">{t('home.deals_of_day') || 'Günün Fırsatları'}</h2>
+                 <div className="hidden md:flex flex-col">
+                    <CountdownTimer hours={5} minutes={42} seconds={18} />
+                 </div>
+              </div>
+              <button onClick={() => setShowAllDeals(!showAllDeals)} className="text-[#F9423A] text-sm font-bold xl:block">
+                {showAllDeals ? (t('home.see_less') || "Daha Az Gör") : `${t('global.see_all') || 'Tümünü Gör'} >`}
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 relative">
+               {MOCK_PRODUCTS.slice(4, showAllDeals ? MOCK_PRODUCTS.length : 10).map((product, i) => (
+                 <div key={i} className="h-full">
+                    <ProductCard product={product} />
+                 </div>
+               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main className="max-w-[1700px] mx-auto px-4 md:px-6 space-y-16 pb-20">
+        
+        {/* Swipable Popular Products Section */}
+        <ProductRow 
+           title={t('home.popular_picks') || "Popüler ürünlerden seçtik"} 
+           products={popularProducts.slice(0, 20)} 
+           linkTo="/search?sortBy=rating"
+        />
+
+        {/* Banner Grid Sections */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+           {[
+             { 
+               to: "/search?categoryId=fashion", 
+               img: "https://images.unsplash.com/photo-1491147334573-44cbb4602074?auto=format&fit=crop&q=80&w=800",
+               title: t('hero.slide2.title'),
+               subtitle: t('mega.best_sellers'),
+               color: 'accent'
+             },
+             { 
+               to: "/search?categoryId=electronics", 
+               img: "https://images.unsplash.com/photo-1542435503-956c469947f6?auto=format&fit=crop&q=80&w=800",
+               title: t('hero.slide1.title'),
+               subtitle: t('hero.slide1.subtitle'),
+               color: 'brand-primary'
+             },
+             { 
+               to: "/search?categoryId=home", 
+               img: "https://images.unsplash.com/photo-1616489953149-8835051a34a8?auto=format&fit=crop&q=80&w=800",
+               title: t('hero.slide2.title'),
+               subtitle: t('mega.regional_deal'),
+               color: 'indigo-500'
+             }
+           ].map((banner, i) => (
+             <Link key={i} to={banner.to} className="group relative aspect-[14/6] rounded-[2.5rem] overflow-hidden shadow-2xl transition-all hover:-translate-y-2 border border-brand-primary/5">
+                <img src={banner.img} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt={banner.title} referrerPolicy="no-referrer" />
+                <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/60 via-brand-primary/20 to-transparent p-10 flex flex-col justify-center">
+                   <span className="text-accent text-[8px] font-black uppercase tracking-[0.4em] mb-2 drop-shadow-lg">{banner.subtitle}</span>
+                   <h3 className="text-white text-3xl font-display font-black uppercase italic leading-none drop-shadow-2xl">{banner.title}</h3>
+                   <div className="mt-6 flex items-center gap-2 text-white/60 group-hover:text-white transition-colors">
+                      <span className="text-[10px] font-black uppercase tracking-widest">{t('hero.cta')}</span>
+                      <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform" />
+                   </div>
+                </div>
+             </Link>
+           ))}
+        </div>
+
+        {/* Flaş İndirimler Grid */}
+        <section className="space-y-10">
+           <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                 <div className="w-1.5 h-8 bg-red-500 rounded-full" />
+                 <h2 className="text-2xl font-display font-black tracking-tighter text-brand-primary dark:text-white uppercase italic">{t('admin.flash_deals')}</h2>
+              </div>
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                 <h3 className="text-4xl font-display font-black text-brand-primary dark:text-white uppercase italic tracking-tight leading-none">
+                    {t('home.tech_days_started') || (
+                      <>TEKNOLOJİ <span className="text-accent">GÜNLERİ</span> BAŞLADI</>
+                    )}
+                 </h3>
+                 <button onClick={() => setShowAllTechDeals(!showAllTechDeals)} className="inline-flex items-center gap-3 px-6 py-3 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-105 transition-all">
+                    {showAllTechDeals ? (t('home.see_less') || "Daha Az Gör") : t('global.see_all')} <ChevronRight size={14} className={showAllTechDeals ? "rotate-90 transition-transform" : "transition-transform"} />
+                 </button>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+              {flashDealProducts.slice(0, showAllTechDeals ? flashDealProducts.length : 6).map((p) => (
+                <div key={p.id} className="relative">
+                   <ProductCard product={p} />
                 </div>
               ))}
            </div>
         </section>
 
-        {/* Premium Trust Banner (CEO Strategic Pillar) */}
-        <section className="bg-white border border-brand-primary/5 rounded-[4rem] p-12 md:p-20 relative overflow-hidden group">
-           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-secondary/50 to-transparent pointer-events-none" />
-           <div className="relative z-10 flex flex-col md:flex-row items-center gap-16">
-              <div className="flex-1">
-                 <div className="w-20 h-20 bg-brand-primary rounded-3xl flex items-center justify-center text-white mb-10 rotate-3 group-hover:rotate-0 transition-transform shadow-2xl">
-                    <Shield size={40} className="fill-white/20" />
-                 </div>
-                 <h2 className="text-4xl md:text-6xl font-display font-black tracking-tighter text-brand-primary uppercase italic mb-8">Mercora <br /> <span className="text-accent">Protection</span></h2>
-                 <p className="text-lg font-medium text-brand-primary/60 max-w-xl leading-relaxed mb-10 italic">
-                    Security for global artisans. Every transaction is covered by Mercora Guard™ — from hub synchronization to doorstep delivery. Built for trust, optimized for trade.
-                 </p>
-                 <div className="flex flex-wrap gap-8">
-                    {[
-                      { icon: ShieldCheck, text: 'Customs Warranty' },
-                      { icon: Lock, text: 'Escrow Settlements' },
-                      { icon: Globe, text: 'Inter-hub Protection' }
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                         <div className="w-8 h-8 bg-brand-primary/5 rounded-lg flex items-center justify-center text-brand-primary">
-                            <item.icon size={16} />
-                         </div>
-                         <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">{item.text}</span>
-                      </div>
-                    ))}
-                 </div>
-              </div>
-              <div className="w-full md:w-[400px] aspect-square bg-brand-secondary/30 rounded-[3rem] p-8 border border-white relative group-hover:scale-105 transition-transform duration-700">
-                 <img src="https://placehold.co/800x800/263238/ffffff?text=Security" className="w-full h-full object-cover rounded-2xl grayscale brightness-110" alt="Security" referrerPolicy="no-referrer" />
-                 <div className="absolute -bottom-6 -right-6 bg-accent text-white p-6 rounded-[2rem] shadow-2xl rotate-3 group-hover:rotate-0 transition-transform">
-                    <p className="text-2xl font-display font-black italic uppercase leading-none">100% SECURE</p>
-                    <p className="text-[10px] font-black uppercase tracking-widest mt-2 opacity-60 italic">Mercora Standard</p>
-                 </div>
-              </div>
-           </div>
-        </section>
+        {/* Erkek Ayakkabı Swipable Section */}
+        <ProductRow 
+           title={t('home.mens_shoes') || "Erkek Ayakkabı"} 
+           products={fashionProducts.slice(0, 20)} 
+           linkTo="/search?categoryId=fashion"
+        />
 
+        {/* Electronics Spotlight Swipable Section */}
+        <ProductRow 
+           title={t('home.electronics_deals') || "Elektronik Fırsatları"} 
+           products={electronicsProducts.slice(0, 20)} 
+           linkTo="/search?categoryId=electronics"
+        />
+
+        {/* Spotlight Promotion Banners */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+           <section className="bg-accent-soft/30 dark:bg-zinc-800/20 rounded-[2.5rem] p-8 border border-accent-soft dark:border-zinc-800 relative group overflow-hidden">
+              <div className="relative z-10">
+                 <span className="px-3 py-1 bg-white text-accent text-[9px] font-black uppercase tracking-[0.2em] rounded-full inline-block shadow-sm mb-4">{t('category.baby') !== 'category.baby' ? t('category.baby') : 'Anne Bebek'}</span>
+                 <h2 className="text-2xl font-display font-black text-brand-primary dark:text-white uppercase italic tracking-tighter mb-6 leading-tight">{t('hero.deals_every_day') || 'YENİ SEZON BEBEK MODASI'}</h2>
+                 <button className="px-6 py-3 bg-accent text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-accent-dark transition-all shadow-lg">{t('global.discover') || 'KEŞFET'}</button>
+              </div>
+              <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=300" className="absolute -bottom-10 -right-10 w-48 rotate-12 group-hover:rotate-0 transition-transform duration-700 opacity-40 group-hover:opacity-100" referrerPolicy="no-referrer" />
+           </section>
+           <section className="bg-brand-secondary/50 dark:bg-zinc-800/20 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800 relative group overflow-hidden">
+               <div className="relative z-10">
+                  <span className="px-3 py-1 bg-white text-accent text-[9px] font-black uppercase tracking-[0.2em] rounded-full inline-block shadow-sm mb-4">{t('category.fashion') !== 'category.fashion' ? t('category.fashion') : 'Moda'}</span>
+                  <h2 className="text-2xl font-display font-black text-brand-primary dark:text-white uppercase italic tracking-tighter mb-6 leading-tight">{t('home.promo_fashion_title') || 'MODADA DÜNYA MARKALARI'}</h2>
+                  <button className="px-6 py-3 bg-brand-primary dark:bg-white text-white dark:text-zinc-900 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-accent transition-all shadow-lg">{t('global.see_all') || 'GÖRÜNTÜLE'}</button>
+               </div>
+           </section>
+           <section className="bg-brand-primary dark:bg-zinc-900 rounded-[2.5rem] p-8 relative group overflow-hidden text-white border dark:border-white/10">
+              <div className="relative z-10">
+                 <span className="px-3 py-1 bg-white/10 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full inline-block mb-4">{t('category.sport') !== 'category.sport' ? t('category.sport') : 'Spor'}</span>
+                 <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter mb-6 leading-tight">{t('home.promo_sport_title') || 'OUTDOOR MACERASI BAŞLASIN'}</h2>
+                 <button className="px-6 py-3 bg-white text-brand-primary dark:text-zinc-900 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-black hover:text-white transition-all shadow-lg">{t('product.buy_now') || 'ALIŞVERİŞE BAŞLA'}</button>
+              </div>
+           </section>
+        </div>
+
+                 {/* Brands/Stores Strip */}
+         <section className="bg-white dark:bg-zinc-900 border border-brand-primary/5 dark:border-white/5 rounded-[2rem] p-6 md:p-8">
+            <div className="flex items-center justify-between mb-8">
+               <h2 className="text-xl md:text-2xl font-display font-black tracking-tighter text-brand-primary dark:text-white uppercase italic">{t('home.featured_brands') || 'Öne Çıkan Markalar'}</h2>
+               <button className="text-brand-primary/60 hover:text-[#F9423A] font-bold text-[10px] md:text-xs transition-colors uppercase tracking-widest hidden md:block">{t('home.all_brands') || 'Tüm Markalar'} &gt;</button>
+            </div>
+            <div className="flex gap-4 md:gap-8 overflow-x-auto no-scrollbar pb-4">
+               {[
+                 { name: 'Apple', logo: 'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=120&h=120&fit=crop' },
+                 { name: 'Samsung', logo: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=120&h=120&fit=crop' },
+                 { name: 'Nike', logo: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=120&h=120&fit=crop' },
+                 { name: 'Adidas', logo: 'https://images.unsplash.com/photo-1518002171953-a080ee817e1f?w=120&h=120&fit=crop' },
+                 { name: 'Puma', logo: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=120&h=120&fit=crop' },
+                 { name: 'Sony', logo: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94bc?w=120&h=120&fit=crop' },
+                 { name: 'Lego', logo: 'https://images.unsplash.com/photo-1585366119957-e9730b6d0f60?w=120&h=120&fit=crop' },
+                 { name: 'Bosch', logo: 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=120&h=120&fit=crop' },
+                 { name: 'Dyson', logo: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?w=120&h=120&fit=crop' },
+               ].map((brand, idx) => (
+                 <div key={idx} className="flex flex-col items-center gap-3 shrink-0 group cursor-pointer w-[70px] md:w-[90px]">
+                    <div className="w-[70px] h-[70px] md:w-[90px] md:h-[90px] rounded-full overflow-hidden border border-brand-primary/10 dark:border-white/10 p-2 bg-white group-hover:border-[#F9423A] transition-colors shadow-sm">
+                       <img src={brand.logo} alt={brand.name} className="w-full h-full object-cover rounded-full mix-blend-multiply" referrerPolicy="no-referrer" />
+                    </div>
+                    <span className="text-[10px] md:text-xs font-bold text-center text-brand-primary dark:text-white group-hover:text-[#F9423A] transition-colors truncate w-full">{brand.name}</span>
+                 </div>
+               ))}
+            </div>
+         </section>
+
+         {/* Discovery Grid: Sizin İçin Seçtiklerimiz */}
+         <ProductRow 
+            title={t('home.picked_for_you') || "Senin İçin Seçtiklerimiz"} 
+            products={MOCK_PRODUCTS.slice(0, 20)} 
+         />
       </main>
-
-      {/* Modern High-End Footer */}
-      <footer className="bg-brand-primary text-white py-16 px-6 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 relative z-10">
-          <div className="col-span-1 md:col-span-1">
-            <div className="flex items-center gap-2 mb-8">
-              <Zap size={24} className="text-accent fill-accent" />
-              <span className="text-2xl font-display font-black tracking-tighter uppercase italic">Mercora</span>
-            </div>
-            <p className="text-white/40 text-xs leading-relaxed mb-8 max-w-[200px]">
-              The global commerce bridge for artisans and premium collectors. Based in London & Istanbul.
-            </p>
-            <div className="flex gap-4">
-               {[1,2,3,4].map(i => <div key={i} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 hover:bg-accent transition-colors cursor-pointer" />)}
-            </div>
-          </div>
-          
-          <div className="space-y-6">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">{t('footer.corporate')}</h4>
-            <ul className="space-y-4 text-xs font-bold text-white/60">
-              <li className="hover:text-white transition-colors cursor-pointer">{t('footer.about')}</li>
-              <li className="hover:text-white transition-colors cursor-pointer">{t('footer.careers')}</li>
-              <li className="hover:text-white transition-colors cursor-pointer">Sustainability</li>
-              <li className="hover:text-white transition-colors cursor-pointer">Global Logistics</li>
-            </ul>
-          </div>
-
-          <div className="space-y-6">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">{t('footer.support')}</h4>
-            <ul className="space-y-4 text-xs font-bold text-white/60">
-              <li className="hover:text-white transition-colors cursor-pointer">{t('footer.help')}</li>
-              <li className="hover:text-white transition-colors cursor-pointer">Order Tracking</li>
-              <li className="hover:text-white transition-colors cursor-pointer">Return Policy</li>
-              <li className="hover:text-white transition-colors cursor-pointer">Customs & Tax</li>
-            </ul>
-          </div>
-
-          <div className="space-y-6">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">Newsletter</h4>
-            <p className="text-xs text-white/40 font-medium">New artisan drops and market insights directly to your inbox.</p>
-            <div className="flex gap-2">
-               <input type="text" placeholder="Email address" className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 text-xs focus:ring-1 focus:ring-accent outline-none" />
-               <button className="p-3 bg-accent rounded-xl hover:scale-105 active:scale-95 transition-all"><ArrowRight size={18} /></button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 text-[10px] font-black uppercase tracking-widest text-white/20">
-          <p>© 2026 Mercora Global. ALL RIGHTS RESERVED.</p>
-          <div className="flex gap-8">
-            <span className="hover:text-white transition-colors cursor-pointer">Privacy</span>
-            <span className="hover:text-white transition-colors cursor-pointer">Cookies</span>
-            <span className="hover:text-white transition-colors cursor-pointer">Security</span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

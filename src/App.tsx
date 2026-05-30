@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { Navbar } from './components/layout/Navbar';
 import { CartPage } from './pages/Cart';
+import { WishlistPage } from './pages/Wishlist';
 import { Home } from './pages/Home';
 import { ProductDetail } from './pages/ProductDetail';
 import { SellerDashboard } from './pages/SellerDashboard';
@@ -9,81 +11,61 @@ import { SellerOrdersPage } from './pages/SellerOrders';
 import { SellerStorePage } from './pages/SellerStore';
 import { SearchResultsPage } from './pages/SearchResults';
 import { UserProfilePage } from './pages/UserProfile';
+import { AdminDashboard } from './pages/AdminDashboard';
+import { SellOnMercora } from './pages/SellOnMercora';
+import { SellerProductUpload } from './pages/SellerProductUpload';
 import { ShoppingAssistant } from './components/ai/ShoppingAssistant';
 import { Footer } from './components/layout/Footer';
 import { LanguageProvider } from './context/LanguageContext';
-import { LoginPage } from './pages/Login';
-import { RegisterPage } from './pages/Register';
+import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
+import { LocationProvider } from './context/LocationContext';
+import { ScrollToTop } from './components/common/ScrollToTop';
+import { BotSalesEngine } from './components/commerce/BotSalesEngine';
+
 import { CheckoutPage } from './pages/Checkout';
-import { OrdersPage } from './pages/Orders';
-import { SellerOnboardPage } from './pages/SellerOnboard';
-import { ProtectedRoute } from './components/auth/ProtectedRoute'
-import { AdminPanel } from '@/pages/Admin';
-import WishlistPage from '@/pages/Wishlist';
-import ComparePage from '@/pages/Compare';
-import { CompareBar } from '@/components/commerce/CompareBar';
-import { ToastContainer } from './components/ui/Toast';
-import { ErrorBoundary } from './components/ui/ErrorBoundary';
-import { ScrollToTop } from './components/ui/ScrollToTop';
-import { HelmetProvider } from 'react-helmet-async';
 
 export default function App() {
   return (
     <HelmetProvider>
-    <LanguageProvider>
-      <Router>
-        <ErrorBoundary>
-          <div className="relative min-h-screen">
-            <ScrollToTop />
-            <Navbar />
+      <ThemeProvider>
+        <AuthProvider>
+          <LanguageProvider>
+            <LocationProvider>
+              <Router>
+                <ScrollToTop />
+                <div className="relative min-h-screen transition-colors duration-300">
+                  <Navbar />
+                  
+                  <main className="pt-[144px] md:pt-[156px]">
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/product/:slug" element={<ProductDetail />} />
+                      <Route path="/cart" element={<CartPage />} />
+                      <Route path="/wishlist" element={<WishlistPage />} />
+                      <Route path="/checkout" element={<CheckoutPage />} />
+                      <Route path="/seller/dashboard" element={<SellerDashboard />} />
+                      <Route path="/seller/products/new" element={<SellerProductUpload />} />
+                      <Route path="/seller/inventory" element={<SellerInventoryPage />} />
+                      <Route path="/seller/orders" element={<SellerOrdersPage />} />
+                      <Route path="/seller/:id" element={<SellerStorePage />} />
+                      <Route path="/search" element={<SearchResultsPage />} />
+                      <Route path="/profile" element={<UserProfilePage />} />
+                      <Route path="/admin" element={<AdminDashboard />} />
+                      <Route path="/sell" element={<SellOnMercora />} />
+                      <Route path="*" element={<Home />} />
+                    </Routes>
+                  </main>
 
-            <main className="pt-36">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/product/:slug" element={<ProductDetail />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/checkout" element={
-                  <ProtectedRoute><CheckoutPage /></ProtectedRoute>
-                } />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/profile" element={
-                  <ProtectedRoute><UserProfilePage /></ProtectedRoute>
-                } />
-                <Route path="/orders" element={
-                  <ProtectedRoute><OrdersPage /></ProtectedRoute>
-                } />
-                <Route path="/seller/dashboard" element={
-                  <ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>
-                } />
-                <Route path="/seller/inventory" element={
-                  <ProtectedRoute requiredRole="seller"><SellerInventoryPage /></ProtectedRoute>
-                } />
-                <Route path="/seller/orders" element={
-                  <ProtectedRoute requiredRole="seller"><SellerOrdersPage /></ProtectedRoute>
-                } />
-                <Route path="/seller/onboard" element={
-                  <ProtectedRoute requiredRole="seller"><SellerOnboardPage /></ProtectedRoute>
-                } />
-                <Route path="/seller/:id" element={<SellerStorePage />} />
-                <Route path="/search" element={<SearchResultsPage />} />
-                <Route path="/wishlist" element={<WishlistPage />} />
-                <Route path="/compare" element={<ComparePage />} />
-                <Route path="/admin" element={
-                  <ProtectedRoute requiredRole="admin"><AdminPanel /></ProtectedRoute>
-                } />
-                <Route path="*" element={<Home />} />
-              </Routes>
-            </main>
-
-            <Footer />
-            <ShoppingAssistant />
-            <CompareBar />
-            <ToastContainer />
-          </div>
-        </ErrorBoundary>
-      </Router>
-    </LanguageProvider>
+                  <Footer />
+                  <ShoppingAssistant />
+                  <BotSalesEngine />
+                </div>
+              </Router>
+            </LocationProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </HelmetProvider>
   );
 }

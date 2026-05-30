@@ -1,89 +1,141 @@
-import React from 'react';
-import { motion } from 'motion/react';
-import { ChevronRight, Globe, ShieldCheck, Zap, Sparkles, Play, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ChevronRight, Globe, Zap, Sparkles, Play, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 
+const SLIDES = [
+  {
+    id: 1,
+    title: 'TEKNOLOJİ',
+    subtitle: 'DEV FIRSATLAR',
+    desc: 'Lider markaların en yeni teknoloji ürünlerinde sepette ek %20 indirim.',
+    image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1600&h=1000',
+    color: 'accent',
+    category: 'electronics'
+  },
+  {
+    id: 2,
+    title: 'EV & YAŞAM',
+    subtitle: 'YENİ SEZON',
+    desc: 'Evinizin havasını değiştirecek şık tasarımlar ve mobilyalarda süper fiyatlar.',
+    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=1600&h=1000',
+    color: 'blue-500',
+    category: 'living-room'
+  },
+  {
+    id: 3,
+    title: 'OUTDOOR',
+    subtitle: 'MACERA BAŞLIYOR',
+    desc: 'Kamp ve doğa sporları ürünlerinde bahar kampanyasını kaçırma.',
+    image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=1600&h=1000',
+    color: 'green-500',
+    category: 'camping'
+  }
+];
+
 export function Hero() {
   const { t } = useLanguage();
+  const SLIDES = [
+    {
+      id: 1,
+      title: t('hero.slide1.title'),
+      subtitle: t('hero.slide1.subtitle'),
+      desc: t('hero.slide1.desc'),
+      image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=1600&h=1000',
+      color: 'accent',
+      category: 'electronics'
+    },
+    {
+      id: 2,
+      title: t('hero.slide2.title'),
+      subtitle: t('hero.slide2.subtitle'),
+      desc: t('hero.slide2.desc'),
+      image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=1600&h=1000',
+      color: 'blue-500',
+      category: 'home'
+    },
+    {
+      id: 3,
+      title: t('hero.slide3.title'),
+      subtitle: t('hero.slide3.subtitle'),
+      desc: t('hero.slide3.desc'),
+      image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=1600&h=1000',
+      color: 'green-500',
+      category: 'sport'
+    }
+  ];
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % SLIDES.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const next = () => setCurrent((prev) => (prev + 1) % SLIDES.length);
+  const prev = () => setCurrent((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
 
   return (
-    <section className="relative pt-32 pb-12 px-4 md:px-6 overflow-hidden bg-[#f2f4f7]">
-      <div className="max-w-[1700px] mx-auto">
-        <div className="grid lg:grid-cols-12 gap-8 items-stretch">
-          
-          {/* Main Massive Carousel-style Banner (Amazon Style) */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="lg:col-span-8 bg-brand-primary rounded-[2.5rem] relative overflow-hidden group min-h-[500px] shadow-2xl"
-          >
+    <div className="relative overflow-hidden group w-full h-[250px] md:h-[400px] lg:h-[480px]">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={current}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className="absolute inset-0"
+        >
+          <Link to={`/search?category=${SLIDES[current].category}`} className="block w-full h-full">
             <img 
-              src="https://placehold.co/1600x1000/1a1a2e/ffffff?text=Mercora" 
-              className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-[3s]" 
-              alt="" 
+              src={SLIDES[current].image} 
+              className="absolute inset-0 w-full h-full object-cover md:object-fill" 
+              alt={SLIDES[current].title} 
               referrerPolicy="no-referrer"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-brand-primary via-brand-primary/40 to-transparent p-10 md:p-16 flex flex-col justify-center">
+            {/* Dark overlay for contrast if text is visible, but in TR e-commerce, the image ITSELF contains the campaign text usually.
+                We'll keep a soft gradient and text here for dynamic usage. */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent p-8 md:p-16 flex flex-col justify-center">
                <motion.div
                  initial={{ opacity: 0, x: -20 }}
                  animate={{ opacity: 1, x: 0 }}
                  transition={{ delay: 0.2 }}
-                 className="space-y-6 max-w-xl"
+                 className="space-y-2 md:space-y-4 max-w-lg"
                >
-                  <span className="px-4 py-1.5 bg-accent text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full inline-block shadow-lg shadow-accent/20">{t('hero.badge')}</span>
-                  <h1 className="text-5xl md:text-7xl font-display font-black text-white leading-none uppercase italic tracking-tighter">{t('hero.title')} <br /> Artifacts <br /> <span className="text-accent underline decoration-4 underline-offset-8">{t('hero.subtitle')}</span></h1>
-                  <p className="text-white/60 text-lg font-medium leading-relaxed max-w-md">{t('hero.desc')}</p>
-                  <div className="flex flex-wrap gap-4 pt-4">
-                     <Link to="/search?category=electronics" className="px-8 py-4 bg-white text-brand-primary rounded-xl font-black uppercase text-xs tracking-widest hover:bg-accent hover:text-white transition-all shadow-2xl">{t('hero.cta')}</Link>
-                     <button className="px-8 py-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-xl font-black uppercase text-xs tracking-widest hover:bg-white/20 transition-all flex items-center gap-2">
-                        <Play size={16} fill="white" /> {t('hero.watch')}
-                     </button>
-                  </div>
+                  <span className="px-3 py-1 bg-[#F9423A] text-white text-[10px] md:text-xs font-bold uppercase rounded w-fit">{t('hero.featured_campaign')}</span>
+                  <h1 className="text-3xl md:text-5xl lg:text-7xl font-black text-white leading-none uppercase tracking-tight drop-shadow-md">
+                    {SLIDES[current].title} <br />
+                    <span className="text-yellow-400">{SLIDES[current].subtitle}</span>
+                  </h1>
+                  <p className="text-white/90 text-sm md:text-base font-medium leading-relaxed drop-shadow-md">{SLIDES[current].desc}</p>
                </motion.div>
             </div>
-            
-            <div className="absolute bottom-8 right-8 flex gap-2">
-               {[0,1,2].map(i => <div key={i} className={cn("transition-all duration-500", i===0 ? "w-8 h-2 bg-accent rounded-full" : "w-2 h-2 bg-white/20 rounded-full")} />)}
-            </div>
-          </motion.div>
-
-          {/* Side Spotlights (Hepsiburada Style) */}
-          <div className="lg:col-span-4 grid grid-cols-1 gap-6">
-             <div className="bg-brand-secondary rounded-[2.5rem] p-8 border border-brand-primary/5 relative overflow-hidden group border-2 border-transparent hover:border-accent transition-all cursor-pointer shadow-sm">
-                <div className="relative z-10 h-full flex flex-col">
-                   <span className="text-[10px] font-black uppercase text-accent tracking-widest mb-2 block">{t('hero.spotlight1.title')}</span>
-                   <h3 className="text-2xl font-display font-black text-brand-primary uppercase italic leading-none">Global <br />Fulfillment</h3>
-                   <p className="text-brand-primary/40 text-[10px] mt-4 font-bold max-w-[140px]">{t('hero.spotlight1.desc')}</p>
-                   <div className="mt-auto">
-                      <button className="w-10 h-10 bg-brand-primary text-white rounded-xl flex items-center justify-center group-hover:bg-accent transition-colors">
-                         <ChevronRight size={20} />
-                      </button>
-                   </div>
-                </div>
-                <Globe size={180} className="absolute -bottom-10 -right-10 text-brand-primary/5 group-hover:rotate-12 transition-transform duration-1000" />
-             </div>
-
-             <div className="bg-[#fff7ed] rounded-[2.5rem] p-8 border border-orange-100 relative overflow-hidden group hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between">
-                <div className="relative z-10">
-                   <div className="flex items-center gap-2 mb-4">
-                      <Zap size={24} className="text-orange-500 fill-orange-500" />
-                      <span className="text-[10px] font-black uppercase text-orange-950 tracking-widest leading-none">Flash Pulse</span>
-                   </div>
-                   <h3 className="text-2xl font-display font-black text-orange-950 uppercase italic leading-none">Sınırlı Süre <br /> Stokta</h3>
-                   <p className="text-orange-900/40 text-[10px] mt-4 font-bold">Kamp & Doğa ekipmanlarında geçerli</p>
-                </div>
-                <div className="relative z-10 mt-6">
-                   <Link to="/search?category=camping" className="inline-flex items-center gap-2 text-xs font-black uppercase text-orange-600">Fırsatları Gör <ChevronRight size={14} /></Link>
-                </div>
-                <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
-                <Sparkles size={80} className="absolute bottom-4 right-4 text-orange-500/10 group-hover:scale-125 transition-transform" />
-             </div>
-          </div>
-
-        </div>
+          </Link>
+        </motion.div>
+      </AnimatePresence>
+      
+      {/* Nav Controls - Dots */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+         {SLIDES.map((_, i) => (
+           <button 
+             key={i} 
+             onClick={() => setCurrent(i)}
+             className={cn(
+               "transition-all duration-300 rounded-full", 
+               i === current ? "w-8 h-2 bg-[#F9423A]" : "w-2 h-2 bg-white/50 hover:bg-white"
+             )} 
+           />
+         ))}
       </div>
-    </section>
+
+      {/* Nav Controls - Arrows */}
+      <div className="absolute top-1/2 -translate-y-1/2 left-2 md:left-4 right-2 md:right-4 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+         <button onClick={prev} className="w-10 h-10 md:w-12 md:h-12 bg-white/50 hover:bg-white rounded-full flex items-center justify-center text-brand-primary transition-all shadow-lg pointer-events-auto"><ChevronLeft size={24} /></button>
+         <button onClick={next} className="w-10 h-10 md:w-12 md:h-12 bg-white/50 hover:bg-white rounded-full flex items-center justify-center text-brand-primary transition-all shadow-lg pointer-events-auto"><ChevronRight size={24} /></button>
+      </div>
+    </div>
   );
 }

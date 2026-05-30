@@ -1,10 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.GEMINI_API_KEY;
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function askShoppingAssistant(query: string, context?: any) {
-  if (!ai) return "AI Assistant şu an devre dışı. GEMINI_API_KEY ayarlanmamış.";
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",

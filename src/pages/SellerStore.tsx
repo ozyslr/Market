@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { 
   Star, MapPin, Globe, CheckCircle, Package, 
   MessageSquare, UserPlus, Share2, Search,
@@ -7,44 +7,46 @@ import {
   Zap, ArrowRight, Award, History
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MOCK_PRODUCTS, MOCK_USER } from '@/mockData';
+import { MOCK_PRODUCTS, MOCK_USER, MOCK_SELLERS } from '@/mockData';
 import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/commerce/ProductCard';
 
 export function SellerStorePage() {
   const { id } = useParams();
-  const [activeTab, setActiveTab] = useState<'products' | 'campaigns' | 'about' | 'reviews'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'about' | 'reviews'>('products');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [following, setFollowing] = useState(false);
 
-  // Hardcoded for the prototype, usually we'd fetch by ID
+  // Find seller from mock data or use the first one as fallback
+  const sellerData = MOCK_SELLERS.find(s => s.id === id || s.slug === id) || MOCK_SELLERS[0];
+  
   const seller = {
-    name: "AuraAudio Engineering",
-    origin: "Berlin, Germany",
-    rating: 4.9,
-    reviewsCount: 1250,
-    followers: 8400,
-    isVerified: true,
-    joinedDate: "Mar 2022",
-    description: "Pioneering the future of artisan audio. Every piece is hand-calibrated in our Berlin workshop using sustainable materials and revolutionary driver technology.",
-    banner: "https://placehold.co/1920x1080/1a1a2e/ffffff?text=Store",
-    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=AA"
+    name: sellerData.storeName,
+    origin: sellerData.origin,
+    rating: sellerData.rating,
+    reviewsCount: sellerData.reviewsCount,
+    followers: sellerData.followersCount,
+    isVerified: sellerData.isVerified,
+    joinedDate: sellerData.joinedDate,
+    description: sellerData.description || "Certified Mercora Artisan.",
+    banner: sellerData.bannerUrl || "https://picsum.photos/seed/shop/1920/1080?blur=4",
+    avatar: sellerData.logoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${sellerData.storeName}`,
+    fulfillment: sellerData.fulfillmentHealth
   };
 
-  const sellerProducts = MOCK_PRODUCTS.filter(p => p.categoryId === 'electronics');
+  const sellerProducts = MOCK_PRODUCTS.filter(p => p.sellerId === sellerData.id);
 
   return (
     <div className="min-h-screen bg-brand-secondary/30 pb-20">
       {/* Hero Banner */}
       <div className="relative h-96 w-full overflow-hidden">
-        <img src={seller.banner} alt="Banner" className="w-full h-full object-cover" />
+        <img src={seller.banner} alt="Banner" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-secondary/80 to-transparent" />
         
         <div className="absolute bottom-12 left-0 right-0">
           <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div className="flex items-center gap-6">
               <div className="w-32 h-32 bg-white rounded-[2.5rem] shadow-2xl p-6 ring-8 ring-white/10 overflow-hidden">
-                <img src={seller.avatar} alt="Logo" className="w-full h-full object-contain" />
+                <img src={seller.avatar} alt="Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
               </div>
               <div>
                 <div className="flex items-center gap-3">
@@ -68,11 +70,8 @@ export function SellerStorePage() {
             </div>
 
             <div className="flex items-center gap-3">
-               <button
-                 onClick={() => setFollowing(f => !f)}
-                 className={`px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl transition-all flex items-center gap-2 border-2 ${following ? 'bg-white text-brand-primary border-brand-primary' : 'bg-brand-primary text-white border-brand-primary hover:bg-accent'}`}
-               >
-                 {following ? '✓ Takip Ediliyor' : '+ Takip Et'}
+               <button className="px-8 py-4 bg-brand-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-brand-primary/20 hover:bg-accent transition-all flex items-center gap-2">
+                 Follow Store
                </button>
                <button className="p-4 bg-white rounded-2xl border border-brand-primary/5 shadow-sm hover:scale-110 transition-transform">
                  <Share2 size={18} />
@@ -93,14 +92,14 @@ export function SellerStorePage() {
                   <span className="text-[10px] font-bold uppercase text-brand-primary/40">Ship Speed</span>
                   <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Fast</span>
                 </div>
-                <div className="text-lg font-black text-brand-primary">98% Within 24hr</div>
+                <div className="text-lg font-black text-brand-primary">{seller.fulfillment?.shipSpeed}</div>
               </div>
               <div className="p-4 bg-brand-secondary rounded-2xl border border-brand-primary/5">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-bold uppercase text-brand-primary/40">Compliance</span>
                   <span className="text-[10px] font-black text-accent uppercase tracking-widest">Top Tier</span>
                 </div>
-                <div className="text-lg font-black text-brand-primary">Level 4 Escrow</div>
+                <div className="text-lg font-black text-brand-primary">{seller.fulfillment?.compliance}</div>
               </div>
             </div>
           </div>
@@ -122,10 +121,9 @@ export function SellerStorePage() {
           <div className="flex items-center justify-between border-b border-brand-primary/5 mb-8 overflow-x-auto">
              <div className="flex items-center gap-10">
                {[
-                 { id: 'products', label: 'Tüm Ürünler', count: sellerProducts.length },
-                 { id: 'campaigns', label: 'Kampanyalar', count: 3 },
-                 { id: 'reviews', label: 'Değerlendirmeler', count: '1.2k' },
-                 { id: 'about', label: 'Hakkında', count: null },
+                 { id: 'products', label: 'Artisan Artifacts', count: sellerProducts.length },
+                 { id: 'about', label: 'Workshop Story', count: null },
+                 { id: 'reviews', label: 'Trust Metrics', count: '1.2k' }
                ].map((tab) => (
                  <button 
                   key={tab.id}
@@ -158,44 +156,7 @@ export function SellerStorePage() {
           </div>
 
           <AnimatePresence mode='wait'>
-            {activeTab === 'campaigns' ? (
-              <motion.div
-                key="campaigns"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-4"
-              >
-                <h2 className="text-xl font-black uppercase tracking-tight text-brand-primary mb-6">Mağaza Kampanyaları</h2>
-                {[
-                  { title: '3 Al 2 Öde', desc: 'Seçili ürünlerde geçerli kampanya', badge: 'AKTİF', color: 'green', until: '30 Nisan 2026' },
-                  { title: '%15 İndirim', desc: '£50 üzeri alışverişlerde geçerli', badge: 'AKTİF', color: 'green', until: '15 Mayıs 2026' },
-                  { title: 'Ücretsiz Kargo', desc: '£30 üzeri tüm siparişlerde', badge: 'SÜREKLİ', color: 'blue', until: '—' },
-                ].map((c, i) => (
-                  <div key={i} className="flex items-center gap-4 bg-white border border-brand-primary/10 rounded-2xl p-5">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${c.color === 'green' ? 'bg-green-100' : 'bg-blue-100'}`}>
-                      🏷️
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-black text-brand-primary">{c.title}</p>
-                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${c.color === 'green' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                          {c.badge}
-                        </span>
-                      </div>
-                      <p className="text-sm text-brand-primary/60">{c.desc}</p>
-                      <p className="text-[10px] text-brand-primary/40 mt-1">Bitiş: {c.until}</p>
-                    </div>
-                    <Link
-                      to="/search"
-                      className="px-4 py-2 bg-accent text-white text-xs font-black uppercase rounded-xl hover:opacity-90 transition-all"
-                    >
-                      Alışveriş Yap
-                    </Link>
-                  </div>
-                ))}
-              </motion.div>
-            ) : activeTab === 'products' ? (
+            {activeTab === 'products' ? (
               <motion.div 
                 key="products"
                 initial={{ opacity: 0, y: 20 }}

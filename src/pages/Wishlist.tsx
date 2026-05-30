@@ -1,103 +1,85 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Heart, ShoppingBag, Trash2 } from 'lucide-react'
-import { useAuthStore } from '@/store/authStore'
-import { useWishlistStore } from '@/store/wishlistStore'
-import { useUIStore } from '@/store/uiStore'
-import { useCartStore } from '@/store/cartStore'
-import { normalizeProduct } from '@/lib/apiProduct'
-import type { Product } from '@/types'
+import { Link } from 'react-router-dom';
+import { Heart, Trash2, ShoppingCart } from 'lucide-react';
+import { ProductCard } from '@/components/commerce/ProductCard';
+import { useWishlistStore } from '@/store/useWishlistStore';
+import { useCartStore } from '@/store/useCartStore';
+import { useLanguage } from '@/context/LanguageContext';
 
-export default function WishlistPage() {
-  const user = useAuthStore(s => s.user)
-  const { toggle, fetchIds } = useWishlistStore()
-  const { addToast } = useUIStore()
-  const addItem = useCartStore(s => s.addItem)
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+export function WishlistPage() {
+  const { t } = useLanguage();
+  const items = useWishlistStore((state) => state.items);
+  const clearWishlist = useWishlistStore((state) => state.clearWishlist);
+  const addItem = useCartStore((state) => state.addItem);
+  const setIsOpen = useCartStore((state) => state.setIsOpen);
 
-  const load = async () => {
-    if (!user) { setLoading(false); return }
-    setLoading(true)
-    try {
-      const res = await fetch('/api/wishlist', { headers: { Authorization: `Bearer ${user.token}` } })
-      if (res.ok) {
-        const { products: rows } = await res.json()
-        setProducts(rows.map(normalizeProduct))
-      }
-    } finally {
-      setLoading(false)
-    }
+  const addAllToCart = () => {
+    items.forEach((p) => addItem(p, 1));
+    setIsOpen(true);
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className="bg-[#f2f4f7] dark:bg-zinc-950 min-h-screen flex flex-col items-center justify-center p-12 text-center transition-colors duration-300">
+        <div className="w-24 h-24 rounded-[2rem] bg-white dark:bg-zinc-900 border border-brand-primary/5 shadow-sm flex items-center justify-center mb-8">
+          <Heart size={40} className="text-accent" />
+        </div>
+        <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">
+          {t('wishlist.empty_title') !== 'wishlist.empty_title' ? t('wishlist.empty_title') : 'Favori Listen Boş'}
+        </h2>
+        <p className="text-brand-primary/40 dark:text-white/40 text-xs font-bold uppercase tracking-widest mt-4 max-w-sm">
+          {t('wishlist.empty_desc') !== 'wishlist.empty_desc' ? t('wishlist.empty_desc') : 'Beğendiğin ürünleri kalbe dokunarak buraya ekle, daha sonra kolayca bul.'}
+        </p>
+        <Link
+          to="/"
+          className="mt-10 px-8 py-3 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary transition-all shadow-lg shadow-accent/20"
+        >
+          {t('wishlist.start_shopping') !== 'wishlist.start_shopping' ? t('wishlist.start_shopping') : 'Alışverişe Başla'}
+        </Link>
+      </div>
+    );
   }
 
-  useEffect(() => { load() }, [user])
-
-  if (!user) return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6">
-      <Heart size={48} className="text-brand-primary/20" />
-      <h2 className="text-2xl font-black">Favorilerinizi görmek için giriş yapın</h2>
-      <Link to="/login" className="px-8 py-3 bg-accent text-white rounded-2xl font-black text-sm">Giriş Yap</Link>
-    </div>
-  )
-
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-8">
-        <Heart size={28} className="text-accent fill-accent" />
-        <h1 className="text-3xl font-black">Favorilerim</h1>
-        <span className="ml-2 text-brand-primary/40 text-lg font-bold">({products.length})</span>
-      </div>
-
-      {products.length === 0 ? (
-        <div className="text-center py-24">
-          <Heart size={64} className="mx-auto text-brand-primary/10 mb-6" />
-          <h3 className="text-xl font-black text-brand-primary/30">Henüz favori ürün yok</h3>
-          <Link to="/" className="mt-6 inline-block px-8 py-3 bg-accent text-white rounded-2xl font-black text-sm">Alışverişe Başla</Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {products.map(p => (
-            <div key={p.id} className="bg-white rounded-3xl border border-brand-primary/5 overflow-hidden group hover:shadow-xl transition-all">
-              <Link to={`/product/${p.slug}`} className="block relative aspect-square overflow-hidden bg-brand-secondary/20">
-                <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              </Link>
-              <div className="p-4 space-y-3">
-                <Link to={`/product/${p.slug}`}>
-                  <h3 className="text-sm font-bold line-clamp-2 hover:text-accent transition-colors">{p.title}</h3>
-                </Link>
-                <p className="text-lg font-black text-accent">£{p.price.toFixed(2)}</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      addItem({ productId: p.id, title: p.title, price: p.price, quantity: 1, image: p.images[0] ?? '', sellerId: p.sellerId })
-                      addToast('Sepete eklendi', 'success')
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-accent text-white rounded-xl text-xs font-black hover:bg-brand-primary transition-colors"
-                  >
-                    <ShoppingBag size={14} /> Sepete Ekle
-                  </button>
-                  <button
-                    onClick={async () => {
-                      await toggle(p.id, user.token, addToast)
-                      await fetchIds(user.token)
-                      load()
-                    }}
-                    className="p-2.5 rounded-xl border border-brand-primary/10 text-red-400 hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
+    <div className="bg-[#f2f4f7] dark:bg-zinc-950 min-h-screen pb-20 transition-colors duration-300">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 pt-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+              <Heart size={22} fill="currentColor" />
             </div>
+            <div>
+              <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white leading-none">
+                {t('wishlist.title') !== 'wishlist.title' ? t('wishlist.title') : 'Favorilerim'}
+              </h1>
+              <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mt-1">
+                {items.length} {t('wishlist.products') !== 'wishlist.products' ? t('wishlist.products') : 'Ürün'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={addAllToCart}
+              className="flex items-center gap-2 px-5 py-3 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary transition-all shadow-lg shadow-accent/20"
+            >
+              <ShoppingCart size={14} /> {t('wishlist.add_all') !== 'wishlist.add_all' ? t('wishlist.add_all') : 'Tümünü Sepete Ekle'}
+            </button>
+            <button
+              onClick={clearWishlist}
+              className="flex items-center gap-2 px-5 py-3 border border-brand-primary/10 dark:border-white/10 text-brand-primary dark:text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all"
+            >
+              <Trash2 size={14} /> {t('wishlist.clear') !== 'wishlist.clear' ? t('wishlist.clear') : 'Temizle'}
+            </button>
+          </div>
+        </div>
+
+        {/* Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {items.map((product) => (
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
-      )}
+      </div>
     </div>
-  )
+  );
 }

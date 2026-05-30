@@ -22,7 +22,18 @@
       "WebFetch(domain:github.com)",
       "Bash(npx skillfish:*)",
       "Bash(npm install *)",
-      "mcp__plugin_context-mode_context-mode__ctx_stats"
+      "mcp__plugin_context-mode_context-mode__ctx_stats",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+      "Bash(curl -s -X POST http://localhost:3001/api/auth/seed-admin)",
+      "PowerShell(Add-Type -AssemblyName System.IO.Compression.FileSystem; $zip = [System.IO.Compression.ZipFile]::OpenRead\\('O:\\\\AI\\\\Mercora_Full_Build_Scaffold.zip'\\); $zip.Entries | ForEach-Object { $_.FullName } | Sort-Object)",
+      "mcp__plugin_context-mode_context-mode__ctx_execute_file",
+      "Bash(git add *)",
+      "mcp__plugin_context-mode_context-mode__ctx_search",
+      "mcp__plugin_context-mode_context-mode__ctx_execute",
+      "Bash(grep -rl \"admin\" src/App.tsx src/pages/Admin*.tsx)",
+      "Bash(npm run:*)",
+      "Bash(rm -f temp_close_divs.txt temp_divs.txt)",
+      "Bash(ls temp_*.txt)"
     ]
   }
 }

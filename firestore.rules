@@ -1,0 +1,140 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // -------------------------------------------------------------------------
+    // GLOBALS & HELPERS
+    // -------------------------------------------------------------------------
+    
+    function isSignedIn() { return request.auth != null; }
+    function userId() { return request.auth.uid; }
+    function userEmail() { return request.auth.token.email; }
+    function isVerified() { return isSignedIn(); } // Adjusted for preview env
+
+    // Admin check: either special email or 'admin' role in users collection
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.keys().hasAll(['email']) && request.auth.token.email == 'ozyslr@gmail.com') ||
+        (exists(/databases/$(database)/documents/users/$(userId())) && 
+         get(/databases/$(database)/documents/users/$(userId())).data.role == 'admin')
+      );
+    }
+
+    function isModerator() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(userId())) && 
+             get(/databases/$(database)/documents/users/$(userId())).data.role == 'moderator';
+    }
+
+    function isSeller() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(userId())) && 
+             get(/databases/$(database)/documents/users/$(userId())).data.role == 'seller';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // -------------------------------------------------------------------------
+    // ENTITY VALIDATION HELPERS
+    // -------------------------------------------------------------------------
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'name', 'email', 'role']) &&
+             data.id == userId() &&
+             data.name is string && data.name.size() <= 100 &&
+             data.email is string && data.email.size() <= 100 &&
+             data.role in ['buyer', 'seller', 'admin', 'moderator'] &&
+             data.preferences is map;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['id', 'sellerId', 'title', 'categoryId', 'price']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.price is number && data.price >= 0 &&
+             data.sellerId is string &&
+             (exists(/databases/$(database)/documents/sellers/$(data.sellerId)) || 
+              existsAfter(/databases/$(database)/documents/sellers/$(data.sellerId)));
+    }
+
+    function isValidSeller(data) {
+      return data.keys().hasAll(['id', 'userId', 'storeName', 'slug']) &&
+             (data.userId == userId() || isAdmin()) &&
+             data.storeName is string && data.storeName.size() <= 100 &&
+             data.slug.matches('^[a-z0-9-]+$');
+    }
+
+    // -------------------------------------------------------------------------
+    // COLLECTION RULES
+    // -------------------------------------------------------------------------
+
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // System Connection Test
+    match /system/connection-test {
+      allow read: if true;
+    }
+
+    // Categories (Publicly readable)
+    match /categories/{cid} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Users
+    match /users/{uid} {
+      allow get: if isSignedIn() && (userId() == uid || isAdmin() || isModerator());
+      allow list: if isAdmin();
+      allow create: if isVerified() && isValidUser(incoming()) && uid == userId();
+      allow update: if isVerified() && (
+        (uid == userId() && incoming().id == existing().id && incoming().role == existing().role) || 
+        isAdmin()
+      );
+    }
+
+    // Sellers
+    match /sellers/{sellerId} {
+      allow read: if true;
+      allow create: if isVerified() && (isAdmin() || (incoming().userId == userId() && isValidSeller(incoming())));
+      allow update: if isVerified() && (
+        (existing().userId == userId() && incoming().userId == existing().userId) || 
+        isAdmin()
+      );
+    }
+
+    // Products
+    match /products/{pid} {
+      allow read: if true;
+      allow create: if isVerified() && (
+        isAdmin() || 
+        (isSeller() && isValidProduct(incoming()) && get(/databases/$(database)/documents/sellers/$(incoming().sellerId)).data.userId == userId())
+      );
+      allow update: if isVerified() && (
+        isAdmin() ||
+        (get(/databases/$(database)/documents/sellers/$(existing().sellerId)).data.userId == userId() && isValidProduct(incoming()))
+      );
+      allow delete: if isAdmin() || (get(/databases/$(database)/documents/sellers/$(existing().sellerId)).data.userId == userId());
+    }
+
+    // Orders
+    match /orders/{oid} {
+      allow get: if isSignedIn() && (resource.data.buyerId == userId() || isAdmin() || isModerator());
+      allow list: if isSignedIn() && (resource.data.buyerId == userId() || isAdmin() || isModerator());
+      allow create: if isSignedIn() && incoming().buyerId == userId();
+      allow update: if isAdmin() || isModerator();
+    }
+
+    // Activity Logs
+    match /activity_logs/{logId} {
+      allow create: if isSignedIn();
+      allow read: if isAdmin();
+    }
+  }
+}
