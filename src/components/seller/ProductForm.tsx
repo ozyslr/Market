@@ -29,6 +29,7 @@ export interface ProductFormData {
   estimatedDeliveryDays: number;
   deliveryTerms: string;
   returnPolicy: string;
+  freeShipping: boolean;
   visibility: 'public' | 'hidden' | 'draft' | 'unlisted';
   metaDescription: string;
 }
@@ -41,6 +42,7 @@ const EMPTY_FORM: ProductFormData = {
   estimatedDeliveryDays: 3,
   deliveryTerms: '3-5 iş günü içinde kargo',
   returnPolicy: '14 gün iade hakkı',
+  freeShipping: false,
   visibility: 'public', metaDescription: '',
 };
 
@@ -421,6 +423,12 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                 <input value={form.returnPolicy} onChange={e => update('returnPolicy', e.target.value)}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
               </div>
+              <label className="flex items-center gap-3 cursor-pointer bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5">
+                <input type="checkbox" checked={form.freeShipping}
+                  onChange={e => update('freeShipping', e.target.checked)}
+                  className="w-4 h-4 accent-green-500" />
+                <span className="text-sm text-white">Ücretsiz kargo (bu üründe kargo ücreti alınmaz)</span>
+              </label>
             </div>
           </section>
 

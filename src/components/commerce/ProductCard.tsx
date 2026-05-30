@@ -163,11 +163,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                </div>
             </div>
 
-            <div className="flex flex-wrap gap-1 mt-2">
-               <div className="px-1.5 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[9px] font-bold rounded">
-                  {t('product.freeShipping')}
-               </div>
-            </div>
+            {product.freeShipping && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                 <div className="px-1.5 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[9px] font-bold rounded">
+                    {t('product.freeShipping')}
+                 </div>
+              </div>
+            )}
             {/* Mobile quick add (visible unconditionally on mobile, hidden on desktop ) */}
             <div className="mt-3 md:hidden">
               <button

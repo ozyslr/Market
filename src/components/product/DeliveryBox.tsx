@@ -5,6 +5,7 @@ interface DeliveryBoxProps {
   locationLabel: string;
   onChangeLocation: () => void;
   hasExpressShipping?: boolean;
+  freeShipping?: boolean;
 }
 
 const CARGO_COMPANIES = ['Yurtiçi Kargo', 'MNG Kargo', 'PTT Kargo', 'Aras Kargo'];
@@ -24,7 +25,7 @@ function getEstimatedDate(): string {
   return `${next.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })} kargoya verilir`;
 }
 
-export function DeliveryBox({ locationLabel, onChangeLocation, hasExpressShipping }: DeliveryBoxProps) {
+export function DeliveryBox({ locationLabel, onChangeLocation, hasExpressShipping, freeShipping }: DeliveryBoxProps) {
   const cargoCompany = React.useMemo(() => getCargoCompany(), []);
   const estimatedDate = React.useMemo(() => getEstimatedDate(), []);
 
@@ -53,6 +54,16 @@ export function DeliveryBox({ locationLabel, onChangeLocation, hasExpressShippin
             <p className="text-[10px] font-bold text-green-600 mt-0.5">{estimatedDate}</p>
           </div>
         </div>
+
+        {freeShipping && (
+          <div className="flex items-start gap-2.5">
+            <Truck size={15} className="text-green-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-black text-green-600">Ücretsiz Kargo</p>
+              <p className="text-[10px] font-bold text-brand-primary/50 mt-0.5">Bu üründe kargo ücreti alınmaz</p>
+            </div>
+          </div>
+        )}
 
         {hasExpressShipping && (
           <div className="flex items-start gap-2.5">

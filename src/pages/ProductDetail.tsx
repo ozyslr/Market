@@ -705,6 +705,7 @@ export function ProductDetail() {
               locationLabel={selectedLocation}
               onChangeLocation={() => setIsLocationModalOpen(true)}
               hasExpressShipping={product.isFlashDeal}
+              freeShipping={product.freeShipping}
             />
           </div>
         </div>

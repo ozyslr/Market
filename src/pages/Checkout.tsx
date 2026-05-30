@@ -214,6 +214,12 @@ export function CheckoutPage() {
   const subtotal = cartProducts.reduce((s, p) => s + p.price * p.quantity, 0);
   const totalDiscount = discountAmount + cartCampaignDiscount;
 
+  // Ücretsiz kargo muafiyeti: freeShipping ürünleri kargo ağırlığına katkı vermez.
+  // Faturalanabilir ağırlık yalnızca ücretli ürünlerden hesaplanır; tüm sepet
+  // ücretsizse kargo bedeli 0'a sabitlenir.
+  const billableShippingUnits = cartProducts.reduce((s, p) => s + (p.freeShipping ? 0 : p.quantity), 0);
+  const allFreeShipping = cartProducts.length > 0 && billableShippingUnits === 0;
+
   // ─── Dinamik kargo ücreti (market para birimine çevrilir) ────────────────────
   // useExchangeRate `${currency}/TRY` → 1 birim para biriminin kaç TL olduğu.
   const { rate: tryPerUnit } = useExchangeRate(`${currency}/TRY`);
@@ -229,7 +235,9 @@ export function CheckoutPage() {
   useEffect(() => {
     const destCity = address.city.trim();
     if (!destCity || cartProducts.length === 0) { setShipRates([]); return; }
-    const weight = Math.max(1, cartProducts.reduce((s, p) => s + p.quantity, 0));
+    // Tüm ürünler ücretsiz kargoluysa taşıyıcı sorgulamaya gerek yok.
+    if (allFreeShipping) { setShipRates([]); setSelectedCarrier(null); return; }
+    const weight = Math.max(1, billableShippingUnits);
     let cancelled = false;
     setRatesLoading(true);
     getAllShippingRates('İstanbul', destCity, weight)
@@ -246,8 +254,9 @@ export function CheckoutPage() {
   }, [address.city, cartProducts.length]);
 
   const selectedRate = shipRates.find(r => r.provider === selectedCarrier) ?? shipRates[0];
-  // Kargo henüz yüklenmediyse önceki sabit değere (12) düş.
-  const shippingInCurrency = selectedRate ? convertTRY(selectedRate.cost) : 12;
+  // Tüm ürünler ücretsiz kargoluysa bedel 0; aksi halde seçili taşıyıcı ücreti
+  // (kargo henüz yüklenmediyse önceki sabit değere (12) düş).
+  const shippingInCurrency = allFreeShipping ? 0 : (selectedRate ? convertTRY(selectedRate.cost) : 12);
   const totals = calculateTotal(Math.max(0, subtotal - totalDiscount), shippingInCurrency, market, true);
 
   const handleApplyCoupon = async () => {

@@ -95,6 +95,7 @@ export interface Order {
 export interface UserProfile extends User {
   spentTotal: number;
   lastLogin: string;
+  phone?: string;
   orders: Order[];
   savedItems: string[];
   addresses?: Address[];
@@ -189,6 +190,7 @@ export interface Product {
   bestSeller?: boolean;
   newArrival?: boolean;
   isFlashDeal?: boolean;
+  freeShipping?: boolean;
   discountPercentage?: number;
   promoBadge?: string;
   promotionStatus?: 'none' | 'pending' | 'active' | 'rejected';
