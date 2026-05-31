@@ -1,6 +1,20 @@
 /**
- * Benim Olan Core Types
+ * Benim Olan Core Types — organized by domain.
+ *
+ * Sections:
+ *   1. Auth & User    — UserRole, Address, User, UserProfile, SavedCard
+ *   2. Marketplace    — Review, Seller, Order
+ *   3. Catalog        — FilterAttribute, Category, Product, ProductVariant
+ *   4. Content & CMS  — MarketContext, TaxCalculation, HeroSlide, HomepageSection,
+ *                       SiteSettings
+ *   5. Commerce       — Coupon, ReturnRequest, Campaign, CartCampaign, FeaturedDeal
+ *   6. Community      — ProductQuestion
+ *   7. Advertising    — AdCampaign, AdEvent, AdConfig, AdPerformance
  */
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 1. Auth & User
+// ═══════════════════════════════════════════════════════════════════════════
 
 export type UserRole = 'buyer' | 'seller' | 'admin' | 'moderator';
 
@@ -30,6 +44,10 @@ export interface User {
   suspendedUntil?: string;
   adminNote?: string;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 2. Marketplace
+// ═══════════════════════════════════════════════════════════════════════════
 
 export interface Review {
   id: string;
@@ -129,6 +147,10 @@ export interface FilterAttributeOption {
   label: string;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 3. Catalog
+// ═══════════════════════════════════════════════════════════════════════════
+
 export interface FilterAttribute {
   key: string;
   label: string;
@@ -226,6 +248,10 @@ export interface Product {
   createdAt?: string;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 4. Content & CMS
+// ═══════════════════════════════════════════════════════════════════════════
+
 export interface MarketContext {
   country: string;
   currency: string;
@@ -284,6 +310,10 @@ export interface HomepageSection {
   createdAt?: string;
   updatedAt?: string;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 5. Commerce
+// ═══════════════════════════════════════════════════════════════════════════
 
 export interface Coupon {
   id: string;
@@ -376,6 +406,10 @@ export interface FeaturedDeal {
   updatedAt?: string;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 6. Community
+// ═══════════════════════════════════════════════════════════════════════════
+
 export interface ProductQuestion {
   id: string;
   productId: string;
@@ -392,6 +426,10 @@ export interface ProductQuestion {
 }
 
 // === CPC Advertising Engine Types ===
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 7. Advertising
+// ═══════════════════════════════════════════════════════════════════════════
 
 export type AdCampaignStatus = 'pending' | 'active' | 'paused' | 'rejected' | 'ended' | 'exhausted';
 
