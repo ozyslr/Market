@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Star, X, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Star, X, ChevronDown, ChevronUp, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface ActiveFilters {
@@ -11,26 +11,49 @@ export interface ActiveFilters {
   freeShipping?: boolean;
 }
 
+export interface FacetCounts {
+  brands?: { name: string; count: number }[];
+  categories?: { id: string; name: string; count: number }[];
+}
+
+const SORT_OPTIONS = [
+  { value: '', label: 'En Yeniler' },
+  { value: 'price-asc', label: 'Fiyat: D\u00fc\u015f\u00fckten Y\u00fckse\u011fe' },
+  { value: 'price-desc', label: 'Fiyat: Y\u00fcksekten D\u00fc\u015f\u00fc\u011fe' },
+  { value: 'rating', label: 'En \u00c7ok Puanlanan' },
+  { value: 'popular', label: 'En Pop\u00fcler' },
+];
+
 interface FilterPanelProps {
   filters: ActiveFilters;
   onChange: (f: ActiveFilters) => void;
   brands?: string[];
+  facetCounts?: FacetCounts;
+  sortBy?: string;
+  onSortChange?: (sort: string) => void;
   className?: string;
 }
 
 const PRICE_PRESETS = [
-  { label: '0 – 500 TL',    min: 0,    max: 500  },
-  { label: '500 – 1000 TL', min: 500,  max: 1000 },
-  { label: '1000 – 2500 TL',min: 1000, max: 2500 },
-  { label: '2500 TL +',     min: 2500, max: undefined },
+  { label: '0 \u2013 500 TL',    min: 0,    max: 500  },
+  { label: '500 \u2013 1000 TL', min: 500,  max: 1000 },
+  { label: '1000 \u2013 2500 TL',min: 1000, max: 2500 },
+  { label: '2500 TL +',          min: 2500, max: undefined },
 ];
 
-export function FilterPanel({ filters, onChange, brands = [], className }: FilterPanelProps) {
+export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortBy = '', onSortChange, className }: FilterPanelProps) {
   const [showAllBrands, setShowAllBrands] = useState(false);
   const [priceMinInput, setPriceMinInput] = useState(filters.priceMin?.toString() ?? '');
   const [priceMaxInput, setPriceMaxInput] = useState(filters.priceMax?.toString() ?? '');
 
-  const visibleBrands = showAllBrands ? brands : brands.slice(0, 8);
+  const displayBrands = useMemo(() => {
+    if (facetCounts?.brands && facetCounts.brands.length > 0) {
+      return facetCounts.brands;
+    }
+    return brands.map(name => ({ name, count: 0 }));
+  }, [facetCounts?.brands, brands]);
+
+  const visibleBrands = showAllBrands ? displayBrands : displayBrands.slice(0, 8);
 
   const update = (patch: Partial<ActiveFilters>) => onChange({ ...filters, ...patch });
 
@@ -74,6 +97,25 @@ export function FilterPanel({ filters, onChange, brands = [], className }: Filte
         )}
       </div>
 
+      {/* Sort Dropdown */}
+      {onSortChange && (
+        <section>
+          <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mb-3">Sırala</p>
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={e => onSortChange(e.target.value)}
+              className="w-full appearance-none px-3 py-2 rounded-xl border border-brand-primary/10 dark:border-white/10 bg-transparent text-xs font-bold text-brand-primary dark:text-white outline-none focus:border-accent transition-colors cursor-pointer"
+            >
+              {SORT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <ArrowUpDown size={12} className="absolute end-3 top-1/2 -translate-y-1/2 text-brand-primary/30 dark:text-white/30 pointer-events-none" />
+          </div>
+        </section>
+      )}
+
       {/* Price Range */}
       <section>
         <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mb-3">Fiyat Aralığı</p>
@@ -111,7 +153,7 @@ export function FilterPanel({ filters, onChange, brands = [], className }: Filte
             onBlur={applyPrice}
             className="w-full px-3 py-2 rounded-xl border border-brand-primary/10 dark:border-white/10 bg-transparent text-xs font-bold text-brand-primary dark:text-white outline-none focus:border-accent transition-colors"
           />
-          <span className="text-brand-primary/30 dark:text-white/30 text-xs">–</span>
+          <span className="text-brand-primary/30 dark:text-white/30 text-xs">{"\u2013"}</span>
           <input
             type="number"
             placeholder="Max"
@@ -145,30 +187,35 @@ export function FilterPanel({ filters, onChange, brands = [], className }: Filte
       </section>
 
       {/* Brands */}
-      {brands.length > 0 && (
+      {displayBrands.length > 0 && (
         <section>
           <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mb-3">Marka</p>
           <div className="space-y-1.5">
-            {visibleBrands.map(brand => (
-              <label key={brand} className="flex items-center gap-2.5 cursor-pointer group">
+            {visibleBrands.map(item => (
+              <label key={item.name} className="flex items-center gap-2.5 cursor-pointer group">
                 <input
                   type="checkbox"
-                  checked={filters.brands?.includes(brand) ?? false}
-                  onChange={() => toggleBrand(brand)}
+                  checked={filters.brands?.includes(item.name) ?? false}
+                  onChange={() => toggleBrand(item.name)}
                   className="w-3.5 h-3.5 accent-accent rounded"
                 />
-                <span className="text-xs text-brand-primary/70 dark:text-white/70 group-hover:text-brand-primary dark:group-hover:text-white transition-colors truncate">
-                  {brand}
+                <span className="flex-1 text-xs text-brand-primary/70 dark:text-white/70 group-hover:text-brand-primary dark:group-hover:text-white transition-colors truncate">
+                  {item.name}
                 </span>
+                {item.count > 0 && (
+                  <span className="text-[10px] font-bold text-brand-primary/40 dark:text-white/40 tabular-nums">
+                    ({item.count})
+                  </span>
+                )}
               </label>
             ))}
           </div>
-          {brands.length > 8 && (
+          {displayBrands.length > 8 && (
             <button
               onClick={() => setShowAllBrands(v => !v)}
               className="mt-2 flex items-center gap-1 text-[10px] font-bold text-accent hover:underline"
             >
-              {showAllBrands ? <><ChevronUp size={11} /> Daha Az</> : <><ChevronDown size={11} /> +{brands.length - 8} Marka</>}
+              {showAllBrands ? <><ChevronUp size={11} /> Daha Az</> : <><ChevronDown size={11} /> +{displayBrands.length - 8} Marka</>}
             </button>
           )}
         </section>
