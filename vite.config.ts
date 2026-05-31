@@ -19,7 +19,7 @@ export default defineConfig(({mode}) => {
       })] : []),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.svg'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
         manifest: {
           name: 'Benim Olan — Alışverişin Yeni Adresi',
           short_name: 'Benim Olan',

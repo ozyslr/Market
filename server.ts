@@ -93,8 +93,17 @@ async function startServer() {
           "https://securetoken.googleapis.com",
           "https://api.postcodes.io",
           "https://*.ingest.de.sentry.io",
+          "https://*.ingest.sentry.io",
           "https://v6.exchangerate-api.com",
           "wss://*.firebaseio.com",
+          "https://generativelanguage.googleapis.com",
+          "https://www.google-analytics.com",
+          "https://www.facebook.com",
+          "https://connect.facebook.net",
+          // Vite HMR websocket + asset loading — development only
+          ...(process.env.NODE_ENV !== 'production'
+            ? ["ws://localhost:*", "ws://127.0.0.1:*", "http://localhost:*", "http://127.0.0.1:*"]
+            : []),
         ],
         frameSrc: ["'self'",
           "https://js.stripe.com",
@@ -106,7 +115,8 @@ async function startServer() {
         mediaSrc: ["'self'"],
         objectSrc: ["'none'"],
         formAction: ["'self'", "https://*.iyzipay.com"],
-        upgradeInsecureRequests: [],
+        // Forcing https upgrade breaks http://localhost dev assets — production only
+        ...(process.env.NODE_ENV === 'production' ? { upgradeInsecureRequests: [] } : {}),
       },
     },
     crossOriginEmbedderPolicy: false, // allow Stripe/iyzico iframes
