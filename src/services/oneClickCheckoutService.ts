@@ -1,5 +1,6 @@
 import type { User as FirebaseUser } from 'firebase/auth';
 import type { OneClickCheckoutResult } from '../types/order';
+import type { SavedCard } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -52,6 +53,61 @@ export async function setupPaymentMethod(
   const data = await res.json();
   if (!res.ok) {
     return { error: data.error || 'Failed to save payment method' };
+  }
+  return { success: true };
+}
+
+/**
+ * Lists the user's saved Stripe cards (wallet).
+ */
+export async function listPaymentMethods(
+  firebaseUser: FirebaseUser
+): Promise<{ cards: SavedCard[]; error?: string }> {
+  const headers = await getAuthHeaders(firebaseUser);
+  const res = await fetch(`${API_BASE}/api/payment-methods`, { headers });
+  const data = await res.json();
+  if (!res.ok) {
+    return { cards: [], error: data.error || 'Failed to load payment methods' };
+  }
+  return { cards: data.cards || [] };
+}
+
+/**
+ * Detaches a saved card. If it was the default, the backend promotes the next
+ * remaining card (returned as newDefaultId) or clears the default.
+ */
+export async function deletePaymentMethod(
+  firebaseUser: FirebaseUser,
+  id: string
+): Promise<{ success?: boolean; newDefaultId?: string | null; error?: string }> {
+  const headers = await getAuthHeaders(firebaseUser);
+  const res = await fetch(`${API_BASE}/api/payment-methods/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers,
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    return { error: data.error || 'Failed to remove card' };
+  }
+  return { success: true, newDefaultId: data.newDefaultId ?? null };
+}
+
+/**
+ * Sets a saved card as the default (used by one-click checkout).
+ */
+export async function setDefaultPaymentMethod(
+  firebaseUser: FirebaseUser,
+  id: string
+): Promise<{ success?: boolean; error?: string }> {
+  const headers = await getAuthHeaders(firebaseUser);
+  const res = await fetch(`${API_BASE}/api/payment-methods/default`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ paymentMethodId: id }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    return { error: data.error || 'Failed to set default card' };
   }
   return { success: true };
 }

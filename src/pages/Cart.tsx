@@ -14,7 +14,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 import { useLocationStore } from '@/context/LocationContext';
 import { useAuth } from '@/context/AuthContext';
-import { executeOneClickCheckout } from '@/services/oneClickCheckoutService';
+import { useOneClickCheckout } from '@/hooks/useOneClickCheckout';
 import { OneClickSuccessModal } from '@/components/checkout/OneClickSuccessModal';
 import { getActiveCartCampaigns, calcCartCampaigns, getCartCampaignDiscount, getCartCampaignGifts } from '@/services/campaignService';
 import type { CartCampaign } from '@/types';
@@ -22,12 +22,17 @@ import type { CartCampaign } from '@/types';
 export function CartPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { user, firebaseUser } = useAuth();
+  const { user } = useAuth();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [oneClickLoading, setOneClickLoading] = useState(false);
-  const [oneClickError, setOneClickError] = useState<string | null>(null);
-  const [oneClickResult, setOneClickResult] = useState<{ orderId: string; total: number } | null>(null);
+  const {
+    canOneClick,
+    runOneClick,
+    loading: oneClickLoading,
+    error: oneClickError,
+    successOrder,
+    clearSuccess,
+  } = useOneClickCheckout();
   const { items, removeItem, updateQuantity, clearCart } = useCart();
   const { location } = useLocationStore();
 
@@ -50,30 +55,13 @@ export function CartPage() {
     navigate('/checkout');
   };
 
-  function canOneClick(): boolean {
-    if (!user) return false;
-    if (!user.defaultPaymentMethodId) return false;
-    if (!user.defaultAddressId) return false;
-    if (!user.addresses?.find(a => a.id === user.defaultAddressId)) return false;
-    return true;
-  }
-
-  async function handleOneClickOrder() {
-    if (!firebaseUser || !user || !canOneClick()) return;
-    setOneClickLoading(true);
-    setOneClickError(null);
-    const cartItems = items.map(i => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity }));
-    const result = await executeOneClickCheckout(firebaseUser, cartItems, user.currency || 'gbp');
-    if (result.status === 'succeeded' && result.orderId) {
-      clearCart();
-      setOneClickResult({ orderId: result.orderId, total: result.total! });
-    } else if (result.status === 'requires_action') {
-      navigate('/checkout');
-    } else {
-      setOneClickError(result.errorMessage || 'Ödeme başarısız oldu.');
-    }
-    setOneClickLoading(false);
-  }
+  const handleOneClickOrder = () => {
+    runOneClick(
+      items.map(i => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity })),
+      user?.currency || 'gbp',
+      clearCart,
+    );
+  };
 
   const getAvailableStock = (product: CartProduct): number => {
     if (product.variant) return product.variant.stock;
@@ -355,7 +343,7 @@ export function CartPage() {
                 )}
 
                 {/* One-Click Order Button */}
-                {user && canOneClick() && items.length > 0 && (
+                {user && canOneClick && items.length > 0 && (
                   <>
                     <div className="mb-1">
                       <p className="text-xs text-brand-primary/60 mb-1">
@@ -379,12 +367,12 @@ export function CartPage() {
                   </>
                 )}
 
-                {oneClickResult && (
+                {successOrder && (
                   <OneClickSuccessModal
-                    orderId={oneClickResult.orderId}
-                    total={oneClickResult.total}
-                    currency={user?.currency || 'gbp'}
-                    onClose={() => setOneClickResult(null)}
+                    orderId={successOrder.orderId}
+                    total={successOrder.total}
+                    currency={successOrder.currency}
+                    onClose={clearSuccess}
                   />
                 )}
 

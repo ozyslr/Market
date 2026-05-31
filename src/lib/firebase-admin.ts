@@ -1,6 +1,11 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import dotenv from 'dotenv';
+
+// This module is imported (and executed) before server.ts calls dotenv.config(),
+// so load .env here first — otherwise FIREBASE_SERVICE_ACCOUNT_B64 reads as undefined.
+dotenv.config();
 
 const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
 

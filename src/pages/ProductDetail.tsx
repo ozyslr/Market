@@ -37,7 +37,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { trackPrice, untrackPrice, isTracking } from '@/services/priceTrackService';
-import { executeOneClickCheckout } from '@/services/oneClickCheckoutService';
+import { useOneClickCheckout } from '@/hooks/useOneClickCheckout';
 import { OneClickSuccessModal } from '@/components/checkout/OneClickSuccessModal';
 import { trackEvent, getRecentViewedIds } from '@/services/behaviorService';
 import { productSchema, breadcrumbSchema } from '@/components/seo/schemas';
@@ -81,9 +81,14 @@ export function ProductDetail() {
   const [activeCoupons, setActiveCoupons] = useState<Coupon[]>([]);
   const [tracking, setTracking] = useState(false);
   const [trackLoading, setTrackLoading] = useState(false);
-  const [oneClickLoading, setOneClickLoading] = useState(false);
-  const [oneClickError, setOneClickError] = useState<string | null>(null);
-  const [oneClickResult, setOneClickResult] = useState<{ orderId: string; total: number } | null>(null);
+  const {
+    canOneClick,
+    runOneClick,
+    loading: oneClickLoading,
+    error: oneClickError,
+    successOrder,
+    clearSuccess,
+  } = useOneClickCheckout();
   const [recSimilar, setRecSimilar] = useState<Product[]>([]);
   const [recAlsoBought, setRecAlsoBought] = useState<Product[]>([]);
   const [arOpen, setArOpen] = useState(false);
@@ -223,36 +228,17 @@ export function ProductDetail() {
     }
   }
 
-  function canOneClick(): boolean {
-    if (!user) return false;
-    if (!user.defaultPaymentMethodId) return false;
-    if (!user.defaultAddressId) return false;
-    if (!user.addresses?.find(a => a.id === user.defaultAddressId)) return false;
-    return true;
-  }
-
-  async function handleBuyNow() {
-    if (!firebaseUser || !user || !product || !canOneClick()) return;
-    setOneClickLoading(true);
-    setOneClickError(null);
+  const handleBuyNow = () => {
+    if (!product || !canOneClick) return;
     const hasVariants = (product.variantAttributes?.length ?? 0) > 0 && (product.variants?.length ?? 0) > 0;
     const selectedVariant: ProductVariant | undefined = hasVariants
       ? product.variants!.find(v => product.variantAttributes!.every(attr => v.attributes[attr] === selectedAttrs[attr]))
       : undefined;
-    const result = await executeOneClickCheckout(
-      firebaseUser,
+    runOneClick(
       [{ productId: product.id, variantId: selectedVariant?.id, quantity }],
-      user.currency || 'gbp'
+      product.currency ?? user?.currency ?? 'gbp',
     );
-    if (result.status === 'succeeded' && result.orderId) {
-      setOneClickResult({ orderId: result.orderId, total: result.total! });
-    } else if (result.status === 'requires_action') {
-      navigate('/checkout');
-    } else {
-      setOneClickError(result.errorMessage || 'Ödeme başarısız oldu.');
-    }
-    setOneClickLoading(false);
-  }
+  };
 
   const memoizedSpecs = React.useMemo(
     () => product?.specifications ?? {},
@@ -647,7 +633,7 @@ export function ProductDetail() {
                     {/* Hemen Al — full width yellow */}
                     {user && (
                       <>
-                        {canOneClick() ? (
+                        {canOneClick ? (
                           <button
                             onClick={handleBuyNow}
                             disabled={oneClickLoading || !canAdd}
@@ -688,12 +674,12 @@ export function ProductDetail() {
                     )}
                   </div>
 
-                  {oneClickResult && (
+                  {successOrder && (
                     <OneClickSuccessModal
-                      orderId={oneClickResult.orderId}
-                      total={oneClickResult.total}
-                      currency={user?.currency || 'gbp'}
-                      onClose={() => setOneClickResult(null)}
+                      orderId={successOrder.orderId}
+                      total={successOrder.total}
+                      currency={successOrder.currency}
+                      onClose={clearSuccess}
                     />
                   )}
                 </div>
@@ -960,7 +946,7 @@ export function ProductDetail() {
             productTitle={product.title}
             canAdd={canAdd}
             onAddToCart={() => canAdd && addItem(product.id, quantity, stickyVariant?.id)}
-            onBuyNow={canOneClick() ? handleBuyNow : undefined}
+            onBuyNow={canOneClick ? handleBuyNow : undefined}
           />
         );
       })()}

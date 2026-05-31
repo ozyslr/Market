@@ -112,6 +112,16 @@ export interface UserProfile extends User {
   };
 }
 
+/** A saved Stripe card, as returned by GET /api/payment-methods. */
+export interface SavedCard {
+  id: string;
+  brand: string;
+  last4: string;
+  expMonth: number;
+  expYear: number;
+  isDefault: boolean;
+}
+
 export type FilterAttributeType = 'checkbox' | 'range' | 'select' | 'rating';
 
 export interface FilterAttributeOption {

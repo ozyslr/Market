@@ -192,6 +192,107 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     }
   });
 
+  // ─── Wallet: List saved cards ────────────────────────────────────────────────
+  app.get('/api/payment-methods', verifyFirebaseToken, async (req: any, res) => {
+    if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+    try {
+      const uid: string = req.uid;
+      const userDoc = await adminDb.collection('users').doc(uid).get();
+      const customerId: string = userDoc.data()?.stripeCustomerId || '';
+      if (!customerId) return res.json({ cards: [] });
+
+      const [methods, customer] = await Promise.all([
+        stripe.paymentMethods.list({ customer: customerId, type: 'card' }),
+        stripe.customers.retrieve(customerId),
+      ]);
+      const defaultPm = (customer && !('deleted' in customer))
+        ? ((customer.invoice_settings?.default_payment_method as string | null) || '')
+        : '';
+      const cards = methods.data.map((pm) => ({
+        id: pm.id,
+        brand: pm.card?.brand || '',
+        last4: pm.card?.last4 || '',
+        expMonth: pm.card?.exp_month || 0,
+        expYear: pm.card?.exp_year || 0,
+        isDefault: pm.id === defaultPm,
+      }));
+      res.json({ cards });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // ─── Wallet: Remove a saved card ─────────────────────────────────────────────
+  app.delete('/api/payment-methods/:id', verifyFirebaseToken, async (req: any, res) => {
+    if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+    const id = req.params.id;
+    if (!isNonEmptyString(id, 128)) return res.status(400).json({ error: 'Invalid payment method id' });
+    try {
+      const uid: string = req.uid;
+      const userRef = adminDb.collection('users').doc(uid);
+      const userData = (await userRef.get()).data() || {};
+      const customerId: string = userData.stripeCustomerId || '';
+      if (!customerId) return res.status(400).json({ error: 'No Stripe customer' });
+
+      // Ownership check — never detach another customer's card
+      const pm = await stripe.paymentMethods.retrieve(id);
+      if (pm.customer !== customerId) return res.status(403).json({ error: 'Not your card' });
+
+      await stripe.paymentMethods.detach(id);
+
+      // If the removed card was the default, promote the next one (or clear)
+      let newDefaultId: string | null = null;
+      if (userData.defaultPaymentMethodId === id) {
+        const remaining = await stripe.paymentMethods.list({ customer: customerId, type: 'card' });
+        const next = remaining.data[0];
+        if (next) {
+          newDefaultId = next.id;
+          await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: next.id } });
+          await userRef.update({
+            defaultPaymentMethodId: next.id,
+            defaultPaymentMethodLast4: next.card?.last4 || '',
+            defaultPaymentMethodBrand: next.card?.brand || '',
+          });
+        } else {
+          await userRef.update({
+            defaultPaymentMethodId: '',
+            defaultPaymentMethodLast4: '',
+            defaultPaymentMethodBrand: '',
+          });
+        }
+      }
+      res.json({ success: true, newDefaultId });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // ─── Wallet: Set default card ────────────────────────────────────────────────
+  app.patch('/api/payment-methods/default', verifyFirebaseToken, async (req: any, res) => {
+    if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+    const { paymentMethodId } = req.body || {};
+    if (!isNonEmptyString(paymentMethodId, 128)) return res.status(400).json({ error: 'paymentMethodId required' });
+    try {
+      const uid: string = req.uid;
+      const userRef = adminDb.collection('users').doc(uid);
+      const customerId: string = (await userRef.get()).data()?.stripeCustomerId || '';
+      if (!customerId) return res.status(400).json({ error: 'No Stripe customer' });
+
+      const pm = await stripe.paymentMethods.retrieve(paymentMethodId);
+      if (pm.customer !== customerId) return res.status(403).json({ error: 'Not your card' });
+
+      await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: paymentMethodId } });
+      await userRef.update({
+        defaultPaymentMethodId: paymentMethodId,
+        defaultPaymentMethodLast4: pm.card?.last4 || '',
+        defaultPaymentMethodBrand: pm.card?.brand || '',
+      });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   // ─── One-Click Checkout ──────────────────────────────────────────────────────
   app.post('/api/one-click-checkout', verifyFirebaseToken, async (req: any, res) => {
     if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
