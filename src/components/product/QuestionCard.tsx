@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HelpCircle, ThumbsUp } from 'lucide-react';
+import { HelpCircle, ThumbsUp, ThumbsDown, BadgeCheck } from 'lucide-react';
 import { ProductQuestion } from '@/types';
 import { voteQuestionHelpful } from '@/services/productQuestionService';
 import { cn } from '@/lib/utils';
@@ -32,6 +32,8 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
       ? { text: question.answer, by: question.answeredBy || 'Satıcı', at: question.answeredAt || '' }
       : null,
   );
+  const [answerHelpfulCount, setAnswerHelpfulCount] = useState(0);
+  const [answerHelpfulVoted, setAnswerHelpfulVoted] = useState<'up' | 'down' | null>(null);
 
   async function handleVote() {
     if (!currentUserId || voting) return;
@@ -99,12 +101,71 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
 
       {/* Cevap */}
       {localAnswer ? (
-        <div className="ms-5 ps-3 border-s-2 border-accent/30 mt-2">
-          <p className="text-xs font-bold text-brand-primary/70 dark:text-zinc-300">{localAnswer.text}</p>
-          <p className="text-[10px] text-accent font-bold mt-1">
-            {localAnswer.by}
-            {localAnswer.at && ` · ${new Date(localAnswer.at).toLocaleDateString('tr-TR')}`}
-          </p>
+        <div className="ms-5 ps-3 border-s-4 border-green-400/50 mt-2 bg-green-50/40 dark:bg-green-950/20 rounded-r-xl py-2">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-xs font-bold text-brand-primary/70 dark:text-zinc-300 leading-relaxed">{localAnswer.text}</p>
+          </div>
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-[10px] text-accent font-bold">
+              <BadgeCheck size={11} className="text-accent" />
+              {localAnswer.by}
+              {localAnswer.at && ` · ${new Date(localAnswer.at).toLocaleDateString('tr-TR')}`}
+            </span>
+            <span className="text-[8px] font-black uppercase tracking-wider bg-accent/10 text-accent px-1.5 py-0.5 rounded-full border border-accent/20">
+              Satıcı
+            </span>
+            {/* Cevap faydalı mı? */}
+            <div className="flex items-center gap-1 ms-auto">
+              <button
+                onClick={() => {
+                  if (answerHelpfulVoted === 'up') {
+                    setAnswerHelpfulCount(c => c - 1);
+                    setAnswerHelpfulVoted(null);
+                  } else {
+                    if (answerHelpfulVoted === 'down') setAnswerHelpfulCount(c => Math.max(0, c - 1));
+                    setAnswerHelpfulCount(c => c + 1);
+                    setAnswerHelpfulVoted('up');
+                  }
+                }}
+                className={cn(
+                  'flex items-center gap-0.5 text-[9px] font-black uppercase transition-colors p-0.5 rounded hover:bg-brand-secondary dark:hover:bg-zinc-800',
+                  answerHelpfulVoted === 'up' ? 'text-green-600' : 'text-brand-primary/20 dark:text-zinc-600',
+                )}
+                title="Faydalı"
+              >
+                <ThumbsUp size={10} fill={answerHelpfulVoted === 'up' ? 'currentColor' : 'none'} />
+              </button>
+              <button
+                onClick={() => {
+                  if (answerHelpfulVoted === 'down') {
+                    setAnswerHelpfulVoted(null);
+                  } else {
+                    if (answerHelpfulVoted === 'up') setAnswerHelpfulCount(c => Math.max(0, c - 1));
+                    setAnswerHelpfulVoted('down');
+                  }
+                }}
+                className={cn(
+                  'flex items-center gap-0.5 text-[9px] font-black uppercase transition-colors p-0.5 rounded hover:bg-brand-secondary dark:hover:bg-zinc-800',
+                  answerHelpfulVoted === 'down' ? 'text-red-500' : 'text-brand-primary/20 dark:text-zinc-600',
+                )}
+                title="Faydalı Değil"
+              >
+                <ThumbsDown size={10} fill={answerHelpfulVoted === 'down' ? 'currentColor' : 'none'} />
+              </button>
+              {answerHelpfulCount > 0 && (
+                <span className="text-[9px] font-bold text-brand-primary/30 dark:text-zinc-500">{answerHelpfulCount}</span>
+              )}
+            </div>
+          </div>
+          {/* Satıcı için tekrar yanıtla */}
+          {isSeller && (
+            <button
+              onClick={() => setShowAnswerForm(true)}
+              className="text-[9px] font-black text-accent/60 hover:text-accent transition-colors mt-1"
+            >
+              Bu soruyu tekrar yanıtla
+            </button>
+          )}
         </div>
       ) : isSeller ? (
         <>

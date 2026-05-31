@@ -1,5 +1,6 @@
 import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, where, orderBy, limit, arrayUnion, arrayRemove, increment, onSnapshot } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Review } from '../types';
 import { createNotification } from './notificationService';
 
@@ -187,6 +188,18 @@ export async function voteReviewHelpful(reviewId: string, userId: string): Promi
     helpfulCount: increment(alreadyVoted ? -1 : 1),
   });
   return (data.helpfulCount ?? 0) + (alreadyVoted ? -1 : 1);
+}
+
+export async function uploadReviewPhoto(
+  file: File,
+  productId: string,
+  userId: string,
+): Promise<string> {
+  const ext = file.name.split('.').pop() ?? 'jpg';
+  const path = `reviews/${productId}/${userId}/${Date.now()}.${ext}`;
+  const storageRef = ref(storage, path);
+  await uploadBytes(storageRef, file);
+  return getDownloadURL(storageRef);
 }
 
 export async function addSellerResponse(

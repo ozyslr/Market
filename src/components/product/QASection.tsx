@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { MessageCircle, Search } from 'lucide-react';
+import { MessageCircle, Search, ChevronDown, HelpCircle, ThumbsUp, BadgeCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ProductQuestion } from '@/types';
 import { getQuestions, askQuestion, answerQuestion } from '@/services/productQuestionService';
 import { QuestionCard } from './QuestionCard';
+import { cn } from '@/lib/utils';
 
 const QA_PAGE_SIZE = 5;
 
@@ -67,10 +68,81 @@ export function QASection({ productId, currentUserId, currentUserName, isSeller,
     return q.text.toLowerCase().includes(s) || (q.answer || '').toLowerCase().includes(s);
   });
 
+  const topQuestions = [...questions]
+    .filter(q => (q.helpfulCount || 0) > 0)
+    .sort((a, b) => (b.helpfulCount || 0) - (a.helpfulCount || 0))
+    .slice(0, 3);
+
+  const [expandedAccordion, setExpandedAccordion] = useState<string | null>(null);
+
   const paginated = filtered.slice(0, page * QA_PAGE_SIZE);
 
   return (
     <div className="space-y-6">
+
+      {/* En Çok Sorulan Sorular */}
+      {topQuestions.length > 1 && (
+        <div className="bg-[#F8F8FA] dark:bg-zinc-900/60 rounded-2xl border border-brand-primary/5 dark:border-white/5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-brand-primary/5 dark:border-white/5 flex items-center gap-2">
+            <HelpCircle size={14} className="text-accent" />
+            <span className="text-[11px] font-black uppercase tracking-widest text-brand-primary dark:text-white">
+              En Çok Sorulan Sorular
+            </span>
+          </div>
+          <div className="divide-y divide-brand-primary/5 dark:divide-white/5">
+            {topQuestions.map(q => (
+              <div key={q.id}>
+                <button
+                  onClick={() => setExpandedAccordion(expandedAccordion === q.id ? null : q.id)}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-start hover:bg-brand-secondary/30 dark:hover:bg-zinc-800/30 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-brand-primary dark:text-white leading-relaxed line-clamp-1">{q.text}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {q.answer ? (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-bold text-green-600">
+                          <BadgeCheck size={10} />
+                          Yanıtlandı
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold text-brand-primary/30 dark:text-zinc-500">Yanıt Bekliyor</span>
+                      )}
+                      {(q.helpfulCount || 0) > 0 && (
+                        <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-accent">
+                          <ThumbsUp size={9} />
+                          {q.helpfulCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronDown
+                    size={14}
+                    className={cn(
+                      'text-brand-primary/30 dark:text-zinc-500 shrink-0 transition-transform duration-200',
+                      expandedAccordion === q.id && 'rotate-180',
+                    )}
+                  />
+                </button>
+                {expandedAccordion === q.id && (
+                  <div className="px-4 pb-3 pt-0">
+                    <div className="ps-3 border-s-2 border-accent/30 bg-white/50 dark:bg-zinc-800/30 rounded-r-lg py-2 px-3 mt-1">
+                      {q.answer ? (
+                        <>
+                          <p className="text-xs font-medium text-brand-primary/70 dark:text-zinc-300 leading-relaxed">{q.answer}</p>
+                          <p className="text-[9px] text-accent font-bold mt-1">{q.answeredBy || 'Satıcı'}</p>
+                        </>
+                      ) : (
+                        <p className="text-[10px] text-brand-primary/30 dark:text-zinc-500 italic">Henüz cevaplanmadı</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Soru sor */}
       {isLoggedIn ? (
         <div className="space-y-3">

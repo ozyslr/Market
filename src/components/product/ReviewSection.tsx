@@ -10,6 +10,7 @@ import {
   checkUserReview,
   updateReview,
   deleteReview,
+  uploadReviewPhoto,
 } from '@/services/reviewService';
 import { getSiteSettings } from '@/services/settingsService';
 import { RatingSummary } from './RatingSummary';
@@ -77,6 +78,15 @@ export function ReviewSection({
 
   async function handleSubmitReview(data: ReviewFormData) {
     if (!currentUserId || !currentUserName) return;
+
+    // Upload photos to Firebase Storage
+    let photoUrls = data.photos;
+    if (data.photoFiles && data.photoFiles.length > 0) {
+      photoUrls = await Promise.all(
+        data.photoFiles.map(file => uploadReviewPhoto(file, productId, currentUserId)),
+      );
+    }
+
     const settings = await getSiteSettings();
     const requireApproval = settings.requireReviewApproval ?? false;
     await addReview(
@@ -89,7 +99,7 @@ export function ReviewSection({
         comment: data.comment,
         createdAt: new Date().toISOString(),
         verified: false,
-        photos: data.photos,
+        photos: photoUrls,
         categoryRatings: data.categoryRatings,
         helpfulCount: 0,
         helpfulVoters: [],

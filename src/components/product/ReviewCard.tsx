@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, ThumbsUp, ChevronDown, ChevronUp, X, Store, Pencil, Trash2 } from 'lucide-react';
+import { Star, ThumbsUp, ChevronDown, ChevronUp, X, Store, Pencil, Trash2, Camera } from 'lucide-react';
 import { CheckCircle2 } from 'lucide-react';
 import { Review } from '@/types';
 import { voteReviewHelpful, addSellerResponse } from '@/services/reviewService';
@@ -94,8 +94,9 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
           </div>
           <div>
             <p className="text-xs font-black text-brand-primary">{review.userName}</p>
-            <p className="text-[10px] text-brand-primary/30 font-bold">
+            <p className="text-[10px] text-brand-primary/30 font-bold flex items-center gap-1">
               {review.createdAt.split('T')[0]}
+              {review.photos && review.photos.length > 0 && <Camera size={10} />}
             </p>
           </div>
         </div>
