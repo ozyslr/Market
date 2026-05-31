@@ -5,7 +5,7 @@ import {
   Truck, ChevronRight, ShoppingCart,
   Globe, Heart, Share2, Info, Award,
   Sparkles, Zap, Shield,
-  CheckCircle2, AlertCircle,
+  AlertCircle,
   TrendingUp, Tag, Copy, BellRing, Smartphone, Zap as ZapIcon, Facebook, Twitter,
 } from 'lucide-react';
 import { MOCK_PRODUCTS } from '@/mockData';
@@ -26,9 +26,9 @@ import { SellerCard } from '@/components/product/SellerCard';
 import { OtherSellers } from '@/components/product/OtherSellers';
 import { DeliveryBox } from '@/components/product/DeliveryBox';
 import { InstallmentTable } from '@/components/product/InstallmentTable';
-import { StickyBuyBar } from '@/components/commerce/StickyBuyBar';
+import { StickyBuyBar } from '@/components/product/StickyBuyBar';
 import { QASection } from '@/components/product/QASection';
-import { VariantSwatches } from '@/components/product/VariantSwatches';
+import { VariantSelector } from '@/components/product/VariantSelector';
 import { SocialProofBar } from '@/components/product/SocialProofBar';
 import { UnitPrice } from '@/components/product/UnitPrice';
 import { getActiveCampaigns, calcCampaignDiscount } from '@/services/campaignService';
@@ -550,48 +550,14 @@ export function ProductDetail() {
             )}
 
             {/* Variants Card */}
-            {product.variantAttributes && product.variantAttributes.length > 0 && product.variants && product.variants.length > 0 && (() => {
-              const selectedVariant: ProductVariant | undefined = product.variants!.find(v =>
-                product.variantAttributes!.every(attr => v.attributes[attr] === selectedAttrs[attr])
-              );
-              const allSelected = product.variantAttributes!.every(attr => selectedAttrs[attr]);
-              return (
-                <div className="py-4 space-y-3.5">
-                  {product.variantAttributes!.map(attr => {
-                    const uniqueValues = [...new Set(product.variants!.map(v => v.attributes[attr]).filter(Boolean))];
-                    return (
-                      <div key={attr}>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">
-                          {attr.charAt(0).toUpperCase() + attr.slice(1)}
-                          {selectedAttrs[attr] && <span className="ms-2 text-brand-primary normal-case font-bold">: {selectedAttrs[attr]}</span>}
-                        </p>
-                        <VariantSwatches
-                          attributeName={attr}
-                          options={uniqueValues.map((val: string) => ({
-                            value: val,
-                            label: val,
-                            inStock: product.variants!.some(v => v.attributes[attr] === val && v.stock > 0),
-                          }))}
-                          selectedValue={selectedAttrs[attr]}
-                          onSelect={(val) => setSelectedAttrs(prev => ({ ...prev, [attr]: val }))}
-                        />
-                      </div>
-                    );
-                  })}
-                  {allSelected && selectedVariant && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-xl border border-green-100 mt-3">
-                      <CheckCircle2 size={12} className="text-green-500" />
-                      <span className="text-xs font-black text-green-700">
-                        {selectedVariant.stock} adet
-                      </span>
-                    </div>
-                  )}
-                  {allSelected && !selectedVariant && (
-                    <p className="text-xs font-bold text-red-500">Bu kombinasyon mevcut değil.</p>
-                  )}
-                </div>
-              );
-            })()}
+            {product.variantAttributes && product.variantAttributes.length > 0 && product.variants && product.variants.length > 0 && (
+              <VariantSelector
+                variants={product.variants}
+                variantAttributes={product.variantAttributes}
+                selectedAttrs={selectedAttrs}
+                onVariantChange={(attr, value) => setSelectedAttrs(prev => ({ ...prev, [attr]: value }))}
+              />
+            )}
 
             {/* Add to Cart & CTAs */}
             <div className="space-y-4">
@@ -931,25 +897,18 @@ export function ProductDetail() {
       </div>
 
       {/* Mobile Sticky Buy Bar */}
-      {(() => {
-        const hasVariants = (product.variantAttributes?.length ?? 0) > 0 && (product.variants?.length ?? 0) > 0;
-        const stickyVariant: ProductVariant | undefined = hasVariants
-          ? product.variants!.find(v => (product.variantAttributes ?? []).every(attr => v.attributes[attr] === selectedAttrs[attr]))
-          : undefined;
-        const allSelected = !hasVariants || (product.variantAttributes ?? []).every(attr => selectedAttrs[attr]);
-        const canAdd = allSelected && (!hasVariants || !!stickyVariant);
-        return (
-          <StickyBuyBar
-            visible={showStickyBar}
-            price={cartPrice}
-            currency={product.currency ?? 'gbp'}
-            productTitle={product.title}
-            canAdd={canAdd}
-            onAddToCart={() => canAdd && addItem(product.id, quantity, stickyVariant?.id)}
-            onBuyNow={canOneClick ? handleBuyNow : undefined}
-          />
-        );
-      })()}
+            <StickyBuyBar
+              product={product}
+              selectedAttrs={selectedAttrs}
+              onVariantChange={(attr, value) => setSelectedAttrs(prev => ({ ...prev, [attr]: value }))}
+              visible={showStickyBar}
+              quantity={quantity}
+              price={cartPrice}
+              currency={product.currency ?? 'gbp'}
+              onAddToCart={(variantId) => addItem(product.id, quantity, variantId)}
+              onBuyNow={canOneClick ? handleBuyNow : undefined}
+              oneClickLoading={oneClickLoading}
+            />
 
       {/* AR Viewer Modal */}
         {product.model3dUrl && (
