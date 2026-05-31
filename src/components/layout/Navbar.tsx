@@ -100,8 +100,12 @@ export function Navbar() {
           </button>
 
           {/* Logo */}
-          <Link to="/" className="flex items-center group shrink-0">
-            <span className="font-bold text-xl sm:text-3xl tracking-tight text-brand-primary dark:text-white">Benim Olan</span>
+          <Link to="/" className="flex items-center group shrink-0" aria-label="Benim Olan ana sayfa">
+            <img
+              src="/logo.png"
+              alt="Benim Olan"
+              className="h-7 sm:h-9 w-auto object-contain group-hover:scale-105 transition-transform dark:brightness-0 dark:invert"
+            />
           </Link>
 
           {/* Mobile Header Icons (Right side) */}

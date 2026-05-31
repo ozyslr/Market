@@ -18,3 +18,8 @@ coverage/
 *adminsdk*.json
 *service-account*.json
 *serviceAccount*.json
+
+# Design source files (not for web deployment)
+design/
+public/*.cdr
+public/*.zip

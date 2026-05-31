@@ -49,8 +49,8 @@ export function MobileMenu({ isOpen, onClose, categories, onOpenAuth }: MobileMe
             onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
           >
             <div className="p-6 bg-brand-primary text-white flex items-center justify-between">
-              <Link to="/" onClick={onClose} className="flex items-center">
-                <span className="font-bold text-xl tracking-tight text-current">Benim Olan</span>
+              <Link to="/" onClick={onClose} className="flex items-center" aria-label="Benim Olan ana sayfa">
+                <img src="/logo.png" alt="Benim Olan" className="h-7 w-auto object-contain brightness-0 invert" />
               </Link>
               <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors" aria-label="Menüyü kapat">
                 <X size={24} />

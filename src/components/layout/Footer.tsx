@@ -49,10 +49,13 @@ export function Footer() {
           
           <div className="xl:col-span-1 hidden xl:block">
             <Link to="/" className="flex items-center gap-2 mb-6 group w-fit">
-              <div className="w-10 h-10 bg-mercora-red rounded-xl flex items-center justify-center text-white scale-100 group-hover:scale-110 transition-transform shadow-lg">
-                <ShoppingBagIcon />
-              </div>
-              <span className="font-bold text-2xl tracking-tight text-brand-primary dark:text-white">Benim Olan</span>
+              <img
+                src="/brand-bag.png"
+                alt=""
+                aria-hidden="true"
+                className="w-10 h-10 rounded-xl object-contain scale-100 group-hover:scale-110 transition-transform"
+              />
+              <span className="font-brand font-bold text-2xl tracking-tight text-brand-primary dark:text-white">Benim Olan</span>
             </Link>
             <p className="text-xs text-brand-primary/50 dark:text-white/50 leading-relaxed font-medium mb-6 pe-8">
               Türkiye'nin yenilikçi, hızlı ve her zaman avantajlı e-ticaret platformu. Aradığın her şey burada.
@@ -141,9 +144,6 @@ export function Footer() {
 }
 
 // Simple icons for footer
-const ShoppingBagIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-);
 const AppleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.04C10.5 2.04 8.79 3.01 7.9 4.31c-2.45 3.59-1.92 8.78.25 11.23.97 1.09 2.19 2.18 3.5 1.5 1.48-.77 2.44-1.28 4.2-1.23 1.5.03 2.5.54 4.04 1.34 1.4.73 2.37.1 3.25-.97 1.38-1.63 2.16-4.66 1.33-6.95-3.32-2.1-1.34-6.42 1.94-7.85-1.1-1.74-3.15-2.07-4.22-2.13-1.64-.1-3.23.86-3.86 1.25-.84.5-2.07-.63-4.33-.46Z"/></svg>
 );
