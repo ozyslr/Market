@@ -1,6 +1,6 @@
 /* Benim Olan PWA Service Worker v1.0.0 */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `benimolan-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `benimolan-dynamic-${CACHE_VERSION}`;
 const IMAGE_CACHE = `benimolan-images-${CACHE_VERSION}`;
@@ -9,7 +9,7 @@ const OFFLINE_URL = '/offline.html';
 const PRECACHE_URLS = [
   '/',
   '/offline.html',
-  '/favicon.svg',
+  '/favicon.ico',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ];
