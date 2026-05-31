@@ -1,9 +1,9 @@
 /* Benim Olan PWA Service Worker v1.0.0 */
 
-const CACHE_VERSION = 'v1';
-const STATIC_CACHE = `mercora-static-${CACHE_VERSION}`;
-const DYNAMIC_CACHE = `mercora-dynamic-${CACHE_VERSION}`;
-const IMAGE_CACHE = `mercora-images-${CACHE_VERSION}`;
+const CACHE_VERSION = 'v2';
+const STATIC_CACHE = `benimolan-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `benimolan-dynamic-${CACHE_VERSION}`;
+const IMAGE_CACHE = `benimolan-images-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE_URLS = [
