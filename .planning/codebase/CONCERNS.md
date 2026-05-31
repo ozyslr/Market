@@ -34,11 +34,7 @@
 
 ### Critical
 
-- **`GEMINI_API_KEY` exposed to client bundle via `vite.config.ts` `define` block:**
-  ```ts
-  'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-  ```
-  Vite's `define` performs string replacement at build time, baking the key into client-side JS. Anyone inspecting the built source can extract it. Route through the Express server instead.
+- **`GEMINI_API_KEY` exposed to client bundle via `vite.config.ts` `define` block.** ✅ **RESOLVED** — Key removed from Vite define; all Gemini calls now proxy through `server/routes/gemini.ts`. Client services call `/api/gemini/*` endpoints.
 
 - **`.env` contains production Stripe keys (`sk_live_...`, `pk_live_...`) and a Firebase Admin SDK service account key in plaintext.** While `.env` is gitignored, a single dev machine compromise exposes full production payment and Firebase admin access. Use environment-level secret injection or a secrets manager.
 
@@ -213,7 +209,7 @@ Only 4 markers found, all benign Turkish placeholder text:
 | **Total** | **4** | **18** | **16** | **14** |
 
 **Top 5 priorities:**
-1. Remove production secrets from `.env` (use secret injection) and remove `GEMINI_API_KEY` from Vite `define` (Critical -- security)
+1. ~~Remove production secrets from `.env` (use secret injection) and remove `GEMINI_API_KEY` from Vite `define`~~ ✅ RESOLVED (2026-05-31)
 2. Enable TypeScript `strict: true` incrementally (High -- fragility)
 3. Extract `mockData.ts` into external fixture files (Critical -- tech debt)
 4. Extract `LanguageContext.tsx` translations into per-locale JSON files (Critical -- tech debt / performance)

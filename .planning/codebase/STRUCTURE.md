@@ -16,6 +16,7 @@ O:\AI\E-tic 2026\
 ├── vite.config.ts               # Vite build + PWA config
 ├── vitest.config.ts             # Vitest test runner configuration
 ├── playwright.config.ts         # Playwright E2E test configuration
+├── .eslintrc.json               # ESLint configuration
 ├── .env                         # Environment variables (gitignored)
 ├── .env.example                 # Environment variable template
 │
@@ -211,7 +212,7 @@ src/
 │   ├── WishlistContext.tsx      #   Product wishlist/favorites
 │   ├── FollowsContext.tsx       #   Seller following system
 │   ├── NotificationContext.tsx  #   In-app notifications
-│   ├── LanguageContext.tsx      #   i18n + RTL + translations (~65KB)
+│   ├── LanguageContext.tsx      #   i18n + RTL (101 lines, lazy-loads DE+AR)
 │   ├── ThemeContext.tsx         #   Visual theme
 │   └── LocationContext.tsx      #   User location/delivery region
 │
@@ -259,7 +260,7 @@ src/
 │   ├── serverValidators.ts      #   Request validation utilities
 │   ├── analytics.ts             #   Google Analytics setup + events
 │   ├── sentry.ts                #   Sentry error monitoring init
-│   ├── gemini.ts                #   Google Gemini AI client
+│   ├── gemini.ts                #   Gemini AI shopping assistant (server-proxied)
 │   ├── taxEngine.ts             #   VAT/customs/duty calculation
 │   ├── turkeyLocations.ts       #   Turkish province + district data
 │   ├── csvTemplate.ts           #   CSV import template builder
@@ -267,11 +268,25 @@ src/
 │   ├── utils.ts                 #   Generic utility functions
 │   └── __tests__/               #   Lib unit tests
 │
-├── types.ts                     # Core TypeScript type definitions (~250 lines)
-│                               #   User, Product, Order, Review, Seller, Cart,
-│                               #   Address, Coupon, Campaign, AdCampaign,
-│                               #   ReturnRequest, SiteSettings, HeroSlide,
-│                               #   HomepageSection, TaxCalculation, etc.
+├── types.ts                     # Core TypeScript type definitions (490 lines)
+│                               #   7 domain-organized sections:
+│                               #   Auth, Marketplace, Catalog, Content, Commerce,
+│                               #   Community, Advertising
+│
+├── data/                        # Domain-specific mock data fixtures
+│   ├── mockSellers.ts           #   Mock seller profiles (150 lines)
+│   ├── mockCategories.ts        #   Mock category tree (716 lines)
+│   ├── mockProducts.ts          #   Mock product catalog (2,830 lines)
+│   └── mockUser.ts              #   Mock user profile (37 lines)
+│
+├── i18n/                        # Per-locale translation files
+│   ├── index.ts                 #   Lazy loader with cache
+│   ├── tr.ts                    #   Turkish translations (340 keys)
+│   ├── en.ts                    #   English translations (338 keys)
+│   ├── de.ts                    #   German translations (338 keys)
+│   └── ar.ts                    #   Arabic translations (338 keys)
+│
+├── mockData.ts                  # Barrel re-export for backward compat (7 lines)
 │
 ├── .claude/                     # Claude Code AI configuration
 │   ├── rules.md                 # Project rules for AI
@@ -289,10 +304,15 @@ src/
 ```
 server/
 ├── iyzico.cjs                   # Iyzico SDK loader (CommonJS wrapper for ESM)
+├── logger.ts                    # Structured JSON logger (zero-dependency)
+├── declarations.d.ts            # Type declarations for packages missing @types/*
+├── lib/
+│   └── validate.ts              # Request body validation middleware factory
 └── routes/
     ├── stripe.ts                # All Stripe endpoints + webhook handler
     ├── iyzico.ts                # Iyzico payment endpoints
-    └── sellerApi.ts             # Seller REST API (API-key auth, versioned)
+    ├── sellerApi.ts             # Seller REST API (API-key auth, versioned)
+    └── gemini.ts                # Gemini AI proxy (text, vision, image)
 ```
 
 All route modules export `register*` functions that receive the Express `app` instance plus dependency injection (Firestore, Stripe SDK, middleware, etc.).
@@ -321,7 +341,8 @@ public/
 
 ```
 scripts/
-└── generate-sitemap.mjs         # Dynamic sitemap generator (run during build)
+├── generate-sitemap.mjs         # Dynamic sitemap generator (run during build)
+└── pre-commit.sh                # Secret scanner pre-commit hook
 ```
 
 ---
@@ -330,8 +351,8 @@ scripts/
 
 | File | Purpose |
 |---|---|
-| `vite.config.ts` | Vite + React + Tailwind + PWA + visualizer plugins, `@` path alias, Gemini API key define |
-| `tsconfig.json` | TypeScript settings (JSX react-jsx, ESNext modules, strict mode) |
+| `vite.config.ts` | Vite + React + Tailwind + PWA + visualizer plugins, `@` path alias |
+| `tsconfig.json` | TypeScript (JSX react-jsx, ESNext, strictNullChecks + noImplicitAny enabled) |
 | `vitest.config.ts` | Unit test runner config (jsdom environment) |
 | `playwright.config.ts` | E2E test runner config |
 | `package.json` | `scripts.dev` = `tsx server.ts`, `scripts.build` = sitemap + vite build |
@@ -355,18 +376,23 @@ scripts/
 | What | Where |
 |---|---|
 | Server entry + all API routes | `server.ts` (root) |
-| Route modules | `server/routes/` |
-| App routing + provider hierarchy | `src/App.tsx` |
-| Page components | `src/pages/` (55 files) |
+| Route modules | `server/routes/` (4 files) |
+| Server utilities | `server/lib/`, `server/logger.ts` |
+| App routing + provider hierarchy | `src/App.tsx` (lazy-loaded pages) |
+| Page components | `src/pages/` (55 files, React.lazy) |
 | UI components by domain | `src/components/{domain}/` |
 | Global state (React Context) | `src/context/` (8 providers) |
 | Data access services | `src/services/` (30+ files) |
 | Shared utilities | `src/lib/` (13 files) |
 | Custom hooks | `src/hooks/` (3 files) |
-| Type definitions | `src/types.ts` |
+| Type definitions | `src/types.ts` (7 domain sections) |
+| Mock data fixtures | `src/data/` (4 domain files) |
+| i18n translations | `src/i18n/` (4 locale files + loader) |
 | Static assets | `public/` |
 | Build configuration | `vite.config.ts` (root) |
+| ESLint configuration | `.eslintrc.json` (root) |
 | Tests | Co-located `__tests__/` dirs + `test-results/` |
+| Pre-commit hooks | `scripts/pre-commit.sh` |
 | Claude AI config | `src/.claude/` |
 | Firebase client config | `firebase-applet-config.json` (root) |
 
@@ -394,6 +420,10 @@ server.ts
   │     └── server/iyzico.cjs
   ├── server/routes/sellerApi.ts
   │     └── src/lib/firebase-admin.ts
+  ├── server/routes/gemini.ts
+  │     └── @google/genai (server-side only)
+  ├── server/logger.ts
+  ├── server/lib/validate.ts
   ├── src/lib/authMiddleware.ts
   │     └── src/lib/firebase-admin.ts
   └── src/lib/serverValidators.ts

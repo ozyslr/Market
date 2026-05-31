@@ -77,9 +77,9 @@
 |---|---|
 | SDK | `@google/genai` 1.29.0 |
 | Model | `gemini-3-flash-preview` |
-| Source | `src/lib/gemini.ts` |
-| Features | AI shopping assistant (Turkish), AI content generation, AI content moderation |
-| Env var | `VITE_GEMINI_API_KEY` (or `GEMINI_API_KEY`) |
+| Source | `server/routes/gemini.ts` (server-side proxy) |
+| Features | AI shopping assistant (Turkish), AI content generation, AI content moderation, visual search, AI recommendations |
+| Env var | `GEMINI_API_KEY` (server-side only — never in client bundle) |
 
 ### Exchange Rate API
 
@@ -222,7 +222,7 @@ All consent-gated via CookieConsent component:
 | `IYZICO_API_KEY` | Payments | No (iyzico only) |
 | `IYZICO_SECRET_KEY` | Payments | No (iyzico only) |
 | `IYZICO_BASE_URL` | Payments | No (defaults to sandbox) |
-| `VITE_GEMINI_API_KEY` | AI | No (disables assistant) |
+| `GEMINI_API_KEY` | AI (server) | No (disables all AI features) |
 | `VITE_EXCHANGE_RATE_API_KEY` | External API | No (disables currency ticker) |
 | `VITE_GA4_MEASUREMENT_ID` | Analytics | No (consent-first) |
 | `VITE_META_PIXEL_ID` | Analytics | No (consent-first) |
