@@ -5,6 +5,7 @@ export interface ReviewFormData {
   rating: number;
   comment: string;
   photos: string[];
+  photoFiles: File[];
   categoryRatings: { quality: number; shipping: number; description: number };
 }
 
@@ -28,6 +29,7 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
   const [photos, setPhotos] = useState<string[]>([]);
   const [categoryRatings, setCategoryRatings] = useState({ quality: 0, shipping: 0, description: 0 });
   const [submitting, setSubmitting] = useState(false);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoError, setPhotoError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -49,6 +51,7 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
       reader.onload = ev => setPhotos(prev => [...prev, ev.target!.result as string]);
       reader.readAsDataURL(file);
     });
+    setPhotoFiles(prev => [...prev, ...valid]);
     e.target.value = '';
   }
 
@@ -57,7 +60,7 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
     if (!comment.trim()) return;
     setSubmitting(true);
     try {
-      await onSubmit({ rating, comment: comment.trim(), photos, categoryRatings });
+      await onSubmit({ rating, comment: comment.trim(), photos, photoFiles, categoryRatings });
     } finally {
       setSubmitting(false);
     }
@@ -145,7 +148,10 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
               />
               <button
                 type="button"
-                onClick={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}
+                onClick={() => {
+                  setPhotos(prev => prev.filter((_, idx) => idx !== i));
+                  setPhotoFiles(prev => prev.filter((_, idx) => idx !== i));
+                }}
                 className="absolute -top-1.5 -end-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
               >
                 <X size={10} />
@@ -184,7 +190,7 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
           {submitting && (
             <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
           )}
-          Gönder
+          {submitting ? 'Yükleniyor...' : 'Gönder'}
         </button>
         <button
           type="button"

@@ -96,8 +96,8 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
                 isActive ? 'bg-accent/10' : 'hover:bg-brand-secondary/50 dark:hover:bg-zinc-800/50',
               )}
             >
-              <span className="text-[10px] font-black w-4 text-brand-primary/60 dark:text-zinc-400 text-end">{star}</span>
-              <Star size={11} fill="#FBBF24" className="text-yellow-400 shrink-0" />
+              <span className="text-[10px] font-black text-brand-primary/60 dark:text-zinc-400">{star}</span>
+              <span className="text-[10px] text-yellow-400 shrink-0">{'★'.repeat(star)}</span>
               <div className="flex-1 h-2.5 bg-brand-secondary dark:bg-zinc-800 rounded-full overflow-hidden border border-brand-primary/5 dark:border-white/5">
                 <div
                   className="h-full bg-yellow-400 transition-all duration-500"

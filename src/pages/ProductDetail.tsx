@@ -456,6 +456,7 @@ export function ProductDetail() {
                     cartAddCount={product.cartAddCount}
                     viewerCount={viewers}
                     bestSellerRank={product.bestSeller ? 1 : undefined}
+                    reviewCount={product.reviewsCount}
                   />
                 </div>
 
