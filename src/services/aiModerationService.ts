@@ -5,7 +5,6 @@
  * Auto-approves safe content, flags suspicious content for manual review.
  */
 
-import { GoogleGenAI } from "@google/genai";
 import { logAudit } from './auditLogService';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -43,11 +42,16 @@ export interface ReviewModerationInput {
 
 // ─── Gemini Client ──────────────────────────────────────────────────────────
 
-function getAI(): GoogleGenAI | null {
+async function callGemini(prompt: string): Promise<string | null> {
   try {
-    const key = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-    if (!key) return null;
-    return new GoogleGenAI({ apiKey: key });
+    const res = await fetch('/api/gemini/text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'gemini-3-flash-preview', prompt }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.text ?? null;
   } catch { return null; }
 }
 
@@ -80,16 +84,10 @@ Rules:
 - Price check: if price is 0 or >1,000,000 TRY, flag it`;
 
 export async function moderateProduct(input: ProductModerationInput): Promise<ModerationResult | null> {
-  const ai = getAI();
-  if (!ai) return fallbackModeration(input);
+  const text = await callGemini(`${PRODUCT_POLICY}\n\nProduct to analyze:\n${JSON.stringify(input, null, 2)}`);
+  if (!text) return fallbackModeration(input);
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `${PRODUCT_POLICY}\n\nProduct to analyze:\n${JSON.stringify(input, null, 2)}`,
-    });
-
-    const text = response.text || '';
     const json = extractJson(text);
     if (!json) return fallbackModeration(input);
 
@@ -127,16 +125,10 @@ Return ONLY valid JSON:
 }`;
 
 export async function moderateReview(input: ReviewModerationInput): Promise<ModerationResult | null> {
-  const ai = getAI();
-  if (!ai) return fallbackReviewModeration(input);
+  const text = await callGemini(`${REVIEW_POLICY}\n\nReview to analyze:\n${JSON.stringify(input, null, 2)}`);
+  if (!text) return fallbackReviewModeration(input);
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `${REVIEW_POLICY}\n\nReview to analyze:\n${JSON.stringify(input, null, 2)}`,
-    });
-
-    const text = response.text || '';
     const json = extractJson(text);
     if (!json) return fallbackReviewModeration(input);
 

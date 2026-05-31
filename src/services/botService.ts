@@ -65,7 +65,7 @@ export class BotService {
    * Deploys bots across all categories
    */
   static async deployGlobalBots() {
-    const results = [];
+    const results: Product[] = [];
     for (const cat of CATEGORIES) {
       const prod = await this.simulateBotAddition(cat.id);
       results.push(prod);

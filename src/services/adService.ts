@@ -286,7 +286,7 @@ export async function recordAdClick(
         updates.isActive = false;
       }
 
-      tx.update(ref, updates);
+      tx.update(ref, updates as any);
 
       // Log AdEvent
       const eventId = `click-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

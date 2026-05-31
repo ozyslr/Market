@@ -82,8 +82,9 @@ export function SellerDashboard() {
 
   useEffect(() => {
     if (!user) return;
+    const uid = user.uid!;
     setFinanceLoading(true);
-    getOrdersBySeller(user.uid).then(orders => { setSellerOrders(orders); setFinanceLoading(false); }).catch(() => setFinanceLoading(false));
+    getOrdersBySeller(uid).then(orders => { setSellerOrders(orders); setFinanceLoading(false); }).catch(() => setFinanceLoading(false));
   }, [user]);
 
   useEffect(() => {

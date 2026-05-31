@@ -472,7 +472,7 @@ export function AdminSellers() {
                         <span className="text-[10px] text-[#1A1033]/40 block">{app.userEmail}</span>
                         {app.kycDocuments && app.kycDocuments.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {app.kycDocuments.map((d, i) => (
+                            {app.kycDocuments.map((d: { url: string; name?: string }, i: number) => (
                               <a
                                 key={d.url}
                                 href={d.url}

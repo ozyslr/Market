@@ -462,7 +462,7 @@ export default function SellerAnalyticsPage() {
                             content={({ active, payload }) =>
                               active && payload?.length ? (
                                 <div className="bg-white border border-zinc-200 rounded-xl px-3 py-2 shadow-xl text-xs">
-                                  <p className="font-bold">{STATUS_LABELS[payload[0].name] || payload[0].name}</p>
+                                  <p className="font-bold">{STATUS_LABELS[payload[0].name as string] || payload[0].name}</p>
                                   <p className="font-semibold text-zinc-600">{payload[0].value} siparis</p>
                                 </div>
                               ) : null

@@ -1,23 +1,15 @@
-import { GoogleGenAI } from '@google/genai';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────
-
-let client: GoogleGenAI | null = null;
-
-function getClient(): GoogleGenAI | null {
-  if (client) return client;
-  const key = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!key) return null;
-  client = new GoogleGenAI({ apiKey: key });
-  return client;
-}
+// ─── Server-proxied Gemini — API key stays server-side ────────────────────
 
 async function generateText(model: string, prompt: string): Promise<string | null> {
-  const ai = getClient();
-  if (!ai) return null;
   try {
-    const res = await ai.models.generateContent({ model, contents: prompt });
-    return res.text ?? null;
+    const res = await fetch('/api/gemini/text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, prompt }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.text ?? null;
   } catch (err) {
     console.error('[AI Content] generateText error:', err);
     return null;
@@ -99,45 +91,18 @@ Return ONLY the meta description text, no JSON, no quotes, no extra formatting.`
   return generateText('gemini-3-flash-preview', prompt);
 }
 
-// ─── Image generation via Imagen ──────────────────────────────────────────
+// ─── Image generation via Imagen (server-proxied) ─────────────────────────
 
-/**
- * Generate a product image using Google Imagen via the Gemini API.
- * Returns a base64 data-URL string, or null if unavailable/failed.
- */
 export async function generateProductImage(prompt: string): Promise<string | null> {
-  const key = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!key) return null;
-
-  // Use the Imagen REST API directly via fetch
-  const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/-/locations/us-central1/publishers/google/models/imagen-3.0-fast-generate-001:predict`;
-
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${key}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
-        }),
-      },
-    );
-
+    const res = await fetch('/api/gemini/image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
+    });
     if (!res.ok) return null;
-
     const data = await res.json();
-    if (!data?.candidates?.[0]?.content?.parts) return null;
-
-    // Extract the first image from response parts
-    for (const part of data.candidates[0].content.parts) {
-      if (part.inlineData?.mimeType?.startsWith('image/')) {
-        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-      }
-    }
-
-    return null;
+    return data.dataUrl ?? null;
   } catch {
     return null;
   }

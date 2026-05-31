@@ -5,21 +5,13 @@ import { db } from '@/lib/firebase';
 // ─── Gemini Vision: describe image ────────────────────────────────────────
 
 async function describeImage(imageBase64: string, mimeType: string): Promise<string | null> {
-  const key = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!key) return null;
-
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${key}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `You are Benim Olan's visual search engine. Analyze this product image and return a JSON object with:
+    const res = await fetch('/api/gemini/vision', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gemini-2.0-flash-exp',
+        prompt: `You are Benim Olan's visual search engine. Analyze this product image and return a JSON object with:
 1. "title" — a concise product title in Turkish (max 60 chars)
 2. "category" — the best matching category from: electronics, fashion, home, sports, beauty, automotive, baby, food, office, pet, books, other
 3. "keywords" — an array of 5-10 search keywords in Turkish for finding similar products
@@ -27,23 +19,14 @@ async function describeImage(imageBase64: string, mimeType: string): Promise<str
 5. "style" — style descriptors (e.g. modern, classic, sporty, minimalist)
 
 Return ONLY valid JSON, no markdown fences. Example: {"title":"Spor Ayakkabı","category":"fashion","keywords":["spor ayakkabı","koşu","beyaz"],"color":"beyaz","style":"sporty"}`,
-                },
-                {
-                  inlineData: {
-                    mimeType,
-                    data: imageBase64,
-                  },
-                },
-              ],
-            },
-          ],
-        }),
-      },
-    );
+        imageBase64,
+        mimeType,
+      }),
+    });
 
     if (!res.ok) return null;
     const data = await res.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+    return data.text ?? null;
   } catch {
     return null;
   }

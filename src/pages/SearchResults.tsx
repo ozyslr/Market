@@ -120,9 +120,9 @@ export function SearchResultsPage() {
     const matchesQuery = !query || [p.title, p.description, p.brand, ...(p.tags ?? [])]
       .some(field => normalizeTR(field ?? '').includes(nq));
     const matchesCategory = isProductInCategory(p, categoryId, allCategories);
-    const matchesTag = !tag || p.tags.includes(tag as any) || (tag === 'deals' && (p.oldPrice && p.oldPrice > p.price));
+    const matchesTag = !tag || (p.tags ?? []).includes(tag as any) || (tag === 'deals' && (p.oldPrice && p.oldPrice > p.price));
     const matchesOrigin = !origin || (origin === 'global' ? p.originCountry !== 'UK' : p.originCountry === origin);
-    const matchesDelivery = !delivery || (delivery === 'prime' ? p.estimatedDeliveryDays <= 2 : true);
+    const matchesDelivery = !delivery || (delivery === 'prime' ? (p.estimatedDeliveryDays ?? 99) <= 2 : true);
 
     const matchesAttrs = categoryFilterAttrs.every(attr => {
       const paramVal = searchParams.get(attr.key);

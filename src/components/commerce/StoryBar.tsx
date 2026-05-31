@@ -42,7 +42,7 @@ export function StoryBar() {
           {CATEGORIES.map((cat) => {
             const IconComponent = {
               Smartphone, Shirt, Home, ShoppingBasket, Sparkles, Baby, Dog, Mountain
-            }[cat.icon] || Zap;
+            }[cat.icon as string] || Zap;
 
             return (
               <Link 

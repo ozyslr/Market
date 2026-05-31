@@ -113,15 +113,17 @@ export async function getContentBasedRecommendations(
 
 // ─── Gemini AI-powered personalized recommendations ───────────────────────
 
-let geminiClient: any = null;
-
-async function getGeminiClient() {
-  if (geminiClient) return geminiClient;
-  const key = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!key) return null;
-  const { GoogleGenAI } = await import('@google/genai');
-  geminiClient = new GoogleGenAI({ apiKey: key });
-  return geminiClient;
+async function callGemini(prompt: string): Promise<string | null> {
+  try {
+    const res = await fetch('/api/gemini/text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'gemini-3-flash-preview', prompt }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.text ?? null;
+  } catch { return null; }
 }
 
 interface RecommendationContext {
@@ -140,8 +142,7 @@ export async function getGeminiRecommendations(
   availableProducts: Product[],
   maxResults = 6,
 ): Promise<Product[]> {
-  const ai = await getGeminiClient();
-  if (!ai || availableProducts.length === 0) return [];
+  if (availableProducts.length === 0) return [];
 
   try {
     const productCatalog = availableProducts.slice(0, 30).map(p => ({
@@ -168,12 +169,8 @@ Rules:
 
 Return format: ["id1", "id2", ...]`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
-    });
-
-    const text = response.text || '[]';
+    const text = await callGemini(prompt);
+    if (!text) return [];
     const jsonMatch = text.match(/\[[\s\S]*?\]/);
     if (!jsonMatch) return [];
 

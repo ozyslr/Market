@@ -180,7 +180,7 @@ export async function getPayoutSchedule(sellerId: string): Promise<PayoutSchedul
 export async function updatePayoutSchedule(sellerId: string, updates: Partial<PayoutSchedule>): Promise<void> {
   try {
     const snap = await getDocs(query(collection(db, SCHEDULE_COL), where('sellerId', '==', sellerId)));
-    const schedule = { ...DEFAULT_SCHEDULE, ...updates, nextAutoPayout: undefined };
+    const schedule = { ...DEFAULT_SCHEDULE, ...updates, nextAutoPayout: '' };
     schedule.nextAutoPayout = computeNextPayout(schedule);
     if (snap.empty) {
       await addDoc(collection(db, SCHEDULE_COL), { sellerId, ...schedule });

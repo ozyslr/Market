@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import Stripe from "stripe";
 import dotenv from "dotenv";
 import helmet from "helmet";
+// @ts-ignore — @types/cors not installed
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import { FieldValue } from "firebase-admin/firestore";
@@ -14,6 +15,7 @@ import { createAuthMiddlewares } from "./src/lib/authMiddleware.js";
 import { registerSellerApiRoutes } from "./server/routes/sellerApi.js";
 import { registerIyzicoRoutes } from "./server/routes/iyzico.js";
 import { registerStripeWebhook, registerStripeRoutes } from "./server/routes/stripe.js";
+import { registerGeminiRoutes } from "./server/routes/gemini.js";
 
 dotenv.config();
 
@@ -318,6 +320,8 @@ async function startServer() {
   // ─── Seller REST API (/api/v1) → server/routes/sellerApi.ts ────────────────
   registerSellerApiRoutes(app, adminDb!);
 
+  registerGeminiRoutes(app);
+
   // POST /api/send-push — Send push notification to a user
   app.post('/api/send-push', verifyFirebaseToken, async (req: any, res) => {
     try {
@@ -328,6 +332,7 @@ async function startServer() {
       if (url !== undefined && !isNonEmptyString(url, 2000)) {
         return res.status(400).json({ error: 'invalid url' });
       }
+      if (!adminDb) return res.status(503).json({ error: 'Firebase Admin not initialized' });
 
       const tokenDoc = await adminDb.collection('pushTokens').doc(userId).get();
       if (!tokenDoc.exists) return res.json({ sent: false, reason: 'No push token' });
@@ -348,6 +353,7 @@ async function startServer() {
   // Called by external cron (e.g. cron-job.org) every Monday at 3 AM
   app.post('/api/process-scheduled-payouts', verifyCronSecret, async (_req, res) => {
     try {
+      if (!adminDb) return res.status(503).json({ error: 'Firebase Admin not initialized' });
       const schedulesSnap = await adminDb.collection('payoutSchedules').get();
       const schedules = new Map<string, any>();
       schedulesSnap.docs.forEach(d => {
