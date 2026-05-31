@@ -5,7 +5,6 @@ import { fileURLToPath } from "url";
 import Stripe from "stripe";
 import dotenv from "dotenv";
 import helmet from "helmet";
-// @ts-ignore — @types/cors not installed
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import { FieldValue } from "firebase-admin/firestore";

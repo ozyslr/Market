@@ -29,7 +29,7 @@ export const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 export const isArray = (v: unknown): v is unknown[] => Array.isArray(v);
 export const isNonEmptyString = (v: unknown): v is string => typeof v === 'string' && v.length > 0;
-export const isEmail = (v: unknown): v is boolean => typeof v === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v as string);
+export const isEmail = (v: unknown): v is string => typeof v === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 export const isStringOrNumber = (v: unknown): v is string | number =>
   typeof v === 'string' || (typeof v === 'number' && Number.isFinite(v));
 
