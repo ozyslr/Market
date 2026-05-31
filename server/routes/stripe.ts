@@ -6,6 +6,7 @@ import express, { type Express } from 'express';
 import type Stripe from 'stripe';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
+import { logger } from '../logger.js';
 import { isFiniteNumber, isNonEmptyString, itemsSignature } from '../../src/lib/serverValidators.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
@@ -29,7 +30,7 @@ export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Fir
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
       if (!webhookSecret) {
-        console.warn('STRIPE_WEBHOOK_SECRET not set — skipping webhook verification');
+        logger.warn('stripe', 'Webhook secret not set — skipping verification');
         return res.status(200).json({ received: true });
       }
 
@@ -37,11 +38,11 @@ export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Fir
       try {
         event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
       } catch (err) {
-        console.error('Webhook signature verification failed:', err);
+        logger.error('stripe', 'Webhook signature verification failed', { error: (err as Error).message });
         return res.status(400).send(`Webhook Error: ${(err as Error).message}`);
       }
 
-      console.log(`Webhook received: ${event.type}`);
+      logger.info('stripe', 'Webhook received', { eventType: event.type });
 
       try {
         switch (event.type) {
@@ -55,14 +56,14 @@ export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Fir
                 updatedAt: new Date().toISOString(),
                 stripePaymentIntentId: session.payment_intent as string,
               });
-              console.log(`Order ${orderId} marked as paid`);
+              logger.info('stripe', 'Order marked as paid', { orderId });
             }
             break;
           }
 
           case 'payment_intent.succeeded': {
             const pi = event.data.object as Stripe.PaymentIntent;
-            console.log(`PaymentIntent ${pi.id} succeeded: ${pi.amount} ${pi.currency}`);
+            logger.info('stripe', 'PaymentIntent succeeded', { piId: pi.id, amount: pi.amount, currency: pi.currency });
             break;
           }
 
@@ -74,16 +75,16 @@ export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Fir
                 status: 'cancelled',
                 updatedAt: new Date().toISOString(),
               });
-              console.log(`Order ${failedOrderId} cancelled due to payment failure`);
+              logger.info('stripe', 'Order cancelled due to payment failure', { orderId: failedOrderId });
             }
             break;
           }
 
           default:
-            console.log(`Unhandled event type: ${event.type}`);
+            logger.info('stripe', 'Unhandled event type', { eventType: event.type });
         }
       } catch (err) {
-        console.error('Webhook handler error:', err);
+        logger.error('stripe', 'Webhook handler error', { error: (err as Error).message });
       }
 
       res.json({ received: true });
@@ -113,7 +114,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
 
     if (!stripeKey || stripeKey === "YOUR_STRIPE_SECRET_KEY") {
-      console.warn("STRIPE_SECRET_KEY not set, using mock response.");
+      logger.warn('stripe', 'Secret key not set, using mock response');
       return res.json({
         clientSecret: "mock_secret_" + Math.random().toString(36).substring(7),
         isMock: true
@@ -386,7 +387,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
             batch.update(adminDb!.collection('products').doc(it.productId), { stock: FieldValue.increment(it.quantity) });
           }
           await batch.commit();
-        } catch (e) { console.warn('Stock release failed:', e); }
+        } catch (e) { logger.warn('stripe', 'Stock release failed', { error: (e as Error).message }); }
       };
 
       // ── Charge off-session (idempotent on rapid double-submit) ──────────
@@ -480,7 +481,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
             },
           });
         } catch (e) {
-          console.warn('one-click-checkout: confirmation email failed:', e);
+          logger.warn('stripe', 'One-click checkout confirmation email failed', { error: (e as Error).message });
         }
       }
 
@@ -490,7 +491,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
       if (error.type === 'StripeCardError') {
         return res.json({ status: 'failed', errorMessage: error.message });
       }
-      console.error('one-click-checkout error:', error);
+      logger.error('stripe', 'One-click checkout error', { error: (error as Error).message });
       res.status(500).json({ error: 'Internal server error' });
     }
   });
@@ -564,7 +565,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
 
       res.json({ status: 'refunded', orderId, refundId, amount: amount ?? orderTotal });
     } catch (error: any) {
-      console.error('refund error:', error);
+      logger.error('stripe', 'Refund error', { error: (error as Error).message });
       res.status(500).json({ error: error.message || 'Refund failed' });
     }
   });

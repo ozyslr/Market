@@ -5,6 +5,7 @@
 import express, { type Express } from 'express';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
+import { logger } from '../logger.js';
 
 export interface IyzicoRouteDeps {
   getIyzico: () => Promise<any>;
@@ -68,7 +69,7 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
                   tx.update(orderRef, { stockDecremented: true });
                 });
               } catch (e) {
-                console.warn('iyzico stok düşürme transaction hatası:', e);
+                logger.warn('iyzico', 'Stock decrement transaction failed', { error: (e as Error).message });
                 const oSnap = await orderRef.get();
                 orderData = oSnap.data();
               }
@@ -83,18 +84,18 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
                     },
                   });
                 } catch (e) {
-                  console.warn('Failed to send confirmation email:', e);
+                  logger.warn('iyzico', 'Confirmation email failed', { error: (e as Error).message });
                 }
               }
             }
 
-            console.log(`iyzico: Order ${orderId} → ${result.paymentStatus}`);
+            logger.info('iyzico', `Order payment status`, { orderId, status: result.paymentStatus });
           }
         }
 
         res.json({ status: result.status, paymentStatus: result.paymentStatus });
       } catch (err: any) {
-        console.error('iyzico callback error:', err);
+        logger.error('iyzico', 'Callback error', { error: (err as Error).message });
         res.status(500).json({ error: err.message });
       }
     }
@@ -189,7 +190,7 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
         res.status(400).json({ error: result.errorMessage || 'iyzico initialization failed', errorCode: result.errorCode });
       }
     } catch (err: any) {
-      console.error('iyzico init error:', err);
+      logger.error('iyzico', 'Init error', { error: (err as Error).message });
       res.status(500).json({ error: err.message });
     }
   });
@@ -214,7 +215,7 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
         res.json({ installments: [] });
       }
     } catch (err: any) {
-      console.error('iyzico installments error:', err);
+      logger.error('iyzico', 'Installments error', { error: (err as Error).message });
       res.json({ installments: [] });
     }
   });

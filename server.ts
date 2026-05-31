@@ -16,6 +16,7 @@ import { registerSellerApiRoutes } from "./server/routes/sellerApi.js";
 import { registerIyzicoRoutes } from "./server/routes/iyzico.js";
 import { registerStripeWebhook, registerStripeRoutes } from "./server/routes/stripe.js";
 import { registerGeminiRoutes } from "./server/routes/gemini.js";
+import { logger } from "./server/logger.js";
 
 dotenv.config();
 
@@ -289,12 +290,12 @@ async function startServer() {
         });
 
         results.push({ userId, email: userEmail, itemCount: items.length, status: 'sent' });
-        console.log(`Abandoned cart email sent to ${userEmail} (${itemCount} items)`);
+        logger.info('cart', `Abandoned cart email sent`, { userEmail, itemCount });
       }
 
       res.json({ checked: cartsSnap.docs.length, results });
     } catch (err: any) {
-      console.error('Abandoned cart check error:', err);
+      logger.error('cart', 'Abandoned cart check failed', { error: (err as Error).message });
       res.status(500).json({ error: err.message });
     }
   });
@@ -415,10 +416,10 @@ async function startServer() {
         }
       }
 
-      console.log(`[autoPayout] Processed=${processed} Skipped=${skipped} Failed=${failed} Total=${totalAmount.toFixed(2)} ₺`);
+      logger.info('payout', `Auto-payout completed`, { processed, skipped, failed, total: totalAmount });
       return res.json({ processed, skipped, failed, totalAmount, details });
     } catch (err: any) {
-      console.error('[autoPayout] Endpoint error:', err);
+      logger.error('payout', 'Auto-payout endpoint error', { error: (err as Error).message });
       return res.status(500).json({ error: err.message });
     }
   });
@@ -455,7 +456,7 @@ if (typeof firebase !== 'undefined') {
       });
       app.use(vite.middlewares);
     } catch (err) {
-      console.error('[Vite] Failed to create dev server:', err);
+      logger.error('vite', 'Failed to create dev server', { error: (err as Error).message });
       // Fallback: serve dist if available
       const distPath = path.join(process.cwd(), 'dist');
       app.use(express.static(distPath));
@@ -469,8 +470,21 @@ if (typeof firebase !== 'undefined') {
     });
   }
 
+  // ─── Centralized error handler (must be last middleware) ──────────────────────
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    logger.error('server', 'Unhandled error', {
+      message: err?.message,
+      stack: process.env.NODE_ENV !== 'production' ? err?.stack : undefined,
+    });
+    res.status(err?.status || 500).json({
+      error: process.env.NODE_ENV === 'production'
+        ? 'Internal server error'
+        : (err?.message || 'Unknown error'),
+    });
+  });
+
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Benim Olan Server running on http://localhost:${PORT}`);
+    logger.info('server', `Benim Olan Server running`, { port: PORT });
   });
 }
 

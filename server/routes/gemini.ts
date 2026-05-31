@@ -4,6 +4,7 @@
  */
 import { GoogleGenAI } from '@google/genai';
 import type { Request, Response, Router } from 'express';
+import { logger } from '../logger.js';
 
 let _ai: GoogleGenAI | null = null;
 
@@ -41,7 +42,7 @@ export function registerGeminiRoutes(app: Router | any) {
       const response = await ai.models.generateContent({ model, contents: prompt });
       res.json({ text: extractText(response) });
     } catch (err: any) {
-      console.error('[Gemini Proxy] text error:', err.message);
+      logger.error('gemini', 'text generation failed', { error: err.message });
       res.status(500).json({ error: 'AI isteği başarısız' });
     }
   });
@@ -70,7 +71,7 @@ export function registerGeminiRoutes(app: Router | any) {
       });
       res.json({ text: extractText(response) });
     } catch (err: any) {
-      console.error('[Gemini Proxy] vision error:', err.message);
+      logger.error('gemini', 'vision analysis failed', { error: err.message });
       res.status(500).json({ error: 'Görsel analiz başarısız' });
     }
   });
@@ -118,7 +119,7 @@ export function registerGeminiRoutes(app: Router | any) {
 
       res.json({ dataUrl: null });
     } catch (err: any) {
-      console.error('[Gemini Proxy] image error:', err.message);
+      logger.error('gemini', 'image generation failed', { error: err.message });
       res.status(500).json({ error: 'Görsel oluşturma başarısız' });
     }
   });

@@ -11,9 +11,13 @@ import { CookieConsent } from './components/common/CookieConsent';
 import SellerLayout from './components/layout/SellerLayout';
 import { CartPage } from './pages/Cart';
 
-// React 19 class component type compat
-const HelmetProvider = HelmetProviderOrig as any;
-const SentryErrorBoundary = Sentry.ErrorBoundary as any;
+import type { ComponentType, ReactNode } from 'react';
+
+// React 19 removed children from ComponentClass props — explicit wrappers restore type-safety
+const HelmetProvider = HelmetProviderOrig as ComponentType<{ children: ReactNode }>;
+
+interface ErrorBoundaryProps { fallback: ReactNode; children: ReactNode }
+const SentryErrorBoundary = (Sentry.ErrorBoundary as any) as ComponentType<ErrorBoundaryProps>;
 import { Home } from './pages/Home';
 import { ProductDetail } from './pages/ProductDetail';
 import { SellerDashboard } from './pages/SellerDashboard';
