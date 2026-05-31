@@ -1,0 +1,152 @@
+import { Seller } from '../types';
+
+export const MOCK_SELLERS: Seller[] = [
+  {
+    id: 's1',
+    userId: 'u2',
+    storeName: "AuraAudio Engineering",
+    slug: "aura-audio",
+    rating: 4.9,
+    reviewsCount: 1250,
+    followersCount: 8400,
+    origin: "Berlin, Germany",
+    joinedDate: "Mar 2022",
+    isVerified: true,
+    kycStatus: 'verified',
+    commissionRate: 0.10,
+    bannerUrl: "https://picsum.photos/seed/audio-banner/1920/1080?blur=4",
+    logoUrl: "https://api.dicebear.com/7.x/initials/svg?seed=AA",
+    description: "Pioneering the future of artisan audio. Every piece is hand-calibrated in our Berlin workshop using sustainable materials and revolutionary driver technology.",
+    fulfillmentHealth: {
+      shipSpeed: "98% Within 24hr",
+      compliance: "Level 4 Escrow"
+    }
+  },
+  {
+    id: 's2',
+    userId: 'u3',
+    storeName: "Clay & Co. Portugese Ceramics",
+    slug: "clay-co-ceramics",
+    rating: 5.0,
+    reviewsCount: 450,
+    followersCount: 2100,
+    origin: "Porto, Portugal",
+    joinedDate: "May 2023",
+    isVerified: true,
+    kycStatus: 'verified',
+    commissionRate: 0.10,
+    bannerUrl: "https://picsum.photos/seed/clay-banner/1920/1080?blur=4",
+    logoUrl: "https://api.dicebear.com/7.x/initials/svg?seed=CC",
+    description: "Hand-thrown ceramics that capture the mist of the Atlantic. We specialize in traditional glazing techniques with a modern minimalist aesthetic.",
+    fulfillmentHealth: {
+      shipSpeed: "95% Within 48hr",
+      compliance: "Artisan Certified"
+    }
+  },
+  {
+    id: 's3',
+    userId: 'u4',
+    storeName: "Nexus Home Systems",
+    slug: "nexus-home",
+    rating: 4.7,
+    reviewsCount: 890,
+    followersCount: 5600,
+    origin: "Seattle, USA",
+    joinedDate: "Jan 2024",
+    isVerified: true,
+    kycStatus: 'verified',
+    commissionRate: 0.12,
+    bannerUrl: "https://picsum.photos/seed/nexus-banner/1920/1080?blur=4",
+    logoUrl: "https://api.dicebear.com/7.x/initials/svg?seed=NS",
+    description: "Next-gen computing and smart home systems for the omni-channel professional.",
+    fulfillmentHealth: {
+      shipSpeed: "99% Within 24hr",
+      compliance: "Enterprise Ready"
+    }
+  },
+  {
+    id: 's4',
+    userId: 'u5',
+    storeName: "Zenith Home Decor",
+    slug: "zenith-decor",
+    rating: 4.8,
+    reviewsCount: 320,
+    followersCount: 1500,
+    origin: "Kyoto, Japan",
+    joinedDate: "Feb 2024",
+    isVerified: true,
+    kycStatus: 'verified',
+    commissionRate: 0.10,
+    bannerUrl: "https://picsum.photos/seed/zenith-banner/1920/1080?blur=4",
+    logoUrl: "https://api.dicebear.com/7.x/initials/svg?seed=ZD",
+    description: "Minimalist home essentials inspired by Japanese craftsmanship.",
+    fulfillmentHealth: {
+      shipSpeed: "97% Within 24hr",
+      compliance: "Artisan Standard"
+    }
+  },
+  {
+    id: 'bot_1',
+    userId: 'u_bot_1',
+    storeName: "MCR-GlobalBot [Auto]",
+    slug: "global-bot-store",
+    rating: 4.9,
+    reviewsCount: 15400,
+    followersCount: 89000,
+    origin: "Data Center Alpha",
+    joinedDate: "Jan 2026",
+    isVerified: true,
+    kycStatus: 'verified',
+    commissionRate: 0.15,
+    bannerUrl: "https://picsum.photos/seed/bot/1920/1080?blur=10",
+    logoUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=MCR1",
+    description: "I am a Benim Olan Automated Selling Agent. I process global shipments 24/7 with zero latency.",
+    fulfillmentHealth: {
+      shipSpeed: "INSTANT",
+      compliance: "Fully Automated"
+    }
+  },
+  {
+    id: 'bot_2',
+    userId: 'u_bot_2',
+    storeName: "MCR-FashionBot",
+    slug: "mcr-fashionbot",
+    rating: 4.6,
+    reviewsCount: 312,
+    followersCount: 1890,
+    origin: "Data Center Beta",
+    joinedDate: "Jan 2026",
+    isVerified: true,
+    kycStatus: 'verified',
+    commissionRate: 0.12,
+    bannerUrl: "https://picsum.photos/seed/bot2/1920/1080?blur=10",
+    logoUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=MCR2",
+    description: "Automated fashion & lifestyle curator powered by Benim Olan AI. Specializing in global apparel trends.",
+    fulfillmentHealth: {
+      shipSpeed: "99% Within 24hr",
+      compliance: "Fully Automated"
+    }
+  },
+  {
+    id: 'bot_3',
+    userId: 'u_bot_3',
+    storeName: "MCR-HomeBot",
+    slug: "mcr-homebot",
+    rating: 4.5,
+    reviewsCount: 198,
+    followersCount: 943,
+    origin: "Data Center Gamma",
+    joinedDate: "Feb 2026",
+    isVerified: true,
+    kycStatus: 'verified',
+    commissionRate: 0.10,
+    bannerUrl: "https://picsum.photos/seed/bot3/1920/1080?blur=10",
+    logoUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=MCR3",
+    description: "Automated home & garden product specialist by Benim Olan AI. Curating the best in home living.",
+    fulfillmentHealth: {
+      shipSpeed: "99% Within 48hr",
+      compliance: "Fully Automated"
+    }
+  }
+];
+
