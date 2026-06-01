@@ -1,7 +1,7 @@
 import { 
   ArrowRight, Sparkles, Zap, Shield, Globe, 
   ChevronLeft, ChevronRight, ShoppingBag, 
-  Flame, Percent, Trophy, Heart, Star,
+  Flame, Percent, Trophy, Heart, Star, Mail, User,
   Smartphone, Sofa, Mountain, Shirt, Coffee,
   TrendingUp, ShieldCheck, Lock, ShoppingBasket,
   Package, Clock, Baby, Dog, Home as HomeIcon
@@ -18,7 +18,7 @@ import { Product, Category, HomepageSection, FeaturedDeal } from '@/types';
 import { SEO } from '@/components/common/SEO';
 import { getProducts, getCategories } from '@/services/productService';
 import { getHomepageSections, DEFAULT_SECTIONS } from '@/services/cmsService';
-import { getFeaturedProducts } from '@/services/featuredService';
+import { getFeaturedProducts, getFeaturedDeals } from '@/services/featuredService';
 import { getActiveDeals } from '@/services/dealService';
 import { useAuth } from '@/context/AuthContext';
 import { getRecentViewedIds } from '@/services/behaviorService';
@@ -137,9 +137,23 @@ export function Home() {
   const [recommendationGroups, setRecommendationGroups] = useState<RecommendationGroup[]>([]);
   const [recsLoading, setRecsLoading] = useState(false);
   const [deals, setDeals] = useState<FeaturedDeal[]>([]);
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+  const [featuredDealData, setFeaturedDealData] = useState<FeaturedDeal[]>([]);
+
+  const handleSubscribe = () => {
+    if (!email.trim()) return;
+    setSubscribed(true);
+    setEmail('');
+    setTimeout(() => setSubscribed(false), 5000);
+  };
 
   useEffect(() => {
     getActiveDeals().then(setDeals).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getFeaturedDeals().then(setFeaturedDealData).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -260,6 +274,19 @@ export function Home() {
   const electronicsProducts = products.filter(p => p.categoryId === 'electronics' && p.featured);
   const fashionProducts = products.filter(p => p.categoryId === 'moda' || p.categoryId === 'fashion');
   const flashDealProducts = products.filter(p => p.isFlashDeal);
+  const trendingProducts = [...products].sort((a, b) => b.rating - a.rating).slice(0, 20);
+  const featuredDealProducts = featuredDealData.length > 0
+    ? products.filter(p => featuredDealData.some(d => d.productId === p.id))
+    : MOCK_PRODUCTS.filter(p => p.featured);
+
+  const categoryIconMap: Record<string, React.ReactNode> = {
+    Smartphone: <Smartphone size={18} />,
+    Shirt: <Shirt size={18} />,
+    User: <User size={18} />,
+    Baby: <Baby size={18} />,
+    Home: <HomeIcon size={18} />,
+    ShoppingBasket: <ShoppingBasket size={18} />,
+  };
 
   return (
     <div className="min-h-screen bg-brand-secondary dark:bg-brand-secondary transition-colors duration-300">
@@ -375,6 +402,26 @@ export function Home() {
         </div>
       </section>
 
+      {/* Category Quick Links — horizontal scrollable strip below hero */}
+      <section className="max-w-[1700px] mx-auto px-4 md:px-6 mb-6">
+        <div className="flex gap-2 md:gap-3 overflow-x-auto no-scrollbar pb-1">
+          {categories.filter(c => !c.parentId).map((cat) => (
+            <Link
+              key={cat.id}
+              to={`/category/${cat.id}`}
+              className="flex items-center gap-2 shrink-0 px-4 py-2.5 bg-white dark:bg-zinc-800 rounded-xl border border-brand-primary/5 dark:border-zinc-700 hover:border-accent hover:bg-accent/5 transition-all shadow-sm group"
+            >
+              <span className="text-brand-primary/60 group-hover:text-accent transition-colors">
+                {categoryIconMap[cat.icon || ''] || <Sparkles size={18} />}
+              </span>
+              <span className="text-xs font-bold text-brand-primary dark:text-white whitespace-nowrap">
+                {t(`category.${cat.id}`) !== `category.${cat.id}` ? t(`category.${cat.id}`) : cat.name}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <section className="pt-8 pb-6 px-4 md:px-6">
         <div className="max-w-[1700px] mx-auto space-y-12">
           {/* Flash Deals Row */}
@@ -429,6 +476,20 @@ export function Home() {
           <ProductRow
              title="Popüler ürünlerden seçtik"
              products={popularProducts.slice(0, 20)}
+          />
+        )}
+
+        {/* Trending Now Section */}
+        <ProductRow
+           title="Yükselenler"
+           products={trendingProducts}
+        />
+
+        {/* Öne Çıkan Kampanyalar Section */}
+        {featuredDealProducts.length > 0 && (
+          <ProductRow
+             title="Kampanya Fırsatları"
+             products={featuredDealProducts.slice(0, 20)}
           />
         )}
 
@@ -607,6 +668,53 @@ export function Home() {
             </div>
           </section>
         )}
+      </section>
+
+      {/* Newsletter CTA */}
+      <section className="max-w-[1700px] mx-auto px-4 md:px-6 pb-16">
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="bg-gradient-to-r from-accent to-accent/80 rounded-[2rem] p-8 md:p-12 text-white text-center relative overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1)_0%,transparent_60%)]" />
+          <div className="relative z-10 max-w-xl mx-auto">
+            <h3 className="text-2xl md:text-3xl font-display font-black uppercase italic mb-2">
+              {t('home.newsletter_title') || 'FIRSATLARI KAÇIRMA'}
+            </h3>
+            <p className="text-white/80 text-sm mb-6">
+              {t('home.newsletter_desc') || 'Kampanya ve indirimlerden ilk sen haberdar ol!'}
+            </p>
+            <div className="flex gap-3 max-w-md mx-auto">
+              <input
+                type="email"
+                placeholder={t('home.newsletter_placeholder') || 'E-posta adresin'}
+                className="flex-1 px-5 py-3 rounded-xl text-brand-primary text-sm font-medium outline-none ring-2 ring-white/20 focus:ring-white/60 transition-all"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSubscribe()}
+              />
+              <button
+                onClick={handleSubscribe}
+                className="px-6 py-3 bg-brand-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-primary/90 transition-all shadow-xl shrink-0"
+              >
+                {t('home.newsletter_cta') || 'Abone Ol'}
+              </button>
+            </div>
+            {subscribed && (
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-green-300 text-sm font-bold mt-4"
+              >
+                <Mail size={14} className="inline me-1" />
+                {t('home.newsletter_success') || 'Başarıyla abone oldunuz!'}
+              </motion.p>
+            )}
+          </div>
+        </motion.section>
       </section>
     </div>
   );
