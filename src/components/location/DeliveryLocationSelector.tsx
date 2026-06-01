@@ -84,6 +84,7 @@ export interface DeliveryLocationSelectorProps {
   variant: 'inline' | 'modal';
   onConfirm?: () => void;
   onClose?: () => void;
+  className?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -94,6 +95,7 @@ export function DeliveryLocationSelector({
   variant,
   onConfirm,
   onClose,
+  className,
 }: DeliveryLocationSelectorProps) {
   const { location, setLocation } = useLocationStore();
 
@@ -153,6 +155,7 @@ export function DeliveryLocationSelector({
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsDropdownOpen(false);
+        onClose?.();
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -163,7 +166,7 @@ export function DeliveryLocationSelector({
   useEffect(() => {
     if (variant !== 'inline' || !isDropdownOpen) return;
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') setIsDropdownOpen(false);
+      if (e.key === 'Escape') { setIsDropdownOpen(false); onClose?.(); }
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
@@ -474,7 +477,7 @@ export function DeliveryLocationSelector({
 
   if (variant === 'inline') {
     return (
-      <div ref={dropdownRef} className="relative">
+      <div ref={dropdownRef} className={cn('relative', className)}>
         {/* Collapsed trigger */}
         <button
           type="button"
@@ -520,7 +523,7 @@ export function DeliveryLocationSelector({
               {/* Inner close button */}
               <button
                 type="button"
-                onClick={() => setIsDropdownOpen(false)}
+                onClick={() => { setIsDropdownOpen(false); onClose?.(); }}
                 className="absolute top-4 right-4 p-1.5 text-[#1A1033]/30
                            hover:text-[#1A1033] dark:hover:text-white transition-colors
                            rounded-lg hover:bg-[#1A1033]/5"
@@ -541,7 +544,7 @@ export function DeliveryLocationSelector({
   // ===================================================================
 
   return (
-    <div>
+    <div className={className}>
       {selectorContent}
     </div>
   );
