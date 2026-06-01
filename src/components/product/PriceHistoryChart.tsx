@@ -124,7 +124,7 @@ export function PriceHistoryChart({ productId, currentPrice, currency }: PriceHi
                       <XAxis dataKey="date" tick={{ fontSize: 9, fontWeight: 700, fill: '#9CA3AF' }} tickLine={false} axisLine={false} />
                       <YAxis hide />
                       <Tooltip
-                        formatter={(value: number) => [`${symbol}${value.toFixed(2)}`, 'Fiyat']}
+                        formatter={(value) => [`${symbol}${Number(value).toFixed(2)}`, 'Fiyat']}
                         contentStyle={{ fontSize: 10, fontWeight: 700, borderRadius: 8, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
                       />
                       <Area type="monotone" dataKey="price" stroke="#FF5200" strokeWidth={2} fill="url(#priceGradient)" dot={false} />
