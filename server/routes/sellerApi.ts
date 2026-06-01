@@ -1,8 +1,10 @@
-// ─── Seller REST API (/api/v1) ───────────────────────────────────────────────
+﻿// â”€â”€â”€ Seller REST API (/api/v1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Public, API-key-authenticated endpoints for sellers to manage their own
 // products, inventory and orders. Extracted verbatim from server.ts.
 // All endpoints require: Authorization: Bearer bo_<api_key>
 import type { Express } from 'express';
+import { validate } from '../lib/validate.js';
+import { createProductSchema, updateProductSchema, bulkStockUpdateSchema } from '../lib/schemas.js';
 import type { Firestore } from 'firebase-admin/firestore';
 
 const API_RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
@@ -48,14 +50,14 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
     return true;
   }
 
-  // GET /api/v1/products — list seller's products
+  // GET /api/v1/products â€” list seller's products
   app.get('/api/v1/products', async (req, res) => {
     const auth = await authenticateApiKey(req);
-    if (!auth) return res.status(401).json({ error: 'Unauthorized — geçersiz API anahtarı' });
+    if (!auth) return res.status(401).json({ error: 'Unauthorized â€” geÃ§ersiz API anahtarÄ±' });
     if (!auth.permissions.includes('products:read') && !auth.permissions.includes('inventory:read'))
-      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok (products:read)' });
+      return res.status(403).json({ error: 'Bu iÅŸlem iÃ§in yetkiniz yok (products:read)' });
     if (!checkApiRateLimit(auth.sellerId, 'products:read'))
-      return res.status(429).json({ error: 'Rate limit aşıldı. Lütfen bekleyin.' });
+      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±. LÃ¼tfen bekleyin.' });
 
     try {
       const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
@@ -69,32 +71,32 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
     }
   });
 
-  // GET /api/v1/products/:id — get single product
+  // GET /api/v1/products/:id â€” get single product
   app.get('/api/v1/products/:id', async (req, res) => {
     const auth = await authenticateApiKey(req);
     if (!auth) return res.status(401).json({ error: 'Unauthorized' });
     if (!checkApiRateLimit(auth.sellerId, 'products:read'))
-      return res.status(429).json({ error: 'Rate limit aşıldı' });
+      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
 
     try {
       const doc = await adminDb.collection('products').doc(req.params.id).get();
-      if (!doc.exists) return res.status(404).json({ error: 'Ürün bulunamadı' });
+      if (!doc.exists) return res.status(404).json({ error: 'ÃœrÃ¼n bulunamadÄ±' });
       const product: any = { id: doc.id, ...doc.data() };
-      if (product.sellerId !== auth.sellerId) return res.status(403).json({ error: 'Bu ürün size ait değil' });
+      if (product.sellerId !== auth.sellerId) return res.status(403).json({ error: 'Bu Ã¼rÃ¼n size ait deÄŸil' });
       return res.json({ product });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
   });
 
-  // POST /api/v1/products — create product
+  // POST /api/v1/products â€” create product
   app.post('/api/v1/products', async (req, res) => {
     const auth = await authenticateApiKey(req);
     if (!auth) return res.status(401).json({ error: 'Unauthorized' });
     if (!auth.permissions.includes('products:write'))
-      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok (products:write)' });
+      return res.status(403).json({ error: 'Bu iÅŸlem iÃ§in yetkiniz yok (products:write)' });
     if (!checkApiRateLimit(auth.sellerId, 'products:write'))
-      return res.status(429).json({ error: 'Rate limit aşıldı' });
+      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
 
     try {
       const { title, price, stock, categoryId, brand, description, images, currency } = req.body;
@@ -118,20 +120,20 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
     }
   });
 
-  // PUT /api/v1/products/:id — update product
+  // PUT /api/v1/products/:id â€” update product
   app.put('/api/v1/products/:id', async (req, res) => {
     const auth = await authenticateApiKey(req);
     if (!auth) return res.status(401).json({ error: 'Unauthorized' });
     if (!auth.permissions.includes('products:write'))
       return res.status(403).json({ error: 'Yetkiniz yok (products:write)' });
     if (!checkApiRateLimit(auth.sellerId, 'products:write'))
-      return res.status(429).json({ error: 'Rate limit aşıldı' });
+      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
 
     try {
       const docRef = adminDb.collection('products').doc(req.params.id);
       const snap = await docRef.get();
-      if (!snap.exists) return res.status(404).json({ error: 'Ürün bulunamadı' });
-      if (snap.data()!.sellerId !== auth.sellerId) return res.status(403).json({ error: 'Bu ürün size ait değil' });
+      if (!snap.exists) return res.status(404).json({ error: 'ÃœrÃ¼n bulunamadÄ±' });
+      if (snap.data()!.sellerId !== auth.sellerId) return res.status(403).json({ error: 'Bu Ã¼rÃ¼n size ait deÄŸil' });
 
       const allowed = ['title', 'price', 'stock', 'description', 'brand', 'categoryId', 'images', 'currency'];
       const updates: Record<string, any> = { updatedAt: new Date().toISOString() };
@@ -145,19 +147,19 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
     }
   });
 
-  // PUT /api/v1/products/stock — batch stock/price update
+  // PUT /api/v1/products/stock â€” batch stock/price update
   app.put('/api/v1/products/stock', async (req, res) => {
     const auth = await authenticateApiKey(req);
     if (!auth) return res.status(401).json({ error: 'Unauthorized' });
     if (!auth.permissions.includes('inventory:write'))
       return res.status(403).json({ error: 'Yetkiniz yok (inventory:write)' });
     if (!checkApiRateLimit(auth.sellerId, 'inventory:write'))
-      return res.status(429).json({ error: 'Rate limit aşıldı' });
+      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
 
     try {
       const { items } = req.body; // [{ productId, stock, price }]
       if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'items[] dizisi gerekli' });
-      if (items.length > 500) return res.status(400).json({ error: 'Tek seferde max 500 ürün' });
+      if (items.length > 500) return res.status(400).json({ error: 'Tek seferde max 500 Ã¼rÃ¼n' });
 
       const batch = adminDb.batch();
       const now = new Date().toISOString();
@@ -175,14 +177,14 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
     }
   });
 
-  // GET /api/v1/orders — list seller's orders
+  // GET /api/v1/orders â€” list seller's orders
   app.get('/api/v1/orders', async (req, res) => {
     const auth = await authenticateApiKey(req);
     if (!auth) return res.status(401).json({ error: 'Unauthorized' });
     if (!auth.permissions.includes('orders:read'))
-      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok (orders:read)' });
+      return res.status(403).json({ error: 'Bu iÅŸlem iÃ§in yetkiniz yok (orders:read)' });
     if (!checkApiRateLimit(auth.sellerId, 'orders:read'))
-      return res.status(429).json({ error: 'Rate limit aşıldı' });
+      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
 
     try {
       const status = req.query.status as string;
@@ -196,25 +198,25 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
     }
   });
 
-  // GET /api/v1/orders/:id — get single order
+  // GET /api/v1/orders/:id â€” get single order
   app.get('/api/v1/orders/:id', async (req, res) => {
     const auth = await authenticateApiKey(req);
     if (!auth) return res.status(401).json({ error: 'Unauthorized' });
     if (!checkApiRateLimit(auth.sellerId, 'orders:read'))
-      return res.status(429).json({ error: 'Rate limit aşıldı' });
+      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
 
     try {
       const doc = await adminDb.collection('orders').doc(req.params.id).get();
-      if (!doc.exists) return res.status(404).json({ error: 'Sipariş bulunamadı' });
+      if (!doc.exists) return res.status(404).json({ error: 'SipariÅŸ bulunamadÄ±' });
       const order: any = { id: doc.id, ...doc.data() };
-      if (!order.sellerIds?.includes(auth.sellerId)) return res.status(403).json({ error: 'Bu sipariş size ait değil' });
+      if (!order.sellerIds?.includes(auth.sellerId)) return res.status(403).json({ error: 'Bu sipariÅŸ size ait deÄŸil' });
       return res.json({ order });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
   });
 
-  // GET /api/v1 — API info / health
+  // GET /api/v1 â€” API info / health
   app.get('/api/v1', (_req, res) => {
     return res.json({
       api: 'Benim Olan Seller REST API',

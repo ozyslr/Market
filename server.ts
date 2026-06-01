@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -26,7 +26,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-03-31.basil' as any,
 });
 
-// ─── Lazy iyzico SDK loader ─────────────────────────────────────────────────
+// â”€â”€â”€ Lazy iyzico SDK loader â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let iyzicoSdk: any = null;
 async function getIyzico() {
   if (!iyzicoSdk) {
@@ -48,8 +48,8 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // ─── Security Middleware ─────────────────────────────────────────────────────
-  // CORS — allow our own origin for API calls
+  // â”€â”€â”€ Security Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // CORS â€” allow our own origin for API calls
   app.use(cors({
     origin: process.env.NODE_ENV === 'production'
       ? (process.env.APP_URL || 'https://benimolan.com')
@@ -59,13 +59,13 @@ async function startServer() {
     credentials: true,
   }));
 
-  // Helmet — secure HTTP headers
+  // Helmet â€” secure HTTP headers
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'", // inline gerekli: GTM/analytics snippet'leri
-          // 'unsafe-eval' yalnızca geliştirmede (Vite HMR) — production'da kaldırıldı (XSS sertleştirme)
+          // 'unsafe-eval' yalnÄ±zca geliÅŸtirmede (Vite HMR) â€” production'da kaldÄ±rÄ±ldÄ± (XSS sertleÅŸtirme)
           ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-eval'"] : []),
           "https://js.stripe.com",
           "https://*.iyzipay.com",
@@ -102,7 +102,7 @@ async function startServer() {
           "https://www.google-analytics.com",
           "https://www.facebook.com",
           "https://connect.facebook.net",
-          // Vite HMR websocket + asset loading — development only
+          // Vite HMR websocket + asset loading â€” development only
           ...(process.env.NODE_ENV !== 'production'
             ? ["ws://localhost:*", "ws://127.0.0.1:*", "http://localhost:*", "http://127.0.0.1:*"]
             : []),
@@ -117,7 +117,7 @@ async function startServer() {
         mediaSrc: ["'self'"],
         objectSrc: ["'none'"],
         formAction: ["'self'", "https://*.iyzipay.com"],
-        // Forcing https upgrade breaks http://localhost dev assets — production only
+        // Forcing https upgrade breaks http://localhost dev assets â€” production only
         ...(process.env.NODE_ENV === 'production' ? { upgradeInsecureRequests: [] } : {}),
       },
     },
@@ -127,7 +127,7 @@ async function startServer() {
     hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
   }));
 
-  // Rate limiting — per-IP
+  // Rate limiting â€” per-IP
   const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 200,
@@ -151,15 +151,15 @@ async function startServer() {
   app.use('/api/setup-payment-method', paymentLimiter);
   app.use('/api/one-click-checkout', paymentLimiter);
 
-  // ─── Auth Middleware ─────────────────────────────────────────────────────────
-  // verifyFirebaseToken / verifyAdmin / verifyCronSecret → src/lib/authMiddleware.ts
+  // â”€â”€â”€ Auth Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // verifyFirebaseToken / verifyAdmin / verifyCronSecret â†’ src/lib/authMiddleware.ts
   const { verifyFirebaseToken, verifyAdmin, verifyCronSecret } =
     createAuthMiddlewares(adminAuth, adminDb);
 
-  // ─── Lightweight Input Validators ────────────────────────────────────────────
-  // isFiniteNumber / isNonEmptyString / itemsSignature → src/lib/serverValidators.ts
+  // â”€â”€â”€ Lightweight Input Validators â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // isFiniteNumber / isNonEmptyString / itemsSignature â†’ src/lib/serverValidators.ts
 
-  // ─── Abandoned Cart Email ──────────────────────────────────────────────────
+  // â”€â”€â”€ Abandoned Cart Email â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post("/api/abandoned-cart/check", verifyCronSecret, async (req, res) => {
     try {
       if (!adminDb) {
@@ -244,23 +244,23 @@ async function startServer() {
           <h1 style="margin:0;color:#fff;font-size:24px;font-weight:900;letter-spacing:-1px;font-style:italic;">MERCORA</h1>
         </td></tr>
         <tr><td style="padding:32px 40px;text-align:center;">
-          <div style="font-size:48px;margin-bottom:16px;">🛒</div>
-          <h2 style="margin:0 0 8px;font-size:20px;font-weight:900;color:#1A1033;">Sepetinde ${itemCount} ürün kaldı!</h2>
+          <div style="font-size:48px;margin-bottom:16px;">ðŸ›’</div>
+          <h2 style="margin:0 0 8px;font-size:20px;font-weight:900;color:#1A1033;">Sepetinde ${itemCount} Ã¼rÃ¼n kaldÄ±!</h2>
           <p style="margin:0 0 24px;font-size:13px;color:#666;line-height:1.6;">
-            Sepetine eklediğin ürünler hala seni bekliyor.<br>
-            Kaçırmadan tamamlamak ister misin?
+            Sepetine eklediÄŸin Ã¼rÃ¼nler hala seni bekliyor.<br>
+            KaÃ§Ä±rmadan tamamlamak ister misin?
           </p>
           <a href="${appUrl}/cart"
              style="display:inline-block;padding:14px 36px;background:#7C3AED;color:#fff;text-decoration:none;border-radius:12px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:2px;box-shadow:0 8px 24px rgba(124,58,237,0.3);">
-            Sepete Dön
+            Sepete DÃ¶n
           </a>
           <p style="margin:20px 0 0;font-size:10px;color:#bbb;font-weight:700;text-transform:uppercase;letter-spacing:1px;">
-            ${items.length} farklı ürün sepetinde seni bekliyor
+            ${items.length} farklÄ± Ã¼rÃ¼n sepetinde seni bekliyor
           </p>
         </td></tr>
         <tr><td style="padding:24px 40px;background:#F8F8FA;text-align:center;border-top:1px solid #eee;">
           <p style="margin:0;font-size:10px;color:#bbb;font-weight:700;text-transform:uppercase;letter-spacing:2px;">
-            Benim Olan · Bu email otomatik gönderilmiştir
+            Benim Olan Â· Bu email otomatik gÃ¶nderilmiÅŸtir
           </p>
         </td></tr>
       </table>
@@ -274,7 +274,7 @@ async function startServer() {
         await adminDb.collection('mail').add({
           to: userEmail,
           message: {
-            subject: `Sepetinde ${itemCount} ürün kaldı — Benim Olan`,
+            subject: `Sepetinde ${itemCount} Ã¼rÃ¼n kaldÄ± â€” Benim Olan`,
             html: emailHtml,
           },
         });
@@ -299,7 +299,7 @@ async function startServer() {
     }
   });
 
-  // ─── Stripe webhook (raw body) → server/routes/stripe.ts ───────────────────
+  // â”€â”€â”€ Stripe webhook (raw body) â†’ server/routes/stripe.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // MUST register before express.json() so the raw body survives for signature verification
   registerStripeWebhook(app, stripe, adminDb);
 
@@ -311,18 +311,18 @@ async function startServer() {
     res.json({ status: "ok", environment: process.env.NODE_ENV });
   });
 
-  // ─── Stripe payment endpoints → server/routes/stripe.ts ────────────────────
+  // â”€â”€â”€ Stripe payment endpoints â†’ server/routes/stripe.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   registerStripeRoutes(app, { stripe, adminDb, verifyFirebaseToken, verifyAdmin, port: PORT });
 
-  // ─── iyzico API → server/routes/iyzico.ts ──────────────────────────────────
+  // â”€â”€â”€ iyzico API â†’ server/routes/iyzico.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   registerIyzicoRoutes(app, { getIyzico, adminDb, port: PORT });
 
-  // ─── Seller REST API (/api/v1) → server/routes/sellerApi.ts ────────────────
+  // â”€â”€â”€ Seller REST API (/api/v1) â†’ server/routes/sellerApi.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   registerSellerApiRoutes(app, adminDb!);
 
   registerGeminiRoutes(app);
 
-  // POST /api/send-push — Send push notification to a user
+  // POST /api/send-push â€” Send push notification to a user
   app.post('/api/send-push', verifyFirebaseToken, async (req: any, res) => {
     try {
       const { userId, title, body, url } = req.body;
@@ -348,7 +348,7 @@ async function startServer() {
     }
   });
 
-  // ─── Scheduled Auto-Payout Endpoint ───────────────────────────────────────
+  // â”€â”€â”€ Scheduled Auto-Payout Endpoint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // POST /api/process-scheduled-payouts
   // Called by external cron (e.g. cron-job.org) every Monday at 3 AM
   app.post('/api/process-scheduled-payouts', verifyCronSecret, async (_req, res) => {
@@ -423,12 +423,12 @@ async function startServer() {
     }
   });
 
-  // Chrome DevTools capability endpoint — avoid 404 noise in console
+  // Chrome DevTools capability endpoint â€” avoid 404 noise in console
   app.get('/.well-known/appspecific/com.chrome.devtools.json', (_req, res) => {
     res.json({});
   });
 
-  // Firebase Hosting auto-config — served natively by Firebase Hosting in production;
+  // Firebase Hosting auto-config â€” served natively by Firebase Hosting in production;
   // this dev-server route mirrors it so firebase-messaging-sw.js works without hardcoded keys.
   app.get('/__/firebase/init.js', (_req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
@@ -469,7 +469,7 @@ if (typeof firebase !== 'undefined') {
     });
   }
 
-  // ─── Centralized error handler (must be last middleware) ──────────────────────
+  // â”€â”€â”€ Centralized error handler (must be last middleware) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     logger.error('server', 'Unhandled error', {
       message: err?.message,

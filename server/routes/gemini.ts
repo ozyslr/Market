@@ -1,8 +1,10 @@
-/**
- * Gemini AI Proxy — all Gemini API calls route through the server.
+﻿/**
+ * Gemini AI Proxy â€” all Gemini API calls route through the server.
  * The API key stays server-side and is NEVER exposed to the client bundle.
  */
 import { GoogleGenAI } from '@google/genai';
+import { validate } from '../lib/validate.js';
+import { geminiTextSchema, geminiVisionSchema, geminiImageSchema } from '../lib/schemas.js';
 import type { Request, Response, Router } from 'express';
 import { logger } from '../logger.js';
 
@@ -16,13 +18,13 @@ function getAI(): GoogleGenAI | null {
   return _ai;
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function extractText(response: any): string {
   return response?.text ?? response?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 }
 
-// ─── Routes ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function registerGeminiRoutes(app: Router | any) {
 
@@ -34,7 +36,7 @@ export function registerGeminiRoutes(app: Router | any) {
   app.post('/api/gemini/text', async (req: Request, res: Response) => {
     try {
       const ai = getAI();
-      if (!ai) return res.status(503).json({ error: 'AI servisi yapılandırılmamış' });
+      if (!ai) return res.status(503).json({ error: 'AI servisi yapÄ±landÄ±rÄ±lmamÄ±ÅŸ' });
 
       const { model, prompt } = req.body;
       if (!model || !prompt) return res.status(400).json({ error: 'model ve prompt gerekli' });
@@ -43,7 +45,7 @@ export function registerGeminiRoutes(app: Router | any) {
       res.json({ text: extractText(response) });
     } catch (err: any) {
       logger.error('gemini', 'text generation failed', { error: err.message });
-      res.status(500).json({ error: 'AI isteği başarısız' });
+      res.status(500).json({ error: 'AI isteÄŸi baÅŸarÄ±sÄ±z' });
     }
   });
 
@@ -55,7 +57,7 @@ export function registerGeminiRoutes(app: Router | any) {
   app.post('/api/gemini/vision', async (req: Request, res: Response) => {
     try {
       const ai = getAI();
-      if (!ai) return res.status(503).json({ error: 'AI servisi yapılandırılmamış' });
+      if (!ai) return res.status(503).json({ error: 'AI servisi yapÄ±landÄ±rÄ±lmamÄ±ÅŸ' });
 
       const { model, prompt, imageBase64, mimeType } = req.body;
       if (!model || !prompt || !imageBase64) {
@@ -72,7 +74,7 @@ export function registerGeminiRoutes(app: Router | any) {
       res.json({ text: extractText(response) });
     } catch (err: any) {
       logger.error('gemini', 'vision analysis failed', { error: err.message });
-      res.status(500).json({ error: 'Görsel analiz başarısız' });
+      res.status(500).json({ error: 'GÃ¶rsel analiz baÅŸarÄ±sÄ±z' });
     }
   });
 
@@ -84,7 +86,7 @@ export function registerGeminiRoutes(app: Router | any) {
   app.post('/api/gemini/image', async (req: Request, res: Response) => {
     try {
       const key = process.env.GEMINI_API_KEY;
-      if (!key) return res.status(503).json({ error: 'AI servisi yapılandırılmamış' });
+      if (!key) return res.status(503).json({ error: 'AI servisi yapÄ±landÄ±rÄ±lmamÄ±ÅŸ' });
 
       const { prompt } = req.body;
       if (!prompt) return res.status(400).json({ error: 'prompt gerekli' });
@@ -102,7 +104,7 @@ export function registerGeminiRoutes(app: Router | any) {
       );
 
       if (!fetchRes.ok) {
-        return res.status(502).json({ error: 'Imagen API hatası' });
+        return res.status(502).json({ error: 'Imagen API hatasÄ±' });
       }
 
       const data = await fetchRes.json();
@@ -120,7 +122,7 @@ export function registerGeminiRoutes(app: Router | any) {
       res.json({ dataUrl: null });
     } catch (err: any) {
       logger.error('gemini', 'image generation failed', { error: err.message });
-      res.status(500).json({ error: 'Görsel oluşturma başarısız' });
+      res.status(500).json({ error: 'GÃ¶rsel oluÅŸturma baÅŸarÄ±sÄ±z' });
     }
   });
 }

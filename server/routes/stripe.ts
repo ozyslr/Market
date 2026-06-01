@@ -1,4 +1,4 @@
-// ─── Stripe payment routes ───────────────────────────────────────────────────
+﻿// â”€â”€â”€ Stripe payment routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Extracted verbatim from server.ts. The webhook needs the raw request body and
 // MUST be registered BEFORE express.json(); registerStripeWebhook handles that
 // half, registerStripeRoutes handles the JSON-parsed endpoints.
@@ -7,6 +7,8 @@ import type Stripe from 'stripe';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 import { logger } from '../logger.js';
+import { validate } from '../lib/validate.js';
+import { createPaymentIntentSchema, setupPaymentMethodSchema, defaultPaymentMethodSchema, oneClickCheckoutSchema, refundSchema } from '../lib/schemas.js';
 import { isFiniteNumber, isNonEmptyString, itemsSignature } from '../../src/lib/serverValidators.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
@@ -21,7 +23,7 @@ export interface StripeRouteDeps {
 
 /** Raw-body Stripe webhook. Register BEFORE express.json(). */
 export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Firestore | null) {
-  // Stripe webhook needs raw body — parse before JSON middleware
+  // Stripe webhook needs raw body â€” parse before JSON middleware
   app.post(
     "/api/webhook",
     express.raw({ type: 'application/json' }),
@@ -30,7 +32,7 @@ export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Fir
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
       if (!webhookSecret) {
-        logger.warn('stripe', 'Webhook secret not set — skipping verification');
+        logger.warn('stripe', 'Webhook secret not set â€” skipping verification');
         return res.status(200).json({ received: true });
       }
 
@@ -97,10 +99,10 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
   const { stripe, adminDb, verifyFirebaseToken, verifyAdmin, port: PORT } = deps;
 
   // Stripe Payment Intent
-  app.post("/api/create-payment-intent", async (req, res) => {
+  app.post("/api/create-payment-intent", validate(createPaymentIntentSchema), async (req, res) => {
     const { amount, currency = "gbp", orderId } = req.body;
 
-    // ── Input validation ──────────────────────────────────────────────
+    // â”€â”€ Input validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (!isFiniteNumber(amount) || amount <= 0 || amount > 1_000_000) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
@@ -135,7 +137,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     }
   });
 
-  // ─── Save Card: Create SetupIntent ──────────────────────────────────────────
+  // â”€â”€â”€ Save Card: Create SetupIntent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post('/api/create-setup-intent', verifyFirebaseToken, async (req: any, res) => {
     if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
     try {
@@ -164,7 +166,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     }
   });
 
-  // ─── Save Card: Attach PaymentMethod to Customer ─────────────────────────────
+  // â”€â”€â”€ Save Card: Attach PaymentMethod to Customer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post('/api/setup-payment-method', verifyFirebaseToken, async (req: any, res) => {
     if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
     const { paymentMethodId, last4, brand } = req.body;
@@ -174,7 +176,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
       const uid: string = req.uid;
       const userDoc = await adminDb.collection('users').doc(uid).get();
       const customerId: string = userDoc.data()?.stripeCustomerId || '';
-      if (!customerId) return res.status(400).json({ error: 'No Stripe customer found — call create-setup-intent first' });
+      if (!customerId) return res.status(400).json({ error: 'No Stripe customer found â€” call create-setup-intent first' });
 
       await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
       await stripe.customers.update(customerId, {
@@ -193,7 +195,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     }
   });
 
-  // ─── Wallet: List saved cards ────────────────────────────────────────────────
+  // â”€â”€â”€ Wallet: List saved cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.get('/api/payment-methods', verifyFirebaseToken, async (req: any, res) => {
     if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
     try {
@@ -223,7 +225,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     }
   });
 
-  // ─── Wallet: Remove a saved card ─────────────────────────────────────────────
+  // â”€â”€â”€ Wallet: Remove a saved card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.delete('/api/payment-methods/:id', verifyFirebaseToken, async (req: any, res) => {
     if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
     const id = req.params.id;
@@ -235,7 +237,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
       const customerId: string = userData.stripeCustomerId || '';
       if (!customerId) return res.status(400).json({ error: 'No Stripe customer' });
 
-      // Ownership check — never detach another customer's card
+      // Ownership check â€” never detach another customer's card
       const pm = await stripe.paymentMethods.retrieve(id);
       if (pm.customer !== customerId) return res.status(403).json({ error: 'Not your card' });
 
@@ -268,7 +270,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     }
   });
 
-  // ─── Wallet: Set default card ────────────────────────────────────────────────
+  // â”€â”€â”€ Wallet: Set default card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.patch('/api/payment-methods/default', verifyFirebaseToken, async (req: any, res) => {
     if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
     const { paymentMethodId } = req.body || {};
@@ -294,7 +296,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     }
   });
 
-  // ─── One-Click Checkout ──────────────────────────────────────────────────────
+  // â”€â”€â”€ One-Click Checkout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post('/api/one-click-checkout', verifyFirebaseToken, async (req: any, res) => {
     if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
     const { items, currency = 'gbp' } = req.body as {
@@ -330,7 +332,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         return res.status(400).json({ error: 'No default shipping address' });
       }
 
-      // ── Fetch product prices server-side (never trust client prices) ──
+      // â”€â”€ Fetch product prices server-side (never trust client prices) â”€â”€
       let subtotal = 0;
       const orderItems: any[] = [];
       for (const item of items) {
@@ -359,7 +361,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
       const tax = parseFloat((subtotal * 0.2).toFixed(2));
       const total = parseFloat((subtotal + shipping + tax).toFixed(2));
 
-      // ── Reserve stock atomically BEFORE charging (prevents overselling) ──
+      // â”€â”€ Reserve stock atomically BEFORE charging (prevents overselling) â”€â”€
       try {
         await adminDb.runTransaction(async (tx) => {
           const refs = items.map((it) => adminDb!.collection('products').doc(it.productId));
@@ -379,7 +381,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         throw e;
       }
 
-      // ── Release reserved stock if the charge does not complete ──────────
+      // â”€â”€ Release reserved stock if the charge does not complete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const releaseStock = async () => {
         try {
           const batch = adminDb!.batch();
@@ -390,7 +392,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         } catch (e) { logger.warn('stripe', 'Stock release failed', { error: (e as Error).message }); }
       };
 
-      // ── Charge off-session (idempotent on rapid double-submit) ──────────
+      // â”€â”€ Charge off-session (idempotent on rapid double-submit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       let paymentIntent: Stripe.PaymentIntent;
       try {
         paymentIntent = await stripe.paymentIntents.create({
@@ -416,7 +418,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         return res.json({ status: 'failed', errorMessage: 'Payment did not succeed' });
       }
 
-      // ── Create order ──────────────────────────────────────────────────
+      // â”€â”€ Create order â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const sellerIds = [...new Set(orderItems.map((i: any) => i.sellerId).filter(Boolean))];
       const orderRef = await adminDb.collection('orders').add({
         userId: uid,
@@ -437,45 +439,45 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         updatedAt: new Date().toISOString(),
       });
 
-      // (Stok zaten şarjdan önce atomik olarak rezerve edildi — burada tekrar düşülmez)
+      // (Stok zaten ÅŸarjdan Ã¶nce atomik olarak rezerve edildi â€” burada tekrar dÃ¼ÅŸÃ¼lmez)
 
-      // ── Clear cart ────────────────────────────────────────────────────
+      // â”€â”€ Clear cart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       await adminDb.collection('carts').doc(uid).delete();
 
-      // ── Create in-app notification ────────────────────────────────────
+      // â”€â”€ Create in-app notification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       await adminDb.collection('notifications').add({
         userId: uid,
         type: 'order_status',
-        title: 'Siparişiniz Alındı',
-        message: `#${orderRef.id.slice(0, 8).toUpperCase()} numaralı siparişiniz onaylandı.`,
+        title: 'SipariÅŸiniz AlÄ±ndÄ±',
+        message: `#${orderRef.id.slice(0, 8).toUpperCase()} numaralÄ± sipariÅŸiniz onaylandÄ±.`,
         link: `/profile?tab=orders`,
         read: false,
         createdAt: new Date().toISOString(),
       });
 
-      // ── Send order confirmation email via Firebase Trigger Email ──────
+      // â”€â”€ Send order confirmation email via Firebase Trigger Email â”€â”€â”€â”€â”€â”€
       if (email) {
         try {
           const appUrl = process.env.APP_URL || `http://localhost:${PORT}`;
           const rows = orderItems.map((i: any) =>
-            `<tr><td style="padding:8px 0;font-size:13px;color:#1A1033;">${i.name} × ${i.quantity}</td>` +
+            `<tr><td style="padding:8px 0;font-size:13px;color:#1A1033;">${i.name} Ã— ${i.quantity}</td>` +
             `<td style="padding:8px 0;font-size:13px;color:#1A1033;text-align:right;font-weight:700;">${currency} ${(i.price * i.quantity).toFixed(2)}</td></tr>`
           ).join('');
           await adminDb.collection('mail').add({
             to: email,
             message: {
-              subject: `Siparişiniz Alındı — #${orderRef.id.slice(0, 8).toUpperCase()}`,
+              subject: `SipariÅŸiniz AlÄ±ndÄ± â€” #${orderRef.id.slice(0, 8).toUpperCase()}`,
               html: `<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;font-family:Arial,sans-serif;">
   <tr><td style="padding:32px 40px;text-align:center;">
-    <div style="font-size:48px;margin-bottom:16px;">✅</div>
-    <h2 style="margin:0 0 8px;font-size:20px;font-weight:900;color:#1A1033;">Siparişiniz onaylandı!</h2>
-    <p style="margin:0 0 24px;font-size:13px;color:#666;">Sipariş No: <strong>#${orderRef.id.slice(0, 8).toUpperCase()}</strong></p>
+    <div style="font-size:48px;margin-bottom:16px;">âœ…</div>
+    <h2 style="margin:0 0 8px;font-size:20px;font-weight:900;color:#1A1033;">SipariÅŸiniz onaylandÄ±!</h2>
+    <p style="margin:0 0 24px;font-size:13px;color:#666;">SipariÅŸ No: <strong>#${orderRef.id.slice(0, 8).toUpperCase()}</strong></p>
     <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;margin-bottom:16px;">${rows}</table>
     <p style="margin:0 0 24px;font-size:15px;font-weight:900;color:#1A1033;text-align:right;">Toplam: ${currency} ${total.toFixed(2)}</p>
-    <a href="${appUrl}/profile?tab=orders" style="display:inline-block;padding:14px 36px;background:#7C3AED;color:#fff;text-decoration:none;border-radius:12px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:2px;">Siparişimi Görüntüle</a>
+    <a href="${appUrl}/profile?tab=orders" style="display:inline-block;padding:14px 36px;background:#7C3AED;color:#fff;text-decoration:none;border-radius:12px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:2px;">SipariÅŸimi GÃ¶rÃ¼ntÃ¼le</a>
   </td></tr>
   <tr><td style="padding:24px 40px;background:#F8F8FA;text-align:center;border-top:1px solid #eee;">
-    <p style="margin:0;font-size:10px;color:#bbb;font-weight:700;text-transform:uppercase;letter-spacing:2px;">Benim Olan · Bu email otomatik gönderilmiştir</p>
+    <p style="margin:0;font-size:10px;color:#bbb;font-weight:700;text-transform:uppercase;letter-spacing:2px;">Benim Olan Â· Bu email otomatik gÃ¶nderilmiÅŸtir</p>
   </td></tr>
 </table>`,
             },
@@ -496,7 +498,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     }
   });
 
-  // ─── Refund (admin only) ────────────────────────────────────────────────
+  // â”€â”€â”€ Refund (admin only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post('/api/refund', verifyAdmin, async (req: any, res) => {
     try {
       if (!adminDb) return res.status(503).json({ error: 'Firestore not configured' });
@@ -531,11 +533,11 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         });
         refundId = refund.id;
       } else if (order.paymentMethod === 'iyzico') {
-        // iyzico iadesi her ödeme kalemi için paymentTransactionId gerektirir —
-        // şimdilik manuel iade gerektiğini bildir, sipariş yine de işaretlenmez.
+        // iyzico iadesi her Ã¶deme kalemi iÃ§in paymentTransactionId gerektirir â€”
+        // ÅŸimdilik manuel iade gerektiÄŸini bildir, sipariÅŸ yine de iÅŸaretlenmez.
         return res.status(422).json({
           error: 'iyzico_manual_refund_required',
-          message: 'iyzico iadeleri panelden manuel yapılmalıdır.',
+          message: 'iyzico iadeleri panelden manuel yapÄ±lmalÄ±dÄ±r.',
         });
       } else {
         return res.status(422).json({ error: 'No refundable payment reference on this order' });
@@ -555,8 +557,8 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         await adminDb.collection('notifications').add({
           userId: order.userId,
           type: 'order_status',
-          title: 'İadeniz Tamamlandı',
-          message: `#${orderId.slice(0, 8).toUpperCase()} numaralı siparişiniz için ${(amount ?? orderTotal).toFixed(2)} ${order.currency || 'TRY'} iade edildi.`,
+          title: 'Ä°adeniz TamamlandÄ±',
+          message: `#${orderId.slice(0, 8).toUpperCase()} numaralÄ± sipariÅŸiniz iÃ§in ${(amount ?? orderTotal).toFixed(2)} ${order.currency || 'TRY'} iade edildi.`,
           link: `/profile?tab=orders`,
           read: false,
           createdAt: now,

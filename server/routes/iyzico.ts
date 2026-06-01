@@ -6,6 +6,8 @@ import express, { type Express } from 'express';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 import { logger } from '../logger.js';
+import { validate } from '../lib/validate.js';
+import { iyzicoCallbackSchema, iyzicoInitSchema, iyzicoInstallmentsQuerySchema } from '../lib/schemas.js';
 
 export interface IyzicoRouteDeps {
   getIyzico: () => Promise<any>;
@@ -125,7 +127,7 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
     }
   });
 
-  app.post("/api/iyzico/init", async (req, res) => {
+  app.post("/api/iyzico/init", validate(iyzicoInitSchema), async (req, res) => {
     try {
       const iyzico = await getIyzico();
       if (!iyzico) {
