@@ -100,7 +100,9 @@ export function DeliveryLocationSelector({
   const { location, setLocation } = useLocationStore();
 
   // ----- local selection state (initialised from persisted location) -----
-  const [selectedMarket, setSelectedMarket] = useState<string>(location.market);
+  const [selectedMarket, setSelectedMarket] = useState<string>(
+    MARKET_OPTIONS[location.market] ? location.market : 'UK',
+  );
   const [selectedCity, setSelectedCity] = useState<string>(location.city);
   const [selectedDistrict, setSelectedDistrict] = useState<string>(location.district ?? '');
 
@@ -160,7 +162,7 @@ export function DeliveryLocationSelector({
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [variant, isDropdownOpen]);
+  }, [variant, isDropdownOpen, onClose]);
 
   // ----- keyboard: close on Escape (inline only) -----
   useEffect(() => {
@@ -170,7 +172,7 @@ export function DeliveryLocationSelector({
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [variant, isDropdownOpen]);
+  }, [variant, isDropdownOpen, onClose]);
 
   // ----- GPS -----
   async function handleGps() {
@@ -178,17 +180,21 @@ export function DeliveryLocationSelector({
       setGpsError('Tarayıcınız konum hizmetini desteklemiyor.');
       return;
     }
+    let cancelled = false;
     setGpsLoading(true);
     setGpsError('');
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
+          if (cancelled) return;
           const { latitude, longitude } = pos.coords;
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
           );
+          if (cancelled) return;
           if (!res.ok) throw new Error('Nominatim request failed');
           const data = await res.json();
+          if (cancelled) return;
           const city =
             data.address?.city || data.address?.town || data.address?.village || '';
           const countryCode = (data.address?.country_code ?? '').toUpperCase();
@@ -199,14 +205,13 @@ export function DeliveryLocationSelector({
           changeMarket(marketKey);
           if (city) selectCity(city);
         } catch {
-          setGpsError('Konum alınamadı, manuel seçin.');
+          if (!cancelled) setGpsError('Konum alınamadı, manuel seçin.');
         } finally {
-          setGpsLoading(false);
+          if (!cancelled) setGpsLoading(false);
         }
       },
       () => {
-        setGpsError('Konum erişimi reddedildi.');
-        setGpsLoading(false);
+        if (!cancelled) { setGpsError('Konum erişimi reddedildi.'); setGpsLoading(false); }
       },
       { timeout: 10_000, enableHighAccuracy: false },
     );
@@ -215,6 +220,7 @@ export function DeliveryLocationSelector({
   // ----- confirm -----
   function handleConfirm() {
     const cfg = MARKET_OPTIONS[selectedMarket];
+    if (!cfg) return;
     const city = selectedCity.trim();
     const district = selectedDistrict.trim();
 
