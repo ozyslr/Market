@@ -51,8 +51,10 @@ export function SellerStorePage() {
 
   const displayProducts = React.useMemo(() => {
     let result = sellerProducts.filter((p: any) => {
+      const q = searchQuery.toLowerCase();
       const matchesSearch = !searchQuery ||
-        p.title.toLowerCase().includes(searchQuery.toLowerCase());
+        p.title.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q));
       const matchesCategory = selectedCategory === 'all' || p.categoryId === selectedCategory;
       return matchesSearch && matchesCategory;
     });
@@ -239,10 +241,10 @@ export function SellerStorePage() {
                      className="px-3 py-2 bg-[#F8F8FA] rounded-xl text-xs font-bold text-[#1A1033]/60 outline-none cursor-pointer border-0 shrink-0"
                    >
                      <option value="default">Varsayılan</option>
-                     <option value="price_asc">Fiyat: Artan</option>
-                     <option value="price_desc">Fiyat: Azalan</option>
-                     <option value="rating">En Yüksek Puan</option>
-                     <option value="newest">En Yeni</option>
+                     <option value="price_asc">Fiyat: Düşükten Yükseğe</option>
+                     <option value="price_desc">Fiyat: Yüksekten Düşüğe</option>
+                     <option value="rating">En Popüler</option>
+                     <option value="newest">En Yeniler</option>
                    </select>
                    <button className="px-8 py-4 bg-white rounded-2xl border border-brand-primary/5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-brand-secondary transition-all">
                      <Filter size={16} /> Filters
@@ -281,6 +283,12 @@ export function SellerStorePage() {
                     ))}
                   </div>
                 )}
+
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-bold text-brand-primary/40 tracking-wider">
+                    {displayProducts.length} sonuç
+                  </span>
+                </div>
 
                 <div className={cn(
                   "grid gap-8",
