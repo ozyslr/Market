@@ -1,6 +1,14 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
-import tr from '@/i18n/tr';
-import en from '@/i18n/en';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  ReactNode,
+} from 'react';
+import tr from '@/i18n/tr.json';
+import en from '@/i18n/en.json';
 
 export interface LanguagePack {
   code: string;
@@ -42,19 +50,21 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') return 'tr';
     return window.localStorage.getItem('lang') || 'tr';
   });
-  const [availableLanguages, setAvailableLanguages] = useState<LanguagePack[]>(initialAvailableLanguages);
-  const [translations, setTranslations] = useState<Record<string, Record<string, string>>>(eagerTranslations);
+  const [availableLanguages, setAvailableLanguages] =
+    useState<LanguagePack[]>(initialAvailableLanguages);
+  const [translations, setTranslations] =
+    useState<Record<string, Record<string, string>>>(eagerTranslations);
 
   // Lazy-load non-default languages (DE, AR)
   useEffect(() => {
     if (translations[lang]) return;
-    import(`@/i18n/${lang}.ts`)
-      .then(mod => {
-        setTranslations(prev => ({ ...prev, [lang]: mod.default }));
+    import(`@/i18n/${lang}.json`)
+      .then((mod) => {
+        setTranslations((prev) => ({ ...prev, [lang]: mod.default }));
       })
       .catch(() => {
         if (lang !== 'en') {
-          setTranslations(prev => ({ ...prev, en }));
+          setTranslations((prev) => ({ ...prev, en }));
         }
       });
   }, [lang]);
@@ -71,26 +81,34 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLangState(newLang);
   }, []);
 
-  const t = useCallback((key: string, fallback?: string) => {
-    const tx = translations[lang] as Record<string, string> | undefined;
-    return tx?.[key]
-      || (en as Record<string, string>)[key]
-      || (tr as Record<string, string>)[key]
-      || fallback
-      || key;
-  }, [lang, translations]);
-
-  const value = useMemo(() => ({
-    lang, setLang, t,
-    availableLanguages, setAvailableLanguages,
-    translations, setTranslations,
-  }), [lang, t, availableLanguages, translations]);
-
-  return (
-    <LanguageContext.Provider value={value}>
-      {children}
-    </LanguageContext.Provider>
+  const t = useCallback(
+    (key: string, fallback?: string) => {
+      const tx = translations[lang] as Record<string, string> | undefined;
+      return (
+        tx?.[key] ||
+        (en as Record<string, string>)[key] ||
+        (tr as Record<string, string>)[key] ||
+        fallback ||
+        key
+      );
+    },
+    [lang, translations],
   );
+
+  const value = useMemo(
+    () => ({
+      lang,
+      setLang,
+      t,
+      availableLanguages,
+      setAvailableLanguages,
+      translations,
+      setTranslations,
+    }),
+    [lang, t, availableLanguages, translations],
+  );
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
 export function useLanguage() {

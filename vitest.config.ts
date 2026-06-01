@@ -14,6 +14,12 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.{ts,tsx}', 'server/**/*.ts'],
       exclude: ['src/test/**', 'src/**/*.d.ts', 'server/declarations.d.ts', 'server/iyzico.cjs'],
+      thresholds: {
+        statements: 2,
+        branches: 1,
+        functions: 2,
+        lines: 2,
+      },
     },
     css: true,
   },

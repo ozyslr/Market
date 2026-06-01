@@ -1,4 +1,4 @@
-const ar = {
+{
   "nav.deals": "عروض اليوم",
   "nav.customerservice": "خدمة العملاء",
   "nav.registry": "قائمة السجل",
@@ -336,6 +336,19 @@ const ar = {
   "product.rec.populer.sub": "المنتجات الأكثر شعبية في هذه الفئة",
   "product.rec.secilmis.title": "منتجات شائعة مختارة لك",
   "product.rec.secilmis.sub": "منتجات شائعة مختارة لك",
-  "product.rec.searches.title": "عمليات البحث الشائعة"
-} as const;
-export default ar;
+  "product.rec.searches.title": "عمليات البحث الشائعة",
+  "cart.continue_shopping": "متابعة التسوق",
+  "checkout.subtotal": "المجموع الفرعي",
+  "common.loading": "جارٍ التحميل...",
+  "common.save": "حفظ",
+  "common.cancel": "إلغاء",
+  "common.close": "إغلاق",
+  "common.search": "بحث",
+  "common.no_results": "لم يتم العثور على نتائج",
+  "common.apply": "تطبيق",
+  "common.back": "رجوع",
+  "common.next": "التالي",
+  "product.out_of_stock": "نفدت الكمية",
+  "product.in_stock": "متوفر",
+  "product.view_details": "عرض التفاصيل"
+}

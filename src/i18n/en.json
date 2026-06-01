@@ -1,4 +1,4 @@
-const en = {
+{
   "nav.deals": "Today's Deals",
   "nav.customerservice": "Customer Service",
   "nav.registry": "Registry",
@@ -337,5 +337,4 @@ const en = {
   "product.in_stock": "In Stock",
   "product.add_to_cart": "Add to Cart",
   "product.view_details": "View Details"
-} as const;
-export default en;
+}

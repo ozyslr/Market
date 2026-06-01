@@ -1,0 +1,5 @@
+# Secret scanner — blocks commits containing API keys
+scripts/pre-commit.sh
+
+# Lint-staged — format & lint only staged files
+npx lint-staged

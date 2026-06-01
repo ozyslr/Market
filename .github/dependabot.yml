@@ -7,8 +7,8 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Europe/Istanbul"
-    open-pull-requests-limit: 5
-    versioning-strategy: auto
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
     labels:
       - "dependencies"
       - "automerge"
@@ -18,9 +18,14 @@ updates:
       firebase:
         patterns: ["firebase", "firebase-admin", "@firebase/*"]
       testing:
-        patterns: ["vitest", "@vitest/*", "@testing-library/*", "@playwright/test", "jsdom"]
+        patterns: ["vitest", "@vitest/*", "@testing-library/*", "@playwright/test", "jsdom", "jsdom"]
       stripe:
         patterns: ["stripe", "@stripe/*"]
+      eslint:
+        patterns: ["eslint", "@eslint/*", "@typescript-eslint/*", "eslint-plugin-*"]
+      other:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
     ignore:
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
@@ -28,3 +33,14 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "vite"
         update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Istanbul"
+    labels:
+      - "dependencies"
+      - "github-actions"

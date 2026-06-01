@@ -1,4 +1,4 @@
-const tr = {
+{
   "nav.deals": "Günün Fırsatları",
   "nav.customerservice": "Müşteri Hizmetleri",
   "nav.registry": "Liste",
@@ -339,5 +339,4 @@ const tr = {
   "product.in_stock": "Stokta Var",
   "product.add_to_cart": "Sepete Ekle",
   "product.view_details": "Detayları Gör"
-} as const;
-export default tr;
+}

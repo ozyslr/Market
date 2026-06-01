@@ -14,7 +14,7 @@ export async function loadTranslations(lang: string): Promise<Record<string, str
   }
 
   try {
-    const mod = await import(`./${lang}.ts`);
+    const mod = await import(`./${lang}.json`);
     const translations = mod.default as Record<string, string>;
     translationCache.set(lang, translations);
     return translations;

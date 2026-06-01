@@ -1,4 +1,4 @@
-const de = {
+{
   "nav.deals": "Tagesangebote",
   "nav.customerservice": "Kundenservice",
   "nav.registry": "Liste",
@@ -336,6 +336,19 @@ const de = {
   "product.rec.populer.sub": "Beliebteste Produkte in dieser Kategorie",
   "product.rec.secilmis.title": "Beliebte Artikel für Sie",
   "product.rec.secilmis.sub": "Beliebte Artikel für Sie ausgewählt",
-  "product.rec.searches.title": "Beliebte Suchen"
-} as const;
-export default de;
+  "product.rec.searches.title": "Beliebte Suchen",
+  "cart.continue_shopping": "Weiter einkaufen",
+  "checkout.subtotal": "Zwischensumme",
+  "common.loading": "Laden...",
+  "common.save": "Speichern",
+  "common.cancel": "Abbrechen",
+  "common.close": "Schließen",
+  "common.search": "Suchen",
+  "common.no_results": "Keine Ergebnisse gefunden",
+  "common.apply": "Anwenden",
+  "common.back": "Zurück",
+  "common.next": "Weiter",
+  "product.out_of_stock": "Ausverkauft",
+  "product.in_stock": "Auf Lager",
+  "product.view_details": "Details anzeigen"
+}
