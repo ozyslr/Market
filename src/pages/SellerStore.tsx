@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Star, MapPin, Globe, CheckCircle, Package,
   MessageSquare, UserPlus, Share2, Search,
@@ -21,7 +21,8 @@ export function SellerStorePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'default' | 'price_asc' | 'price_desc' | 'rating' | 'newest'>('default');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const { firebaseUser } = useAuth();
+  const { user, firebaseUser } = useAuth();
+  const navigate = useNavigate();
   const { isFollowing, toggleFollow, loading: followLoading } = useFollows();
 
   // Find seller from mock data or use the first one as fallback
@@ -120,6 +121,15 @@ export function SellerStorePage() {
                >
                  {following ? 'Takibi Bırak' : 'Takip Et'}
                </button>
+               {firebaseUser && user?.id !== sellerData.id && (
+                 <button
+                   onClick={() => navigate(`/messages?sellerId=${sellerData.id}`)}
+                   className="px-6 py-4 bg-white border-2 border-accent/20 text-accent hover:bg-accent hover:text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm transition-all flex items-center gap-2"
+                 >
+                   <MessageSquare size={18} />
+                   Mesaj Gönder
+                 </button>
+               )}
                <button className="p-4 bg-white rounded-2xl border border-brand-primary/5 shadow-sm hover:scale-110 transition-transform">
                  <Share2 size={18} />
                </button>

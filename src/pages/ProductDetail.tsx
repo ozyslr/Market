@@ -5,7 +5,7 @@ import {
   Truck, ChevronRight, ShoppingCart,
   Globe, Heart, Share2, Info, Award,
   Sparkles, Zap, Shield,
-  AlertCircle,
+  AlertCircle, MessageSquare,
   TrendingUp, Tag, Copy, BellRing, Smartphone, Zap as ZapIcon, Facebook, Twitter,
 } from 'lucide-react';
 import { MOCK_PRODUCTS } from '@/mockData';
@@ -515,6 +515,21 @@ export function ProductDetail() {
                 document.querySelector('[data-tab-panel]')?.scrollIntoView({ behavior: 'smooth' });
               }}
             />
+
+            {/* Satıcıya Sor — Messaging entry point */}
+            {firebaseUser && user?.id !== product.sellerId && (
+              <div className="py-3">
+                <button
+                  onClick={() => navigate(
+                    `/messages?sellerId=${product.sellerId}&productId=${product.id}&productTitle=${encodeURIComponent(product.title)}`
+                  )}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-accent/20 text-accent hover:bg-accent hover:text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                >
+                  <MessageSquare size={16} />
+                  Satıcıya Sor
+                </button>
+              </div>
+            )}
 
             {/* Other Sellers */}
             <OtherSellers sellers={[]} />

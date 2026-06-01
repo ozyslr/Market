@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, BarChart3, Settings, LogOut,
   Store, Home, FileUp, Loader2, Clock, XCircle, AlertTriangle, TrendingUp, ShieldCheck,
   Activity, Ticket, Trophy, FileText, Target, Key,
+  MessageSquare,
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -15,6 +16,7 @@ const navItems = [
   { path: '/seller/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/seller/inventory',  icon: Package,         label: 'Ürünlerim' },
   { path: '/seller/orders',     icon: ShoppingBag,     label: 'Siparişler' },
+  { path: '/seller/messages',   icon: MessageSquare,   label: 'Mesajlar'   },
   { path: '/seller/analytics',  icon: Activity,        label: 'Analitik'  },
   { path: '/seller/finance',    icon: BarChart3,       label: 'Finans' },
   { path: '/seller/settings',   icon: Settings,        label: 'Mağaza Ayarları' },

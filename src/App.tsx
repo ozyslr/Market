@@ -52,6 +52,7 @@ const OrderTracking = named(() => import('./pages/OrderTracking'), 'OrderTrackin
 const UserSupport = named(() => import('./pages/UserSupport'), 'UserSupport');
 const VisualSearch = named(() => import('./pages/VisualSearch'), 'VisualSearch');
 const ProductVerification = named(() => import('./pages/ProductVerification'), 'ProductVerification');
+const MessageCenter = named(() => import('./pages/MessageCenter'), 'MessageCenter');
 const NotFound = named(() => import('./pages/NotFound'), 'NotFound');
 
 // Seller pages
@@ -70,6 +71,7 @@ const SellerPerformance = named(() => import('./pages/SellerPerformance'), 'Sell
 const SellerInvoices = named(() => import('./pages/SellerInvoices'), 'SellerInvoices');
 const SellerPriceAnalysis = named(() => import('./pages/SellerPriceAnalysis'), 'SellerPriceAnalysis');
 const SellerApiKeys = named(() => import('./pages/SellerApiKeys'), 'SellerApiKeys');
+const SellerMessages = named(() => import('./pages/SellerMessages'), 'SellerMessages');
 const SellerAnalytics = defaultPage(() => import('./pages/SellerAnalytics'));
 
 // Admin pages
@@ -173,6 +175,7 @@ export default function App() {
                         <Route path="invoices" element={<SellerInvoices />} />
                         <Route path="price-analysis" element={<SellerPriceAnalysis />} />
                         <Route path="api-keys" element={<SellerApiKeys />} />
+                        <Route path="messages" element={<SellerMessages />} />
                       </Route>
                     </Route>
                     {/* All other routes — with Navbar/Footer */}
@@ -197,6 +200,7 @@ export default function App() {
                       <Route path="/support" element={<UserSupport />} />
                       <Route path="/visual-search" element={<VisualSearch />} />
                       <Route path="/verify" element={<ProductVerification />} />
+                      <Route path="/messages" element={<MessageCenter />} />
                       <Route path="*" element={<NotFound />} />
                     </Route>
                   </Routes>
