@@ -20,6 +20,7 @@ import { Order, OrderStatus } from '@/types/order';
 import { ProfileSettings } from '@/components/profile/ProfileSettings';
 import { SavedPaymentMethod } from '@/components/profile/SavedPaymentMethod';
 import { ProductCard } from '@/components/commerce/ProductCard';
+import { ReorderButton } from '@/components/commerce/ReorderButton';
 import { getUserTracks, untrackPrice, PriceTrack } from '@/services/priceTrackService';
 
 type ProfileTab = 'overview' | 'orders' | 'favorites' | 'pricetracks' | 'stores' | 'addresses' | 'payment' | 'settings';
@@ -60,13 +61,7 @@ const OrderCard: React.FC<{ order: Order; expanded?: boolean }> = ({ order, expa
   const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
   const StatusIcon = cfg.icon as React.ElementType;
   const navigate = useNavigate();
-  const { addItem } = useCart();
   const [showReturn, setShowReturn] = useState(false);
-
-  const handleReorder = () => {
-    order.items.forEach(item => addItem(item.productId, item.quantity));
-    navigate('/cart');
-  };
 
   // İade yalnızca teslim edilmiş siparişlerde mümkün
   const canReturn = order.status === 'delivered';
@@ -118,12 +113,9 @@ const OrderCard: React.FC<{ order: Order; expanded?: boolean }> = ({ order, expa
         >
           Takip Et
         </button>
-        <button
-          onClick={handleReorder}
-          className="flex-1 py-2 border border-brand-primary/10 dark:border-zinc-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/60 dark:text-zinc-400 hover:border-accent hover:text-accent transition-all"
-        >
-          Tekrar Satın Al
-        </button>
+        {['delivered', 'paid'].includes(order.status) && (
+          <ReorderButton orderId={order.id} userId={order.userId} className="flex-1" />
+        )}
         {canReturn && (
           <button
             onClick={() => setShowReturn(true)}

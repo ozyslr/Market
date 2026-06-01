@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { getOrderById, updateOrderStatus } from '@/services/orderService';
 import { getTrackingStatus } from '@/services/cargoService';
+import { ReorderButton } from '@/components/commerce/ReorderButton';
 import type { Order } from '@/types/order';
 import type { TrackingResponse, CargoProviderName } from '@/services/cargoService';
 import { cn } from '@/lib/utils';
@@ -253,6 +254,13 @@ export function OrderTracking() {
               <span className="font-black text-accent">{order.total.toFixed(2)} ₺</span>
             </div>
           </div>
+
+          {/* Reorder Button — only for delivered or paid orders */}
+          {['delivered', 'paid'].includes(order.status) && (
+            <div className="mt-6 pt-4 border-t border-[#F8F8FA] flex justify-center">
+              <ReorderButton orderId={order.id} userId={order.userId} />
+            </div>
+          )}
         </div>
 
         {/* Courier Info */}
