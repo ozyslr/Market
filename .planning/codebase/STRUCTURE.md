@@ -17,6 +17,7 @@ O:\AI\E-tic 2026\
 ├── vitest.config.ts             # Vitest test runner configuration
 ├── playwright.config.ts         # Playwright E2E test configuration
 ├── .eslintrc.json               # ESLint configuration
+├── .prettierrc.json             # Prettier formatting configuration
 ├── .env                         # Environment variables (gitignored)
 ├── .env.example                 # Environment variable template
 │
@@ -71,20 +72,28 @@ src/
 ├── pages/                       # Page-level components (one per route)
 │   ├── Home.tsx                 #   Landing page
 │   ├── ProductDetail.tsx        #   Product detail page
+│   ├── About.tsx                #   About us page
 │   ├── Cart.tsx                 #   Shopping cart
-│   ├── Checkout.tsx             #   Checkout flow
-│   ├── SearchResults.tsx        #   Search results
+│   ├── Campaigns.tsx            #   Campaign listing
 │   ├── CategoryPage.tsx         #   Category listing
+│   ├── Checkout.tsx             #   Checkout flow
 │   ├── CollectionPage.tsx       #   Curated collection
-│   ├── UserProfile.tsx          #   User profile/settings
-│   ├── Wishlist.tsx             #   User wishlist
-│   ├── OrderTracking.tsx        #   Order tracking
+│   ├── Contact.tsx              #   Contact page
+│   ├── FAQ.tsx                  #   Frequently asked questions
+│   ├── FollowedSellers.tsx      #   Followed sellers feed
+│   ├── MessageCenter.tsx        #   Internal messaging inbox
 │   ├── NotFound.tsx             #   404 page
+│   ├── OrderHistory.tsx         #   Past orders list
+│   ├── OrderTracking.tsx        #   Order tracking
+│   ├── PriceAlerts.tsx          #   Price drop alerts
+│   ├── ProductVerification.tsx  #   Product authenticity verification
+│   ├── SearchResults.tsx        #   Search results
 │   ├── SellOnBenimOlan.tsx      #   "Sell on our platform" landing
 │   ├── SellerApplication.tsx    #   Seller application form
-│   ├── VisualSearch.tsx         #   Image-based search
-│   ├── ProductVerification.tsx  #   Product authenticity verification
+│   ├── UserProfile.tsx          #   User profile/settings
 │   ├── UserSupport.tsx          #   User support/tickets
+│   ├── VisualSearch.tsx         #   Image-based search
+│   ├── Wishlist.tsx             #   User wishlist
 │   │
 │   ├── AdminDashboard.tsx       #   Admin panel home
 │   ├── AdminAnalytics.tsx       #   Admin analytics
@@ -113,24 +122,24 @@ src/
 │   ├── AdminWebhooks.tsx        #   Admin webhook configuration
 │   │
 │   ├── SellerDashboard.tsx      #   Seller panel home
-│   ├── SellerInventory.tsx      #   Seller product inventory
-│   ├── SellerOrders.tsx         #   Seller order management
-│   ├── SellerFinance.tsx        #   Seller financials
-│   ├── SellerSettings.tsx       #   Seller store settings
-│   ├── SellerImportCenter.tsx   #   CSV product import
-│   ├── SellerPricing.tsx        #   Seller pricing tools
 │   ├── SellerAnalytics.tsx      #   Seller analytics dashboard
+│   ├── SellerApiKeys.tsx        #   Seller API key management
 │   ├── SellerCertificates.tsx   #   Seller certificates/credentials
 │   ├── SellerCoupons.tsx        #   Seller coupon management
-│   ├── SellerPerformance.tsx    #   Seller performance metrics
+│   ├── SellerFinance.tsx        #   Seller financials
+│   ├── SellerImportCenter.tsx   #   CSV product import
+│   ├── SellerInventory.tsx      #   Seller product inventory
 │   ├── SellerInvoices.tsx       #   Seller invoice management
+│   ├── SellerMessages.tsx       #   Seller messaging
+│   ├── SellerOrders.tsx         #   Seller order management
+│   ├── SellerPerformance.tsx    #   Seller performance metrics
 │   ├── SellerPriceAnalysis.tsx  #   Seller price analysis
-│   ├── SellerApiKeys.tsx        #   Seller API key management
+│   ├── SellerPricing.tsx        #   Seller pricing tools
+│   ├── SellerSettings.tsx       #   Seller store settings
 │   ├── SellerStore.tsx          #   Public seller storefront
 │   ├── AdCampaigns.tsx          #   Seller ad campaigns (CPC)
 │   │
 │   ├── ModeratorDashboard.tsx   #   Moderator panel
-│   └── SellerStore.tsx          #   Public seller storefront page
 │
 ├── components/                  # Reusable UI components
 │   ├── layout/                  #   Layout/shell components
@@ -145,6 +154,9 @@ src/
 │   │   ├── LocationModal.tsx    #     Location selection modal
 │   │   ├── NotificationsPanel.tsx #   Notification dropdown
 │   │   └── SellerLayout.tsx     #     Seller panel layout (no nav/footer)
+│   │
+│   ├── location/                #   Delivery location components
+│   │   └── DeliveryLocationSelector.tsx # Location picker with cascade
 │   │
 │   ├── commerce/                #   E-commerce specific components
 │   │   ├── ProductCard.tsx      #     Product listing card
@@ -203,6 +215,29 @@ src/
 │   ├── chat/                    #   Live support components
 │   │   └── LiveChatWidget.tsx   #     Live chat widget
 │   │
+│   ├── profile/                 #   User profile components
+│   │   ├── ProfileSettings.tsx  #     Profile settings form
+│   │   ├── ReturnRequestModal.tsx #   Return request form
+│   │   └── SavedPaymentMethod.tsx #  Saved payment card display
+│   │
+│   ├── seller/                  #   Seller panel components
+│   │   ├── BatchShipModal.tsx   #     Batch shipping modal
+│   │   ├── BulkEditBar.tsx      #     Bulk product edit bar
+│   │   ├── CategorySelect.tsx   #     Category tree selector
+│   │   ├── CSVImportPanel.tsx   #     CSV import panel
+│   │   ├── OrderStatsBar.tsx    #     Order statistics bar
+│   │   ├── ProductForm.tsx      #     Product add/edit form
+│   │   ├── ProductFormModal.tsx #     Product form in modal
+│   │   └── ReturnManagementSection.tsx # Return management
+│   │
+│   ├── seo/                     #   Structured data & SEO components
+│   │   ├── JsonLd.tsx           #     JSON-LD structured data
+│   │   └── schemas.ts           #     Schema.org type definitions
+│   │
+│   ├── ui/                      #   Generic UI primitives
+│   │   ├── Skeleton.tsx         #     Loading skeleton placeholder
+│   │   └── __tests__/           #     UI component tests
+│   │
 │   └── marketing/               #   Marketing components
 │       └── CampaignBanner.tsx   #     Campaign promotion banner
 │
@@ -221,37 +256,65 @@ src/
 │   ├── useExchangeRate.ts       #   Currency exchange rate conversion
 │   └── useOneClickCheckout.ts   #   One-click checkout flow
 │
-├── services/                    # Data access / business logic services
-│   ├── productService.ts        #   Product CRUD + search + filtering
-│   ├── orderService.ts          #   Order lifecycle management
-│   ├── reviewService.ts         #   Product reviews + moderation
-│   ├── cartService.ts           #   Cart Firestore operations
+├── services/                    # Data access / business logic services (60 files)
 │   ├── adService.ts             #   CPC advertising engine
-│   ├── searchService.ts         #   Full-text product search
-│   ├── campaignService.ts       #   Campaign management
-│   ├── sellerService.ts         #   Seller profile + operations
-│   ├── userService.ts           #   User profile operations
-│   ├── financeService.ts        #   Seller payout + commission
-│   ├── cargoService.ts          #   Shipping/logistics tracking
-│   ├── notificationService.ts   #   Push + in-app notifications
-│   ├── emailService.ts          #   Transactional email sending
-│   ├── invoiceService.ts        #   Invoice generation
-│   ├── loyaltyService.ts        #   Loyalty points system
-│   ├── blockchainService.ts     #   Blockchain authenticity records
-│   ├── couponService.ts         #   Coupon code validation
-│   ├── commissionService.ts     #   Platform commission calculation
-│   ├── dynamicPricingService.ts #   Dynamic pricing rules
 │   ├── aiContentService.ts      #   AI-generated product content
 │   ├── aiModerationService.ts   #   AI content moderation
 │   ├── analyticsService.ts      #   Business analytics queries
-│   ├── behaviorService.ts       #   User behavior tracking
-│   ├── auditLogService.ts       #   Admin audit logging
 │   ├── apiKeyService.ts         #   Seller API key management
-│   ├── followService.ts         #   Follow/unfollow operations
+│   ├── arService.ts             #   AR/3D model service
+│   ├── auditLogService.ts       #   Admin audit logging
+│   ├── behaviorService.ts       #   User behavior tracking
+│   ├── blockchainService.ts     #   Blockchain authenticity records
+│   ├── botService.ts            #   AI chatbot logic
+│   ├── campaignService.ts       #   Campaign management
+│   ├── cargoService.ts          #   Shipping/logistics tracking
+│   ├── cartService.ts           #   Cart Firestore operations
+│   ├── chatService.ts           #   Live support chat
+│   ├── cmsService.ts            #   CMS/menu management
+│   ├── commissionService.ts     #   Platform commission calculation
+│   ├── couponService.ts         #   Coupon code validation
+│   ├── dealService.ts           #   Featured deals management
+│   ├── dynamicPricingService.ts #   Dynamic pricing rules
+│   ├── emailService.ts          #   Transactional email sending
 │   ├── featuredService.ts       #   Featured deals management
-│   ├── offlineService.ts        #   Offline detection + banner
+│   ├── financeService.ts        #   Seller payout + commission
+│   ├── followService.ts         #   Follow/unfollow operations
+│   ├── invoiceService.ts        #   Invoice generation
+│   ├── loyaltyService.ts        #   Loyalty points system
+│   ├── moderationService.ts     #   Content moderation
+│   ├── notificationService.ts   #   Push + in-app notifications
+│   ├── offlineService.tsx       #   Offline detection + banner
+│   ├── oneClickCheckoutService.ts # One-click checkout logic
+│   ├── orderService.ts          #   Order lifecycle management
+│   ├── paymentProviderService.ts #   Payment provider abstraction
+│   ├── priceAnalysisService.ts  #   Competitive price analysis
+│   ├── priceHistoryService.ts   #   Price history records
+│   ├── priceTrackingService.ts  #   Price tracking service
+│   ├── priceTrackService.ts     #   User price alerts
+│   ├── productQuestionService.ts # Product Q&A service
+│   ├── productService.ts        #   Product CRUD + search + filtering
+│   ├── pushNotificationService.ts # Push notification dispatch
+│   ├── recommendationService.ts #   Product recommendation engine
+│   ├── reorderService.ts        #   Reorder/past purchase
+│   ├── returnService.ts         #   Return/refund processing
+│   ├── reviewService.ts         #   Product reviews + moderation
+│   ├── searchService.ts         #   Full-text product search
+│   ├── seedService.ts           #   Database seeding
+│   ├── sellerAnalyticsService.ts #   Seller analytics data
+│   ├── sellerApplicationService.ts # Seller application processing
+│   ├── sellerPayoutService.ts   #   Seller payout management
+│   ├── sellerRatingService.ts   #   Seller rating calculation
+│   ├── sellerService.ts         #   Seller profile + operations
+│   ├── sellerTierService.ts     #   Seller tier management
+│   ├── settingsService.ts       #   App settings
+│   ├── stockAlertService.ts     #   Low stock alerts
+│   ├── storageService.ts        #   Firebase Storage wrapper
+│   ├── supportService.ts        #   User support tickets
 │   ├── swRegistration.ts        #   Service worker registration
-│   └── appUpdateService.ts      #   PWA update notification
+│   ├── userService.ts           #   User profile operations
+│   ├── visualSearchService.ts   #   Image-based search
+│   └── webhookService.ts        #   Webhook dispatch
 │
 ├── lib/                         # Shared utilities and configuration
 │   ├── firebase.ts              #   Firebase client SDK init + error handling
@@ -307,7 +370,9 @@ server/
 ├── logger.ts                    # Structured JSON logger (zero-dependency)
 ├── declarations.d.ts            # Type declarations for packages missing @types/*
 ├── lib/
-│   └── validate.ts              # Request body validation middleware factory
+│   ├── validate.ts              # Request body validation middleware factory
+│   ├── schemas.ts               # Zod schemas for validation
+│   └── __tests__/               # Validation tests
 └── routes/
     ├── stripe.ts                # All Stripe endpoints + webhook handler
     ├── iyzico.ts                # Iyzico payment endpoints
@@ -324,15 +389,24 @@ All route modules export `register*` functions that receive the Express `app` in
 ```
 public/
 ├── favicon.ico                  # Favicon
+├── favicon.png                  # PNG favicon
+├── favicon-16.png               # 16px favicon
+├── favicon-32.png               # 32px favicon
+├── favicon-48.png               # 48px favicon
 ├── apple-touch-icon.png         # iOS home screen icon
 ├── robots.txt                   # Search engine crawling rules
 ├── sitemap.xml                  # SEO sitemap
+├── manifest.json                # PWA manifest
 ├── offline.html                 # PWA offline fallback page
 ├── firebase-messaging-sw.js     # Firebase push notification service worker
-├── icons/                       # PWA app icons (192px, 512px)
-│   ├── icon-192.png
-│   └── icon-512.png
-└── images/                      # Static image assets
+├── service-worker.js            # Service worker
+├── og-image.png                 # Open Graph share image
+├── logo.png                     # Site logo
+├── brand-bag.png                # Brand shopping bag icon
+├── modulus-pro-medium.otf       # Custom font
+└── icons/                       # PWA app icons (192px, 512px)
+    ├── icon-192.png
+    └── icon-512.png
 ```
 
 ---
@@ -355,6 +429,7 @@ scripts/
 | `tsconfig.json` | TypeScript (JSX react-jsx, ESNext, strictNullChecks + noImplicitAny enabled) |
 | `vitest.config.ts` | Unit test runner config (jsdom environment) |
 | `playwright.config.ts` | E2E test runner config |
+| `.prettierrc.json` | Prettier formatting rules |
 | `package.json` | `scripts.dev` = `tsx server.ts`, `scripts.build` = sitemap + vite build |
 
 ---
@@ -382,8 +457,8 @@ scripts/
 | Page components | `src/pages/` (55 files, React.lazy) |
 | UI components by domain | `src/components/{domain}/` |
 | Global state (React Context) | `src/context/` (8 providers) |
-| Data access services | `src/services/` (30+ files) |
-| Shared utilities | `src/lib/` (13 files) |
+| Data access services | `src/services/` (55 files) |
+| Shared utilities | `src/lib/` (12 files + tests) |
 | Custom hooks | `src/hooks/` (3 files) |
 | Type definitions | `src/types.ts` (7 domain sections) |
 | Mock data fixtures | `src/data/` (4 domain files) |
