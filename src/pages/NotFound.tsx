@@ -106,6 +106,7 @@ export function NotFound() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Ne aramıştınız?"
+          aria-label="Ne aramıştınız?"
           className="w-full bg-white dark:bg-zinc-900 border border-brand-primary/10 dark:border-white/10 rounded-2xl py-4 ps-12 pe-6 text-brand-primary dark:text-white placeholder:text-brand-primary/30 dark:placeholder:text-white/30 font-medium text-sm focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
         />
       </motion.form>

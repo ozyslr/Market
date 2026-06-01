@@ -139,11 +139,12 @@ export function Footer() {
             <p className="text-xs text-brand-primary/60 dark:text-white/60 mb-4 leading-relaxed">
               Kampanya ve fırsatlardan ilk siz haberdar olun.
             </p>
-            <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
+            <form onSubmit={(e) => e.preventDefault()} className="flex gap-2" role="form" aria-label="E-bülten aboneliği">
               <input
                 type="email"
                 required
                 placeholder="E-posta adresiniz"
+                aria-label="E-posta adresiniz"
                 className="flex-1 min-w-0 px-3 py-2 text-xs rounded-lg border border-brand-primary/10 dark:border-white/10 bg-white dark:bg-zinc-800 text-brand-primary dark:text-white placeholder:text-brand-primary/30 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-mercora-red/50"
               />
               <button
