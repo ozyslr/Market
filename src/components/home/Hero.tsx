@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, Globe, Zap, Sparkles, Play, ChevronLeft } from 'lucide-react';
+import { ChevronRight, Globe, Zap, Sparkles, Play, ChevronLeft, Percent } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
@@ -99,6 +99,19 @@ export function Hero() {
               lazy={false}
               referrerPolicy="no-referrer"
             />
+            {/* Animated background gradient pattern */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-blue-500/10"
+                animate={{ opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <motion.div
+                className="absolute -top-1/2 -start-1/2 w-full h-full bg-gradient-to-br from-accent/15 to-transparent rounded-full blur-3xl"
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+              />
+            </div>
             {/* Dark overlay for contrast if text is visible, but in TR e-commerce, the image ITSELF contains the campaign text usually.
                 We'll keep a soft gradient and text here for dynamic usage. */}
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent p-8 md:p-16 flex flex-col justify-center">
@@ -114,6 +127,22 @@ export function Hero() {
                     <span className="text-yellow-400">{SLIDES[current].subtitle}</span>
                   </h1>
                   <p className="text-white/90 text-sm md:text-base font-medium leading-relaxed drop-shadow-md">{SLIDES[current].desc}</p>
+                  <div className="flex gap-3 mt-4 md:mt-6">
+                    <Link
+                      to={`/search?category=${SLIDES[current].category}`}
+                      className="px-5 py-2.5 bg-mercora-red text-white text-xs font-bold uppercase rounded-xl hover:bg-red-600 transition-all shadow-lg inline-flex items-center gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {t('hero.cta') || 'Alışverişe Başla'} <ChevronRight size={14} />
+                    </Link>
+                    <Link
+                      to="/campaigns"
+                      className="px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white text-xs font-bold uppercase rounded-xl border border-white/30 hover:bg-white/30 transition-all inline-flex items-center gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Kampanyalar <Percent size={14} />
+                    </Link>
+                  </div>
                </motion.div>
             </div>
           </Link>
