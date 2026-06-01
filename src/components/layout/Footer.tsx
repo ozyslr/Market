@@ -45,9 +45,10 @@ export function Footer() {
         </div>
 
         {/* Link Sections */}
-        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-8 mb-16 px-4">
-          
-          <div className="xl:col-span-1 hidden xl:block">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-8 mb-16 px-4">
+
+          {/* Brand Column - xl only */}
+          <div className="hidden xl:block">
             <Link to="/" className="flex items-center gap-2 mb-6 group w-fit">
               <img
                 src="/brand-bag.png"
@@ -90,33 +91,33 @@ export function Footer() {
               ],
             },
             {
-              title: 'Hakkımızda',
+              title: 'Alışveriş',
               links: [
-                { label: 'Müşteri Hizmetleri', to: '/support' },
-                { label: 'Benim Olan Blog', to: '/' },
-                { label: 'Yatırımcı İlişkileri', to: '/' },
                 { label: 'Kampanyalar', to: '/campaigns' },
                 { label: 'Hediye Kartı', to: '/' },
-              ],
-            },
-            {
-              title: 'Yardım',
-              links: [
-                { label: 'SSS', to: '/faq' },
-                { label: 'Canlı Yardım', to: '/support' },
+                { label: 'Benim Olan Blog', to: '/' },
                 { label: 'Nasıl İade Ederim', to: '/faq' },
                 { label: 'İşlem Rehberi', to: '/' },
-                { label: 'Kullanım Koşulları', to: '/' },
               ],
             },
             {
-              title: 'Satış Yap',
+              title: 'Satıcı',
               links: [
                 { label: 'Satıcı Platformu', to: '/sell' },
                 { label: 'Benim Olan Akademi', to: '/' },
                 { label: 'Reklam Ver', to: '/' },
                 { label: 'İş Ortaklığı', to: '/' },
                 { label: 'Seller Center', to: '/seller/dashboard' },
+              ],
+            },
+            {
+              title: 'Yardım',
+              links: [
+                { label: 'Müşteri Hizmetleri', to: '/support' },
+                { label: 'SSS', to: '/faq' },
+                { label: 'Canlı Yardım', to: '/support' },
+                { label: 'Yatırımcı İlişkileri', to: '/' },
+                { label: 'Kullanım Koşulları', to: '/' },
               ],
             },
           ].map((section, i) => (
@@ -131,6 +132,28 @@ export function Footer() {
               </ul>
             </div>
           ))}
+
+          {/* Newsletter */}
+          <div>
+            <h4 className="font-bold text-sm mb-6 text-brand-primary dark:text-white">E-Bülten</h4>
+            <p className="text-xs text-brand-primary/60 dark:text-white/60 mb-4 leading-relaxed">
+              Kampanya ve fırsatlardan ilk siz haberdar olun.
+            </p>
+            <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
+              <input
+                type="email"
+                required
+                placeholder="E-posta adresiniz"
+                className="flex-1 min-w-0 px-3 py-2 text-xs rounded-lg border border-brand-primary/10 dark:border-white/10 bg-white dark:bg-zinc-800 text-brand-primary dark:text-white placeholder:text-brand-primary/30 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-mercora-red/50"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 text-xs font-bold text-white bg-mercora-red rounded-lg hover:bg-mercora-red/90 transition-colors whitespace-nowrap"
+              >
+                Abone Ol
+              </button>
+            </form>
+          </div>
         </div>
 
         {/* Bottom Banner */}
@@ -138,8 +161,8 @@ export function Footer() {
           <div className="flex gap-4">
             <span className="text-xs font-bold text-brand-primary/50 dark:text-white/50">Bizi Takip Edin:</span>
              <div className="flex gap-4">
-               {[Instagram, Twitter, Facebook, Youtube].map((Icon, i) => {
-                 const names = ['Instagram', 'Twitter', 'Facebook', 'Youtube'];
+               {[Twitter, Instagram, Facebook, Youtube].map((Icon, i) => {
+                 const names = ['Twitter/X', 'Instagram', 'Facebook', 'Youtube'];
                  return (
                  <a href="#" key={i} className="text-brand-primary/40 hover:text-mercora-red dark:text-white/40 dark:hover:text-mercora-red transition-colors" aria-label={names[i]}>
                    <Icon size={18} />
@@ -150,16 +173,17 @@ export function Footer() {
           </div>
           
           {/* Payment Providers Mock */}
-          <div className="flex gap-2 opacity-60 grayscale hover:grayscale-0 transition-all">
-             <div className="w-10 h-6 bg-brand-primary rounded border border-brand-primary/10 flex items-center justify-center text-white text-[8px] font-black italic">VISA</div>
-             <div className="w-10 h-6 bg-red-600 rounded border border-brand-primary/10 flex items-center justify-center text-white text-[8px] font-black">MC</div>
-             <div className="w-10 h-6 bg-blue-600 rounded border border-brand-primary/10 flex items-center justify-center text-white text-[8px] font-black italic">AMEX</div>
-             <div className="w-10 h-6 bg-gradient-to-r from-green-500 to-blue-500 rounded border border-brand-primary/10 flex items-center justify-center text-white text-[8px] font-black">TROY</div>
+          <div className="flex gap-2 opacity-60 grayscale hover:grayscale-0 transition-all flex-wrap justify-center">
+             <div className="w-10 h-6 bg-blue-700 rounded border border-brand-primary/10 flex items-center justify-center text-white text-[7px] font-black italic">VISA</div>
+             <div className="w-14 h-6 bg-red-600 rounded border border-brand-primary/10 flex items-center justify-center text-white text-[7px] font-black">Mastercard</div>
+             <div className="w-10 h-6 bg-gradient-to-r from-green-500 to-blue-500 rounded border border-brand-primary/10 flex items-center justify-center text-white text-[7px] font-black">TROY</div>
+             <div className="w-10 h-6 bg-purple-600 rounded border border-brand-primary/10 flex items-center justify-center text-white text-[7px] font-black">iyzico</div>
+             <div className="w-10 h-6 bg-indigo-600 rounded border border-brand-primary/10 flex items-center justify-center text-white text-[7px] font-black">Stripe</div>
           </div>
         </div>
         
         <div className="mt-8 text-center text-[10px] text-brand-primary/40 dark:text-white/40 font-medium pb-20 md:pb-0">
-          <p>© 2026 Benim Olan E-Ticaret A.Ş. Her Hakkı Saklıdır.</p>
+          <p>© 2026 Benim Olan. Tüm hakları saklıdır.</p>
           <p className="mt-1">Kayıtlı Elektronik Posta Adresi: benimolan@hs01.kep.tr | Mersis No: 0123456789000001</p>
         </div>
       </div>
