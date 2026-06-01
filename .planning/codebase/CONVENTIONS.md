@@ -7,7 +7,7 @@
 
 ## Code Style / Formatting
 
-- **No ESLint or Prettier configuration.** The project has no `.eslintrc*` or `.prettierrc*` files. The only lint-like check is `tsc --noEmit` (run via `npm run lint`), which performs TypeScript type-checking without emitting output.
+- **ESLint and Prettier configured.** `.eslintrc.json` (ESLint 10) and `.prettierrc.json` at project root. The `npm run lint` script runs `tsc --noEmit` for type-checking.
 - **Vite build pipeline** uses `@vitejs/plugin-react` with `@tailwindcss/vite` for CSS. The `vite.config.ts` defines a `@/` path alias mapping to `./src`.
 - **CSS approach:** Tailwind CSS v4 via the Vite plugin. The `cn()` utility (`src/lib/utils.ts`) wraps `clsx` and `tailwind-merge` for conditional class merging.
 - **File extension convention:** Components — `.tsx`, pure logic/services — `.ts`, tests — `.test.tsx` or `.test.ts`.
@@ -20,7 +20,7 @@
   - Target: `ES2022`
   - Module: `ESNext` with `bundler` resolution
   - JSX: `react-jsx`
-  - `strict: true` is **not** set (no strict null checks, no strict function types, etc.)
+  - `strict: true` is enabled (includes strictNullChecks, strict function types, etc.)
   - `skipLibCheck: true`, `isolatedModules: true`
   - `noEmit: true`
   - Path alias: `@/*` mapped to `./src/*`
@@ -147,13 +147,20 @@ src/
   App.tsx               — Root component, routing, context providers
   main.tsx              — Entry point, Sentry + Analytics init
   components/
-    commerce/           — Product cards, recommendations, comparison, etc.
-    common/             — Breadcrumb, OptimizedImage, SEO, CookieConsent, etc.
-    layout/             — Navbar, Footer, SellerLayout
-    ui/                 — Skeleton loaders, base UI primitives
     ai/                 — ShoppingAssistant
     chat/               — LiveChatWidget
     checkout/           — Payment components
+    commerce/           — Product cards, recommendations, comparison, etc.
+    common/             — Breadcrumb, OptimizedImage, SEO, CookieConsent, etc.
+    home/               — Hero component
+    layout/             — Navbar, Footer, SellerLayout
+    location/           — DeliveryLocationSelector
+    marketing/          — CampaignBanner
+    product/            — Product gallery, reviews, Q&A, delivery box, etc.
+    profile/            — ProfileSettings, ReturnRequestModal, SavedPaymentMethod
+    seller/             — ProductForm, CSVImportPanel, BulkEditBar, CategorySelect, etc.
+    seo/                — JsonLd, schema.org types
+    ui/                 — Skeleton loaders, base UI primitives
   context/              — React Context providers
   hooks/                — Custom hooks
   lib/                  — Firebase init, sentry, analytics, utils, validators

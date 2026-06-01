@@ -123,9 +123,9 @@ O:\AI\E-tic 2026\
     App.tsx              — Root component (Router + context providers)
     index.css            — Tailwind v4 base + @theme customisations
     lib/                 — Shared utilities (firebase, auth middleware, sentry, gemini, analytics, etc.)
-    services/            — 35+ service modules (Firestore CRUD, external APIs)
+    services/            — 55+ service modules (Firestore CRUD, external APIs)
     context/             — React context providers (Language, Auth, Cart, Wishlist, etc.)
-    components/          — UI components
+    components/          — UI components (layout, commerce, product, checkout, location, seller, profile, seo, ui, etc.)
     pages/               — Route page components
     types/               — TypeScript type definitions
   server/

@@ -61,9 +61,10 @@ Third-party/automated seller access via `GET /api/v1/*` with API key authenticat
 ## 3. Architectural Layers
 
 ### Presentation Layer
-- **Pages** (`src/pages/`): 55+ page components each mapping to a React Router route. Covers buyer (Home, ProductDetail, Cart, Checkout, etc.), seller (Dashboard, Inventory, Orders, Finance, etc.), and admin (Dashboard, Products, Users, CMS, etc.) flows.
+- **Pages** (`src/pages/`): 65+ page components each mapping to a React Router route. Covers buyer (Home, ProductDetail, Cart, Checkout, etc.), seller (Dashboard, Inventory, Orders, Finance, etc.), and admin (Dashboard, Products, Users, CMS, etc.) flows.
 - **Components** (`src/components/`): Reusable UI components organized by domain:
   - `layout/` -- Navbar, Footer, MobileMenu, MegaMenu, SearchBar, AuthModal, etc.
+  - `location/` -- DeliveryLocationSelector with province/district cascade.
   - `commerce/` -- ProductCard, ProductCarousel, FilterPanel, ComparisonBar, StoryBar, ARViewer, etc.
   - `product/` -- ProductGallery, ReviewCard, RatingSummary, DeliveryBox, InstallmentTable, etc.
   - `checkout/` -- IyzicoPayment, ManualPayment, PaymentMethodSelector, OneClickSuccessModal.
@@ -71,6 +72,10 @@ Third-party/automated seller access via `GET /api/v1/*` with API key authenticat
   - `home/` -- Hero component.
   - `ai/` -- ShoppingAssistant (AI chat integration).
   - `chat/` -- LiveChatWidget.
+  - `profile/` -- ProfileSettings, ReturnRequestModal, SavedPaymentMethod.
+  - `seller/` -- ProductForm, CSVImportPanel, BulkEditBar, CategorySelect, etc.
+  - `seo/` -- JsonLd structured data, schema.org types.
+  - `ui/` -- Skeleton loaders.
   - `marketing/` -- CampaignBanner.
 
 ### Business Logic / State Management Layer
@@ -87,7 +92,7 @@ Third-party/automated seller access via `GET /api/v1/*` with API key authenticat
 - **Hooks** (`src/hooks/`): Custom React hooks (`useComparison`, `useExchangeRate`, `useOneClickCheckout`).
 
 ### Data Access / Service Layer
-- **Services** (`src/services/`): ~30+ service modules encapsulating Firestore read/write operations:
+- **Services** (`src/services/`): ~55 service modules encapsulating Firestore read/write operations:
   - `productService.ts` -- product CRUD, search, filtering
   - `orderService.ts` -- order lifecycle
   - `reviewService.ts` -- reviews and ratings
@@ -109,6 +114,10 @@ Third-party/automated seller access via `GET /api/v1/*` with API key authenticat
   - `turkeyLocations.ts` -- Turkish province/district data
   - `csvTemplate.ts` -- CSV import templates
   - `storage.ts` -- Firebase Storage helper
+  - `utils.ts` -- `cn()` class merge utility
+- **Server Lib** (`server/lib/`): Validation utilities:
+  - `validate.ts` -- Zod-based request body validation middleware factory
+  - `schemas.ts` -- Shared Zod schemas for payment, auth, and seller API validation
 
 ---
 

@@ -30,20 +30,36 @@
 ```
 src/lib/__tests__/
 ├── authMiddleware.test.ts
-└── serverValidators.test.ts
+├── serverValidators.test.ts
+└── utils.test.ts
 
-src/components/__tests__/
-├── CookieConsent.test.tsx
-└── SimpleProductCard.test.tsx
+src/components/common/__tests__/
+├── Breadcrumb.test.tsx
+└── OptimizedImage.test.tsx
+
+src/components/ui/__tests__/
+└── Skeleton.test.tsx
 
 src/context/__tests__/
+├── AuthContext.test.tsx
 └── LanguageContext.test.tsx
 
+server/lib/__tests__/
+└── validate.test.ts
+
 server/__tests__/
-└── exchangeRate.test.ts
+├── exchangeRate.test.ts
+└── logger.test.ts
 
 src/services/__tests__/
-└── exchangeRate.test.ts
+├── campaignService.test.ts
+├── cartService.test.ts
+├── couponService.test.ts
+├── exchangeRate.test.ts
+├── notificationService.test.ts
+├── priceTrackingService.test.ts
+├── reorderService.test.ts
+└── stockAlertService.test.ts
 
 e2e/__tests__/
 ├── homepage.spec.ts
@@ -52,7 +68,7 @@ e2e/__tests__/
 └── pwa.spec.ts
 ```
 
-**5 `__tests__/` directories** across the codebase.
+**9 `__tests__/` directories** across the codebase.
 
 Additional test utilities live in:
 - `src/test/setup.ts` — global test setup (jsdom, mocks, cleanup)
@@ -116,11 +132,9 @@ E2E test browser configuration supports multiple viewports and RTL testing (Arab
 ## CI Integration
 
 **GitHub Actions** (`.github/workflows/`):
-- **Type-check + build** run on every push/PR — only `tsc --noEmit` and `vite build`
-- **Unit tests (vitest) are NOT run in CI** — only local execution
+- **Type-check + build** run on every push/PR — `npm test` (vitest), `tsc --noEmit`, and `vite build`
+- **Unit tests (vitest) run in CI** on every push/PR
 - **E2E tests** scheduled on weekdays (not per-commit), using Playwright
-
-This means the CI pipeline does not catch test regressions automatically.
 
 ## Coverage Configuration
 
@@ -137,31 +151,45 @@ No minimum coverage threshold is configured. Coverage is opt-in via `npm run tes
 |------|--------|-------|
 | Auth middleware | Yes | `src/lib/__tests__/authMiddleware.test.ts` |
 | Server validators | Yes | `src/lib/__tests__/serverValidators.test.ts` |
-| Cookie consent | Yes | `src/components/__tests__/CookieConsent.test.tsx` |
-| Simple product card | Yes | `src/components/__tests__/SimpleProductCard.test.tsx` |
+| Utils | Yes | `src/lib/__tests__/utils.test.ts` |
+| Breadcrumb | Yes | `src/components/common/__tests__/Breadcrumb.test.tsx` |
+| OptimizedImage | Yes | `src/components/common/__tests__/OptimizedImage.test.tsx` |
+| Skeleton | Yes | `src/components/ui/__tests__/Skeleton.test.tsx` |
+| AuthContext | Yes | `src/context/__tests__/AuthContext.test.tsx` |
 | Language context | Yes | `src/context/__tests__/LanguageContext.test.tsx` |
+| Validate middleware | Yes | `server/lib/__tests__/validate.test.ts` |
+| Server logger | Yes | `server/__tests__/logger.test.ts` |
 | Exchange rate (server) | Yes | `server/__tests__/exchangeRate.test.ts` |
+| Cart service | Yes | `src/services/__tests__/cartService.test.ts` |
+| Campaign service | Yes | `src/services/__tests__/campaignService.test.ts` |
+| Coupon service | Yes | `src/services/__tests__/couponService.test.ts` |
+| Notification service | Yes | `src/services/__tests__/notificationService.test.ts` |
+| Price tracking service | Yes | `src/services/__tests__/priceTrackingService.test.ts` |
+| Reorder service | Yes | `src/services/__tests__/reorderService.test.ts` |
+| Stock alert service | Yes | `src/services/__tests__/stockAlertService.test.ts` |
 | Exchange rate (service) | Yes | `src/services/__tests__/exchangeRate.test.ts` |
+| One-click checkout | Yes | `src/test/oneClickCheckoutService.test.ts` |
+| Type definitions | Yes | `src/test/types.test.ts` |
 | E2E critical flows | Yes | 4 specs in `e2e/__tests__/` |
 
-**8 unit test files** across the full codebase.
+**18 unit test files** across the full codebase.
 
 ## What's NOT Tested
 
 | Area | Gap |
 |------|-----|
-| **40+ services** | `productService`, `orderService`, `reviewService`, `searchService`, `cartService`, `paymentService`, `returnService`, `adService`, `chatService`, `notificationService`, and ~30 more — zero unit tests |
-| **All pages** | 55+ page components (`src/pages/`) — zero component tests |
-| **All context providers** | 7 of 8 contexts untested (only `LanguageContext` tested) |
+| **~40 services untested** | `productService`, `orderService`, `reviewService`, `searchService`, `paymentService`, `returnService`, `adService`, and ~33 more — zero tests. 8 services newly tested |
+| **All pages** | 65+ page components (`src/pages/`) — zero component tests |
+| **Most context providers** | 6 of 8 contexts untested (AuthContext + LanguageContext tested) |
 | **Custom hooks** | No dedicated hook tests |
 | **Payment flows** | Stripe and Iyzico routes have no tests |
 | **Firestore integration** | No integration tests for database operations |
-| **Server routes** | Only exchange rate tested; stripe, iyzico, seller API routes untested |
-| **Admin pages** | `AdminReturns`, `AdminSellers`, `AdminDashboard` — untested |
+| **Server routes** | Only logger and validate tested; stripe, iyzico, seller API routes untested |
+| **Admin pages** | All admin pages — untested |
 
 ## Summary
 
-- **Test count:** 8 unit test files + 4 E2E specs = ~20 total test cases
-- **Test-to-source ratio:** Very low — testing covers ~2% of source files
-- **CI test gap:** Unit tests not enforced in CI pipeline
+- **Test count:** 18 unit test files + 4 E2E specs = ~40 total test cases
+- **Test-to-source ratio:** Low — testing covers ~5% of source files
+- **CI:** Unit tests (vitest) run on every push/PR via `npm test` ⚠️ Coverage not enforced
 - **Coverage:** No minimum threshold, opt-in only
