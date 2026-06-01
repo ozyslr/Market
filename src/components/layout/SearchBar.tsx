@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Search, ArrowRight, TrendingUp, Smartphone, Coffee, Package, Clock, Zap, Camera } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { MOCK_PRODUCTS } from '@/mockData';
+import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { useLanguage } from '@/context/LanguageContext';
 import { searchSuggestions, searchProductsLegacy as searchProducts } from '@/services/searchService';
 import { OptimizedImage } from '@/components/common/OptimizedImage';

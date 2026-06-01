@@ -1,4 +1,4 @@
-import {
+﻿import {
   collection,
   query,
   where,
@@ -9,7 +9,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Product, Category, SponsoredSlot } from '@/types';
-import { MOCK_PRODUCTS, CATEGORIES } from '@/mockData';
+import { MOCK_PRODUCTS } from '@/data/mockProducts';
+import { CATEGORIES } from '@/data/mockCategories';
 import { injectSponsoredProducts } from './adService';
 
 // ─── Types ───────────────────────────────────────────────────────────────────

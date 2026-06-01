@@ -1,4 +1,4 @@
-import React, { FormEvent, useState, useEffect } from 'react';
+﻿import React, { FormEvent, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ShieldCheck, Truck, CreditCard, ChevronRight, CheckCircle2, Loader2, MapPin, Search, Plus, Check, Download, Building2 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
@@ -6,7 +6,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MOCK_PRODUCTS } from '@/mockData';
+import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { createOrder, getOrderById } from '@/services/orderService';
 import { decreaseProductStock, validateCartStock } from '@/services/productService';
 import { addAddress } from '@/services/userService';

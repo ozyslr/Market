@@ -1,4 +1,4 @@
-import { 
+﻿import { 
   ArrowRight, Sparkles, Zap, Shield, Globe, 
   ChevronLeft, ChevronRight, ShoppingBag, 
   Flame, Percent, Trophy, Heart, Star, Mail, User,
@@ -9,7 +9,8 @@ import {
 import React, { useRef, useState, useEffect } from 'react';
 import { Hero } from '@/components/home/Hero';
 import { ProductCard } from '@/components/commerce/ProductCard';
-import { MOCK_PRODUCTS, CATEGORIES } from '@/mockData';
+import { MOCK_PRODUCTS } from '@/data/mockProducts';
+import { CATEGORIES } from '@/data/mockCategories';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';

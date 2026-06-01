@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -10,7 +10,7 @@ import { Plus, Edit, Trash2, X, Loader2, ToggleLeft, ToggleRight, ChevronUp, Che
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '@/context/LanguageContext';
 import { cn } from '@/lib/utils';
-import { CATEGORIES as MOCK_CATEGORIES } from '@/mockData';
+import { CATEGORIES as MOCK_CATEGORIES } from '@/data/mockCategories';
 
 function normName(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9ğüşöçı]/g, '');

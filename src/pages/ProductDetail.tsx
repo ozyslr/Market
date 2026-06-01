@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+﻿import React, { useState, useEffect, Suspense } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -8,7 +8,7 @@ import {
   AlertCircle, MessageSquare,
   TrendingUp, Tag, Copy, BellRing, Smartphone, Zap as ZapIcon, Facebook, Twitter,
 } from 'lucide-react';
-import { MOCK_PRODUCTS } from '@/mockData';
+import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { useLocationStore } from '@/context/LocationContext';

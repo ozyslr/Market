@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { getUsers, updateUser, deleteUser, suspendUser, banUser, unrestrictUser, setAdminNote } from '@/services/userService';
 import { User, UserRole } from '@/types';
 import { Trash2, User as UserIcon, Loader2, X, Search, ChevronDown, ShoppingBag } from 'lucide-react';
-import { MOCK_USER } from '@/mockData';
+import { MOCK_USER } from '@/data/mockUser';
 import { cn } from '@/lib/utils';
 
 const ROLES: UserRole[] = ['buyer', 'seller', 'moderator', 'admin'];

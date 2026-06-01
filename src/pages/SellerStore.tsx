@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Star, MapPin, Globe, CheckCircle, Package,
@@ -7,7 +7,9 @@ import {
   Zap, ArrowRight, Award, History
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MOCK_PRODUCTS, MOCK_USER, MOCK_SELLERS } from '@/mockData';
+import { MOCK_PRODUCTS } from '@/data/mockProducts';
+import { MOCK_USER } from '@/data/mockUser';
+import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';

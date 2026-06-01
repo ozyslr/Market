@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Trash2, Plus, Minus, ShieldCheck, Truck,
   HelpCircle, ChevronRight, Heart, Sparkles,
@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MOCK_PRODUCTS } from '@/mockData';
+import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { cn } from '@/lib/utils';
 import { ProductVariant } from '@/types';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';

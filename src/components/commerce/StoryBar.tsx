@@ -1,7 +1,7 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/context/LanguageContext';
-import { CATEGORIES } from '@/mockData';
+import { CATEGORIES } from '@/data/mockCategories';
 import { cn } from '@/lib/utils';
 import { 
   Smartphone, Shirt, Home, ShoppingBasket, 

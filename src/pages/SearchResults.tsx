@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   Filter, Search as SearchIcon, Star,
@@ -7,7 +7,7 @@ import {
   ArrowRight, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MOCK_PRODUCTS } from '@/mockData';
+import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { getCategories } from '@/services/productService';
 import { getFacetedFilters } from '@/services/searchService';
 import { Category, FilterAttribute, Product } from '@/types';

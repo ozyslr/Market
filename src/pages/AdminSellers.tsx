@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getSellers, updateSeller } from '@/services/userService';
 import { createNotification } from '@/services/notificationService';
@@ -13,7 +13,7 @@ import {
   ShieldCheck, ShieldOff, Edit2, Check, X, Package, ChevronRight,
   FileText, DollarSign, TrendingUp, Plus, Save, Medal,
 } from 'lucide-react';
-import { MOCK_SELLERS } from '@/mockData';
+import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
 
 const KYC_BADGE: Record<string, { label: string; cls: string }> = {

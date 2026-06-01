@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   Menu, ChevronRight, Zap, Package,
   Smartphone, Shirt, User, Home, ShoppingBasket, Sparkles, Baby, Dog, Mountain,
@@ -7,7 +7,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { CATEGORIES } from '@/mockData';
+import { CATEGORIES } from '@/data/mockCategories';
 import { useLanguage } from '@/context/LanguageContext';
 import { Category } from '@/types';
 

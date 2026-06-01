@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Package, Heart, MapPin, Settings, Star, ShoppingBag,
   TrendingUp, Wallet, Zap, LayoutDashboard, ArrowRight,
@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { MOCK_PRODUCTS, MOCK_SELLERS } from '@/mockData';
+import { MOCK_PRODUCTS } from '@/data/mockProducts';
+import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
