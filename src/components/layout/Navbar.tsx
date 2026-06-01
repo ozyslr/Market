@@ -7,7 +7,7 @@ import {
   Smartphone, Shirt, Home, ShoppingBasket, Sparkles, Baby, Dog, Mountain, Coffee, Clock,
   BookOpen, Gamepad2, Car, Wrench,
   Mail, Lock, Eye, EyeOff, UserPlus, Bell, CheckCheck,
-  MessageSquare
+  MessageSquare, Percent,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -490,6 +490,7 @@ export function Navbar() {
               { name: 'Yeni Gelenler', path: '/collection/new-arrivals' },
               { name: 'Flash Fırsatları', path: '/collection/flash-deals' },
               { name: 'Öne Çıkanlar', path: '/collection/featured' },
+              { name: 'Kampanyalar', path: '/campaigns' },
               { name: 'Benim Olan Prime', path: '/search?delivery=prime' },
               { name: 'Gift Finder', path: '/search?tag=gift' },
             ].map((item, i) => (

@@ -53,6 +53,7 @@ const UserSupport = named(() => import('./pages/UserSupport'), 'UserSupport');
 const VisualSearch = named(() => import('./pages/VisualSearch'), 'VisualSearch');
 const ProductVerification = named(() => import('./pages/ProductVerification'), 'ProductVerification');
 const MessageCenter = named(() => import('./pages/MessageCenter'), 'MessageCenter');
+const Campaigns = named(() => import('./pages/Campaigns'), 'Campaigns');
 const NotFound = named(() => import('./pages/NotFound'), 'NotFound');
 
 // Seller pages
@@ -183,6 +184,7 @@ export default function App() {
                       <Route path="/" element={<Home />} />
                       <Route path="/product/:slug" element={<ProductDetail />} />
                       <Route path="/cart" element={<CartPage />} />
+                      <Route path="/campaigns" element={<Campaigns />} />
                       <Route path="/checkout" element={<CheckoutPage />} />
                       <Route path="/moderator" element={<ModeratorDashboard />} />
                       <Route path="/seller/:id" element={<SellerStorePage />} />
