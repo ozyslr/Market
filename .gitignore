@@ -19,6 +19,9 @@ coverage/
 *service-account*.json
 *serviceAccount*.json
 
+# Claude AI worktrees — ephemeral agent isolation
+.claude/worktrees/
+
 # Design source files (not for web deployment)
 design/
 public/*.cdr

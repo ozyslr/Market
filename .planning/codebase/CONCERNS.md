@@ -20,7 +20,7 @@
 
 - **`lint` script is `tsc --noEmit` only.** ❌ **HALF-RESOLVED** — `.eslintrc.json` added (2026-05-31) with ESLint configuration, but wire-up to `lint` script is incomplete.
 
-- **34 packages misplaced in `dependencies` vs `devDependencies`.** ❌ **Unresolved.** Build/lint/type tooling in production deps: `eslint`, `@types/papaparse`, `@vitejs/plugin-react`, `@tailwindcss/vite`, `vite`, `cors`, `dotenv`, `express`, `express-rate-limit`, `helmet`, `tsx`, and more. Only server runtime should be in `dependencies`.
+- **34 packages misplaced in `dependencies` vs `devDependencies`.** ✅ **RESOLVED** (2026-06-01) — All build/lint/type tooling already in devDependencies. Only misplaced package was `@testing-library/dom` (test utility), moved to devDependencies. The listed server packages (`cors`, `express`, `helmet`, etc.) are correctly in `dependencies` as runtime deps.
 
 ### Medium
 
@@ -156,7 +156,7 @@ Only 4 markers found, all benign Turkish placeholder text:
 
 ### High
 
-- **`@dnd-kit/sortable ^10.0.0` vs `@dnd-kit/core ^6.3.1`** -- a 4-major-version gap. Likely runtime incompatibility.
+- **`@dnd-kit/sortable ^10.0.0` vs `@dnd-kit/core ^6.3.1`** -- a 4-major-version gap in semver range, but npm resolves correctly at install time: `sortable@10.0.0` lists `@dnd-kit/core@^6.x` as a peer dependency. ✅ **FALSE POSITIVE — no action needed.**
 
 ### Medium
 
@@ -198,17 +198,17 @@ Only 4 markers found, all benign Turkish placeholder text:
 
 | Category | Critical | High | Medium | Low |
 |----------|----------|------|--------|-----|
-| Technical Debt | 0 | 2 | 1 | 0 |
+| Technical Debt | 0 | 0 | 1 | 0 |
 | Security | 1 | 2 | 2 | 0 |
 | Performance | 0 | 0 | 1 | 2 |
 | Fragile Areas | 0 | 1 | 2 | 1 |
 | Known Issues | 0 | 0 | 0 | 4 |
 | Missing Infrastructure | 0 | 1 | 1 | 2 |
-| Dependency Risks | 0 | 1 | 2 | 3 |
+| Dependency Risks | 0 | 0 | 2 | 3 |
 | Architectural | 0 | 1 | 2 | 2 |
-| **Total** | **1** | **8** | **11** | **14** |
+| **Total** | **1** | **6** | **11** | **14** |
 
-**Resolved since initial audit (2026-05-31):** 13 items (4 critical, 7 high, 2 medium)
+**Resolved since initial audit (2026-05-31):** 15 items (4 critical, 7 high, 2 medium, 1 false positive, 1 HALF-resolved)→✅
 - ✅ GEMINI_API_KEY removed from Vite define
 - ✅ mockData.ts refactored (3,735 → 10 lines)
 - ✅ LanguageContext.tsx extracted (1,434 → 102 lines)
@@ -222,10 +222,12 @@ Only 4 markers found, all benign Turkish placeholder text:
 - ✅ 10 new test files added (8 → 18)
 - ✅ Gemini proxy route extracted
 - ✅ package.json name fixed (`"react-example"` → `"benim-olan"`)
+- ✅ Structured logging upgraded to pino + pino-http (2026-06-01)
+- ✅ @dnd-kit version gap: false positive — npm resolves correctly at install time
+- ✅ Dependencies split: `@testing-library/dom` moved to devDependencies; server runtime deps correctly placed
 
-**Top 5 remaining priorities:**
-1. Add structured logging (winston/pino) to server
-2. Resolve `@dnd-kit/sortable ^10.0.0` vs `@dnd-kit/core ^6.3.1` version gap
-3. Split dependencies into `dependencies` vs `devDependencies` correctly
-4. Increase test coverage with minimum threshold in CI
-5. Extract `LanguageContext.tsx` translations into per-locale JSON files (Critical -- tech debt / performance)
+**Top 4 remaining priorities:**
+1. Increase test coverage with minimum threshold in CI
+2. Extract `LanguageContext.tsx` translations into per-locale JSON files (Critical -- tech debt / performance)
+3. Add pre-commit hooks (husky/lint-staged)
+4. Set up Dependabot / Renovate for automated dependency updates

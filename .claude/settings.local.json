@@ -84,7 +84,8 @@
       "Bash(bun --version)",
       "PowerShell($b = Get-Command bun -ErrorAction SilentlyContinue; if \\($b\\) { \"FOUND: $\\($b.Source\\)\"; bun --version } else { \"BUN NOT FOUND in PowerShell PATH\" })",
       "PowerShell(powershell -c \"irm bun.sh/install.ps1 | iex\")",
-      "Bash(gh run *)"
+      "Bash(gh run *)",
+      "Bash(git rm *)"
     ],
     "additionalDirectories": [
       "O:\\AI\\E-tic 2026\\docs\\superpowers"
