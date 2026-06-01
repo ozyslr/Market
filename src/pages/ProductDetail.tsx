@@ -109,7 +109,13 @@ export function ProductDetail() {
   }, []);
 
   useEffect(() => {
-    if (product?.id) setViewers(Math.floor(Math.random() * 14) + 2);
+    if (!product?.id) return;
+    // Initial random viewer count + periodic refresh every 15s
+    setViewers(Math.floor(Math.random() * 14) + 2);
+    const interval = setInterval(() => {
+      setViewers(Math.floor(Math.random() * 14) + 2);
+    }, 15_000);
+    return () => clearInterval(interval);
   }, [product?.id]);
 
   useEffect(() => {
