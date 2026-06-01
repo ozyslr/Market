@@ -1,26 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock Firebase modules
-const mockGetDocs = vi.fn();
-const mockSetDoc = vi.fn();
-const mockUpdateDoc = vi.fn();
-const mockDeleteDoc = vi.fn();
-const mockDoc = vi.fn();
-const mockCollection = vi.fn();
-const mockQuery = vi.fn();
-const mockWhere = vi.fn();
-const mockIncrement = vi.fn((n: number) => n);
-const mockServerTimestamp = vi.fn(() => 'SERVER_TIMESTAMP');
-const mockHandleFirestoreError = vi.fn();
+// All mocks must use vi.hoisted() because vi.mock is hoisted to top of file
+const {
+  mockGetDocs, mockSetDoc, mockUpdateDoc, mockDeleteDoc,
+  mockDoc, mockCollection, mockQuery, mockWhere,
+  mockIncrement, mockServerTimestamp, mockHandleFirestoreError,
+} = vi.hoisted(() => ({
+  mockGetDocs: vi.fn(),
+  mockSetDoc: vi.fn(),
+  mockUpdateDoc: vi.fn(),
+  mockDeleteDoc: vi.fn(),
+  mockDoc: vi.fn(),
+  mockCollection: vi.fn(),
+  mockQuery: vi.fn(),
+  mockWhere: vi.fn(),
+  mockIncrement: vi.fn((n: number) => n),
+  mockServerTimestamp: vi.fn(() => 'SERVER_TIMESTAMP' as const),
+  mockHandleFirestoreError: vi.fn(),
+}));
 
 vi.mock('firebase/firestore', () => ({
   getFirestore: () => ({}),
-  getDocs: (...args: any[]) => mockGetDocs(...args),
-  setDoc: (...args: any[]) => mockSetDoc(...args),
-  updateDoc: (...args: any[]) => mockUpdateDoc(...args),
-  deleteDoc: (...args: any[]) => mockDeleteDoc(...args),
-  doc: (...args: any[]) => mockDoc(...args),
-  collection: (...args: any[]) => mockCollection(...args),
+  getDocs: mockGetDocs,
+  setDoc: mockSetDoc,
+  updateDoc: mockUpdateDoc,
+  deleteDoc: mockDeleteDoc,
+  doc: mockDoc,
+  collection: mockCollection,
   query: mockQuery,
   where: mockWhere,
   increment: mockIncrement,
@@ -29,7 +35,7 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('../../lib/firebase', () => ({
   db: {},
-  handleFirestoreError: (...args: any[]) => mockHandleFirestoreError(...args),
+  handleFirestoreError: mockHandleFirestoreError,
   OperationType: { CREATE: 'create', UPDATE: 'update', DELETE: 'delete', LIST: 'list' },
   auth: { currentUser: null },
 }));
