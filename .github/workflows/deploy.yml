@@ -4,10 +4,16 @@ on:
   push:
     branches: [master]
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Deploy to Firebase Hosting
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
