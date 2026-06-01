@@ -6,6 +6,7 @@ interface DeliveryBoxProps {
   onChangeLocation: () => void;
   hasExpressShipping?: boolean;
   freeShipping?: boolean;
+  estimatedDeliveryDays?: number;
 }
 
 const CARGO_COMPANIES = ['Yurtiçi Kargo', 'MNG Kargo', 'PTT Kargo', 'Aras Kargo'];
@@ -25,9 +26,20 @@ function getEstimatedDate(): string {
   return `${next.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })} kargoya verilir`;
 }
 
-export function DeliveryBox({ locationLabel, onChangeLocation, hasExpressShipping, freeShipping }: DeliveryBoxProps) {
+export function DeliveryBox({ locationLabel, onChangeLocation, hasExpressShipping, freeShipping, estimatedDeliveryDays }: DeliveryBoxProps) {
   const cargoCompany = React.useMemo(() => getCargoCompany(), []);
   const estimatedDate = React.useMemo(() => getEstimatedDate(), []);
+
+  const deliveryRange = React.useMemo(() => {
+    if (!estimatedDeliveryDays || estimatedDeliveryDays <= 0) return null;
+    const start = new Date();
+    start.setDate(start.getDate() + 1);
+    const end = new Date();
+    end.setDate(end.getDate() + estimatedDeliveryDays);
+    const fmt = (d: Date) =>
+      d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+    return `${fmt(start)} - ${fmt(end)}`;
+  }, [estimatedDeliveryDays]);
 
   return (
     <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-3">
@@ -49,9 +61,19 @@ export function DeliveryBox({ locationLabel, onChangeLocation, hasExpressShippin
       <div className="border-t border-brand-primary/5 pt-3 space-y-2.5">
         <div className="flex items-start gap-2.5">
           <Truck size={15} className="text-green-500 shrink-0 mt-0.5" />
-          <div>
+          <div className="flex-1">
             <p className="text-xs font-black text-brand-primary">{cargoCompany} ile</p>
             <p className="text-[10px] font-bold text-green-600 mt-0.5">{estimatedDate}</p>
+            {deliveryRange && (
+              <p className="text-[10px] font-bold text-green-700 mt-0.5">
+                Tahmini Teslimat: {deliveryRange}
+              </p>
+            )}
+            {estimatedDeliveryDays !== undefined && estimatedDeliveryDays <= 2 && (
+              <span className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] font-black uppercase rounded">
+                Hızlı Teslimat
+              </span>
+            )}
           </div>
         </div>
 
@@ -71,6 +93,7 @@ export function DeliveryBox({ locationLabel, onChangeLocation, hasExpressShippin
             <div>
               <p className="text-xs font-black text-accent">Hızlı Teslimat</p>
               <p className="text-[10px] font-bold text-brand-primary/50 mt-0.5">Aynı gün kargo</p>
+              <p className="text-[10px] font-bold text-accent mt-0.5">Express kargo mevcut</p>
             </div>
           </div>
         )}

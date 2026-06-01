@@ -27,6 +27,7 @@ import { OtherSellers } from '@/components/product/OtherSellers';
 import { DeliveryBox } from '@/components/product/DeliveryBox';
 import { InstallmentTable } from '@/components/product/InstallmentTable';
 import { StickyBuyBar } from '@/components/product/StickyBuyBar';
+import { TrustBadges } from '@/components/product/TrustBadges';
 import { QASection } from '@/components/product/QASection';
 import { VariantSelector } from '@/components/product/VariantSelector';
 import { SocialProofBar } from '@/components/product/SocialProofBar';
@@ -653,6 +654,9 @@ export function ProductDetail() {
               );
             })()}
 
+            {/* Trust Badges */}
+            <TrustBadges />
+
             {/* Delivery & Trust */}
             <DeliveryBox
               locationLabel={selectedLocation}
@@ -909,6 +913,9 @@ export function ProductDetail() {
               onAddToCart={(variantId) => addItem(product.id, quantity, variantId)}
               onBuyNow={canOneClick ? handleBuyNow : undefined}
               oneClickLoading={oneClickLoading}
+              onQuantityChange={setQuantity}
+              isFavorited={isWishlisted(product.id)}
+              onToggleFavorite={() => toggleWishlist(product.id)}
             />
 
       {/* AR Viewer Modal */}
