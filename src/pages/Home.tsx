@@ -25,6 +25,7 @@ import { getRecentViewedIds } from '@/services/behaviorService';
 import { getAllRecommendations, RecommendationGroup } from '@/services/recommendationService';
 import { ProductRecommendations } from '@/components/commerce/ProductRecommendations';
 import { CampaignBanner } from '@/components/marketing/CampaignBanner';
+import { DeliveryLocationSelector } from '@/components/location/DeliveryLocationSelector';
 import { ProductGridSkeleton } from '@/components/ui/Skeleton';
 
 const CountdownTimer = ({ hours = 5, minutes = 42, seconds = 18, endTime }: { hours?: number; minutes?: number; seconds?: number; endTime?: string }) => {
@@ -343,6 +344,16 @@ export function Home() {
                  ))}
               </div>
            </div>
+        </div>
+      </div>
+
+      {/* Delivery Location Bar */}
+      <div className="max-w-[1700px] mx-auto px-4 md:px-6 mb-4">
+        <div className="flex items-center gap-3">
+          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#1A1033]/30 dark:text-zinc-400 shrink-0">
+            Teslimat Konumu
+          </span>
+          <DeliveryLocationSelector variant="inline" />
         </div>
       </div>
 
