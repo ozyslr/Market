@@ -85,10 +85,14 @@
       "PowerShell($b = Get-Command bun -ErrorAction SilentlyContinue; if \\($b\\) { \"FOUND: $\\($b.Source\\)\"; bun --version } else { \"BUN NOT FOUND in PowerShell PATH\" })",
       "PowerShell(powershell -c \"irm bun.sh/install.ps1 | iex\")",
       "Bash(gh run *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(npx husky *)",
+      "Bash(git config *)",
+      "Bash(git restore *)",
+      "Bash(npx playwright *)",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4173/)"
     ],
-    "additionalDirectories": [
-      "O:\\AI\\E-tic 2026\\docs\\superpowers"
-    ]
+    "additionalDirectories": ["O:\\AI\\E-tic 2026\\docs\\superpowers"]
   }
 }
