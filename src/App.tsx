@@ -48,6 +48,7 @@ const CategoryPage = named(() => import('./pages/CategoryPage'), 'CategoryPage')
 const CollectionPage = named(() => import('./pages/CollectionPage'), 'CollectionPage');
 const UserProfilePage = named(() => import('./pages/UserProfile'), 'UserProfilePage');
 const Wishlist = named(() => import('./pages/Wishlist'), 'Wishlist');
+const OrderHistory = named(() => import('./pages/OrderHistory'), 'OrderHistory');
 const OrderTracking = named(() => import('./pages/OrderTracking'), 'OrderTracking');
 const UserSupport = named(() => import('./pages/UserSupport'), 'UserSupport');
 const VisualSearch = named(() => import('./pages/VisualSearch'), 'VisualSearch');
@@ -202,6 +203,7 @@ export default function App() {
                       <Route path="/wishlist" element={<Wishlist />} />
                       <Route path="/followed-sellers" element={<FollowedSellers />} />
                       <Route path="/price-alerts" element={<PriceAlerts />} />
+                      <Route path="/orders" element={<OrderHistory />} />
                       <Route path="/orders/:orderId" element={<OrderTracking />} />
                       <Route path="/support" element={<UserSupport />} />
                       <Route path="/visual-search" element={<VisualSearch />} />

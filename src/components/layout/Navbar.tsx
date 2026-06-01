@@ -314,6 +314,9 @@ export function Navbar() {
                         <span className="text-[10px] uppercase font-black tracking-[0.2em] text-brand-primary/30 dark:text-white/30 flex items-center gap-1.5">
                           <ShoppingBag size={12} /> Alışveriş
                         </span>
+                        <Link to="/orders" className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link">
+                          <ShoppingBag size={12} className="text-accent/70 group-hover/link:text-mercora-red transition-colors shrink-0" /> Siparişlerim
+                        </Link>
                         <Link to="/profile?tab=orders" className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link">
                           <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Tüm Siparişlerim
                         </Link>
