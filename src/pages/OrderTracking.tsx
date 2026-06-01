@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import {
   Loader2, Package, Truck, MapPin, ArrowLeft, Navigation, Clock,
   Phone, User, ExternalLink, ChevronRight, AlertCircle,
+  CheckCircle2, Copy, CreditCard, Gift, HelpCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getOrderById, updateOrderStatus } from '@/services/orderService';
@@ -12,6 +13,8 @@ import type { Order } from '@/types/order';
 import type { TrackingResponse, CargoProviderName } from '@/services/cargoService';
 import { cn } from '@/lib/utils';
 
+// ─── Constants ───────────────────────────────────────────────────────────
+
 const STEP_LABELS: Record<string, { label: string; icon: any }> = {
   pending:    { label: 'Hazırlanıyor', icon: Package },
   processing: { label: 'Paketleniyor', icon: Package },
@@ -20,22 +23,317 @@ const STEP_LABELS: Record<string, { label: string; icon: any }> = {
   cancelled:  { label: 'İptal Edildi', icon: AlertCircle },
 };
 
+const TIMELINE_STEPS = [
+  { key: 'ordered',   label: 'Sipariş Alındı',   icon: CheckCircle2 },
+  { key: 'preparing', label: 'Hazırlanıyor',      icon: Package },
+  { key: 'shipped',   label: 'Kargoya Verildi',   icon: Truck },
+  { key: 'delivered', label: 'Teslim Edildi',     icon: MapPin },
+] as const;
+
+const PAYMENT_META: Record<string, { icon: any; label: string }> = {
+  stripe: { icon: CreditCard, label: 'Kredi Kartı' },
+  iyzico: { icon: CreditCard, label: 'Kredi Kartı' },
+  paytr:  { icon: CreditCard, label: 'Kredi Kartı' },
+  manual: { icon: Gift,       label: 'Havale / EFT' },
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────
+
+function getStepDate(order: Order, stepKey: string): Date | null {
+  switch (stepKey) {
+    case 'ordered':
+      return order.createdAt ? new Date(order.createdAt) : null;
+    case 'preparing':
+      if (order.paidAt) return new Date(order.paidAt);
+      if (['processing', 'shipped', 'delivered'].includes(order.status) && order.createdAt)
+        return new Date(order.createdAt);
+      return null;
+    case 'shipped':
+      if (order.shippedAt) return new Date(order.shippedAt);
+      if (['shipped', 'delivered'].includes(order.status) && order.updatedAt)
+        return new Date(order.updatedAt);
+      return null;
+    case 'delivered':
+      if (order.status === 'delivered' && order.updatedAt)
+        return new Date(order.updatedAt);
+      return null;
+    case 'cancelled':
+      return order.updatedAt ? new Date(order.updatedAt) : null;
+    default:
+      return null;
+  }
+}
+
+// ─── D. Enhanced ETA Countdown ──────────────────────────────────────────
+
 function EtaCountdown({ targetDate }: { targetDate: string }) {
-  const [remaining, setRemaining] = useState('');
+  const target = new Date(targetDate).getTime();
+  const [remaining, setRemaining] = useState({ days: 0, hours: 0, minutes: 0 });
+
   useEffect(() => {
     const tick = () => {
-      const diff = new Date(targetDate).getTime() - Date.now();
-      if (diff <= 0) { setRemaining('Teslim ediliyor...'); return; }
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      setRemaining(`${h}s ${m}dk`);
+      const diff = target - Date.now();
+      if (diff <= 0) { setRemaining({ days: 0, hours: 0, minutes: 0 }); return; }
+      setRemaining({
+        days:    Math.floor(diff / 86400000),
+        hours:   Math.floor((diff % 86400000) / 3600000),
+        minutes: Math.floor((diff % 3600000) / 60000),
+      });
     };
     tick();
     const interval = setInterval(tick, 30000);
     return () => clearInterval(interval);
-  }, [targetDate]);
-  return <span>{remaining}</span>;
+  }, [target]);
+
+  const { days, hours, minutes } = remaining;
+  const label =
+    days > 0 ? `${days} gün ${hours} saat` :
+    hours > 0 ? `${hours} saat ${minutes} dk` :
+    minutes > 0 ? `${minutes} dakika` :
+    'Teslim ediliyor...';
+
+  const isImminent = days === 0 && hours < 1;
+  const colorClass =
+    days > 3 ? 'text-green-600 dark:text-green-400' :
+    days >= 1 ? 'text-amber-600 dark:text-amber-400' :
+    'text-red-600 dark:text-red-400';
+
+  return (
+    <motion.span
+      className={cn('inline-flex items-center gap-1.5 text-xs font-bold', colorClass)}
+      animate={isImminent ? { scale: [1, 1.04, 1] } : {}}
+      transition={isImminent ? { repeat: Infinity, duration: 2 } : {}}
+    >
+      <Clock size={14} />
+      <span>{label}</span>
+    </motion.span>
+  );
 }
+
+// ─── A. Vertical Timeline ───────────────────────────────────────────────
+
+function OrderTimeline({ order, currentStep }: { order: Order; currentStep: number }) {
+  const isCancelled = order.status === 'cancelled';
+
+  const timelineSteps = isCancelled
+    ? [
+        { key: 'ordered' as const,   label: 'Sipariş Alındı', icon: CheckCircle2 },
+        { key: 'cancelled' as const, label: 'İptal Edildi',   icon: AlertCircle },
+      ]
+    : [...TIMELINE_STEPS];
+
+  // For cancelled: step 0 (ordered) is completed, step 1 (cancelled) is active-in-red
+  // For normal: convert 1-based currentStep to 0-based active index
+  const activeIndex = isCancelled ? 1 : currentStep - 1;
+
+  return (
+    <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
+      <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400 mb-6 flex items-center gap-2">
+        <Navigation size={16} className="text-accent" /> Sipariş Durumu
+      </h3>
+
+      <div className="relative">
+        {timelineSteps.map((step, idx) => {
+          const isCompleted = idx < activeIndex;
+          const isActive = idx === activeIndex;
+          const isCancelledStep = isCancelled && step.key === 'cancelled';
+          const date = getStepDate(order, step.key);
+
+          return (
+            <motion.div
+              key={step.key}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.35, delay: idx * 0.12 }}
+              className="relative flex gap-4 pb-8 last:pb-0"
+            >
+              {/* Connector line (gradient) */}
+              {idx < timelineSteps.length - 1 && (
+                <div className="absolute start-5 top-10 bottom-0 w-0.5 overflow-hidden rounded-full">
+                  <div className="h-full w-full bg-[#F8F8FA] dark:bg-zinc-800" />
+                  <motion.div
+                    className={cn(
+                      'absolute top-0 start-0 w-full rounded-full',
+                      isCancelled && idx === 0
+                        ? 'bg-gradient-to-b from-accent to-red-500'
+                        : 'bg-gradient-to-b from-accent via-accent to-accent/40'
+                    )}
+                    initial={{ height: '0%' }}
+                    animate={{ height: isCompleted ? '100%' : '0%' }}
+                    transition={{ duration: 0.8, ease: 'easeOut', delay: idx * 0.15 }}
+                  />
+                </div>
+              )}
+
+              {/* Icon circle */}
+              <motion.div
+                animate={
+                  isActive && !isCompleted && !isCancelledStep
+                    ? { scale: [1, 1.12, 1] }
+                    : isCompleted
+                      ? { scale: [0.9, 1] }
+                      : isCancelledStep
+                        ? { scale: [1, 1.08, 1] }
+                        : {}
+                }
+                transition={{ duration: 0.4 }}
+                className={cn(
+                  'relative z-10 w-10 h-10 rounded-full flex items-center justify-center shrink-0',
+                  isCompleted
+                    ? 'bg-accent text-white shadow-lg shadow-accent/20'
+                    : isCancelledStep
+                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
+                      : isActive
+                        ? 'bg-accent text-white shadow-lg shadow-accent/20'
+                        : 'bg-[#F8F8FA] dark:bg-zinc-800 text-[#1A1033]/20 dark:text-zinc-600'
+                )}
+              >
+                {isCompleted ? (
+                  <motion.div
+                    initial={{ rotate: -90, scale: 0 }}
+                    animate={{ rotate: 0, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                  >
+                    <CheckCircle2 size={18} />
+                  </motion.div>
+                ) : (
+                  <step.icon size={18} />
+                )}
+              </motion.div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0 pt-1.5">
+                <p className={cn(
+                  'text-sm font-black',
+                  isCancelledStep ? 'text-red-600 dark:text-red-400' :
+                  isCompleted || isActive ? 'text-[#1A1033] dark:text-white' :
+                  'text-[#1A1033]/20 dark:text-zinc-600'
+                )}>
+                  {step.label}
+                </p>
+                {date && (
+                  <p className={cn(
+                    'text-[11px] mt-0.5',
+                    isCompleted || isActive
+                      ? 'text-[#1A1033]/50 dark:text-zinc-400'
+                      : 'text-[#1A1033]/20 dark:text-zinc-600'
+                  )}>
+                    {date.toLocaleDateString('tr-TR', {
+                      day: 'numeric', month: 'long', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })}
+                  </p>
+                )}
+                {isActive && !isCompleted && !isCancelled && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="inline-block mt-1.5 text-[9px] font-black uppercase tracking-widest text-accent"
+                  >
+                    Su Anda Burada
+                  </motion.span>
+                )}
+                {isCancelledStep && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="inline-block mt-1.5 text-[9px] font-black uppercase tracking-widest text-red-500"
+                  >
+                    Siparis Iptal Edildi
+                  </motion.span>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── C. Carrier Tracking Card ───────────────────────────────────────────
+
+function CarrierTrackingCard({ order, tracking }: { order: Order; tracking: TrackingResponse | null }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!order.trackingNumber) return;
+    try {
+      await navigator.clipboard.writeText(order.trackingNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* clipboard not available */ }
+  };
+
+  const carrierUrl = order.trackingNumber && order.carrier
+    ? `https://www.google.com/search?q=${encodeURIComponent(order.carrier + ' ' + order.trackingNumber)}`
+    : null;
+
+  const lastEvent = tracking?.events?.[0] ?? null;
+
+  return (
+    <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
+      <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400 mb-5 flex items-center gap-2">
+        <Truck size={16} className="text-accent" /> Kargo Takibi
+      </h3>
+
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center shrink-0">
+          <Truck size={28} className="text-accent" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-black text-[#1A1033] dark:text-white text-sm">
+            {order.carrier} Kargo
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <code className="text-[11px] text-[#1A1033]/60 dark:text-zinc-400 font-mono bg-[#F8F8FA] dark:bg-zinc-800 px-2 py-0.5 rounded-lg truncate max-w-[180px]">
+              {order.trackingNumber}
+            </code>
+            <button
+              onClick={handleCopy}
+              className="p-1.5 rounded-lg hover:bg-[#F8F8FA] dark:hover:bg-zinc-800 transition-colors shrink-0"
+              title="Takip numarasini kopyala"
+            >
+              {copied ? (
+                <CheckCircle2 size={14} className="text-green-500" />
+              ) : (
+                <Copy size={14} className="text-[#1A1033]/40 dark:text-zinc-500" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Last tracking status */}
+      {lastEvent && (
+        <div className="mt-5 pt-4 border-t border-[#F8F8FA] dark:border-zinc-800">
+          <p className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 mb-1 font-bold uppercase tracking-wider">
+            Son Guncelleme
+          </p>
+          <p className="text-xs font-bold text-[#1A1033]/80 dark:text-zinc-300">{lastEvent.status}</p>
+          <p className="text-[10px] text-[#1A1033]/50 dark:text-zinc-400">{lastEvent.description}</p>
+          <p className="text-[9px] text-[#1A1033]/30 dark:text-zinc-500 mt-0.5">
+            {new Date(lastEvent.timestamp).toLocaleString('tr-TR')}
+          </p>
+        </div>
+      )}
+
+      {/* Tracking button */}
+      {carrierUrl && (
+        <a
+          href={carrierUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-5 w-full flex items-center justify-center gap-2 py-3 bg-accent text-white rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all"
+        >
+          <ExternalLink size={14} /> Kargoyu Takip Et
+        </a>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────
 
 export function OrderTracking() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -55,7 +353,7 @@ export function OrderTracking() {
         getTrackingStatus(o.carrier as CargoProviderName, o.trackingNumber)
           .then(t => {
             setTracking(t);
-            // Kargo teslim edildiyse sipariş durumunu otomatik güncelle
+            // Auto-update order status to delivered when tracking confirms delivery
             if (t.delivered && o.status === 'shipped') {
               updateOrderStatus(o.id, 'delivered').catch(() => {});
               setOrder(prev => prev ? { ...prev, status: 'delivered' } : prev);
@@ -81,91 +379,169 @@ export function OrderTracking() {
   const isDelivered = order.status === 'delivered';
   const currentStep = isDelivered ? 4 : isShipped ? 3 : order.status === 'processing' ? 2 : 1;
 
-  const carrierUrl = order.trackingNumber && order.carrier
-    ? `https://www.google.com/search?q=${encodeURIComponent(order.carrier + ' ' + order.trackingNumber)}`
-    : null;
+  const paymentMeta = PAYMENT_META[order.paymentMethod] || PAYMENT_META.stripe;
 
   return (
-    <div className="min-h-screen bg-[#F8F8FA] pt-24 pb-20 px-4">
+    <div className="min-h-screen bg-[#F8F8FA] dark:bg-zinc-950 pt-24 pb-20 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
+
         {/* Back */}
-        <Link to="/profile" className="inline-flex items-center gap-2 text-xs font-bold text-[#1A1033]/40 hover:text-accent">
+        <Link
+          to="/profile"
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#1A1033]/40 dark:text-zinc-500 hover:text-accent transition-colors"
+        >
           <ArrowLeft size={14} /> Siparişlerime Dön
         </Link>
 
-        {/* Header */}
-        <div className="bg-white rounded-[2.5rem] p-8 border border-[#1A1033]/5">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/30">
-              Sipariş #{order.id.slice(-6).toUpperCase()}
-            </span>
-            <span className={cn(
-              'px-3 py-1 rounded-xl text-[10px] font-black uppercase',
-              isDelivered ? 'bg-green-50 text-green-600' :
-              isShipped ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'
-            )}>
-              {STEP_LABELS[order.status]?.label || order.status}
-            </span>
+        {/* ───── E. Order Summary Card ───── */}
+        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            {/* Left: order id + date + item count */}
+            <div>
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/30 dark:text-zinc-500">
+                Sipariş #{order.id.slice(-6).toUpperCase()}
+              </span>
+              <p className="text-xs text-[#1A1033]/50 dark:text-zinc-400 mt-1">
+                {new Date(order.createdAt).toLocaleDateString('tr-TR', {
+                  day: 'numeric', month: 'long', year: 'numeric',
+                })}
+              </p>
+              <p className="text-xs text-[#1A1033]/40 dark:text-zinc-500">
+                {order.items.length} ürün
+              </p>
+            </div>
+            {/* Right: status badge + total */}
+            <div className="flex flex-col items-end gap-2">
+              <span className={cn(
+                'px-3 py-1 rounded-xl text-[10px] font-black uppercase',
+                isDelivered
+                  ? 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400'
+                  : isShipped
+                    ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
+                    : order.status === 'cancelled'
+                      ? 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400'
+                      : 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400'
+              )}>
+                {STEP_LABELS[order.status]?.label || order.status}
+              </span>
+              <span className="text-xl font-black text-[#1A1033] dark:text-white">
+                {order.total.toFixed(2)} ₺
+              </span>
+            </div>
           </div>
 
-          {/* Animated Route Visualization */}
-          <div className="relative py-8">
-            <div className="absolute top-1/2 start-0 end-0 h-1.5 bg-[#F8F8FA] rounded-full -translate-y-1/2" />
-            <motion.div
-              className="absolute top-1/2 start-0 h-1.5 bg-accent rounded-full -translate-y-1/2"
-              initial={{ width: '0%' }}
-              animate={{ width: `${(currentStep / 4) * 100}%` }}
-              transition={{ duration: 1.5, ease: 'easeOut' }}
-            />
-            <div className="relative flex justify-between">
-              {[
-                { step: 1, label: 'Sipariş', icon: Package },
-                { step: 2, label: 'Hazırlık', icon: Package },
-                { step: 3, label: 'Kargo', icon: Truck },
-                { step: 4, label: 'Teslimat', icon: MapPin },
-              ].map(({ step, label, icon: Icon }) => {
-                const done = currentStep >= step;
-                const active = currentStep === step;
-                return (
-                  <div key={step} className="flex flex-col items-center gap-2 relative z-10">
-                    <motion.div
-                      animate={active ? { scale: [1, 1.1, 1] } : {}}
-                      transition={{ repeat: Infinity, duration: 2 }}
-                      className={cn(
-                        'w-12 h-12 rounded-2xl flex items-center justify-center transition-all',
-                        done ? 'bg-accent text-white shadow-lg shadow-accent/20' :
-                        'bg-[#F8F8FA] text-[#1A1033]/20'
-                      )}
-                    >
-                      <Icon size={22} />
-                    </motion.div>
-                    <span className={cn(
-                      'text-[9px] font-black uppercase tracking-widest',
-                      done ? 'text-accent' : 'text-[#1A1033]/20'
-                    )}>{label}</span>
-                  </div>
-                );
-              })}
+          {/* Payment method + Quick actions */}
+          <div className="mt-5 pt-4 border-t border-[#F8F8FA] dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <paymentMeta.icon size={14} className="text-[#1A1033]/40 dark:text-zinc-500" />
+              <span className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 uppercase tracking-wider">
+                {paymentMeta.label}
+                {order.installment && order.installment > 1
+                  ? ` (${order.installment} taksit)`
+                  : ''}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {['delivered', 'paid'].includes(order.status) && (
+                <ReorderButton orderId={order.id} userId={order.userId} />
+              )}
+              <Link
+                to="/iletisim"
+                className="flex items-center gap-1.5 py-2 px-3 border border-[#1A1033]/10 dark:border-zinc-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400 hover:border-accent hover:text-accent transition-all"
+              >
+                <HelpCircle size={12} />
+                Destek
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* Live Tracking Info */}
+        {/* ───── A. Vertical Timeline ───── */}
+        <OrderTimeline order={order} currentStep={currentStep} />
+
+        {/* ───── B. Order Items Grid ───── */}
+        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
+          <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400 mb-6">
+            Sipariş Detayı
+          </h3>
+
+          <div className="space-y-3">
+            {order.items.map((item, i) => (
+              <Link
+                key={i}
+                to={`/urun/${item.productId}`}
+                className="flex items-center gap-4 p-3 rounded-2xl bg-[#F8F8FA]/50 dark:bg-zinc-800/30 hover:bg-[#F8F8FA] dark:hover:bg-zinc-800 transition-colors group"
+              >
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
+                  className="w-16 h-16 rounded-xl object-contain bg-white dark:bg-zinc-900 p-2 shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-[#1A1033] dark:text-white line-clamp-2 group-hover:text-accent transition-colors">
+                    {item.name}
+                  </p>
+                  <p className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 mt-1">
+                    {item.quantity} adet x {item.price.toFixed(2)} ₺
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-black text-[#1A1033] dark:text-white">
+                    {item.subtotal.toFixed(2)} ₺
+                  </p>
+                </div>
+                <ChevronRight size={14} className="text-[#1A1033]/20 dark:text-zinc-600 shrink-0" />
+              </Link>
+            ))}
+          </div>
+
+          {/* Totals */}
+          <div className="mt-6 pt-4 border-t border-[#F8F8FA] dark:border-zinc-800 space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-[#1A1033]/40 dark:text-zinc-500">Ara Toplam</span>
+              <span className="font-bold text-[#1A1033] dark:text-white">{order.subtotal.toFixed(2)} ₺</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#1A1033]/40 dark:text-zinc-500">Kargo</span>
+              <span className="font-bold text-[#1A1033] dark:text-white">{order.shipping.toFixed(2)} ₺</span>
+            </div>
+            <div className="flex justify-between text-sm pt-2 border-t border-[#F8F8FA] dark:border-zinc-800">
+              <span className="font-black uppercase text-[#1A1033] dark:text-white">Toplam</span>
+              <span className="font-black text-accent">{order.total.toFixed(2)} ₺</span>
+            </div>
+          </div>
+
+          {/* Reorder (kept below items for consistency) */}
+          {['delivered', 'paid'].includes(order.status) && (
+            <div className="mt-6 pt-4 border-t border-[#F8F8FA] dark:border-zinc-800 flex justify-center">
+              <ReorderButton orderId={order.id} userId={order.userId} />
+            </div>
+          )}
+        </div>
+
+        {/* ───── C. Carrier Tracking Card ───── */}
+        {isShipped && order.trackingNumber && order.carrier && (
+          <CarrierTrackingCard order={order} tracking={tracking} />
+        )}
+
+        {/* ───── Live Tracking Info (kept from original) ───── */}
         {isShipped && order.trackingNumber && (
-          <div className="bg-white rounded-[2.5rem] p-8 border border-[#1A1033]/5 space-y-5">
-            <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 flex items-center gap-2">
+          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800 space-y-5">
+            <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400 flex items-center gap-2">
               <Navigation size={16} className="text-accent" /> Canlı Takip
             </h3>
 
             {/* Live indicator */}
-            <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4">
+            <div className="flex items-center gap-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50 rounded-2xl p-4">
               <div className="relative">
                 <div className="w-3 h-3 bg-green-500 rounded-full" />
                 <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping" />
               </div>
               <div>
-                <p className="text-xs font-black text-green-700">Kargo Yolda</p>
-                <p className="text-[10px] text-green-600/70">
+                <p className="text-xs font-black text-green-700 dark:text-green-400">Kargo Yolda</p>
+                <p className="text-[10px] text-green-600/70 dark:text-green-400/60">
                   {order.carrier} · {order.trackingNumber}
                 </p>
               </div>
@@ -173,7 +549,9 @@ export function OrderTracking() {
 
             {/* Tracking Events Timeline */}
             {trackingLoading ? (
-              <div className="flex justify-center py-4"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>
+              <div className="flex justify-center py-4">
+                <Loader2 className="w-6 h-6 animate-spin text-accent" />
+              </div>
             ) : tracking?.success ? (
               <div className="space-y-1">
                 {tracking.events.map((event, idx) => (
@@ -181,17 +559,20 @@ export function OrderTracking() {
                     <div className="flex flex-col items-center">
                       <div className={cn(
                         'w-2.5 h-2.5 rounded-full mt-1.5',
-                        idx === 0 ? 'bg-accent ring-4 ring-accent/20' :
-                        idx === tracking.events.length - 1 ? 'bg-green-500' : 'bg-[#1A1033]/15'
+                        idx === 0
+                          ? 'bg-accent ring-4 ring-accent/20'
+                          : idx === tracking.events.length - 1
+                            ? 'bg-green-500'
+                            : 'bg-[#1A1033]/15 dark:bg-zinc-700'
                       )} />
                       {idx < tracking.events.length - 1 && (
-                        <div className="w-px flex-1 bg-[#1A1033]/10 mt-1" />
+                        <div className="w-px flex-1 bg-[#1A1033]/10 dark:bg-zinc-800 mt-1" />
                       )}
                     </div>
                     <div className="flex-1 pb-3">
-                      <p className="text-xs font-black text-[#1A1033]">{event.status}</p>
-                      <p className="text-[10px] text-[#1A1033]/50">{event.description}</p>
-                      <p className="text-[9px] text-[#1A1033]/30 flex items-center gap-2">
+                      <p className="text-xs font-black text-[#1A1033] dark:text-white">{event.status}</p>
+                      <p className="text-[10px] text-[#1A1033]/50 dark:text-zinc-400">{event.description}</p>
+                      <p className="text-[9px] text-[#1A1033]/30 dark:text-zinc-500 flex items-center gap-2">
                         {event.location && <span>{event.location}</span>}
                         <span>{new Date(event.timestamp).toLocaleString('tr-TR')}</span>
                       </p>
@@ -201,87 +582,36 @@ export function OrderTracking() {
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-xs text-[#1A1033]/30">Takip bilgisi alınamadı</p>
+                <p className="text-xs text-[#1A1033]/30 dark:text-zinc-500">Takip bilgisi alınamadı</p>
               </div>
             )}
 
             {/* ETA */}
             {tracking?.estimatedDelivery && !tracking.delivered && (
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center gap-3">
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-2xl p-4 flex items-center gap-3">
                 <Clock size={20} className="text-blue-500" />
                 <div>
-                  <p className="text-xs font-black text-blue-700">Tahmini Teslimat</p>
-                  <p className="text-sm font-bold text-blue-600">
-                    {new Date(tracking.estimatedDelivery).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  <p className="text-xs font-black text-blue-700 dark:text-blue-400">Tahmini Teslimat</p>
+                  <p className="text-sm font-bold text-blue-600 dark:text-blue-300">
+                    {new Date(tracking.estimatedDelivery).toLocaleDateString('tr-TR', {
+                      weekday: 'long', day: 'numeric', month: 'long',
+                    })}
                   </p>
-                  <p className="text-[10px] text-blue-500/70 mt-0.5">
-                    <EtaCountdown targetDate={tracking.estimatedDelivery} /> kaldı
+                  <p className="text-[10px] text-blue-500/70 dark:text-blue-300/60 mt-0.5 flex items-center gap-1">
+                    <EtaCountdown targetDate={tracking.estimatedDelivery} /> kaldi
                   </p>
                 </div>
               </div>
             )}
 
             {tracking?.delivered && (
-              <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-center">
-                <p className="text-sm font-black text-green-700">Teslim Edildi</p>
-                <p className="text-[10px] text-green-600/70 mt-1">Siparişiniz başarıyla teslim edildi.</p>
+              <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50 rounded-2xl p-4 text-center">
+                <p className="text-sm font-black text-green-700 dark:text-green-400">Teslim Edildi</p>
+                <p className="text-[10px] text-green-600/70 dark:text-green-400/60 mt-1">
+                  Siparişiniz başarıyla teslim edildi.
+                </p>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Order Items */}
-        <div className="bg-white rounded-[2.5rem] p-8 border border-[#1A1033]/5">
-          <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 mb-4">Sipariş Detayı</h3>
-          <div className="space-y-3">
-            {order.items.map((item, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <img src={item.image} alt={item.name} referrerPolicy="no-referrer" loading="lazy"
-                  className="w-12 h-12 rounded-xl object-contain bg-[#F8F8FA] p-1.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-[#1A1033] line-clamp-1">{item.name}</p>
-                  <p className="text-[10px] text-[#1A1033]/40">{item.quantity} adet</p>
-                </div>
-                <span className="text-xs font-black text-[#1A1033]">{item.subtotal.toFixed(2)} ₺</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 pt-4 border-t border-[#F8F8FA] space-y-2 text-xs">
-            <div className="flex justify-between"><span className="text-[#1A1033]/40">Ara Toplam</span><span className="font-bold">{order.subtotal.toFixed(2)} ₺</span></div>
-            <div className="flex justify-between"><span className="text-[#1A1033]/40">Kargo</span><span className="font-bold">{order.shipping.toFixed(2)} ₺</span></div>
-            <div className="flex justify-between text-sm pt-2 border-t border-[#F8F8FA]">
-              <span className="font-black uppercase">Toplam</span>
-              <span className="font-black text-accent">{order.total.toFixed(2)} ₺</span>
-            </div>
-          </div>
-
-          {/* Reorder Button — only for delivered or paid orders */}
-          {['delivered', 'paid'].includes(order.status) && (
-            <div className="mt-6 pt-4 border-t border-[#F8F8FA] flex justify-center">
-              <ReorderButton orderId={order.id} userId={order.userId} />
-            </div>
-          )}
-        </div>
-
-        {/* Courier Info */}
-        {isShipped && order.carrier && (
-          <div className="bg-white rounded-[2.5rem] p-8 border border-[#1A1033]/5">
-            <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 mb-4">Kurye Bilgisi</h3>
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center">
-                <Truck size={28} className="text-accent" />
-              </div>
-              <div className="flex-1">
-                <p className="font-black text-[#1A1033]">{order.carrier} Kargo</p>
-                <p className="text-[10px] text-[#1A1033]/40">Takip No: {order.trackingNumber}</p>
-              </div>
-              {carrierUrl && (
-                <a href={carrierUrl} target="_blank" rel="noopener noreferrer"
-                  className="px-4 py-2.5 bg-accent text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-1.5 hover:opacity-90">
-                  <ExternalLink size={12} /> Takip Et
-                </a>
-              )}
-            </div>
           </div>
         )}
       </div>

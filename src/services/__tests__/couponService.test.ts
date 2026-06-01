@@ -21,10 +21,10 @@ vi.mock('firebase/firestore', () => ({
   deleteDoc: (...args: any[]) => mockDeleteDoc(...args),
   doc: (...args: any[]) => mockDoc(...args),
   collection: (...args: any[]) => mockCollection(...args),
-  query: (...args: any[]) => mockQuery(...args),
-  where: (...args: any[]) => mockWhere(...args),
-  increment: (...args: any[]) => mockIncrement(...args),
-  serverTimestamp: (...args: any[]) => mockServerTimestamp(...args),
+  query: mockQuery,
+  where: mockWhere,
+  increment: mockIncrement,
+  serverTimestamp: mockServerTimestamp,
 }));
 
 vi.mock('../../lib/firebase', () => ({
