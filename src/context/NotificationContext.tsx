@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   getUserNotifications,
   markAsRead,
   markAllAsRead,
   Notification,
+  NotificationType,
 } from '@/services/notificationService';
 import {
   getPushPermissionStatus,
@@ -13,6 +14,13 @@ import {
   onForegroundMessage,
   requestPushPermission,
 } from '@/services/pushNotificationService';
+
+export interface TypeCounts {
+  order: number;
+  stock: number;
+  price: number;
+  system: number;
+}
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -24,6 +32,8 @@ interface NotificationContextType {
   pushSupported: boolean;
   pushGranted: boolean;
   enablePush: () => Promise<void>;
+  filterByType: (type: NotificationType) => Notification[];
+  typeCounts: TypeCounts;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -36,6 +46,8 @@ const NotificationContext = createContext<NotificationContextType>({
   pushSupported: false,
   pushGranted: false,
   enablePush: async () => {},
+  filterByType: () => [],
+  typeCounts: { order: 0, stock: 0, price: 0, system: 0 },
 });
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
@@ -111,6 +123,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  const filterByType = useCallback((type: NotificationType) => {
+    return notifications.filter(n => n.type === type);
+  }, [notifications]);
+
+  const typeCounts = useMemo(() => {
+    const counts = { order: 0, stock: 0, price: 0, system: 0 };
+    notifications.forEach(n => {
+      if (n.type === 'order_status') counts.order++;
+      else if (n.type === 'back_in_stock') counts.stock++;
+      else if (n.type === 'price_drop') counts.price++;
+      else counts.system++;
+    });
+    return counts;
+  }, [notifications]);
+
   return (
     <NotificationContext.Provider
       value={{
@@ -123,6 +150,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         pushSupported,
         pushGranted,
         enablePush,
+        filterByType,
+        typeCounts,
       }}
     >
       {children}

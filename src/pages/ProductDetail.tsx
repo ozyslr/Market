@@ -32,6 +32,8 @@ import { QASection } from '@/components/product/QASection';
 import { VariantSelector } from '@/components/product/VariantSelector';
 import { SocialProofBar } from '@/components/product/SocialProofBar';
 import { UnitPrice } from '@/components/product/UnitPrice';
+import { StockAlertButton } from '@/components/product/StockAlertButton';
+import { PriceTrackButton } from '@/components/product/PriceTrackButton';
 import { getActiveCampaigns, calcCampaignDiscount } from '@/services/campaignService';
 import { getCoupons } from '@/services/couponService';
 import { useAuth } from '@/context/AuthContext';
@@ -472,6 +474,13 @@ export function ProductDetail() {
                 )}
               </div>
 
+              {/* Price Tracking */}
+              <PriceTrackButton
+                productId={product.id}
+                currentPrice={cartPrice}
+                userId={firebaseUser?.uid}
+              />
+
               {/* Authent Badge */}
               <div className="pt-2 border-t border-brand-primary/5">
                 <AuthenticityBadge
@@ -640,6 +649,13 @@ export function ProductDetail() {
                         {tracking ? 'Fiyat Takibinde' : 'Fiyat Takibi'}
                       </button>
                     )}
+
+                    {/* Stock Alert */}
+                    <StockAlertButton
+                      productId={product.id}
+                      stock={product.stock ?? 0}
+                      userId={firebaseUser?.uid}
+                    />
                   </div>
 
                   {successOrder && (

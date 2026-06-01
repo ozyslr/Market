@@ -105,3 +105,57 @@ export async function markAllAsRead(userId: string): Promise<void> {
 export function getUnreadCount(notifications: Notification[]): number {
   return notifications.filter(n => !n.read).length;
 }
+
+/**
+ * Convenience: notify a buyer when their order status changes.
+ */
+export async function notifyOrderStatusChange(
+  userId: string,
+  orderId: string,
+  status: string,
+): Promise<void> {
+  const statusLabels: Record<string, { title: string; message: string }> = {
+    processing: { title: 'Siparişiniz Hazırlanıyor', message: 'Siparişiniz hazırlanıyor.' },
+    shipped:    { title: 'Siparişiniz Kargoya Verildi', message: 'Siparişiniz kargoya verildi.' },
+    delivered:  { title: 'Siparişiniz Teslim Edildi', message: 'Siparişiniz teslim edildi.' },
+    cancelled:  { title: 'Siparişiniz İptal Edildi', message: 'Siparişiniz iptal edildi.' },
+  };
+  const label = statusLabels[status];
+  if (!label) return;
+  await createNotification(userId, 'order_status', label.title, label.message, `/orders/${orderId}`);
+}
+
+/**
+ * Convenience: notify a user when a product they are watching drops in price.
+ */
+export async function notifyPriceDrop(
+  userId: string,
+  productTitle: string,
+  oldPrice: number,
+  newPrice: number,
+): Promise<void> {
+  const dropPercent = Math.round((1 - newPrice / oldPrice) * 100);
+  await createNotification(
+    userId,
+    'price_drop',
+    'Fiyat Düştü!',
+    `${productTitle} — %${dropPercent} indirim: ${oldPrice.toFixed(2)} → ${newPrice.toFixed(2)}`,
+    undefined,
+  );
+}
+
+/**
+ * Convenience: notify a user when an out-of-stock product becomes available again.
+ */
+export async function notifyStockAvailable(
+  userId: string,
+  productTitle: string,
+): Promise<void> {
+  await createNotification(
+    userId,
+    'back_in_stock',
+    'Tekrar Stokta',
+    `${productTitle} ürünü tekrar stoklarımıza girdi.`,
+    undefined,
+  );
+}
