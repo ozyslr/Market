@@ -54,6 +54,7 @@ const VisualSearch = named(() => import('./pages/VisualSearch'), 'VisualSearch')
 const ProductVerification = named(() => import('./pages/ProductVerification'), 'ProductVerification');
 const MessageCenter = named(() => import('./pages/MessageCenter'), 'MessageCenter');
 const Campaigns = named(() => import('./pages/Campaigns'), 'Campaigns');
+const FollowedSellers = named(() => import('./pages/FollowedSellers'), 'FollowedSellers');
 const NotFound = named(() => import('./pages/NotFound'), 'NotFound');
 
 // Seller pages
@@ -198,6 +199,7 @@ export default function App() {
                       <Route path="/sell" element={<SellOnBenimOlan />} />
                       <Route path="/sell/apply" element={<SellerApplication />} />
                       <Route path="/wishlist" element={<Wishlist />} />
+                      <Route path="/followed-sellers" element={<FollowedSellers />} />
                       <Route path="/orders/:orderId" element={<OrderTracking />} />
                       <Route path="/support" element={<UserSupport />} />
                       <Route path="/visual-search" element={<VisualSearch />} />

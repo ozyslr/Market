@@ -7,7 +7,7 @@ import {
   Smartphone, Shirt, Home, ShoppingBasket, Sparkles, Baby, Dog, Mountain, Coffee, Clock,
   BookOpen, Gamepad2, Car, Wrench,
   Mail, Lock, Eye, EyeOff, UserPlus, Bell, CheckCheck,
-  MessageSquare, Percent,
+  MessageSquare, Percent, Store,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -340,6 +340,9 @@ export function Navbar() {
                         </span>
                         <Link to="/profile?tab=favorites" className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link">
                           <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Favorilerim
+                        </Link>
+                        <Link to="/followed-sellers" onClick={() => setIsAccountMenuOpen(false)} className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link">
+                          <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Takip Ettiğim Satıcılar
                         </Link>
                         <Link to="/profile?tab=collections" className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link">
                           <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Öğrenci İndirimleri
