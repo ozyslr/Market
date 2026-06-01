@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HelpCircle, ThumbsUp, ThumbsDown, BadgeCheck } from 'lucide-react';
+import { HelpCircle, ThumbsUp, ThumbsDown, BadgeCheck, MessageCircle } from 'lucide-react';
 import { ProductQuestion } from '@/types';
 import { voteQuestionHelpful } from '@/services/productQuestionService';
 import { cn } from '@/lib/utils';
@@ -172,9 +172,10 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
           {!showAnswerForm ? (
             <button
               onClick={() => setShowAnswerForm(true)}
-              className="ms-5 text-[10px] font-black text-accent hover:underline mt-1"
+              className="ms-5 mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 hover:bg-accent/20 border border-accent/20 hover:border-accent/40 rounded-xl text-[10px] font-black text-accent uppercase tracking-wider transition-all active:scale-95"
             >
-              Yanıtla
+              <MessageCircle size={12} />
+              Hızlı Yanıtla
             </button>
           ) : (
             <div className="ms-5 mt-2 flex gap-2">
