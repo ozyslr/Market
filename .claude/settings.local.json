@@ -65,7 +65,26 @@
       "Bash(tasklist)",
       "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3000, 3001 -State Listen | Select-Object OwningProcess, LocalPort\")",
       "Bash(taskkill /PID 17648 /F)",
-      "Bash(grep -E 'js$|json$|config|test|spec')"
+      "Bash(grep -E 'js$|json$|config|test|spec')",
+      "Bash(git stash *)",
+      "Bash(Select-Object -First 10)",
+      "PowerShell(npx tsc --noEmit 2>&1)",
+      "Bash(Get-ChildItem O:AIE-tic *)",
+      "Bash(git push *)",
+      "Bash(git reset *)",
+      "PowerShell(npx eslint src/ server/ --max-warnings=50 2>&1 | Select-Object -Last 5)",
+      "Bash(npx eslint *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(Get-Content -Path \"O:\\\\AI\\\\E-tic 2026\\\\package.json\")",
+      "Bash(Out-String)",
+      "Bash(Select-String -Pattern \"zod\")",
+      "Bash(git clone *)",
+      "Read(//c/Users/ozyslr/.claude/skills/gstack/**)",
+      "Bash(command -v bun)",
+      "Bash(bun --version)",
+      "PowerShell($b = Get-Command bun -ErrorAction SilentlyContinue; if \\($b\\) { \"FOUND: $\\($b.Source\\)\"; bun --version } else { \"BUN NOT FOUND in PowerShell PATH\" })",
+      "PowerShell(powershell -c \"irm bun.sh/install.ps1 | iex\")",
+      "Bash(gh run *)"
     ],
     "additionalDirectories": [
       "O:\\AI\\E-tic 2026\\docs\\superpowers"

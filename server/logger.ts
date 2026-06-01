@@ -1,51 +1,60 @@
 /**
- * Structured logger — wraps console with levels, timestamps, and JSON formatting.
- * Zero dependencies. In production, outputs JSON lines for log aggregation.
+ * Structured logger — wraps pino with component-level logging.
+ *
+ * API (backward-compatible):
+ *   logger.info(component, message, data?)
+ *   logger.error(component, message, data?)
+ *   logger.warn(component, message, data?)
+ *   logger.debug(component, message, data?)
+ *
+ * Also exports `httpLogger` — pino-http Express middleware for automatic
+ * HTTP request/response logging.
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+import pino from 'pino';
+import pinoHttp from 'pino-http';
+import { Writable } from 'stream';
 
-interface LogEntry {
-  ts: string;
-  level: LogLevel;
-  component: string;
-  message: string;
-  data?: Record<string, unknown>;
-}
+// ─── Pino instance factory ───────────────────────────────────────────────────
 
 const isProd = process.env.NODE_ENV === 'production';
 
-function formatLog(entry: LogEntry): string {
-  if (isProd) {
-    return JSON.stringify(entry);
-  }
-  const prefix = `[${entry.ts}] ${entry.level.toUpperCase().padEnd(5)} [${entry.component}]`;
-  const suffix = entry.data ? ` ${JSON.stringify(entry.data)}` : '';
-  return `${prefix} ${entry.message}${suffix}`;
-}
-
-function log(level: LogLevel, component: string, message: string, data?: Record<string, unknown>) {
-  const entry: LogEntry = {
-    ts: new Date().toISOString(),
-    level,
-    component,
-    message,
-    ...(data ? { data } : {}),
-  };
-
-  const formatted = formatLog(entry);
-
-  switch (level) {
-    case 'error': console.error(formatted); break;
-    case 'warn':  console.warn(formatted);  break;
-    case 'debug': console.debug(formatted); break;
-    default:      console.log(formatted);
-  }
-}
-
-export const logger = {
-  info:    (component: string, message: string, data?: Record<string, unknown>) => log('info', component, message, data),
-  warn:    (component: string, message: string, data?: Record<string, unknown>) => log('warn', component, message, data),
-  error:   (component: string, message: string, data?: Record<string, unknown>) => log('error', component, message, data),
-  debug:   (component: string, message: string, data?: Record<string, unknown>) => log('debug', component, message, data),
+const defaults = {
+  level: process.env.LOG_LEVEL || (isProd ? 'info' : 'debug'),
+  formatters: {
+    bindings: isProd ? undefined : () => ({}),
+  },
+  timestamp: pino.stdTimeFunctions.isoTime,
 };
+
+/**
+ * Create a component-level logging wrapper backed by pino.
+ * Accepts an optional writable stream (defaults to stdout).
+ */
+export function createLogger(destination?: Writable) {
+  const dest = destination ?? pino.destination(1);
+  const instance = pino(defaults, dest);
+  return {
+    info:  (component: string, message: string, data?: Record<string, unknown>) => instance.info({ component, ...(data ? { data } : {}) }, message),
+    warn:  (component: string, message: string, data?: Record<string, unknown>) => instance.warn({ component, ...(data ? { data } : {}) }, message),
+    error: (component: string, message: string, data?: Record<string, unknown>) => instance.error({ component, ...(data ? { data } : {}) }, message),
+    debug: (component: string, message: string, data?: Record<string, unknown>) => instance.debug({ component, ...(data ? { data } : {}) }, message),
+  };
+}
+
+const pinoInstance = pino(defaults, pino.destination(1));
+
+export const logger = createLogger();
+
+// ─── HTTP request logging middleware ─────────────────────────────────────────
+
+export const httpLogger = pinoHttp({
+  logger: pinoInstance,
+  redact: {
+    paths: ['req.headers.authorization', 'req.headers.cookie', 'req.headers["stripe-signature"]'],
+    censor: '[REDACTED]',
+  },
+  autoLogging: {
+    ignore: (req) => req.url === '/api/health',
+  },
+});

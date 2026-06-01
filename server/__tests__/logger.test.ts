@@ -1,117 +1,102 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { Writable } from 'stream';
 
-// We import the module under test — it wraps console methods
-import { logger } from '../logger.js';
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const originalConsole = { log: console.log, warn: console.warn, error: console.error, debug: console.debug };
-
-beforeEach(() => {
-  vi.spyOn(console, 'log').mockImplementation(() => {});
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
-  vi.spyOn(console, 'error').mockImplementation(() => {});
-  vi.spyOn(console, 'debug').mockImplementation(() => {});
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-// ─── Helper ────────────────────────────────────────────────────────────────
-
-function lastCall(spy: any): string {
-  return spy.mock.calls[spy.mock.calls.length - 1]?.[0] ?? '';
+/** Creates a writable stream that captures pino output in memory. */
+function captureStream(): { stream: Writable; lines: string[] } {
+  const lines: string[] = [];
+  const stream = new Writable({
+    write(chunk: Buffer, _enc: BufferEncoding, cb: (error?: Error | null) => void) {
+      lines.push(chunk.toString().trim());
+      cb();
+    },
+  });
+  return { stream, lines };
 }
 
-// ─── Tests ─────────────────────────────────────────────────────────────────
+/** Re-import logger module with a custom stream and return parsed output. */
+async function createTestLogger() {
+  const capture = captureStream();
+  // Re-import from fresh (untangle any previous module state)
+  const mod = await import('../logger.js');
+  const testLogger = mod.createLogger(capture.stream);
+  return { logger: testLogger, lines: capture.lines, parse: () => capture.lines.map(l => JSON.parse(l)) };
+}
+
+// ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('logger', () => {
   describe('info', () => {
-    it('calls console.log', () => {
-      logger.info('test', 'hello');
-      expect(console.log).toHaveBeenCalled();
-    });
-
-    it('includes component name in output', () => {
+    it('emits a JSON log entry with correct level', async () => {
+      const { logger, parse, lines } = await createTestLogger();
       logger.info('auth', 'user logged in');
-      expect(lastCall(console.log)).toContain('[auth]');
+      const entries = parse();
+      expect(entries).toHaveLength(1);
+      expect(entries[0].level).toBe(30); // pino numeric level for info
+      expect(entries[0].msg).toBe('user logged in');
     });
 
-    it('includes message in output', () => {
-      logger.info('db', 'connected');
-      expect(lastCall(console.log)).toContain('connected');
-    });
-
-    it('includes ISO timestamp', () => {
-      logger.info('svc', 'ping');
-      const out = lastCall(console.log);
-      expect(out).toMatch(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\]/);
-    });
-
-    it('includes level INFO', () => {
-      logger.info('svc', 'ping');
-      expect(lastCall(console.log)).toContain('INFO');
-    });
-
-    it('includes data when provided', () => {
+    it('includes component name and data', async () => {
+      const { logger, parse } = await createTestLogger();
       logger.info('cart', 'checkout', { orderId: '123', total: 99 });
-      expect(lastCall(console.log)).toContain('orderId');
+      const entry = parse()[0];
+      expect(entry.component).toBe('cart');
+      expect(entry.data?.orderId).toBe('123');
+      expect(entry.data?.total).toBe(99);
+    });
+
+    it('emits ISO timestamp', async () => {
+      const { logger, parse } = await createTestLogger();
+      logger.info('svc', 'ping');
+      const entry = parse()[0];
+      expect(entry.time).toBeTypeOf('string');
+      expect(entry.time).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
   });
 
   describe('warn', () => {
-    it('calls console.warn', () => {
+    it('emits a JSON log entry with warn level', async () => {
+      const { logger, parse } = await createTestLogger();
       logger.warn('payment', 'retry');
-      expect(console.warn).toHaveBeenCalled();
-    });
-
-    it('includes WARN level', () => {
-      logger.warn('payment', 'retry');
-      expect(lastCall(console.warn)).toContain('WARN');
+      const entry = parse()[0];
+      expect(entry.level).toBe(40); // pino numeric level for warn
+      expect(entry.msg).toBe('retry');
     });
   });
 
   describe('error', () => {
-    it('calls console.error', () => {
+    it('emits a JSON log entry with error level', async () => {
+      const { logger, parse } = await createTestLogger();
       logger.error('db', 'connection failed');
-      expect(console.error).toHaveBeenCalled();
+      const entry = parse()[0];
+      expect(entry.level).toBe(50); // pino numeric level for error
+      expect(entry.msg).toBe('connection failed');
     });
 
-    it('includes error data', () => {
+    it('includes error data', async () => {
+      const { logger, parse } = await createTestLogger();
       logger.error('api', 'timeout', { url: '/x', ms: 5000 });
-      const out = lastCall(console.error);
-      expect(out).toContain('timeout');
-      expect(out).toContain('5000');
-    });
-
-    it('includes ERROR level', () => {
-      logger.error('api', 'fail');
-      expect(lastCall(console.error)).toContain('ERROR');
+      const entry = parse()[0];
+      expect(entry.data?.url).toBe('/x');
+      expect(entry.data?.ms).toBe(5000);
     });
   });
 
   describe('debug', () => {
-    it('calls console.debug', () => {
+    it('emits a JSON log entry with debug level', async () => {
+      const { logger, parse } = await createTestLogger();
       logger.debug('cache', 'miss');
-      expect(console.debug).toHaveBeenCalled();
-    });
-
-    it('includes DEBUG level', () => {
-      logger.debug('cache', 'miss');
-      expect(lastCall(console.debug)).toContain('DEBUG');
+      const entry = parse()[0];
+      expect(entry.level).toBe(20); // pino numeric level for debug
+      expect(entry.msg).toBe('miss');
     });
   });
 
-  describe('production mode JSON', () => {
-    it('outputs valid JSON when NODE_ENV=production', () => {
-      vi.stubEnv('NODE_ENV', 'production');
-      // Re-import to pick up new env — actually the module singleton caches isProd,
-      // so we test the JSON format via the parseability of the output
-      logger.info('test', 'json check', { key: 'val' });
-      const out = lastCall(console.log);
-      // In dev mode it won't be JSON, but the test verifies structure is there
-      expect(out).toContain('test');
-      expect(out).toContain('json check');
-      vi.unstubAllEnvs();
+  describe('httpLogger', () => {
+    it('exports httpLogger as a function', async () => {
+      const mod = await import('../logger.js');
+      expect(mod.httpLogger).toBeTypeOf('function');
     });
   });
 });

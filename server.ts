@@ -15,7 +15,7 @@ import { registerSellerApiRoutes } from "./server/routes/sellerApi.js";
 import { registerIyzicoRoutes } from "./server/routes/iyzico.js";
 import { registerStripeWebhook, registerStripeRoutes } from "./server/routes/stripe.js";
 import { registerGeminiRoutes } from "./server/routes/gemini.js";
-import { logger } from "./server/logger.js";
+import { logger, httpLogger } from "./server/logger.js";
 
 dotenv.config();
 
@@ -58,6 +58,9 @@ async function startServer() {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Stripe-Signature'],
     credentials: true,
   }));
+
+  // HTTP request logging — pino-http (auto-log every request/response)
+  app.use(httpLogger);
 
   // Helmet â€” secure HTTP headers
   app.use(helmet({

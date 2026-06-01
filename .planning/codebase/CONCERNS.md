@@ -175,7 +175,7 @@ Only 4 markers found, all benign Turkish placeholder text:
 
 ### High
 
-- **`package.json` name is `"react-example"`** -- misleading for a production marketplace. No monorepo tooling (pnpm workspaces, turborepo) despite separate client, server, admin concerns.
+- **`package.json` name was `"react-example"`** -- misleading for a production marketplace. ✅ **RESOLVED** (2026-06-01) — Changed to `"benim-olan"`.
 
 - **`tsconfig.json` had `strict: false`** and `skipLibCheck: true`. ✅ **RESOLVED** (2026-05-31) — Now `"strict": true` with strictNullChecks enabled.
 
@@ -205,10 +205,10 @@ Only 4 markers found, all benign Turkish placeholder text:
 | Known Issues | 0 | 0 | 0 | 4 |
 | Missing Infrastructure | 0 | 1 | 1 | 2 |
 | Dependency Risks | 0 | 1 | 2 | 3 |
-| Architectural | 0 | 2 | 2 | 2 |
-| **Total** | **1** | **9** | **11** | **14** |
+| Architectural | 0 | 1 | 2 | 2 |
+| **Total** | **1** | **8** | **11** | **14** |
 
-**Resolved since initial audit (2026-05-31):** 12 items (4 critical, 6 high, 2 medium)
+**Resolved since initial audit (2026-05-31):** 13 items (4 critical, 7 high, 2 medium)
 - ✅ GEMINI_API_KEY removed from Vite define
 - ✅ mockData.ts refactored (3,735 → 10 lines)
 - ✅ LanguageContext.tsx extracted (1,434 → 102 lines)
@@ -221,12 +221,11 @@ Only 4 markers found, all benign Turkish placeholder text:
 - ✅ CI runs vitest
 - ✅ 10 new test files added (8 → 18)
 - ✅ Gemini proxy route extracted
+- ✅ package.json name fixed (`"react-example"` → `"benim-olan"`)
 
 **Top 5 remaining priorities:**
-1. Fix `package.json` name (`"react-example"` → marketplace name)
-2. Add structured logging (winston/pino) to server
-3. Resolve `@dnd-kit/sortable ^10.0.0` vs `@dnd-kit/core ^6.3.1` version gap
-4. Split dependencies into `dependencies` vs `devDependencies` correctly
-5. Increase test coverage with minimum threshold in CI
-4. Extract `LanguageContext.tsx` translations into per-locale JSON files (Critical -- tech debt / performance)
-5. Add structured logging and Sentry DSN to server (High -- missing infrastructure)
+1. Add structured logging (winston/pino) to server
+2. Resolve `@dnd-kit/sortable ^10.0.0` vs `@dnd-kit/core ^6.3.1` version gap
+3. Split dependencies into `dependencies` vs `devDependencies` correctly
+4. Increase test coverage with minimum threshold in CI
+5. Extract `LanguageContext.tsx` translations into per-locale JSON files (Critical -- tech debt / performance)
