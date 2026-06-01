@@ -344,6 +344,9 @@ export function Navbar() {
                         <Link to="/followed-sellers" onClick={() => setIsAccountMenuOpen(false)} className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link">
                           <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Takip Ettiğim Satıcılar
                         </Link>
+                        <Link to="/price-alerts" onClick={() => setIsAccountMenuOpen(false)} className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link">
+                          <Bell size={12} className="text-accent/70 group-hover/link:text-mercora-red transition-colors shrink-0" /> Fiyat Alarmları
+                        </Link>
                         <Link to="/profile?tab=collections" className="text-xs font-bold hover:text-mercora-red transition-colors py-1 flex items-center gap-2 group/link">
                           <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/link:bg-mercora-red transition-colors" /> Öğrenci İndirimleri
                         </Link>
