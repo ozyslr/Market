@@ -157,9 +157,9 @@ export async function getAllOrders(): Promise<Order[]> {
 }
 
 const STATUS_NOTIFY: Partial<Record<OrderStatus, { title: string; message: string }>> = {
-  processing: { title: 'Siparişiniz İşleme Alındı', message: 'Siparişiniz hazırlanmaya başlandı.' },
-  shipped:    { title: 'Siparişiniz Kargoya Verildi', message: 'Siparişiniz kargoya teslim edildi.' },
-  delivered:  { title: 'Siparişiniz Teslim Edildi', message: 'Siparişiniz başarıyla teslim edildi.' },
+  processing: { title: 'Siparişiniz Hazırlanıyor', message: 'Siparişiniz hazırlanıyor.' },
+  shipped:    { title: 'Siparişiniz Kargoya Verildi', message: 'Siparişiniz kargoya verildi.' },
+  delivered:  { title: 'Siparişiniz Teslim Edildi', message: 'Siparişiniz teslim edildi.' },
   cancelled:  { title: 'Siparişiniz İptal Edildi', message: 'Siparişiniz iptal edildi.' },
 };
 
