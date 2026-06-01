@@ -81,27 +81,51 @@ export function Footer() {
           {[
             {
               title: 'Benim Olan',
-              links: ['Biz Kimiz', 'Kariyer', 'İletişim', 'Sürdürülebilirlik', 'Güvenli Alışveriş']
+              links: [
+                { label: 'Hakkımızda', to: '/about' },
+                { label: 'Kariyer', to: '/' },
+                { label: 'İletişim', to: '/contact' },
+                { label: 'Sürdürülebilirlik', to: '/' },
+                { label: 'Güvenli Alışveriş', to: '/' },
+              ],
             },
             {
               title: 'Hakkımızda',
-              links: ['Müşteri Hizmetleri', 'Benim Olan Blog', 'Yatırımcı İlişkileri', 'Kampanyalar', 'Hediye Kartı']
+              links: [
+                { label: 'Müşteri Hizmetleri', to: '/support' },
+                { label: 'Benim Olan Blog', to: '/' },
+                { label: 'Yatırımcı İlişkileri', to: '/' },
+                { label: 'Kampanyalar', to: '/campaigns' },
+                { label: 'Hediye Kartı', to: '/' },
+              ],
             },
             {
               title: 'Yardım',
-              links: ['Sıkça Sorulan Sorular', 'Canlı Yardım', 'Nasıl İade Ederim', 'İşlem Rehberi', 'Kullanım Koşulları']
+              links: [
+                { label: 'SSS', to: '/faq' },
+                { label: 'Canlı Yardım', to: '/support' },
+                { label: 'Nasıl İade Ederim', to: '/faq' },
+                { label: 'İşlem Rehberi', to: '/' },
+                { label: 'Kullanım Koşulları', to: '/' },
+              ],
             },
             {
               title: 'Satış Yap',
-              links: ['Satıcı Platformu', 'Benim Olan Akademi', 'Reklam Ver', 'İş Ortaklığı', 'Seller Center']
-            }
+              links: [
+                { label: 'Satıcı Platformu', to: '/sell' },
+                { label: 'Benim Olan Akademi', to: '/' },
+                { label: 'Reklam Ver', to: '/' },
+                { label: 'İş Ortaklığı', to: '/' },
+                { label: 'Seller Center', to: '/seller/dashboard' },
+              ],
+            },
           ].map((section, i) => (
             <div key={i}>
               <h4 className="font-bold text-sm mb-6 text-brand-primary dark:text-white">{section.title}</h4>
               <ul className="space-y-4">
                 {section.links.map(link => (
-                  <li key={link}>
-                    <Link to="/" className="text-brand-primary/60 dark:text-white/60 hover:text-mercora-red dark:hover:text-mercora-red transition-colors text-xs font-medium">{link}</Link>
+                  <li key={link.label}>
+                    <Link to={link.to} className="text-brand-primary/60 dark:text-white/60 hover:text-mercora-red dark:hover:text-mercora-red transition-colors text-xs font-medium">{link.label}</Link>
                   </li>
                 ))}
               </ul>

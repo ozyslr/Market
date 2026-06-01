@@ -57,6 +57,9 @@ const MessageCenter = named(() => import('./pages/MessageCenter'), 'MessageCente
 const Campaigns = named(() => import('./pages/Campaigns'), 'Campaigns');
 const FollowedSellers = named(() => import('./pages/FollowedSellers'), 'FollowedSellers');
 const PriceAlerts = named(() => import('./pages/PriceAlerts'), 'PriceAlerts');
+const About = named(() => import('./pages/About'), 'About');
+const Contact = named(() => import('./pages/Contact'), 'Contact');
+const FAQ = named(() => import('./pages/FAQ'), 'FAQ');
 const NotFound = named(() => import('./pages/NotFound'), 'NotFound');
 
 // Seller pages
@@ -209,6 +212,9 @@ export default function App() {
                       <Route path="/visual-search" element={<VisualSearch />} />
                       <Route path="/verify" element={<ProductVerification />} />
                       <Route path="/messages" element={<MessageCenter />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/faq" element={<FAQ />} />
                       <Route path="*" element={<NotFound />} />
                     </Route>
                   </Routes>

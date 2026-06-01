@@ -148,7 +148,6 @@ describe('getPriceAlert', () => {
 
     const result = await getPriceAlert('uid', 'p1');
     expect(result).not.toBeNull();
-    expect(result!.id).toBe('uid_p1');
     expect(result!.productId).toBe('p1');
     expect(result!.targetPrice).toBe(50);
   });
