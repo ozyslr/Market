@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Search, Loader2, ExternalLink, CheckCircle2, AlertTriangle, Package } from 'lucide-react';
+import {
+  ShieldCheck,
+  Search,
+  Loader2,
+  ExternalLink,
+  CheckCircle2,
+  AlertTriangle,
+  Package,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { verifyProduct, getExplorerUrl } from '@/services/blockchainService';
 import type { VerificationResult } from '@/services/blockchainService';
@@ -46,11 +54,14 @@ export function ProductVerification() {
         <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-zinc-800 shadow-sm p-6 md:p-8 mb-8">
           <form onSubmit={handleSearch} className="flex gap-3">
             <div className="flex-1 relative">
-              <Search size={16} className="absolute start-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <Search
+                size={16}
+                className="absolute start-4 top-1/2 -translate-y-1/2 text-zinc-400"
+              />
               <input
                 type="text"
                 value={query}
-                onChange={e => setQuery(e.target.value)}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Sertifika ID veya seri numarası girin (örn: MRC-XXXX-XXXX)"
                 className="w-full ps-10 pe-4 py-3.5 bg-brand-secondary/30 dark:bg-zinc-800 rounded-xl border border-brand-primary/5 dark:border-zinc-700 outline-none focus:ring-4 ring-accent/10 text-sm font-bold transition-all"
               />
@@ -113,37 +124,64 @@ export function ProductVerification() {
                     loading="lazy"
                   />
                   <div>
-                    <h3 className="text-lg font-black text-brand-primary dark:text-white uppercase">{result.certificate.productTitle}</h3>
+                    <h3 className="text-lg font-black text-brand-primary dark:text-white uppercase">
+                      {result.certificate.productTitle}
+                    </h3>
                     <p className="text-xs font-bold text-brand-primary/40 dark:text-white/40 mt-1">
-                      {result.certificate.metadata.brand} · {result.certificate.metadata.originCountry}
+                      {result.certificate.metadata.brand} ·{' '}
+                      {result.certificate.metadata.originCountry}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                   <div className="p-4 bg-brand-secondary/30 dark:bg-zinc-800/50 rounded-xl border border-brand-primary/5 dark:border-zinc-700">
-                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">Seri Numarası</p>
-                    <p className="text-xs font-mono font-bold text-brand-primary dark:text-white">{result.certificate.metadata.serialNumber}</p>
+                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">
+                      Seri Numarası
+                    </p>
+                    <p className="text-xs font-mono font-bold text-brand-primary dark:text-white">
+                      {result.certificate.metadata.serialNumber}
+                    </p>
                   </div>
                   <div className="p-4 bg-brand-secondary/30 dark:bg-zinc-800/50 rounded-xl border border-brand-primary/5 dark:border-zinc-700">
-                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">İşlem Hash</p>
-                    <p className="text-[10px] font-mono font-bold text-brand-primary dark:text-white truncate">{result.certificate.txHash.substring(0, 20)}...</p>
+                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">
+                      İşlem Hash
+                    </p>
+                    <p className="text-[10px] font-mono font-bold text-brand-primary dark:text-white truncate">
+                      {result.certificate.txHash.substring(0, 20)}...
+                    </p>
                   </div>
                   <div className="p-4 bg-brand-secondary/30 dark:bg-zinc-800/50 rounded-xl border border-brand-primary/5 dark:border-zinc-700">
-                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">Blok Numarası</p>
-                    <p className="text-xs font-mono font-bold text-brand-primary dark:text-white">#{result.certificate.blockNumber.toLocaleString()}</p>
+                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">
+                      Blok Numarası
+                    </p>
+                    <p className="text-xs font-mono font-bold text-brand-primary dark:text-white">
+                      #{result.certificate.blockNumber.toLocaleString()}
+                    </p>
                   </div>
                   <div className="p-4 bg-brand-secondary/30 dark:bg-zinc-800/50 rounded-xl border border-brand-primary/5 dark:border-zinc-700">
-                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">Ağ</p>
-                    <p className="text-xs font-bold text-brand-primary dark:text-white">{result.certificate.network}</p>
+                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">
+                      Ağ
+                    </p>
+                    <p className="text-xs font-bold text-brand-primary dark:text-white">
+                      {result.certificate.network}
+                    </p>
                   </div>
                   <div className="p-4 bg-brand-secondary/30 dark:bg-zinc-800/50 rounded-xl border border-brand-primary/5 dark:border-zinc-700">
-                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">Düzenlenme</p>
-                    <p className="text-xs font-bold text-brand-primary dark:text-white">{new Date(result.certificate.issuedAt).toLocaleDateString('tr-TR')}</p>
+                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">
+                      Düzenlenme
+                    </p>
+                    <p className="text-xs font-bold text-brand-primary dark:text-white">
+                      {new Date(result.certificate.issuedAt).toLocaleDateString('tr-TR')}
+                    </p>
                   </div>
                   <div className="p-4 bg-brand-secondary/30 dark:bg-zinc-800/50 rounded-xl border border-brand-primary/5 dark:border-zinc-700">
-                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">Menşei</p>
-                    <p className="text-xs font-bold text-brand-primary dark:text-white">{result.certificate.metadata.originCountry}</p>
+                    <p className="text-[9px] font-black text-brand-primary/40 dark:text-white/40 uppercase tracking-wider mb-1">
+                      Menşei
+                    </p>
+                    <p className="text-xs font-bold text-brand-primary dark:text-white">
+                      {result.certificate.metadata.originCountry}
+                    </p>
                   </div>
                 </div>
 
@@ -154,7 +192,7 @@ export function ProductVerification() {
                   className="flex items-center justify-center gap-2 w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                 >
                   <ExternalLink size={16} />
-                  PolygonScan'de Görüntüle
+                  PolygonScan&apos;de Görüntüle
                 </a>
               </div>
             </div>
@@ -169,10 +207,15 @@ export function ProductVerification() {
                 Sertifika Bulunamadı
               </h2>
               <p className="text-sm font-bold text-amber-600 dark:text-amber-400 mb-6">
-                Bu sertifika numarasına ait kayıt bulunamadı. Lütfen girdiğiniz bilgiyi kontrol edin.
+                Bu sertifika numarasına ait kayıt bulunamadı. Lütfen girdiğiniz bilgiyi kontrol
+                edin.
               </p>
               <button
-                onClick={() => { setViewState('search'); setQuery(''); setResult(null); }}
+                onClick={() => {
+                  setViewState('search');
+                  setQuery('');
+                  setResult(null);
+                }}
                 className="px-8 py-3 bg-accent text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-primary transition-all"
               >
                 Yeni Sorgulama
@@ -209,14 +252,30 @@ export function ProductVerification() {
           </h3>
           <div className="grid md:grid-cols-3 gap-4 text-center">
             {[
-              { icon: ShieldCheck, title: 'Değiştirilemez Kayıt', desc: 'Her sertifika blok zincirinde saklanır ve değiştirilemez.' },
-              { icon: Search, title: 'Anında Doğrulama', desc: 'Seri numarası ile saniyeler içinde orijinallik kontrolü yapın.' },
-              { icon: Package, title: 'Ürün Güvencesi', desc: 'Satın aldığınız ürünün orijinal olduğundan emin olun.' },
+              {
+                icon: ShieldCheck,
+                title: 'Değiştirilemez Kayıt',
+                desc: 'Her sertifika blok zincirinde saklanır ve değiştirilemez.',
+              },
+              {
+                icon: Search,
+                title: 'Anında Doğrulama',
+                desc: 'Seri numarası ile saniyeler içinde orijinallik kontrolü yapın.',
+              },
+              {
+                icon: Package,
+                title: 'Ürün Güvencesi',
+                desc: 'Satın aldığınız ürünün orijinal olduğundan emin olun.',
+              },
             ].map((item, i) => (
               <div key={i} className="p-4 bg-brand-secondary/30 dark:bg-zinc-800/50 rounded-xl">
                 <item.icon size={24} className="text-accent mx-auto mb-3" />
-                <h4 className="text-xs font-black text-brand-primary dark:text-white uppercase mb-1">{item.title}</h4>
-                <p className="text-[10px] font-bold text-brand-primary/40 dark:text-white/40">{item.desc}</p>
+                <h4 className="text-xs font-black text-brand-primary dark:text-white uppercase mb-1">
+                  {item.title}
+                </h4>
+                <p className="text-[10px] font-bold text-brand-primary/40 dark:text-white/40">
+                  {item.desc}
+                </p>
               </div>
             ))}
           </div>

@@ -1,6 +1,19 @@
 ﻿import React, { FormEvent, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Truck, CreditCard, ChevronRight, CheckCircle2, Loader2, MapPin, Search, Plus, Check, Download, Building2 } from 'lucide-react';
+import {
+  ShieldCheck,
+  Truck,
+  CreditCard,
+  ChevronRight,
+  CheckCircle2,
+  Loader2,
+  MapPin,
+  Search,
+  Plus,
+  Check,
+  Download,
+  Building2,
+} from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useAuth } from '@/context/AuthContext';
@@ -20,7 +33,12 @@ import { StripePaymentForm } from '@/components/checkout/StripePaymentForm';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 import type { Order, PaymentMethod, ShippingAddress } from '@/types/order';
 import { validateCoupon, incrementCouponUsage, calcDiscount } from '@/services/couponService';
-import { getActiveCartCampaigns, calcCartCampaigns, getCartCampaignDiscount, getCartCampaignGifts } from '@/services/campaignService';
+import {
+  getActiveCartCampaigns,
+  calcCartCampaigns,
+  getCartCampaignDiscount,
+  getCartCampaignGifts,
+} from '@/services/campaignService';
 import type { CartCampaign } from '@/types';
 import type { Address, Coupon } from '@/types';
 import { cn } from '@/lib/utils';
@@ -32,8 +50,7 @@ import { useExchangeRate } from '@/hooks/useExchangeRate';
 const CURRENCY_SYMBOLS: Record<string, string> = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
 
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
-const stripePromise =
-  stripeKey && !stripeKey.includes('YOUR') ? loadStripe(stripeKey) : null;
+const stripePromise = stripeKey && !stripeKey.includes('YOUR') ? loadStripe(stripeKey) : null;
 
 // ─── Outer checkout page ────────────────────────────────────────────────────
 export function CheckoutPage() {
@@ -61,11 +78,16 @@ export function CheckoutPage() {
   const [cartCampaigns, setCartCampaigns] = useState<CartCampaign[]>([]);
   const [cartCampaignDiscount, setCartCampaignDiscount] = useState(0);
   useEffect(() => {
-    getActiveCartCampaigns().then(campaigns => {
-      const ccs = calcCartCampaigns(campaigns, subtotal, cartProducts.map(p => p.id));
+    getActiveCartCampaigns().then((campaigns) => {
+      const ccs = calcCartCampaigns(
+        campaigns,
+        subtotal,
+        cartProducts.map((p) => p.id),
+      );
       setCartCampaigns(ccs);
       setCartCampaignDiscount(getCartCampaignDiscount(ccs));
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const cartGifts = getCartCampaignGifts(cartCampaigns);
   const [stockError, setStockError] = useState<string | null>(null);
@@ -79,7 +101,7 @@ export function CheckoutPage() {
       const orderId = searchParams.get('orderId') || '';
       if (iyzicoStatus === 'success' && orderId) {
         // Fetch order and show confirmation
-        getOrderById(orderId).then(order => {
+        getOrderById(orderId).then((order) => {
           if (order) {
             setConfirmedOrderId(order.id);
             setConfirmedOrder(order);
@@ -100,7 +122,7 @@ export function CheckoutPage() {
       url.search = '';
       window.history.replaceState({}, '', url.toString());
     }
-  }, []);
+  }, [clearCart, searchParams]);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [postcodeLookupLoading, setPostcodeLookupLoading] = useState(false);
@@ -119,11 +141,11 @@ export function CheckoutPage() {
   const currency = user?.currency ?? 'GBP';
   const market = MARKETS[user?.country ?? 'UK'] ?? MARKETS['UK'];
   const cartProducts = items
-    .map(item => {
-      const product = MOCK_PRODUCTS.find(p => p.id === item.productId);
+    .map((item) => {
+      const product = MOCK_PRODUCTS.find((p) => p.id === item.productId);
       return product ? { ...product, quantity: item.quantity } : null;
     })
-    .filter(Boolean) as (typeof MOCK_PRODUCTS[0] & { quantity: number })[];
+    .filter(Boolean) as ((typeof MOCK_PRODUCTS)[0] & { quantity: number })[];
 
   const subtotal = cartProducts.reduce((s, p) => s + p.price * p.quantity, 0);
   const totalDiscount = discountAmount + cartCampaignDiscount;
@@ -131,7 +153,10 @@ export function CheckoutPage() {
   // Ücretsiz kargo muafiyeti: freeShipping ürünleri kargo ağırlığına katkı vermez.
   // Faturalanabilir ağırlık yalnızca ücretli ürünlerden hesaplanır; tüm sepet
   // ücretsizse kargo bedeli 0'a sabitlenir.
-  const billableShippingUnits = cartProducts.reduce((s, p) => s + (p.freeShipping ? 0 : p.quantity), 0);
+  const billableShippingUnits = cartProducts.reduce(
+    (s, p) => s + (p.freeShipping ? 0 : p.quantity),
+    0,
+  );
   const allFreeShipping = cartProducts.length > 0 && billableShippingUnits === 0;
 
   // ─── Dinamik kargo ücreti (market para birimine çevrilir) ────────────────────
@@ -148,30 +173,51 @@ export function CheckoutPage() {
 
   useEffect(() => {
     const destCity = address.city.trim();
-    if (!destCity || cartProducts.length === 0) { setShipRates([]); return; }
+    if (!destCity || cartProducts.length === 0) {
+      setShipRates([]);
+      return;
+    }
     // Tüm ürünler ücretsiz kargoluysa taşıyıcı sorgulamaya gerek yok.
-    if (allFreeShipping) { setShipRates([]); setSelectedCarrier(null); return; }
+    if (allFreeShipping) {
+      setShipRates([]);
+      setSelectedCarrier(null);
+      return;
+    }
     const weight = Math.max(1, billableShippingUnits);
     let cancelled = false;
     setRatesLoading(true);
     getAllShippingRates('İstanbul', destCity, weight)
-      .then(rates => {
+      .then((rates) => {
         if (cancelled) return;
         setShipRates(rates);
         // Henüz seçim yoksa en ucuzu (liste artan sıralı) öne al.
-        setSelectedCarrier(prev =>
-          prev && rates.some(r => r.provider === prev) ? prev : rates[0]?.provider ?? null);
+        setSelectedCarrier((prev) =>
+          prev && rates.some((r) => r.provider === prev) ? prev : (rates[0]?.provider ?? null),
+        );
       })
-      .finally(() => { if (!cancelled) setRatesLoading(false); });
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+      .finally(() => {
+        if (!cancelled) setRatesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address.city, cartProducts.length]);
 
-  const selectedRate = shipRates.find(r => r.provider === selectedCarrier) ?? shipRates[0];
+  const selectedRate = shipRates.find((r) => r.provider === selectedCarrier) ?? shipRates[0];
   // Tüm ürünler ücretsiz kargoluysa bedel 0; aksi halde seçili taşıyıcı ücreti
   // (kargo henüz yüklenmediyse önceki sabit değere (12) düş).
-  const shippingInCurrency = allFreeShipping ? 0 : (selectedRate ? convertTRY(selectedRate.cost) : 12);
-  const totals = calculateTotal(Math.max(0, subtotal - totalDiscount), shippingInCurrency, market, true);
+  const shippingInCurrency = allFreeShipping
+    ? 0
+    : selectedRate
+      ? convertTRY(selectedRate.cost)
+      : 12;
+  const totals = calculateTotal(
+    Math.max(0, subtotal - totalDiscount),
+    shippingInCurrency,
+    market,
+    true,
+  );
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -184,7 +230,7 @@ export function CheckoutPage() {
       if (result.valid && result.coupon) {
         // If coupon is seller-scoped, verify cart has products from that seller
         if (result.coupon.sellerId) {
-          const sellerItems = cartProducts.filter(p => p.sellerId === result.coupon!.sellerId);
+          const sellerItems = cartProducts.filter((p) => p.sellerId === result.coupon!.sellerId);
           if (sellerItems.length === 0) {
             setCouponError('Bu kupon sepetinizdeki ürünler için geçerli değil.');
             setCouponLoading(false);
@@ -203,7 +249,11 @@ export function CheckoutPage() {
         setAppliedCoupon(result.coupon);
         setCouponCode('');
       } else {
-        setCouponError(result.error === 'coupon.min_order' ? 'Minimum sipariş tutarı karşılanmıyor' : 'Geçersiz veya süresi dolmuş kupon');
+        setCouponError(
+          result.error === 'coupon.min_order'
+            ? 'Minimum sipariş tutarı karşılanmıyor'
+            : 'Geçersiz veya süresi dolmuş kupon',
+        );
       }
     } finally {
       setCouponLoading(false);
@@ -219,7 +269,7 @@ export function CheckoutPage() {
       const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(code)}`);
       const data = await res.json();
       if (data.status === 200 && data.result) {
-        setAddress(a => ({
+        setAddress((a) => ({
           ...a,
           city: data.result.admin_district || data.result.parish || a.city,
           state: data.result.admin_county || data.result.region || a.state,
@@ -238,7 +288,7 @@ export function CheckoutPage() {
   const selectSavedAddress = (addr: Address) => {
     setSelectedAddressId(addr.id);
     setShowNewAddressForm(false);
-    setAddress(a => ({
+    setAddress((a) => ({
       ...a,
       fullName: addr.fullName,
       line1: addr.line1,
@@ -273,12 +323,15 @@ export function CheckoutPage() {
   };
 
   // Shared order processing — validates stock, creates order, decrements stock
-  const processOrder = async (status: 'paid' | 'pending', paymentIntentId: string): Promise<Order | null> => {
+  const processOrder = async (
+    status: 'paid' | 'pending',
+    paymentIntentId: string,
+  ): Promise<Order | null> => {
     if (!firebaseUser) return null;
     setStockError(null);
     setStockValidating(true);
 
-    const orderItems = cartProducts.map(p => ({
+    const orderItems = cartProducts.map((p) => ({
       productId: p.id,
       sellerId: p.sellerId,
       name: p.title,
@@ -290,12 +343,12 @@ export function CheckoutPage() {
 
     // Validate stock BEFORE creating order
     const stockCheck = await validateCartStock(
-      cartProducts.map(p => ({ productId: p.id, quantity: p.quantity }))
+      cartProducts.map((p) => ({ productId: p.id, quantity: p.quantity })),
     );
 
     if (!stockCheck.passed) {
-      const failureMsgs = stockCheck.failures.map(f =>
-        `"${f.productId.slice(0,8)}..." — mevcut: ${f.available}, istenen: ${f.requested}`
+      const failureMsgs = stockCheck.failures.map(
+        (f) => `"${f.productId.slice(0, 8)}..." — mevcut: ${f.available}, istenen: ${f.requested}`,
       );
       setStockError(`Stok yetersiz! ${failureMsgs.join(' | ')}`);
       setStockValidating(false);
@@ -307,7 +360,7 @@ export function CheckoutPage() {
         userId: firebaseUser.uid,
         userEmail: firebaseUser.email ?? '',
         items: orderItems,
-        sellerIds: [...new Set(orderItems.map(i => i.sellerId))],
+        sellerIds: [...new Set(orderItems.map((i) => i.sellerId))],
         subtotal: totals.subtotal,
         shipping: totals.shipping,
         tax: totals.vat,
@@ -323,7 +376,7 @@ export function CheckoutPage() {
 
       // Decrement stock atomically (throws if any item has insufficient stock)
       await decreaseProductStock(
-        cartProducts.map(p => ({ productId: p.id, quantity: p.quantity }))
+        cartProducts.map((p) => ({ productId: p.id, quantity: p.quantity })),
       );
 
       if (appliedCoupon) await incrementCouponUsage(appliedCoupon.id);
@@ -365,329 +418,419 @@ export function CheckoutPage() {
     }
   };
 
-  const elementsOptions = clientSecret && !isMock
-    ? { clientSecret, appearance: { theme: 'stripe' as const } }
-    : undefined;
+  const elementsOptions =
+    clientSecret && !isMock
+      ? { clientSecret, appearance: { theme: 'stripe' as const } }
+      : undefined;
 
   return (
     <>
-    <div className="min-h-screen bg-[#F8F8FA] pt-32 pb-20 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <button
-            onClick={() => navigate('/cart')}
-            className="p-2 border border-[#1A1033]/10 rounded-xl hover:bg-[#1A1033]/5 transition-colors"
-          >
-            <ChevronRight size={20} className="rotate-180 text-[#1A1033]" />
-          </button>
-          <h1 className="text-4xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
-            Secure Checkout
-          </h1>
-        </div>
+      <div className="min-h-screen bg-[#F8F8FA] pt-32 pb-20 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-4 mb-8">
+            <button
+              onClick={() => navigate('/cart')}
+              className="p-2 border border-[#1A1033]/10 rounded-xl hover:bg-[#1A1033]/5 transition-colors"
+            >
+              <ChevronRight size={20} className="rotate-180 text-[#1A1033]" />
+            </button>
+            <h1 className="text-4xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+              Secure Checkout
+            </h1>
+          </div>
 
-        {/* Progress Bar */}
-        <div className="flex items-center justify-between mb-12 relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-0 before:w-full before:h-1 before:bg-[#1A1033]/5 before:-z-10">
-          {[{ num: 1, label: 'Delivery' }, { num: 2, label: 'Payment' }, { num: 3, label: 'Confirmation' }].map(s => (
-            <div key={s.num} className="flex flex-col items-center gap-2">
-              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-black transition-all ${step >= s.num ? 'bg-accent text-white shadow-lg' : 'bg-white text-[#1A1033]/30 border border-[#1A1033]/5'}`}>
-                {step > s.num ? <CheckCircle2 size={20} /> : s.num}
+          {/* Progress Bar */}
+          <div className="flex items-center justify-between mb-12 relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-0 before:w-full before:h-1 before:bg-[#1A1033]/5 before:-z-10">
+            {[
+              { num: 1, label: 'Delivery' },
+              { num: 2, label: 'Payment' },
+              { num: 3, label: 'Confirmation' },
+            ].map((s) => (
+              <div key={s.num} className="flex flex-col items-center gap-2">
+                <div
+                  className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-black transition-all ${step >= s.num ? 'bg-accent text-white shadow-lg' : 'bg-white text-[#1A1033]/30 border border-[#1A1033]/5'}`}
+                >
+                  {step > s.num ? <CheckCircle2 size={20} /> : s.num}
+                </div>
+                <span
+                  className={`text-[10px] uppercase font-black tracking-widest ${step >= s.num ? 'text-[#1A1033]' : 'text-[#1A1033]/30'}`}
+                >
+                  {s.label}
+                </span>
               </div>
-              <span className={`text-[10px] uppercase font-black tracking-widest ${step >= s.num ? 'text-[#1A1033]' : 'text-[#1A1033]/30'}`}>{s.label}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-
-            {/* Step 1: Shipping */}
-            {step === 1 && (
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-[2.5rem] p-8 border border-[#F8F8FA] shadow-sm">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center">
-                    <Truck size={24} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              {/* Step 1: Shipping */}
+              {step === 1 && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-white rounded-[2.5rem] p-8 border border-[#F8F8FA] shadow-sm"
+                >
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center">
+                      <Truck size={24} />
+                    </div>
+                    <h2 className="text-2xl font-display font-black uppercase tracking-tight text-[#1A1033]">
+                      Shipping Address
+                    </h2>
                   </div>
-                  <h2 className="text-2xl font-display font-black uppercase tracking-tight text-[#1A1033]">Shipping Address</h2>
-                </div>
-                <form className="space-y-6" onSubmit={e => { e.preventDefault(); proceedToPayment(); }}>
-                  <AddressSelector
-                    address={address}
-                    onAddressChange={(updates) => setAddress(a => ({ ...a, ...updates }))}
-                    selectedAddressId={selectedAddressId}
-                    onSelectSavedAddress={selectSavedAddress}
-                    showNewAddressForm={showNewAddressForm}
-                    onToggleNewAddressForm={() => { setShowNewAddressForm(f => !f); setSelectedAddressId(null); }}
-                    postcodeLookupLoading={postcodeLookupLoading}
-                    postcodeLookupError={postcodeLookupError}
-                    onPostcodeLookup={lookupPostcode}
-                    onPostcodeErrorClear={() => setPostcodeLookupError('')}
-                    saveAddress={saveAddress}
-                    onToggleSaveAddress={() => setSaveAddress(s => !s)}
-                    savedAddresses={(user as any)?.addresses ?? []}
-                    defaultAddressId={(user as any)?.defaultAddressId ?? ''}
-                    user={user}
-                  />
+                  <form
+                    className="space-y-6"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      proceedToPayment();
+                    }}
+                  >
+                    <AddressSelector
+                      address={address}
+                      onAddressChange={(updates) => setAddress((a) => ({ ...a, ...updates }))}
+                      selectedAddressId={selectedAddressId}
+                      onSelectSavedAddress={selectSavedAddress}
+                      showNewAddressForm={showNewAddressForm}
+                      onToggleNewAddressForm={() => {
+                        setShowNewAddressForm((f) => !f);
+                        setSelectedAddressId(null);
+                      }}
+                      postcodeLookupLoading={postcodeLookupLoading}
+                      postcodeLookupError={postcodeLookupError}
+                      onPostcodeLookup={lookupPostcode}
+                      onPostcodeErrorClear={() => setPostcodeLookupError('')}
+                      saveAddress={saveAddress}
+                      onToggleSaveAddress={() => setSaveAddress((s) => !s)}
+                      savedAddresses={(user as any)?.addresses ?? []}
+                      defaultAddressId={(user as any)?.defaultAddressId ?? ''}
+                      user={user}
+                    />
 
-                  <button type="submit" disabled={isFetchingIntent}
-                    className="w-full py-4 bg-[#1A1033] text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 mt-8 disabled:opacity-60">
-                    {isFetchingIntent
-                      ? <><Loader2 size={16} className="animate-spin" /> Hazırlanıyor...</>
-                      : <>Ödemeye Devam Et <ChevronRight size={18} /></>}
-                  </button>
-                </form>
-              </motion.div>
-            )}
+                    <button
+                      type="submit"
+                      disabled={isFetchingIntent}
+                      className="w-full py-4 bg-[#1A1033] text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 mt-8 disabled:opacity-60"
+                    >
+                      {isFetchingIntent ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" /> Hazırlanıyor...
+                        </>
+                      ) : (
+                        <>
+                          Ödemeye Devam Et <ChevronRight size={18} />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </motion.div>
+              )}
 
-            {/* Step 2: Payment */}
-            {step === 2 && (
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-[2.5rem] p-8 border border-[#F8F8FA] shadow-sm">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center">
-                    <CreditCard size={24} />
+              {/* Step 2: Payment */}
+              {step === 2 && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-white rounded-[2.5rem] p-8 border border-[#F8F8FA] shadow-sm"
+                >
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center">
+                      <CreditCard size={24} />
+                    </div>
+                    <h2 className="text-2xl font-display font-black uppercase tracking-tight text-[#1A1033]">
+                      Secure Payment
+                    </h2>
                   </div>
-                  <h2 className="text-2xl font-display font-black uppercase tracking-tight text-[#1A1033]">Secure Payment</h2>
-                </div>
 
-                {/* Escrow notice */}
-                <div className="bg-[#F8F8FA] p-6 rounded-2xl mb-6 border border-[#1A1033]/5 relative overflow-hidden">
-                  <ShieldCheck className="absolute -end-4 -bottom-4 text-accent/5 size-32" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-2">Escrow Protection</p>
-                  <p className="text-sm font-medium text-[#1A1033]/60 relative z-10">Your funds are held securely until the artifact is delivered and verified by you.</p>
-                </div>
+                  {/* Escrow notice */}
+                  <div className="bg-[#F8F8FA] p-6 rounded-2xl mb-6 border border-[#1A1033]/5 relative overflow-hidden">
+                    <ShieldCheck className="absolute -end-4 -bottom-4 text-accent/5 size-32" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-2">
+                      Escrow Protection
+                    </p>
+                    <p className="text-sm font-medium text-[#1A1033]/60 relative z-10">
+                      Your funds are held securely until the artifact is delivered and verified by
+                      you.
+                    </p>
+                  </div>
 
-                {/* Payment Method Selector */}
-                <div className="mb-6">
-                  <PaymentMethodSelector
-                    selected={paymentMethod}
-                    onChange={setPaymentMethod}
-                    region={user?.country || 'UK'}
-                  />
-                </div>
+                  {/* Payment Method Selector */}
+                  <div className="mb-6">
+                    <PaymentMethodSelector
+                      selected={paymentMethod}
+                      onChange={setPaymentMethod}
+                      region={user?.country || 'UK'}
+                    />
+                  </div>
 
-                {/* Stripe Payment */}
-                {paymentMethod === 'stripe' && clientSecret && (
-                  <>
-                    {stripePromise && elementsOptions ? (
-                      <Elements stripe={stripePromise} options={elementsOptions}>
+                  {/* Stripe Payment */}
+                  {paymentMethod === 'stripe' && clientSecret && (
+                    <>
+                      {stripePromise && elementsOptions ? (
+                        <Elements stripe={stripePromise} options={elementsOptions}>
+                          <StripePaymentForm
+                            total={totals.total}
+                            currency={currency}
+                            isMock={false}
+                            shippingAddress={address}
+                            onSuccess={handlePaymentSuccess}
+                            onBack={() => setStep(1)}
+                          />
+                        </Elements>
+                      ) : (
                         <StripePaymentForm
                           total={totals.total}
                           currency={currency}
-                          isMock={false}
+                          isMock={true}
                           shippingAddress={address}
                           onSuccess={handlePaymentSuccess}
                           onBack={() => setStep(1)}
                         />
-                      </Elements>
-                    ) : (
-                      <StripePaymentForm
-                        total={totals.total}
-                        currency={currency}
-                        isMock={true}
-                        shippingAddress={address}
-                        onSuccess={handlePaymentSuccess}
-                        onBack={() => setStep(1)}
-                      />
-                    )}
-                  </>
-                )}
+                      )}
+                    </>
+                  )}
 
-                {/* Stripe: need to init payment intent first */}
-                {paymentMethod === 'stripe' && !clientSecret && (
-                  <div className="text-center py-8">
-                    <button
-                      type="button"
-                      onClick={proceedToPayment}
-                      disabled={isFetchingIntent}
-                      className="py-4 px-8 bg-accent text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 mx-auto disabled:opacity-60"
-                    >
-                      {isFetchingIntent
-                        ? <><Loader2 size={16} className="animate-spin" /> Hazırlanıyor...</>
-                        : <>Ödemeye Hazırlan <ChevronRight size={18} /></>}
-                    </button>
-                  </div>
-                )}
+                  {/* Stripe: need to init payment intent first */}
+                  {paymentMethod === 'stripe' && !clientSecret && (
+                    <div className="text-center py-8">
+                      <button
+                        type="button"
+                        onClick={proceedToPayment}
+                        disabled={isFetchingIntent}
+                        className="py-4 px-8 bg-accent text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 mx-auto disabled:opacity-60"
+                      >
+                        {isFetchingIntent ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" /> Hazırlanıyor...
+                          </>
+                        ) : (
+                          <>
+                            Ödemeye Hazırlan <ChevronRight size={18} />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
 
-                {/* iyzico Payment */}
-                {paymentMethod === 'iyzico' && firebaseUser && (
-                  <IyzicoPayment
-                    total={totals.total}
-                    currency={currency}
-                    orderId={`pending_${Date.now()}`}
-                    userId={firebaseUser.uid}
-                    userEmail={firebaseUser.email || ''}
-                    userName={address.fullName}
-                    buyerPhone={address.phone}
-                    region={user?.country || 'UK'}
-                    shippingAddress={{
-                      fullName: address.fullName,
-                      line1: address.line1,
-                      city: address.city,
-                      country: address.country,
-                    }}
-                    onSuccess={() => {}}
-                    onBack={() => setStep(1)}
-                    onError={(msg) => setPaymentError(msg)}
-                  />
-                )}
+                  {/* iyzico Payment */}
+                  {paymentMethod === 'iyzico' && firebaseUser && (
+                    <IyzicoPayment
+                      total={totals.total}
+                      currency={currency}
+                      orderId={`pending_${Date.now()}`}
+                      userId={firebaseUser.uid}
+                      userEmail={firebaseUser.email || ''}
+                      userName={address.fullName}
+                      buyerPhone={address.phone}
+                      region={user?.country || 'UK'}
+                      shippingAddress={{
+                        fullName: address.fullName,
+                        line1: address.line1,
+                        city: address.city,
+                        country: address.country,
+                      }}
+                      onSuccess={() => {}}
+                      onBack={() => setStep(1)}
+                      onError={(msg) => setPaymentError(msg)}
+                    />
+                  )}
 
-                {/* Manual EFT/Havale Payment */}
-                {paymentMethod === 'manual' && (
-                  <ManualPayment
-                    total={totals.total}
-                    currency={currency}
-                    onConfirm={async () => {
-                      const order = await processOrder('pending', '');
-                      if (order) {
-                        setConfirmedOrderId(order.id);
-                        setConfirmedOrder(order);
-                        clearCart();
-                        setStep(3);
-                      }
-                    }}
-                    onBack={() => setStep(1)}
-                    onError={(msg) => setPaymentError(msg)}
-                  />
-                )}
+                  {/* Manual EFT/Havale Payment */}
+                  {paymentMethod === 'manual' && (
+                    <ManualPayment
+                      total={totals.total}
+                      currency={currency}
+                      onConfirm={async () => {
+                        const order = await processOrder('pending', '');
+                        if (order) {
+                          setConfirmedOrderId(order.id);
+                          setConfirmedOrder(order);
+                          clearCart();
+                          setStep(3);
+                        }
+                      }}
+                      onBack={() => setStep(1)}
+                      onError={(msg) => setPaymentError(msg)}
+                    />
+                  )}
 
-                {stockValidating && (
-                  <div className="mt-4 flex items-center gap-2 bg-blue-50 border border-blue-200 px-4 py-3 rounded-xl">
-                    <Loader2 size={16} className="animate-spin text-blue-500" />
-                    <p className="text-xs font-bold text-blue-700">Stok kontrol ediliyor...</p>
-                  </div>
-                )}
-                {stockError && (
-                  <div className="mt-4 bg-red-50 border-2 border-red-400 px-4 py-3 rounded-xl">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1">Stok Hatası</p>
-                    <p className="text-xs font-bold text-red-700">{stockError}</p>
-                  </div>
-                )}
-                {paymentError && (
-                  <p className="mt-4 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl">{paymentError}</p>
-                )}
-              </motion.div>
-            )}
-
-            {/* Step 3: Confirmation */}
-            {step === 3 && (
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-[2.5rem] border border-[#F8F8FA] shadow-sm overflow-hidden">
-                {/* Success header */}
-                <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-10 text-center text-white">
-                  <div className="w-20 h-20 bg-white/20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-5 shadow-xl">
-                    <CheckCircle2 size={36} />
-                  </div>
-                  <h2 className="text-3xl font-display font-black uppercase italic tracking-tighter mb-2">Ödeme Başarılı!</h2>
-                  {confirmedOrderId && (
-                    <p className="text-sm font-black text-white/70 uppercase tracking-widest">
-                      Sipariş #{confirmedOrderId.slice(0, 12).toUpperCase()}
+                  {stockValidating && (
+                    <div className="mt-4 flex items-center gap-2 bg-blue-50 border border-blue-200 px-4 py-3 rounded-xl">
+                      <Loader2 size={16} className="animate-spin text-blue-500" />
+                      <p className="text-xs font-bold text-blue-700">Stok kontrol ediliyor...</p>
+                    </div>
+                  )}
+                  {stockError && (
+                    <div className="mt-4 bg-red-50 border-2 border-red-400 px-4 py-3 rounded-xl">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1">
+                        Stok Hatası
+                      </p>
+                      <p className="text-xs font-bold text-red-700">{stockError}</p>
+                    </div>
+                  )}
+                  {paymentError && (
+                    <p className="mt-4 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl">
+                      {paymentError}
                     </p>
                   )}
-                </div>
+                </motion.div>
+              )}
 
-                <div className="p-8 space-y-6">
-                  {/* Estimated delivery */}
-                  <div className="flex items-center gap-4 bg-[#F8F8FA] rounded-2xl px-5 py-4">
-                    <Truck size={20} className="text-accent shrink-0" />
-                    <div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40">Tahmini Teslimat</p>
-                      <p className="text-sm font-black text-[#1A1033]">
-                        {(() => {
-                          const d = new Date();
-                          d.setDate(d.getDate() + 3);
-                          const d2 = new Date();
-                          d2.setDate(d2.getDate() + 5);
-                          return `${d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })} – ${d2.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
-                        })()}
-                      </p>
+              {/* Step 3: Confirmation */}
+              {step === 3 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white rounded-[2.5rem] border border-[#F8F8FA] shadow-sm overflow-hidden"
+                >
+                  {/* Success header */}
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-10 text-center text-white">
+                    <div className="w-20 h-20 bg-white/20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-5 shadow-xl">
+                      <CheckCircle2 size={36} />
                     </div>
+                    <h2 className="text-3xl font-display font-black uppercase italic tracking-tighter mb-2">
+                      Ödeme Başarılı!
+                    </h2>
+                    {confirmedOrderId && (
+                      <p className="text-sm font-black text-white/70 uppercase tracking-widest">
+                        Sipariş #{confirmedOrderId.slice(0, 12).toUpperCase()}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Order items summary */}
-                  {confirmedOrder && (
-                    <div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-3">Sipariş Özeti</p>
-                      <div className="space-y-2">
-                        {confirmedOrder.items.map((item, i) => (
-                          <div key={i} className="flex items-center gap-3">
-                            <img src={item.image} alt={item.name} referrerPolicy="no-referrer" loading="lazy"
-                              className="w-10 h-10 rounded-xl object-contain bg-[#F8F8FA] p-1 shrink-0" />
-                            <span className="flex-1 text-[11px] font-bold text-[#1A1033] line-clamp-1">{item.name}</span>
-                            <span className="text-[11px] font-black text-[#1A1033]/50">×{item.quantity}</span>
-                          </div>
-                        ))}
+                  <div className="p-8 space-y-6">
+                    {/* Estimated delivery */}
+                    <div className="flex items-center gap-4 bg-[#F8F8FA] rounded-2xl px-5 py-4">
+                      <Truck size={20} className="text-accent shrink-0" />
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40">
+                          Tahmini Teslimat
+                        </p>
+                        <p className="text-sm font-black text-[#1A1033]">
+                          {(() => {
+                            const d = new Date();
+                            d.setDate(d.getDate() + 3);
+                            const d2 = new Date();
+                            d2.setDate(d2.getDate() + 5);
+                            return `${d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })} – ${d2.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+                          })()}
+                        </p>
                       </div>
                     </div>
-                  )}
 
-                  {/* Shipping address */}
-                  {confirmedOrder?.shippingAddress && (
-                    <div className="border-t border-[#1A1033]/5 pt-5">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-2">Teslimat Adresi</p>
-                      <p className="text-[12px] font-bold text-[#1A1033]">{confirmedOrder.shippingAddress.fullName}</p>
-                      <p className="text-[11px] text-[#1A1033]/50 leading-relaxed">
-                        {confirmedOrder.shippingAddress.line1}, {confirmedOrder.shippingAddress.city} {confirmedOrder.shippingAddress.postalCode}
+                    {/* Order items summary */}
+                    {confirmedOrder && (
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-3">
+                          Sipariş Özeti
+                        </p>
+                        <div className="space-y-2">
+                          {confirmedOrder.items.map((item, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                referrerPolicy="no-referrer"
+                                loading="lazy"
+                                className="w-10 h-10 rounded-xl object-contain bg-[#F8F8FA] p-1 shrink-0"
+                              />
+                              <span className="flex-1 text-[11px] font-bold text-[#1A1033] line-clamp-1">
+                                {item.name}
+                              </span>
+                              <span className="text-[11px] font-black text-[#1A1033]/50">
+                                ×{item.quantity}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Shipping address */}
+                    {confirmedOrder?.shippingAddress && (
+                      <div className="border-t border-[#1A1033]/5 pt-5">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-2">
+                          Teslimat Adresi
+                        </p>
+                        <p className="text-[12px] font-bold text-[#1A1033]">
+                          {confirmedOrder.shippingAddress.fullName}
+                        </p>
+                        <p className="text-[11px] text-[#1A1033]/50 leading-relaxed">
+                          {confirmedOrder.shippingAddress.line1},{' '}
+                          {confirmedOrder.shippingAddress.city}{' '}
+                          {confirmedOrder.shippingAddress.postalCode}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Email info */}
+                    <div className="bg-blue-50 rounded-xl px-4 py-3 flex items-center gap-3 border border-blue-100">
+                      <span className="text-base shrink-0">📧</span>
+                      <p className="text-[10px] font-bold text-blue-700">
+                        <strong>{user?.email}</strong> adresinize onay emaili gönderildi.
                       </p>
                     </div>
-                  )}
 
-                  {/* Email info */}
-                  <div className="bg-blue-50 rounded-xl px-4 py-3 flex items-center gap-3 border border-blue-100">
-                    <span className="text-base shrink-0">📧</span>
-                    <p className="text-[10px] font-bold text-blue-700">
-                      <strong>{user?.email}</strong> adresinize onay emaili gönderildi.
-                    </p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-3 pt-2">
-                    {confirmedOrder && (
-                      <button onClick={() => setShowInvoice(true)}
-                        className="flex-1 py-3.5 border-2 border-[#1A1033]/10 text-[#1A1033] rounded-2xl font-black uppercase text-[10px] tracking-widest hover:border-accent hover:text-accent transition-colors flex items-center justify-center gap-2">
-                        <Download size={14} /> Fatura İndir
+                    {/* Actions */}
+                    <div className="flex gap-3 pt-2">
+                      {confirmedOrder && (
+                        <button
+                          onClick={() => setShowInvoice(true)}
+                          className="flex-1 py-3.5 border-2 border-[#1A1033]/10 text-[#1A1033] rounded-2xl font-black uppercase text-[10px] tracking-widest hover:border-accent hover:text-accent transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Download size={14} /> Fatura İndir
+                        </button>
+                      )}
+                      <button
+                        onClick={() => navigate('/profile')}
+                        className="flex-1 py-3.5 bg-[#1A1033] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:bg-accent transition-colors"
+                      >
+                        Siparişlerimi Gör
                       </button>
-                    )}
-                    <button onClick={() => navigate('/profile')}
-                      className="flex-1 py-3.5 bg-[#1A1033] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:bg-accent transition-colors">
-                      Siparişlerimi Gör
-                    </button>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
-          </div>
+                </motion.div>
+              )}
+            </div>
 
-          {/* Order Summary Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-[2.5rem] p-8 border border-[#F8F8FA] shadow-sm sticky top-32">
-              <OrderSummary
-                cartProducts={cartProducts}
-                cartCampaigns={cartCampaigns}
-                cartGifts={cartGifts}
-                couponCode={couponCode}
-                onCouponCodeChange={(code) => { setCouponCode(code.toUpperCase()); setCouponError(''); }}
-                couponError={couponError}
-                couponLoading={couponLoading}
-                appliedCoupon={appliedCoupon}
-                onApplyCoupon={handleApplyCoupon}
-                onRemoveCoupon={() => { setAppliedCoupon(null); setDiscountAmount(0); }}
-                discountAmount={discountAmount}
-                cartCampaignDiscount={cartCampaignDiscount}
-                totals={totals}
-                curSym={curSym}
-                ratesLoading={ratesLoading}
-                shipRates={shipRates}
-                selectedCarrier={selectedCarrier}
-                onSelectCarrier={setSelectedCarrier}
-                convertTRY={convertTRY}
-              />
+            {/* Order Summary Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-[2.5rem] p-8 border border-[#F8F8FA] shadow-sm sticky top-32">
+                <OrderSummary
+                  cartProducts={cartProducts}
+                  cartCampaigns={cartCampaigns}
+                  cartGifts={cartGifts}
+                  couponCode={couponCode}
+                  onCouponCodeChange={(code) => {
+                    setCouponCode(code.toUpperCase());
+                    setCouponError('');
+                  }}
+                  couponError={couponError}
+                  couponLoading={couponLoading}
+                  appliedCoupon={appliedCoupon}
+                  onApplyCoupon={handleApplyCoupon}
+                  onRemoveCoupon={() => {
+                    setAppliedCoupon(null);
+                    setDiscountAmount(0);
+                  }}
+                  discountAmount={discountAmount}
+                  cartCampaignDiscount={cartCampaignDiscount}
+                  totals={totals}
+                  curSym={curSym}
+                  ratesLoading={ratesLoading}
+                  shipRates={shipRates}
+                  selectedCarrier={selectedCarrier}
+                  onSelectCarrier={setSelectedCarrier}
+                  convertTRY={convertTRY}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    {showInvoice && confirmedOrder && (
-      <InvoiceModal order={confirmedOrder} onClose={() => setShowInvoice(false)} />
-    )}
+      {showInvoice && confirmedOrder && (
+        <InvoiceModal order={confirmedOrder} onClose={() => setShowInvoice(false)} />
+      )}
     </>
   );
 }

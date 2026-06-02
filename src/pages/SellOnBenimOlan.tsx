@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Zap, Globe, ShieldCheck, TrendingUp, ArrowRight,
-  DollarSign, X, CheckCircle, Loader2, Store,
+  Zap,
+  Globe,
+  ShieldCheck,
+  TrendingUp,
+  ArrowRight,
+  DollarSign,
+  X,
+  CheckCircle,
+  Loader2,
+  Store,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
@@ -26,14 +34,22 @@ export function SellOnBenimOlan() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState<ApplyForm>({
-    storeName: '', contactName: '', phone: '',
-    businessType: 'individual', category: '', website: '', description: '',
+    storeName: '',
+    contactName: '',
+    phone: '',
+    businessType: 'individual',
+    category: '',
+    website: '',
+    description: '',
   });
 
-  const set = (k: keyof ApplyForm, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const set = (k: keyof ApplyForm, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   async function handleApply() {
-    if (!user?.id) { navigate('/'); return; }
+    if (!user?.id) {
+      navigate('/');
+      return;
+    }
     if (!form.storeName.trim()) return;
     setSubmitting(true);
     try {
@@ -53,8 +69,13 @@ export function SellOnBenimOlan() {
         description: form.description.trim(),
         kycStatus: 'pending',
         isVerified: false,
-        slug: form.storeName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-        rating: 0, reviewsCount: 0, followersCount: 0,
+        slug: form.storeName
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, ''),
+        rating: 0,
+        reviewsCount: 0,
+        followersCount: 0,
         commissionRate: 10,
         origin: user.country || 'TR',
         joinedDate: new Date().toISOString(),
@@ -85,7 +106,9 @@ export function SellOnBenimOlan() {
           >
             <div className="px-6 py-2 bg-white/10 rounded-full border border-white/10 backdrop-blur-md flex items-center gap-3">
               <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Benim Olan Satıcı Platformu 2026</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">
+                Benim Olan Satıcı Platformu 2026
+              </span>
             </div>
           </motion.div>
 
@@ -95,7 +118,9 @@ export function SellOnBenimOlan() {
             className="text-6xl md:text-8xl font-display font-black tracking-tightest leading-none mb-10 italic uppercase"
           >
             Ürünlerinizi <br />
-            <span className="text-accent underline decoration-4 underline-offset-8">Dünyaya Satın</span>
+            <span className="text-accent underline decoration-4 underline-offset-8">
+              Dünyaya Satın
+            </span>
           </motion.h1>
 
           <motion.p
@@ -104,12 +129,13 @@ export function SellOnBenimOlan() {
             transition={{ delay: 0.2 }}
             className="text-xl text-white/60 max-w-2xl mx-auto mb-12 font-medium"
           >
-            450+ seçkin satıcıya katılın. Benim Olan'ın AI destekli altyapısıyla ürünlerinizi global pazara taşıyın.
+            450+ seçkin satıcıya katılın. Benim Olan&apos;ın AI destekli altyapısıyla ürünlerinizi
+            global pazara taşıyın.
           </motion.p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <button
-              onClick={() => user ? setShowForm(true) : navigate('/')}
+              onClick={() => (user ? setShowForm(true) : navigate('/'))}
               className="px-10 py-5 bg-accent text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-accent/40 hover:scale-105 transition-all flex items-center gap-3"
             >
               Satıcı Başvurusu Yap <ArrowRight size={18} />
@@ -127,16 +153,20 @@ export function SellOnBenimOlan() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
             {[
               { label: 'Satıcı Büyümesi', value: '420%', icon: TrendingUp },
-              { label: 'Global Pazar',     value: '14+',  icon: Globe },
-              { label: 'KDV Yönetimi',    value: '100%', icon: ShieldCheck },
+              { label: 'Global Pazar', value: '14+', icon: Globe },
+              { label: 'KDV Yönetimi', value: '100%', icon: ShieldCheck },
               { label: 'Ortalama Sipariş', value: '₺640', icon: DollarSign },
             ].map((stat, i) => (
               <div key={i} className="text-center group">
                 <div className="w-16 h-16 mx-auto mb-6 bg-white rounded-2xl shadow-xl flex items-center justify-center text-accent group-hover:rotate-12 transition-all">
                   <stat.icon size={24} />
                 </div>
-                <h3 className="text-4xl font-display font-black text-brand-primary mb-2 italic uppercase">{stat.value}</h3>
-                <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 leading-none">{stat.label}</p>
+                <h3 className="text-4xl font-display font-black text-brand-primary mb-2 italic uppercase">
+                  {stat.value}
+                </h3>
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 leading-none">
+                  {stat.label}
+                </p>
               </div>
             ))}
           </div>
@@ -147,36 +177,55 @@ export function SellOnBenimOlan() {
       <section className="py-32 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-20 text-center">
-            <h2 className="text-4xl font-display font-black uppercase italic tracking-tighter mb-4">Satıcı Yol Haritası</h2>
-            <p className="text-brand-primary/40 uppercase font-black text-[10px] tracking-[0.3em]">Başvurudan ilk satışa 3 adım</p>
+            <h2 className="text-4xl font-display font-black uppercase italic tracking-tighter mb-4">
+              Satıcı Yol Haritası
+            </h2>
+            <p className="text-brand-primary/40 uppercase font-black text-[10px] tracking-[0.3em]">
+              Başvurudan ilk satışa 3 adım
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {[
               {
-                step: '01', title: 'Başvuru & Onay',
+                step: '01',
+                title: 'Başvuru & Onay',
                 desc: 'Satıcı başvurunuzu doldurun. AI destekli KYC ve mağaza doğrulama 24 saat içinde tamamlanır.',
                 feat: ['Otomatik KYC', 'Belge Doğrulama', 'Hızlı Aktivasyon'],
               },
               {
-                step: '02', title: 'Ürün Yükleme',
+                step: '02',
+                title: 'Ürün Yükleme',
                 desc: 'XML feed, CSV veya tek tek ürün ekleyebilirsiniz. 14 dile otomatik çeviri ve çoklu döviz desteği.',
                 feat: ['AI Açıklamalar', 'Toplu CSV Yükleme', 'Marketplace Sync'],
               },
               {
-                step: '03', title: 'Küresel Satış',
+                step: '03',
+                title: 'Küresel Satış',
                 desc: 'Bot Satış Motorumuz, yüksek niyetli alıcılara ürünlerinizi proaktif olarak sunar.',
                 feat: ['Algoritmik Teklif', 'Bot Pazarlama', 'Viral SEO'],
               },
             ].map((card, i) => (
-              <div key={i} className="p-10 bg-white rounded-[3rem] border border-brand-primary/5 shadow-2xl relative overflow-hidden group">
-                <span className="absolute -top-10 -end-10 text-[10rem] font-display font-black text-brand-primary/5 group-hover:text-accent/10 transition-colors">{card.step}</span>
+              <div
+                key={i}
+                className="p-10 bg-white rounded-[3rem] border border-brand-primary/5 shadow-2xl relative overflow-hidden group"
+              >
+                <span className="absolute -top-10 -end-10 text-[10rem] font-display font-black text-brand-primary/5 group-hover:text-accent/10 transition-colors">
+                  {card.step}
+                </span>
                 <div className="relative z-10">
-                  <h3 className="text-2xl font-display font-black uppercase mb-6 italic tracking-tighter">{card.title}</h3>
-                  <p className="text-sm text-brand-primary/60 font-medium mb-10 leading-relaxed">{card.desc}</p>
+                  <h3 className="text-2xl font-display font-black uppercase mb-6 italic tracking-tighter">
+                    {card.title}
+                  </h3>
+                  <p className="text-sm text-brand-primary/60 font-medium mb-10 leading-relaxed">
+                    {card.desc}
+                  </p>
                   <ul className="space-y-4">
                     {card.feat.map((f, j) => (
-                      <li key={j} className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-brand-primary">
+                      <li
+                        key={j}
+                        className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-brand-primary"
+                      >
                         <Zap size={14} className="text-accent" /> {f}
                       </li>
                     ))}
@@ -194,14 +243,16 @@ export function SellOnBenimOlan() {
           <div className="absolute inset-0 bg-accent/20 blur-[100px] opacity-30" />
           <div className="relative z-10">
             <h2 className="text-4xl md:text-6xl font-display font-black text-white italic uppercase tracking-tighter mb-8 leading-none">
-              Elite Marketplace'e <br />
-              <span className="text-accent underline decoration-4 underline-offset-8 decoration-accent/50">Hazır mısınız?</span>
+              Elite Marketplace&apos;e <br />
+              <span className="text-accent underline decoration-4 underline-offset-8 decoration-accent/50">
+                Hazır mısınız?
+              </span>
             </h2>
             <p className="text-white/60 mb-12 max-w-xl mx-auto font-medium">
               Lansman fazı için %0 komisyonla sınırlı satıcı kontenjanı mevcuttur.
             </p>
             <button
-              onClick={() => user ? setShowForm(true) : navigate('/')}
+              onClick={() => (user ? setShowForm(true) : navigate('/'))}
               className="px-12 py-5 bg-accent text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-accent/40 hover:scale-105 transition-all"
             >
               Hemen Başvur
@@ -218,7 +269,9 @@ export function SellOnBenimOlan() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            onClick={e => { if (e.target === e.currentTarget) setShowForm(false); }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowForm(false);
+            }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -233,7 +286,8 @@ export function SellOnBenimOlan() {
                     Başvurunuz Alındı!
                   </h3>
                   <p className="text-brand-primary/60 text-sm mb-6 leading-relaxed">
-                    Admin ekibimiz başvurunuzu inceleyecek.<br />
+                    Admin ekibimiz başvurunuzu inceleyecek.
+                    <br />
                     Onay sonrası satıcı panelinize erişebilirsiniz.
                   </p>
                   <button
@@ -264,7 +318,7 @@ export function SellOnBenimOlan() {
                     <FormField label="Mağaza Adı *" placeholder="Mağazanızın adı">
                       <input
                         value={form.storeName}
-                        onChange={e => set('storeName', e.target.value)}
+                        onChange={(e) => set('storeName', e.target.value)}
                         placeholder="Mağazanızın adı"
                         className={inputCls}
                       />
@@ -273,7 +327,7 @@ export function SellOnBenimOlan() {
                     <FormField label="Yetkili Adı" placeholder="">
                       <input
                         value={form.contactName}
-                        onChange={e => set('contactName', e.target.value)}
+                        onChange={(e) => set('contactName', e.target.value)}
                         placeholder="Ad Soyad"
                         className={inputCls}
                       />
@@ -283,16 +337,23 @@ export function SellOnBenimOlan() {
                       <input
                         type="tel"
                         value={form.phone}
-                        onChange={e => set('phone', e.target.value)}
+                        onChange={(e) => set('phone', e.target.value)}
                         placeholder="+90 5XX XXX XX XX"
                         className={inputCls}
                       />
                     </FormField>
 
                     <div>
-                      <label className="block text-[10px] font-black uppercase text-brand-primary/40 mb-2">İşletme Türü</label>
+                      <label className="block text-[10px] font-black uppercase text-brand-primary/40 mb-2">
+                        İşletme Türü
+                      </label>
                       <div className="flex gap-4">
-                        {([['individual', 'Bireysel'], ['company', 'Şirket']] as const).map(([val, lbl]) => (
+                        {(
+                          [
+                            ['individual', 'Bireysel'],
+                            ['company', 'Şirket'],
+                          ] as const
+                        ).map(([val, lbl]) => (
                           <label key={val} className="flex items-center gap-2 cursor-pointer">
                             <input
                               type="radio"
@@ -310,7 +371,7 @@ export function SellOnBenimOlan() {
                     <FormField label="Ürün Kategorisi" placeholder="">
                       <input
                         value={form.category}
-                        onChange={e => set('category', e.target.value)}
+                        onChange={(e) => set('category', e.target.value)}
                         placeholder="Elektronik, Giyim, Ev & Yaşam..."
                         className={inputCls}
                       />
@@ -319,7 +380,7 @@ export function SellOnBenimOlan() {
                     <FormField label="Mağaza Açıklaması" placeholder="">
                       <textarea
                         value={form.description}
-                        onChange={e => set('description', e.target.value)}
+                        onChange={(e) => set('description', e.target.value)}
                         placeholder="Sattığınız ürünler ve mağazanız hakkında kısaca..."
                         rows={3}
                         className={`${inputCls} resize-none`}
@@ -329,7 +390,7 @@ export function SellOnBenimOlan() {
                     <FormField label="Website (İsteğe bağlı)" placeholder="">
                       <input
                         value={form.website}
-                        onChange={e => set('website', e.target.value)}
+                        onChange={(e) => set('website', e.target.value)}
                         placeholder="https://..."
                         className={inputCls}
                       />
@@ -342,7 +403,13 @@ export function SellOnBenimOlan() {
                       disabled={submitting || !form.storeName.trim()}
                       className="w-full py-4 bg-accent text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-accent/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      {submitting ? <><Loader2 size={14} className="animate-spin" /> Gönderiliyor...</> : 'Başvuruyu Gönder'}
+                      {submitting ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" /> Gönderiliyor...
+                        </>
+                      ) : (
+                        'Başvuruyu Gönder'
+                      )}
                     </button>
                     <p className="text-center text-[10px] text-brand-primary/30 mt-3 font-medium">
                       Admin onayı sonrası satıcı panelinize erişim sağlanır.
@@ -358,12 +425,22 @@ export function SellOnBenimOlan() {
   );
 }
 
-const inputCls = 'w-full border border-[#F8F8FA] rounded-xl p-3 text-sm focus:outline-none focus:border-accent bg-white';
+const inputCls =
+  'w-full border border-[#F8F8FA] rounded-xl p-3 text-sm focus:outline-none focus:border-accent bg-white';
 
-function FormField({ label, children }: { label: string; placeholder: string; children: React.ReactNode }) {
+function FormField({
+  label,
+  children,
+}: {
+  label: string;
+  placeholder: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <label className="block text-[10px] font-black uppercase text-brand-primary/40 mb-1">{label}</label>
+      <label className="block text-[10px] font-black uppercase text-brand-primary/40 mb-1">
+        {label}
+      </label>
       {children}
     </div>
   );

@@ -64,10 +64,14 @@ export function ConnectionIndicator() {
   const { isOnline } = useNetworkStatus();
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
-      isOnline ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
-    }`}>
-      <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+    <span
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
+        isOnline ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
+      }`}
+    >
+      <span
+        className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
+      />
       {isOnline ? 'Online' : 'Offline'}
     </span>
   );
@@ -101,19 +105,21 @@ export async function cacheOfflineData(key: string, data: any): Promise<void> {
     const db = await openDB();
     const tx = db.transaction('cache', 'readwrite');
     tx.objectStore('cache').put({ key, data, timestamp: Date.now() });
-  } catch { /* non-critical */ }
+  } catch {
+    /* non-critical */
+  }
 }
 
 /** Read data from offline cache */
 export async function getOfflineData<T>(key: string): Promise<T | null> {
   try {
     const db = await openDB();
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const tx = db.transaction('cache', 'readonly');
       const req = tx.objectStore('cache').get(key);
       req.onsuccess = () => {
         const result = req.result;
-        resolve(result ? result.data as T : null);
+        resolve(result ? (result.data as T) : null);
       };
       req.onerror = () => resolve(null);
     });
@@ -128,7 +134,9 @@ export async function queueOfflineAction(action: { type: string; payload: any })
     const db = await openDB();
     const tx = db.transaction('pendingActions', 'readwrite');
     tx.objectStore('pendingActions').add({ ...action, createdAt: Date.now() });
-  } catch { /* non-critical */ }
+  } catch {
+    /* non-critical */
+  }
 }
 
 /** Process all queued offline actions */
@@ -151,7 +159,9 @@ export async function processPendingActions(
         await handler(action);
         store.delete(action.id);
         processed++;
-      } catch { /* skip failed */ }
+      } catch {
+        /* skip failed */
+      }
     }
     return processed;
   } catch {
@@ -171,7 +181,9 @@ export function useOfflineCart() {
   const saveCartOffline = useCallback((items: any[]) => {
     try {
       localStorage.setItem(CART_KEY, JSON.stringify(items));
-    } catch {}
+    } catch {
+      /* empty */
+    }
   }, []);
 
   const loadCartOffline = useCallback((): any[] => {
@@ -186,7 +198,9 @@ export function useOfflineCart() {
   const clearOfflineCart = useCallback(() => {
     try {
       localStorage.removeItem(CART_KEY);
-    } catch {}
+    } catch {
+      /* empty */
+    }
   }, []);
 
   return { saveCartOffline, loadCartOffline, clearOfflineCart };
@@ -198,9 +212,7 @@ export function useOfflineCart() {
  * Hook that processes queued actions when coming back online.
  * Usage: useReconnectHandler(processOrder, processCartUpdate)
  */
-export function useReconnectHandler(
-  onReconnect?: () => void,
-) {
+export function useReconnectHandler(onReconnect?: () => void) {
   const { isOnline } = useNetworkStatus();
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ processed: number; failed: number } | null>(null);
@@ -213,11 +225,12 @@ export function useReconnectHandler(
     processPendingActions(async (action) => {
       // Default handler - can be overridden
       console.log('[offline] Processing pending action:', action.type, action.payload);
-    }).then(processed => {
+    }).then((processed) => {
       setSyncResult({ processed, failed: 0 });
       setSyncing(false);
       setTimeout(() => setSyncResult(null), 5000);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline]);
 
   return { syncing, syncResult };

@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  ShoppingBag, Loader2, Package, Truck, MapPin, XCircle,
-  ChevronRight, Clock, AlertCircle, Eye,
+  ShoppingBag,
+  Loader2,
+  Package,
+  Truck,
+  MapPin,
+  XCircle,
+  ChevronRight,
+  Clock,
+  AlertCircle,
+  Eye,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getOrdersByUser } from '@/services/orderService';
@@ -21,35 +29,78 @@ interface FilterTab {
 }
 
 const FILTER_TABS: FilterTab[] = [
-  { key: 'all',        label: 'Tümü',         statuses: [] },
-  { key: 'processing', label: 'İşleniyor',    statuses: ['pending', 'paid', 'processing'] },
-  { key: 'shipped',    label: 'Kargoda',      statuses: ['shipped'] },
-  { key: 'delivered',  label: 'Teslim Edildi',statuses: ['delivered'] },
-  { key: 'cancelled',  label: 'İptal',        statuses: ['cancelled', 'refunded', 'return_requested', 'returned'] },
+  { key: 'all', label: 'Tümü', statuses: [] },
+  { key: 'processing', label: 'İşleniyor', statuses: ['pending', 'paid', 'processing'] },
+  { key: 'shipped', label: 'Kargoda', statuses: ['shipped'] },
+  { key: 'delivered', label: 'Teslim Edildi', statuses: ['delivered'] },
+  {
+    key: 'cancelled',
+    label: 'İptal',
+    statuses: ['cancelled', 'refunded', 'return_requested', 'returned'],
+  },
 ];
 
-const STATUS_STYLES: Record<string, { bg: string; text: string; icon: React.ComponentType<{ size?: number }> }> = {
-  pending:        { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', icon: Clock },
-  paid:           { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-700 dark:text-blue-300', icon: Package },
-  processing:     { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', icon: Package },
-  shipped:        { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', icon: Truck },
-  delivered:      { bg: 'bg-green-100 dark:bg-green-900/30',  text: 'text-green-700 dark:text-green-300', icon: MapPin },
-  cancelled:      { bg: 'bg-red-100 dark:bg-red-900/30',      text: 'text-red-700 dark:text-red-300', icon: XCircle },
-  refunded:       { bg: 'bg-red-100 dark:bg-red-900/30',      text: 'text-red-700 dark:text-red-300', icon: AlertCircle },
-  return_requested: { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300', icon: AlertCircle },
-  returned:       { bg: 'bg-zinc-100 dark:bg-zinc-800',       text: 'text-zinc-600 dark:text-zinc-400', icon: XCircle },
+const STATUS_STYLES: Record<
+  string,
+  { bg: string; text: string; icon: React.ComponentType<{ size?: number }> }
+> = {
+  pending: {
+    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    text: 'text-amber-700 dark:text-amber-300',
+    icon: Clock,
+  },
+  paid: {
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    text: 'text-blue-700 dark:text-blue-300',
+    icon: Package,
+  },
+  processing: {
+    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    text: 'text-amber-700 dark:text-amber-300',
+    icon: Package,
+  },
+  shipped: {
+    bg: 'bg-purple-100 dark:bg-purple-900/30',
+    text: 'text-purple-700 dark:text-purple-300',
+    icon: Truck,
+  },
+  delivered: {
+    bg: 'bg-green-100 dark:bg-green-900/30',
+    text: 'text-green-700 dark:text-green-300',
+    icon: MapPin,
+  },
+  cancelled: {
+    bg: 'bg-red-100 dark:bg-red-900/30',
+    text: 'text-red-700 dark:text-red-300',
+    icon: XCircle,
+  },
+  refunded: {
+    bg: 'bg-red-100 dark:bg-red-900/30',
+    text: 'text-red-700 dark:text-red-300',
+    icon: AlertCircle,
+  },
+  return_requested: {
+    bg: 'bg-orange-100 dark:bg-orange-900/30',
+    text: 'text-orange-700 dark:text-orange-300',
+    icon: AlertCircle,
+  },
+  returned: {
+    bg: 'bg-zinc-100 dark:bg-zinc-800',
+    text: 'text-zinc-600 dark:text-zinc-400',
+    icon: XCircle,
+  },
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  pending:         'Beklemede',
-  paid:            'Ödendi',
-  processing:      'Hazırlanıyor',
-  shipped:         'Kargoda',
-  delivered:       'Teslim Edildi',
-  cancelled:       'İptal Edildi',
-  refunded:        'İade Edildi',
+  pending: 'Beklemede',
+  paid: 'Ödendi',
+  processing: 'Hazırlanıyor',
+  shipped: 'Kargoda',
+  delivered: 'Teslim Edildi',
+  cancelled: 'İptal Edildi',
+  refunded: 'İade Edildi',
   return_requested: 'İade Talep Edildi',
-  returned:        'İade Tamamlandı',
+  returned: 'İade Tamamlandı',
 };
 
 // ─── Skeleton ────────────────────────────────────────────────────────────
@@ -96,11 +147,13 @@ function StatusBadge({ status }: { status: OrderStatus }) {
   const style = STATUS_STYLES[status] || STATUS_STYLES.pending;
   const Icon = style.icon;
   return (
-    <span className={cn(
-      'inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider',
-      style.bg,
-      style.text,
-    )}>
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider',
+        style.bg,
+        style.text,
+      )}
+    >
       <Icon size={12} />
       {STATUS_LABELS[status] || status}
     </span>
@@ -241,12 +294,13 @@ export function OrderHistory() {
         setError('Siparişler yüklenirken bir hata oluştu.');
       })
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const filteredOrders = useMemo(() => {
-    const tab = FILTER_TABS.find(t => t.key === activeFilter);
+    const tab = FILTER_TABS.find((t) => t.key === activeFilter);
     if (!tab || tab.statuses.length === 0) return orders;
-    return orders.filter(o => tab.statuses.includes(o.status));
+    return orders.filter((o) => tab.statuses.includes(o.status));
   }, [orders, activeFilter]);
 
   // ── Not logged in ────────────────────────────────────────────────────
@@ -297,9 +351,10 @@ export function OrderHistory() {
       {/* Filter tabs */}
       <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar">
         {FILTER_TABS.map((tab) => {
-          const count = tab.statuses.length === 0
-            ? orders.length
-            : orders.filter(o => tab.statuses.includes(o.status)).length;
+          const count =
+            tab.statuses.length === 0
+              ? orders.length
+              : orders.filter((o) => tab.statuses.includes(o.status)).length;
           return (
             <button
               key={tab.key}

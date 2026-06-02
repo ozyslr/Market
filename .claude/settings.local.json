@@ -91,7 +91,10 @@
       "Bash(git restore *)",
       "Bash(npx playwright *)",
       "Bash(npm run *)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4173/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4173/)",
+      "PowerShell(cd \"O:\\\\AI\\\\E-tic 2026\"; $json = npx eslint src/ --format json 2>$null | ConvertFrom-Json; $total = 0; $json | ForEach-Object { $total += $_.warningCount + $_.errorCount }; Write-Host \"Total warnings: $total\"; Write-Host \"Files with issues:\"; $json | Where-Object { $_.warningCount -gt 0 -or $_.errorCount -gt 0 } | ForEach-Object { Write-Host \"  $\\($_.filePath\\): $\\($_.warningCount\\)w $\\($_.errorCount\\)e\" })",
+      "PowerShell(cd \"O:\\\\AI\\\\E-tic 2026\"; $json = npx eslint src/ --format json 2>$null | ConvertFrom-Json; $json | Where-Object { $_.warningCount -gt 0 -or $_.errorCount -gt 0 } | ForEach-Object { $_.messages | ForEach-Object { Write-Host \"$\\($_.filePath\\):$\\($_.line\\) [$\\($_.ruleId\\)] $\\($_.message\\) \\(severity: $\\($_.severity\\)\\)\" } })",
+      "PowerShell(Get-Content \"O:\\\\AI\\\\E-tic 2026\\\\src\\\\pages\\\\Checkout.tsx\" -Encoding utf8 | Select-Object -Index \\(68,69,70\\) | ForEach-Object { \"[$_]\" })"
     ],
     "additionalDirectories": ["O:\\AI\\E-tic 2026\\docs\\superpowers"]
   }

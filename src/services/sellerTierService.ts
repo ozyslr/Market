@@ -88,7 +88,12 @@ const DEFAULT_TIERS: Record<SellerTier, Omit<TierConfig, 'tier'>> = {
     maxMonthlyRevenue: 150000,
     commissionRate: 12,
     monthlyFee: 99,
-    benefits: ['Gelişmiş mağaza sayfası', 'Toplu CSV import', 'Temel analitik', 'Canlı sohbet desteği'],
+    benefits: [
+      'Gelişmiş mağaza sayfası',
+      'Toplu CSV import',
+      'Temel analitik',
+      'Canlı sohbet desteği',
+    ],
     apiAccess: false,
     bulkImport: true,
     couponCreation: false,
@@ -102,7 +107,13 @@ const DEFAULT_TIERS: Record<SellerTier, Omit<TierConfig, 'tier'>> = {
     maxMonthlyRevenue: 500000,
     commissionRate: 10,
     monthlyFee: 249,
-    benefits: ['Özelleştirilebilir mağaza', 'Kupon oluşturma', 'Dinamik fiyatlandırma', 'Gelişmiş analitik', 'Öncelikli destek'],
+    benefits: [
+      'Özelleştirilebilir mağaza',
+      'Kupon oluşturma',
+      'Dinamik fiyatlandırma',
+      'Gelişmiş analitik',
+      'Öncelikli destek',
+    ],
     apiAccess: false,
     bulkImport: true,
     couponCreation: true,
@@ -116,7 +127,15 @@ const DEFAULT_TIERS: Record<SellerTier, Omit<TierConfig, 'tier'>> = {
     maxMonthlyRevenue: 2000000,
     commissionRate: 8,
     monthlyFee: 599,
-    benefits: ['Premium mağaza', 'API erişimi', 'Öne çıkan yerleşim', 'Kupon + kampanya', 'Fiyatlandırma motoru', '7/24 öncelikli destek', 'İade otomasyonu'],
+    benefits: [
+      'Premium mağaza',
+      'API erişimi',
+      'Öne çıkan yerleşim',
+      'Kupon + kampanya',
+      'Fiyatlandırma motoru',
+      '7/24 öncelikli destek',
+      'İade otomasyonu',
+    ],
     apiAccess: true,
     bulkImport: true,
     couponCreation: true,
@@ -130,7 +149,15 @@ const DEFAULT_TIERS: Record<SellerTier, Omit<TierConfig, 'tier'>> = {
     maxMonthlyRevenue: undefined, // Unlimited
     commissionRate: 5,
     monthlyFee: 1499,
-    benefits: ['Sınırsız ürün', 'En düşük komisyon', 'API + Webhook', 'Öncelikli featured yerleşim', 'Blockchain sertifikası', 'Özel hesap yöneticisi', 'Tüm özellikler sınırsız'],
+    benefits: [
+      'Sınırsız ürün',
+      'En düşük komisyon',
+      'API + Webhook',
+      'Öncelikli featured yerleşim',
+      'Blockchain sertifikası',
+      'Özel hesap yöneticisi',
+      'Tüm özellikler sınırsız',
+    ],
     apiAccess: true,
     bulkImport: true,
     couponCreation: true,
@@ -150,13 +177,18 @@ const COL = 'sellerTiers';
 export async function getTierConfig(tier: SellerTier): Promise<TierConfig> {
   try {
     const snap = await getDoc(doc(db, COL, tier));
-    if (snap.exists()) return { tier, ...snap.data() as Omit<TierConfig, 'tier'> };
-  } catch {}
+    if (snap.exists()) return { tier, ...(snap.data() as Omit<TierConfig, 'tier'>) };
+  } catch {
+    /* empty */
+  }
   return { tier, ...DEFAULT_TIERS[tier] };
 }
 
 /** Admin: update tier configuration */
-export async function updateTierConfig(tier: SellerTier, updates: Partial<Omit<TierConfig, 'tier'>>): Promise<void> {
+export async function updateTierConfig(
+  tier: SellerTier,
+  updates: Partial<Omit<TierConfig, 'tier'>>,
+): Promise<void> {
   try {
     await setDoc(doc(db, COL, tier), { ...DEFAULT_TIERS[tier], ...updates }, { merge: true });
   } catch (error) {
@@ -169,13 +201,13 @@ export async function updateTierConfig(tier: SellerTier, updates: Partial<Omit<T
 export async function getAllTierConfigs(): Promise<TierConfig[]> {
   try {
     const snap = await getDocs(collection(db, COL));
-    const stored = new Map(snap.docs.map(d => [d.id, d.data() as Omit<TierConfig, 'tier'>]));
-    return TIER_ORDER.map(tier => ({
+    const stored = new Map(snap.docs.map((d) => [d.id, d.data() as Omit<TierConfig, 'tier'>]));
+    return TIER_ORDER.map((tier) => ({
       tier,
       ...(stored.get(tier) || DEFAULT_TIERS[tier]),
     }));
   } catch {
-    return TIER_ORDER.map(tier => ({ tier, ...DEFAULT_TIERS[tier] }));
+    return TIER_ORDER.map((tier) => ({ tier, ...DEFAULT_TIERS[tier] }));
   }
 }
 
@@ -210,7 +242,7 @@ export async function getSellerTierStatus(
   const scoreToNextTier = nextConfig ? nextConfig.minPerformanceScore - performanceScore : null;
   const productsToNextTier = nextConfig ? nextConfig.maxProducts - productCount : null;
 
-  let recommendation = '';
+  let recommendation: string;
   if (atCap && nextTier) {
     recommendation = `Ürün limitine ulaştınız! ${nextConfig!.maxProducts} ürün için ${nextTier} seviyesine yükselin.`;
   } else if (remainingSlots < 10 && nextTier) {
@@ -224,15 +256,31 @@ export async function getSellerTierStatus(
   }
 
   return {
-    sellerId, currentTier, productCount, remainingSlots, monthlyRevenue, performanceScore,
-    nextTier, scoreToNextTier, productsToNextTier, atCap, tierConfig: config, recommendation,
+    sellerId,
+    currentTier,
+    productCount,
+    remainingSlots,
+    monthlyRevenue,
+    performanceScore,
+    nextTier,
+    scoreToNextTier,
+    productsToNextTier,
+    atCap,
+    tierConfig: config,
+    recommendation,
     updatedAt: new Date().toISOString(),
   };
 }
 
 /** Get all tier benefits for display */
-export function getTierBenefits(): { tier: SellerTier; label: string; benefits: string[]; commissionRate: number; maxProducts: number }[] {
-  return TIER_ORDER.map(tier => ({
+export function getTierBenefits(): {
+  tier: SellerTier;
+  label: string;
+  benefits: string[];
+  commissionRate: number;
+  maxProducts: number;
+}[] {
+  return TIER_ORDER.map((tier) => ({
     tier,
     label: DEFAULT_TIERS[tier].label,
     benefits: DEFAULT_TIERS[tier].benefits,

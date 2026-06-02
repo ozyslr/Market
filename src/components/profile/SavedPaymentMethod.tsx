@@ -43,14 +43,13 @@ function SetupForm({ onSuccess }: { onSuccess: () => void }) {
     }
 
     if (setupIntent?.payment_method) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const pm = await (stripe as any).retrievePaymentMethod(setupIntent.payment_method as string);
       const card = pm.paymentMethod?.card;
       const result = await setupPaymentMethod(
         firebaseUser,
         setupIntent.payment_method as string,
         card?.last4 || '',
-        card?.brand || ''
+        card?.brand || '',
       );
       if (result.error) {
         setError(result.error);
@@ -92,7 +91,10 @@ export function SavedPaymentMethod() {
   const [setupError, setSetupError] = useState<string | null>(null);
 
   const loadCards = useCallback(async () => {
-    if (!firebaseUser) { setLoadingCards(false); return; }
+    if (!firebaseUser) {
+      setLoadingCards(false);
+      return;
+    }
     setLoadingCards(true);
     setCardsError(null);
     const result = await listPaymentMethods(firebaseUser);
@@ -101,12 +103,19 @@ export function SavedPaymentMethod() {
     setLoadingCards(false);
   }, [firebaseUser]);
 
-  useEffect(() => { loadCards(); }, [loadCards]);
+  useEffect(() => {
+    loadCards();
+  }, [loadCards]);
 
   const openSetupForm = async () => {
     if (!firebaseUser) return;
     if (!stripePublishableKey) {
-      setSetupError(t('payment.configMissing', 'Ödeme sistemi yapılandırılmamış. Lütfen daha sonra tekrar deneyin.'));
+      setSetupError(
+        t(
+          'payment.configMissing',
+          'Ödeme sistemi yapılandırılmamış. Lütfen daha sonra tekrar deneyin.',
+        ),
+      );
       return;
     }
     setLoadingIntent(true);
@@ -116,7 +125,9 @@ export function SavedPaymentMethod() {
       setClientSecret(result.clientSecret);
       setShowForm(true);
     } else {
-      setSetupError(result.error || t('payment.setupFailed', 'Ödeme formu yüklenemedi. Lütfen tekrar deneyin.'));
+      setSetupError(
+        result.error || t('payment.setupFailed', 'Ödeme formu yüklenemedi. Lütfen tekrar deneyin.'),
+      );
     }
     setLoadingIntent(false);
   };
@@ -132,7 +143,10 @@ export function SavedPaymentMethod() {
 
   const handleDelete = async (id: string) => {
     if (!firebaseUser) return;
-    if (!window.confirm(t('payment.confirmDelete', 'Bu kartı kaldırmak istediğinize emin misiniz?'))) return;
+    if (
+      !window.confirm(t('payment.confirmDelete', 'Bu kartı kaldırmak istediğinize emin misiniz?'))
+    )
+      return;
     setBusyId(id);
     const result = await deletePaymentMethod(firebaseUser, id);
     if (result.error) setCardsError(result.error);
@@ -154,7 +168,7 @@ export function SavedPaymentMethod() {
       <p className="text-sm text-brand-primary/60 dark:text-zinc-400">
         {t(
           'payment.description',
-          'Tek tıkla ödeme için kartınızı kaydedin. Kart bilgileri güvenli şekilde Stripe\'ta saklanır.'
+          "Tek tıkla ödeme için kartınızı kaydedin. Kart bilgileri güvenli şekilde Stripe'ta saklanır.",
         )}
       </p>
 
@@ -162,7 +176,10 @@ export function SavedPaymentMethod() {
       {loadingCards ? (
         <div className="space-y-2">
           {[0, 1].map((i) => (
-            <div key={i} className="h-16 rounded-xl bg-brand-primary/5 dark:bg-zinc-800 animate-pulse" />
+            <div
+              key={i}
+              className="h-16 rounded-xl bg-brand-primary/5 dark:bg-zinc-800 animate-pulse"
+            />
           ))}
         </div>
       ) : cards.length === 0 ? (
@@ -223,7 +240,11 @@ export function SavedPaymentMethod() {
         </div>
       )}
 
-      {cardsError && <p className="text-sm text-red-500" role="alert">{cardsError}</p>}
+      {cardsError && (
+        <p className="text-sm text-red-500" role="alert">
+          {cardsError}
+        </p>
+      )}
 
       {/* Add card */}
       {!showForm && (
@@ -233,12 +254,16 @@ export function SavedPaymentMethod() {
           className="w-full py-3 border-2 border-dashed border-brand-primary/20 rounded-xl text-sm text-brand-primary/60 dark:text-zinc-400 hover:border-accent hover:text-accent transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} />
-          {loadingIntent ? t('payment.loading', 'Yükleniyor...') : t('payment.addCard', 'Kart Ekle')}
+          {loadingIntent
+            ? t('payment.loading', 'Yükleniyor...')
+            : t('payment.addCard', 'Kart Ekle')}
         </button>
       )}
 
       {setupError && (
-        <p className="text-sm text-red-500" role="alert">{setupError}</p>
+        <p className="text-sm text-red-500" role="alert">
+          {setupError}
+        </p>
       )}
 
       {showForm && clientSecret && (

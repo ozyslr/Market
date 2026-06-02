@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
-  ShieldCheck, ExternalLink, Plus, Loader2, Search, CheckCircle2, AlertTriangle,
-  X, Package, Globe, Hash, Calendar,
+  ShieldCheck,
+  ExternalLink,
+  Plus,
+  Loader2,
+  Search,
+  CheckCircle2,
+  AlertTriangle,
+  X,
+  Package,
+  Globe,
+  Hash,
+  Calendar,
 } from 'lucide-react';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -31,21 +41,26 @@ export function SellerCertificates() {
     if (!user?.id) return;
     loadCertificates();
     loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   async function loadCertificates() {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const snap = await getDocs(query(
-        collection(db, 'productCertificates'),
-        // Note: We query all and filter client-side since Firestore doesn't support OR queries easily
-        // In production, create composite indexes
-        orderBy('issuedAt', 'desc'),
-        limit(50),
-      ));
-      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }) as ProductCertificate & { id: string });
-      setCertificates(all.filter(c => c.sellerId === user.id));
+      const snap = await getDocs(
+        query(
+          collection(db, 'productCertificates'),
+          // Note: We query all and filter client-side since Firestore doesn't support OR queries easily
+          // In production, create composite indexes
+          orderBy('issuedAt', 'desc'),
+          limit(50),
+        ),
+      );
+      const all = snap.docs.map(
+        (d) => ({ id: d.id, ...d.data() }) as ProductCertificate & { id: string },
+      );
+      setCertificates(all.filter((c) => c.sellerId === user.id));
     } catch {
       // Fallback: empty
     } finally {
@@ -56,19 +71,17 @@ export function SellerCertificates() {
   async function loadProducts() {
     if (!user?.id) return;
     try {
-      const snap = await getDocs(query(
-        collection(db, 'products'),
-        orderBy('createdAt', 'desc'),
-        limit(100),
-      ));
-      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Product);
-      setProducts(all.filter(p => p.sellerId === user.id));
+      const snap = await getDocs(
+        query(collection(db, 'products'), orderBy('createdAt', 'desc'), limit(100)),
+      );
+      const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Product);
+      setProducts(all.filter((p) => p.sellerId === user.id));
     } catch {
       // Fallback: empty
     }
   }
 
-  const filteredProducts = products.filter(p =>
+  const filteredProducts = products.filter((p) =>
     p.title.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
@@ -101,7 +114,9 @@ export function SellerCertificates() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Blockchain Sertifikaları</h1>
-          <p className="text-sm text-zinc-400 mt-1">Ürünleriniz için blockchain destekli orijinallik sertifikaları oluşturun ve yönetin</p>
+          <p className="text-sm text-zinc-400 mt-1">
+            Ürünleriniz için blockchain destekli orijinallik sertifikaları oluşturun ve yönetin
+          </p>
         </div>
         <button
           onClick={() => setActiveTab('issue')}
@@ -117,19 +132,20 @@ export function SellerCertificates() {
         {[
           { id: 'certificates' as Tab, label: 'Sertifikalarım' },
           { id: 'issue' as Tab, label: 'Yeni Sertifika' },
-        ].map(tab => (
+        ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-6 py-3 text-sm font-medium transition-colors relative ${
-              activeTab === tab.id
-                ? 'text-emerald-400'
-                : 'text-zinc-500 hover:text-zinc-300'
+              activeTab === tab.id ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             {tab.label}
             {activeTab === tab.id && (
-              <motion.div layoutId="cert-tab" className="absolute bottom-0 start-0 end-0 h-0.5 bg-emerald-400" />
+              <motion.div
+                layoutId="cert-tab"
+                className="absolute bottom-0 start-0 end-0 h-0.5 bg-emerald-400"
+              />
             )}
           </button>
         ))}
@@ -157,7 +173,7 @@ export function SellerCertificates() {
             </div>
           ) : (
             <div className="space-y-4">
-              {certificates.map(cert => (
+              {certificates.map((cert) => (
                 <div
                   key={cert.id}
                   className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-emerald-800/50 transition-colors"
@@ -229,26 +245,36 @@ export function SellerCertificates() {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Ürün ara..."
                 className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-xl text-sm text-white outline-none focus:border-emerald-500 transition-colors"
               />
               {searchTerm && (
                 <div className="mt-2 max-h-48 overflow-auto space-y-1">
-                  {filteredProducts.slice(0, 10).map(p => (
+                  {filteredProducts.slice(0, 10).map((p) => (
                     <button
                       key={p.id}
-                      onClick={() => { setSelectedProduct(p); setSearchTerm(p.title); }}
+                      onClick={() => {
+                        setSelectedProduct(p);
+                        setSearchTerm(p.title);
+                      }}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                         selectedProduct?.id === p.id
                           ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                           : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                       }`}
                     >
-                      <img src={p.images[0]} alt={p.title} className="w-8 h-8 object-contain rounded" loading="lazy" />
+                      <img
+                        src={p.images[0]}
+                        alt={p.title}
+                        className="w-8 h-8 object-contain rounded"
+                        loading="lazy"
+                      />
                       <div className="text-start min-w-0">
                         <p className="truncate">{p.title}</p>
-                        <p className="text-[10px] text-zinc-500">{p.brand} · {p.originCountry}</p>
+                        <p className="text-[10px] text-zinc-500">
+                          {p.brand} · {p.originCountry}
+                        </p>
                       </div>
                     </button>
                   ))}
@@ -266,7 +292,10 @@ export function SellerCertificates() {
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-semibold text-white">Seçilen Ürün</h4>
                   <button
-                    onClick={() => { setSelectedProduct(null); setSearchTerm(''); }}
+                    onClick={() => {
+                      setSelectedProduct(null);
+                      setSearchTerm('');
+                    }}
                     className="p-1 hover:bg-zinc-700 rounded-lg text-zinc-500 hover:text-white transition-all"
                   >
                     <X size={14} />
@@ -291,11 +320,7 @@ export function SellerCertificates() {
               disabled={!selectedProduct || issuing}
               className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-xl text-sm font-medium transition-all"
             >
-              {issuing ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <ShieldCheck size={16} />
-              )}
+              {issuing ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
               {issuing ? 'Blok zincire kaydediliyor...' : 'Sertifikayı Oluştur'}
             </button>
           </div>
@@ -309,7 +334,8 @@ export function SellerCertificates() {
             <ul className="space-y-2 text-xs text-zinc-400">
               <li className="flex items-start gap-2">
                 <CheckCircle2 size={12} className="text-emerald-500 mt-0.5 shrink-0" />
-                Her sertifika benzersiz bir seri numarası ve işlem hash'i ile blok zincirinde saklanır
+                Her sertifika benzersiz bir seri numarası ve işlem hash&apos;i ile blok zincirinde
+                saklanır
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 size={12} className="text-emerald-500 mt-0.5 shrink-0" />

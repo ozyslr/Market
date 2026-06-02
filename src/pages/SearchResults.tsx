@@ -1,10 +1,20 @@
 ﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
-  Filter, Search as SearchIcon, Star,
-  MapPin, Globe, ShieldCheck, Zap, History,
-  TrendingUp, SlidersHorizontal, Grid, List as ListIcon,
-  ArrowRight, X
+  Filter,
+  Search as SearchIcon,
+  Star,
+  MapPin,
+  Globe,
+  ShieldCheck,
+  Zap,
+  History,
+  TrendingUp,
+  SlidersHorizontal,
+  Grid,
+  List as ListIcon,
+  ArrowRight,
+  X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MOCK_PRODUCTS } from '@/data/mockProducts';
@@ -21,43 +31,53 @@ import { SearchResultsSkeleton } from '@/components/ui/Skeleton';
 function normalizeTR(s: string): string {
   return s
     .toLowerCase()
-    .replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ü/g, 'u')
-    .replace(/ö/g, 'o').replace(/ı/g, 'i').replace(/ç/g, 'c')
-    .replace(/İ/g, 'i').replace(/Ş/g, 's').replace(/Ğ/g, 'g')
-    .replace(/Ü/g, 'u').replace(/Ö/g, 'o').replace(/Ç/g, 'c');
+    .replace(/ş/g, 's')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ö/g, 'o')
+    .replace(/ı/g, 'i')
+    .replace(/ç/g, 'c')
+    .replace(/İ/g, 'i')
+    .replace(/Ş/g, 's')
+    .replace(/Ğ/g, 'g')
+    .replace(/Ü/g, 'u')
+    .replace(/Ö/g, 'o')
+    .replace(/Ç/g, 'c');
 }
 
 function isProductInCategory(product: Product, catId: string, allCategories: Category[]): boolean {
   if (!catId) return true;
   if (product.categoryId === catId) return true;
-  
-  const cat = allCategories.find(c => c.id === catId);
+
+  const cat = allCategories.find((c) => c.id === catId);
   if (!cat) return false;
-  
+
   // If the category has a parent, the product must belong to that parent category
   if (cat.parentId && product.categoryId !== cat.parentId) return false;
-  
+
   // Subcategory fallback keyword matching
   const words = new Set<string>();
-  cat.name.split(/[\s&,_\/\-]+/).forEach(w => words.add(normalizeTR(w)));
-  cat.slug.split(/[_\-]+/).forEach(w => words.add(normalizeTR(w)));
-  
+  cat.name.split(/[\s&,_/-]+/).forEach((w) => words.add(normalizeTR(w)));
+  cat.slug.split(/[_-]+/).forEach((w) => words.add(normalizeTR(w)));
+
   if (cat.items) {
-    cat.items.forEach(item => {
-      item.name.split(/[\s&,_\/\-]+/).forEach(w => words.add(normalizeTR(w)));
-      item.query.split(/[_\-]+/).forEach(w => words.add(normalizeTR(w)));
+    cat.items.forEach((item) => {
+      item.name.split(/[\s&,_/-]+/).forEach((w) => words.add(normalizeTR(w)));
+      item.query.split(/[_-]+/).forEach((w) => words.add(normalizeTR(w)));
     });
   }
-  
+
   const keywords = Array.from(words)
-    .map(w => w.replace(/[^a-z0-9]/g, ''))
-    .filter(w => w.length > 2);
-    
+    .map((w) => w.replace(/[^a-z0-9]/g, ''))
+    .filter((w) => w.length > 2);
+
   if (keywords.length === 0) return false;
-  
-  const productText = normalizeTR(`${product.title} ${product.description} ${product.brand} ${(product.tags ?? []).join(' ')}`);
-  
-  return keywords.some(kw => productText.includes(kw));
+
+  const productText = normalizeTR(
+    `${product.title} ${product.description} ${product.brand} ${(product.tags ?? []).join(' ')}`,
+  );
+
+  return keywords.some((kw) => productText.includes(kw));
 }
 
 const RECENT_KEY = 'mercora_recent_searches';
@@ -66,9 +86,11 @@ function saveRecentSearch(q: string) {
   if (!q.trim()) return;
   try {
     const prev: string[] = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
-    const next = [q, ...prev.filter(x => x !== q)].slice(0, 8);
+    const next = [q, ...prev.filter((x) => x !== q)].slice(0, 8);
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-  } catch {}
+  } catch {
+    /* empty */
+  }
 }
 
 export function SearchResultsPage() {
@@ -98,16 +120,19 @@ export function SearchResultsPage() {
   }, [query, categoryId, tag, origin, delivery, sortBy, priceMin, priceMax, minRating]);
 
   useEffect(() => {
-    if (!categoryId) { setCategoryFilterAttrs([]); return; }
-    getCategories().then(cats => {
-      const cat = cats.find(c => c.id === categoryId);
+    if (!categoryId) {
+      setCategoryFilterAttrs([]);
+      return;
+    }
+    getCategories().then((cats) => {
+      const cat = cats.find((c) => c.id === categoryId);
       setCategoryFilterAttrs(cat?.filterAttributes ?? []);
     });
   }, [categoryId]);
 
   // Fetch dynamic facet counts (brands, categories) for the sidebar
   useEffect(() => {
-    getFacetedFilters(categoryId || undefined).then(facets => {
+    getFacetedFilters(categoryId || undefined).then((facets) => {
       setFacetCounts({
         brands: facets?.brands ?? [],
       });
@@ -124,24 +149,34 @@ export function SearchResultsPage() {
     setSearchParams(next);
   };
 
-  useEffect(() => { if (query) saveRecentSearch(query); }, [query]);
+  useEffect(() => {
+    if (query) saveRecentSearch(query);
+  }, [query]);
 
   // Derive brand and stock params
   const brandsParam = searchParams.get('brand') || '';
   const selectedBrands = brandsParam ? brandsParam.split(',') : [];
   const inStockParam = searchParams.get('inStock') === '1';
 
-  let results = MOCK_PRODUCTS.filter(p => {
+  let results = MOCK_PRODUCTS.filter((p) => {
     if (p.status !== undefined && p.status !== 'approved') return false;
     const nq = normalizeTR(query);
-    const matchesQuery = !query || [p.title, p.description, p.brand, ...(p.tags ?? [])]
-      .some(field => normalizeTR(field ?? '').includes(nq));
+    const matchesQuery =
+      !query ||
+      [p.title, p.description, p.brand, ...(p.tags ?? [])].some((field) =>
+        normalizeTR(field ?? '').includes(nq),
+      );
     const matchesCategory = isProductInCategory(p, categoryId, allCategories);
-    const matchesTag = !tag || (p.tags ?? []).includes(tag as any) || (tag === 'deals' && (p.oldPrice && p.oldPrice > p.price));
-    const matchesOrigin = !origin || (origin === 'global' ? p.originCountry !== 'UK' : p.originCountry === origin);
-    const matchesDelivery = !delivery || (delivery === 'prime' ? (p.estimatedDeliveryDays ?? 99) <= 2 : true);
+    const matchesTag =
+      !tag ||
+      (p.tags ?? []).includes(tag as any) ||
+      (tag === 'deals' && p.oldPrice && p.oldPrice > p.price);
+    const matchesOrigin =
+      !origin || (origin === 'global' ? p.originCountry !== 'UK' : p.originCountry === origin);
+    const matchesDelivery =
+      !delivery || (delivery === 'prime' ? (p.estimatedDeliveryDays ?? 99) <= 2 : true);
 
-    const matchesAttrs = categoryFilterAttrs.every(attr => {
+    const matchesAttrs = categoryFilterAttrs.every((attr) => {
       const paramVal = searchParams.get(attr.key);
       if (!paramVal) return true;
       const selectedValues = paramVal.split(',');
@@ -151,12 +186,11 @@ export function SearchResultsPage() {
       } else {
         productVal = (p.attributes as Record<string, string>)?.[attr.key] ?? '';
       }
-      return selectedValues.some(v => productVal.toLowerCase().includes(v.toLowerCase()));
+      return selectedValues.some((v) => productVal.toLowerCase().includes(v.toLowerCase()));
     });
 
     const matchesPrice =
-      (!priceMin || p.price >= Number(priceMin)) &&
-      (!priceMax || p.price <= Number(priceMax));
+      (!priceMin || p.price >= Number(priceMin)) && (!priceMax || p.price <= Number(priceMax));
 
     const matchesRating = !minRating || p.rating >= Number(minRating);
 
@@ -166,15 +200,26 @@ export function SearchResultsPage() {
     // In stock filter (from FilterPanel)
     const matchesInStock = !inStockParam || (p.stock ?? 0) > 0;
 
-    const matchesFreeShipping = searchParams.get('freeShipping') !== '1' ||
+    const matchesFreeShipping =
+      searchParams.get('freeShipping') !== '1' ||
       (p.estimatedDeliveryDays != null && p.estimatedDeliveryDays <= 3);
-    const matchesAdvantageous = searchParams.get('advantageous') !== '1' ||
-      (p.discountPercentage ?? 0) >= 10 || !!p.oldPrice;
+    const matchesAdvantageous =
+      searchParams.get('advantageous') !== '1' || (p.discountPercentage ?? 0) >= 10 || !!p.oldPrice;
 
-    return matchesQuery && matchesCategory && matchesTag && matchesOrigin &&
-           matchesDelivery && matchesAttrs && matchesPrice && matchesRating &&
-           matchesBrand && matchesInStock &&
-           matchesFreeShipping && matchesAdvantageous;
+    return (
+      matchesQuery &&
+      matchesCategory &&
+      matchesTag &&
+      matchesOrigin &&
+      matchesDelivery &&
+      matchesAttrs &&
+      matchesPrice &&
+      matchesRating &&
+      matchesBrand &&
+      matchesInStock &&
+      matchesFreeShipping &&
+      matchesAdvantageous
+    );
   });
 
   if (sortBy) {
@@ -188,80 +233,138 @@ export function SearchResultsPage() {
     });
   }
 
-  const categoryName = allCategories.find(c => c.id === categoryId)?.name || tag || query;
-  const hasActiveFilters = !!(priceMin || priceMax || minRating ||
+  const categoryName = allCategories.find((c) => c.id === categoryId)?.name || tag || query;
+  const hasActiveFilters = !!(
+    priceMin ||
+    priceMax ||
+    minRating ||
     searchParams.get('freeShipping') === '1' ||
     searchParams.get('advantageous') === '1' ||
     selectedBrands.length > 0 ||
     inStockParam ||
-    categoryFilterAttrs.some(a => searchParams.get(a.key)));
+    categoryFilterAttrs.some((a) => searchParams.get(a.key))
+  );
 
   // ActiveFilters derived from URL searchParams for FilterPanel
-  const panelFilters: ActiveFilters = useMemo(() => ({
-    priceMin: priceMin ? Number(priceMin) : undefined,
-    priceMax: priceMax ? Number(priceMax) : undefined,
-    rating: minRating ? Number(minRating) : undefined,
-    brands: selectedBrands.length > 0 ? selectedBrands : undefined,
-    inStock: inStockParam || undefined,
-    freeShipping: searchParams.get('freeShipping') === '1' || undefined,
-  }), [priceMin, priceMax, minRating, selectedBrands.join(','), inStockParam, searchParams.get('freeShipping')]);
+  const panelFilters: ActiveFilters = useMemo(
+    () => ({
+      priceMin: priceMin ? Number(priceMin) : undefined,
+      priceMax: priceMax ? Number(priceMax) : undefined,
+      rating: minRating ? Number(minRating) : undefined,
+      brands: selectedBrands.length > 0 ? selectedBrands : undefined,
+      inStock: inStockParam || undefined,
+      freeShipping: searchParams.get('freeShipping') === '1' || undefined,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }),
+    [
+      priceMin,
+      priceMax,
+      minRating,
+      selectedBrands.join(','),
+      inStockParam,
+      searchParams.get('freeShipping'),
+    ],
+  );
 
   // FilterPanel onChange -> sync to URL params
-  const handleFilterPanelChange = useCallback((f: ActiveFilters) => {
-    const next = new URLSearchParams(searchParams);
-    if (f.priceMin != null) next.set('price_min', String(f.priceMin));
-    else next.delete('price_min');
-    if (f.priceMax != null) next.set('price_max', String(f.priceMax));
-    else next.delete('price_max');
-    if (f.rating != null) next.set('rating', String(f.rating));
-    else next.delete('rating');
-    if (f.brands && f.brands.length > 0) next.set('brand', f.brands.join(','));
-    else next.delete('brand');
-    if (f.inStock) next.set('inStock', '1');
-    else next.delete('inStock');
-    if (f.freeShipping) next.set('freeShipping', '1');
-    else next.delete('freeShipping');
-    setSearchParams(next);
-  }, [searchParams, setSearchParams]);
+  const handleFilterPanelChange = useCallback(
+    (f: ActiveFilters) => {
+      const next = new URLSearchParams(searchParams);
+      if (f.priceMin != null) next.set('price_min', String(f.priceMin));
+      else next.delete('price_min');
+      if (f.priceMax != null) next.set('price_max', String(f.priceMax));
+      else next.delete('price_max');
+      if (f.rating != null) next.set('rating', String(f.rating));
+      else next.delete('rating');
+      if (f.brands && f.brands.length > 0) next.set('brand', f.brands.join(','));
+      else next.delete('brand');
+      if (f.inStock) next.set('inStock', '1');
+      else next.delete('inStock');
+      if (f.freeShipping) next.set('freeShipping', '1');
+      else next.delete('freeShipping');
+      setSearchParams(next);
+    },
+    [searchParams, setSearchParams],
+  );
 
   // Sort change handler
-  const handleSortChange = useCallback((sort: string) => {
-    const next = new URLSearchParams(searchParams);
-    if (sort) next.set('sortBy', sort);
-    else next.delete('sortBy');
-    setSearchParams(next);
-  }, [searchParams, setSearchParams]);
+  const handleSortChange = useCallback(
+    (sort: string) => {
+      const next = new URLSearchParams(searchParams);
+      if (sort) next.set('sortBy', sort);
+      else next.delete('sortBy');
+      setSearchParams(next);
+    },
+    [searchParams, setSearchParams],
+  );
 
   // Active filters bar items (from URL params)
   const activeFilters = useMemo(() => {
     const filters: { key: string; value: string; label: string }[] = [];
-    categoryFilterAttrs.forEach(attr => {
+    categoryFilterAttrs.forEach((attr) => {
       const val = searchParams.get(attr.key);
-      if (val) val.split(',').forEach(v => filters.push({ key: attr.key, value: v, label: `${attr.label}: ${v}` }));
+      if (val)
+        val
+          .split(',')
+          .forEach((v) => filters.push({ key: attr.key, value: v, label: `${attr.label}: ${v}` }));
     });
     if (priceMin) filters.push({ key: 'price_min', value: priceMin, label: `Min: ${priceMin}₺` });
     if (priceMax) filters.push({ key: 'price_max', value: priceMax, label: `Max: ${priceMax}₺` });
-    if (minRating) filters.push({ key: 'rating', value: minRating, label: `${minRating}+ ${t('filter.andAbove')}` });
-    if (searchParams.get('freeShipping') === '1') filters.push({ key: 'freeShipping', value: '1', label: t('filter.freeShipping') });
-    if (searchParams.get('advantageous') === '1') filters.push({ key: 'advantageous', value: '1', label: t('filter.advantageous') });
+    if (minRating)
+      filters.push({
+        key: 'rating',
+        value: minRating,
+        label: `${minRating}+ ${t('filter.andAbove')}`,
+      });
+    if (searchParams.get('freeShipping') === '1')
+      filters.push({ key: 'freeShipping', value: '1', label: t('filter.freeShipping') });
+    if (searchParams.get('advantageous') === '1')
+      filters.push({ key: 'advantageous', value: '1', label: t('filter.advantageous') });
     if (inStockParam) filters.push({ key: 'inStock', value: '1', label: t('product.inStock') });
     if (selectedBrands.length > 0) {
-      selectedBrands.forEach(b => filters.push({ key: 'brand', value: b, label: b }));
+      selectedBrands.forEach((b) => filters.push({ key: 'brand', value: b, label: b }));
     }
     return filters;
-  }, [searchParams, categoryFilterAttrs, priceMin, priceMax, minRating, inStockParam, selectedBrands.join(',')]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    searchParams,
+    categoryFilterAttrs,
+    priceMin,
+    priceMax,
+    minRating,
+    inStockParam,
+    selectedBrands.join(','),
+  ]);
 
   const removeFilter = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
-    if (['price_min', 'price_max', 'rating', 'freeShipping', 'advantageous', 'inStock', 'brand'].includes(key)) {
+    if (
+      [
+        'price_min',
+        'price_max',
+        'rating',
+        'freeShipping',
+        'advantageous',
+        'inStock',
+        'brand',
+      ].includes(key)
+    ) {
       if (key === 'brand') {
-        const current = next.get('brand')?.split(',').filter(v => v !== value) ?? [];
+        const current =
+          next
+            .get('brand')
+            ?.split(',')
+            .filter((v) => v !== value) ?? [];
         current.length ? next.set('brand', current.join(',')) : next.delete('brand');
       } else {
         next.delete(key);
       }
     } else {
-      const current = next.get(key)?.split(',').filter(v => v !== value) ?? [];
+      const current =
+        next
+          .get(key)
+          ?.split(',')
+          .filter((v) => v !== value) ?? [];
       current.length ? next.set(key, current.join(',')) : next.delete(key);
     }
     setSearchParams(next);
@@ -287,38 +390,53 @@ export function SearchResultsPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
           <div>
             <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2 sm:mb-4">
-              <Link to="/" className="hover:text-accent">Benim Olan Global</Link>
+              <Link to="/" className="hover:text-accent">
+                Benim Olan Global
+              </Link>
               <span>/</span>
               <span className="text-brand-primary">Search Results</span>
             </div>
             <h1 className="text-xl sm:text-4xl font-display font-black tracking-tighter text-brand-primary uppercase italic leading-tight">
-               <span className="text-accent">{results.length}</span> Artifacts Found
-               <span className="hidden sm:inline"> within "{categoryName || 'Global Catalog'}"</span>
+              <span className="text-accent">{results.length}</span> Artifacts Found
+              <span className="hidden sm:inline">
+                {' '}
+                within &quot;{categoryName || 'Global Catalog'}&quot;
+              </span>
             </h1>
           </div>
 
           <div className="flex items-center gap-2 lg:gap-4 shrink-0">
-             <button
-               onClick={() => setIsMobileFilterOpen(true)}
-               className="lg:hidden flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-950 rounded-2xl border border-brand-primary/5 shadow-sm text-[10px] font-black uppercase tracking-widest text-brand-primary"
-             >
-               <Filter size={14} /> {t('global.filter')}
-             </button>
+            <button
+              onClick={() => setIsMobileFilterOpen(true)}
+              className="lg:hidden flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-950 rounded-2xl border border-brand-primary/5 shadow-sm text-[10px] font-black uppercase tracking-widest text-brand-primary"
+            >
+              <Filter size={14} /> {t('global.filter')}
+            </button>
 
-             <div className="flex bg-white dark:bg-zinc-950 rounded-2xl p-1 sm:p-1.5 border border-brand-primary/5 shadow-sm">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={cn("px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl transition-all flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase tracking-widest", viewMode === 'grid' ? "bg-brand-primary text-white shadow-lg" : "text-brand-primary/40 hover:text-brand-primary")}
-                >
-                  <Grid size={14} /> Grid
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={cn("px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl transition-all flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase tracking-widest", viewMode === 'list' ? "bg-brand-primary text-white shadow-lg" : "text-brand-primary/40 hover:text-brand-primary")}
-                >
-                  <ListIcon size={14} /> List
-                </button>
-             </div>
+            <div className="flex bg-white dark:bg-zinc-950 rounded-2xl p-1 sm:p-1.5 border border-brand-primary/5 shadow-sm">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={cn(
+                  'px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl transition-all flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase tracking-widest',
+                  viewMode === 'grid'
+                    ? 'bg-brand-primary text-white shadow-lg'
+                    : 'text-brand-primary/40 hover:text-brand-primary',
+                )}
+              >
+                <Grid size={14} /> Grid
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  'px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl transition-all flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase tracking-widest',
+                  viewMode === 'list'
+                    ? 'bg-brand-primary text-white shadow-lg'
+                    : 'text-brand-primary/40 hover:text-brand-primary',
+                )}
+              >
+                <ListIcon size={14} /> List
+              </button>
+            </div>
           </div>
         </div>
 
@@ -342,8 +460,15 @@ export function SearchResultsPage() {
                   className="fixed inset-y-0 end-0 w-[85%] max-w-[320px] bg-white dark:bg-zinc-950 z-[70] lg:hidden flex flex-col shadow-2xl p-6"
                 >
                   <div className="flex items-center justify-between mb-8 pb-4 border-b border-brand-primary/5">
-                    <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><Filter size={16} /> Curated Filters</h3>
-                    <button onClick={() => setIsMobileFilterOpen(false)} className="text-brand-primary/20"><SlidersHorizontal size={20} /></button>
+                    <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                      <Filter size={16} /> Curated Filters
+                    </h3>
+                    <button
+                      onClick={() => setIsMobileFilterOpen(false)}
+                      className="text-brand-primary/20"
+                    >
+                      <SlidersHorizontal size={20} />
+                    </button>
                   </div>
                   <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
                     <FilterPanel
@@ -367,7 +492,12 @@ export function SearchResultsPage() {
                       />
                     )}
                   </div>
-                  <button onClick={() => setIsMobileFilterOpen(false)} className="w-full py-4 bg-brand-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] mt-4">Apply Filters</button>
+                  <button
+                    onClick={() => setIsMobileFilterOpen(false)}
+                    className="w-full py-4 bg-brand-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] mt-4"
+                  >
+                    Apply Filters
+                  </button>
                 </motion.div>
               </>
             )}
@@ -376,41 +506,51 @@ export function SearchResultsPage() {
           {/* Advanced Filters Sidebar */}
           <aside className="lg:col-span-3 space-y-6 sm:space-y-8 hidden lg:block">
             <div className="bg-white dark:bg-zinc-950 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-brand-primary/5">
-               <div className="flex items-center justify-between mb-6 sm:mb-8">
-                 <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-accent">Curated Filters</h3>
-                 <SlidersHorizontal size={14} className="text-brand-primary/20" />
-               </div>
-               <FilterPanel
-                 filters={panelFilters}
-                 onChange={handleFilterPanelChange}
-                 facetCounts={facetCounts}
-                 sortBy={sortBy}
-                 onSortChange={handleSortChange}
-                 className="border-none p-0 bg-transparent dark:bg-transparent shadow-none"
-               />
-               {categoryId && (
-                 <CategoryAwareFilters
-                   categoryId={categoryId}
-                   categories={allCategories}
-                   filterAttributes={categoryFilterAttrs}
-                   searchParams={searchParams}
-                   setSearchParams={setSearchParams}
-                   toggleFilter={toggleFilter}
-                   advantageous={searchParams.get('advantageous') === '1'}
-                   filteredCount={results.length}
-                 />
-               )}
+              <div className="flex items-center justify-between mb-6 sm:mb-8">
+                <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-accent">
+                  Curated Filters
+                </h3>
+                <SlidersHorizontal size={14} className="text-brand-primary/20" />
+              </div>
+              <FilterPanel
+                filters={panelFilters}
+                onChange={handleFilterPanelChange}
+                facetCounts={facetCounts}
+                sortBy={sortBy}
+                onSortChange={handleSortChange}
+                className="border-none p-0 bg-transparent dark:bg-transparent shadow-none"
+              />
+              {categoryId && (
+                <CategoryAwareFilters
+                  categoryId={categoryId}
+                  categories={allCategories}
+                  filterAttributes={categoryFilterAttrs}
+                  searchParams={searchParams}
+                  setSearchParams={setSearchParams}
+                  toggleFilter={toggleFilter}
+                  advantageous={searchParams.get('advantageous') === '1'}
+                  filteredCount={results.length}
+                />
+              )}
             </div>
 
             {/* Strategic Banner */}
             <div className="bg-brand-primary rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
-               <Zap size={100} className="absolute -top-10 -end-10 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
-               <TrendingUp size={24} className="text-accent mb-4" />
-               <h4 className="text-xl font-display font-black tracking-tight leading-tight mb-4 uppercase italic">Global <br /> Dynamic <br /> Insights</h4>
-               <p className="text-xs text-white/60 font-medium leading-relaxed">We've identified a 15% increase in demand for these artifacts in your region. Act fast.</p>
-               <button className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-accent hover:gap-4 transition-all">
-                 View Market Pulse <ArrowRight size={14} />
-               </button>
+              <Zap
+                size={100}
+                className="absolute -top-10 -end-10 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-700"
+              />
+              <TrendingUp size={24} className="text-accent mb-4" />
+              <h4 className="text-xl font-display font-black tracking-tight leading-tight mb-4 uppercase italic">
+                Global <br /> Dynamic <br /> Insights
+              </h4>
+              <p className="text-xs text-white/60 font-medium leading-relaxed">
+                We&apos;ve identified a 15% increase in demand for these artifacts in your region.
+                Act fast.
+              </p>
+              <button className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-accent hover:gap-4 transition-all">
+                View Market Pulse <ArrowRight size={14} />
+              </button>
             </div>
           </aside>
 
@@ -424,10 +564,12 @@ export function SearchResultsPage() {
             {searchLoading ? (
               <SearchResultsSkeleton />
             ) : (
-              <div className={cn(
-                 "grid gap-4 sm:gap-10",
-                 viewMode === 'grid' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
-              )}>
+              <div
+                className={cn(
+                  'grid gap-4 sm:gap-10',
+                  viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1',
+                )}
+              >
                 {results.length > 0 ? (
                   results.map((product) => (
                     <ProductCard key={product.id} product={product} openInNewTab />
@@ -437,8 +579,13 @@ export function SearchResultsPage() {
                     <div className="w-24 h-24 bg-brand-secondary rounded-full flex items-center justify-center mb-8 animate-bounce">
                       <SearchIcon size={40} className="text-brand-primary/10" />
                     </div>
-                    <h3 className="text-3xl font-display font-black text-brand-primary opacity-20 uppercase italic">The global archives are silent.</h3>
-                    <p className="text-brand-primary/40 mt-4 max-w-sm">No artifacts matched your query. Try searching for broader artisan categories or use the AI Assistant.</p>
+                    <h3 className="text-3xl font-display font-black text-brand-primary opacity-20 uppercase italic">
+                      The global archives are silent.
+                    </h3>
+                    <p className="text-brand-primary/40 mt-4 max-w-sm">
+                      No artifacts matched your query. Try searching for broader artisan categories
+                      or use the AI Assistant.
+                    </p>
                   </div>
                 )}
               </div>
@@ -447,7 +594,9 @@ export function SearchResultsPage() {
             {/* Pagination / Load More */}
             {!searchLoading && results.length > 0 && (
               <div className="mt-20 flex flex-col items-center gap-6">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/20">Archiving artifacts 1 - {results.length} of {results.length}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/20">
+                  Archiving artifacts 1 - {results.length} of {results.length}
+                </p>
                 <button className="px-12 py-5 bg-white border border-brand-primary/5 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.3em] hover:bg-brand-primary hover:text-white transition-all shadow-xl shadow-brand-primary/5">
                   Load Global Feed
                 </button>
@@ -479,16 +628,21 @@ const CategoryAwareFilters: React.FC<{
       <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/40 mb-4">
         Product Attributes
       </h4>
-      {filterAttributes.map(attr => {
+      {filterAttributes.map((attr) => {
         const currentVal = searchParams.get(attr.key);
         if (attr.type === 'checkbox' && attr.options) {
           return (
             <div key={attr.key} className="mb-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary/60 mb-2">{attr.label}</p>
-              {attr.options.map(opt => {
+              <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary/60 mb-2">
+                {attr.label}
+              </p>
+              {attr.options.map((opt) => {
                 const selected = currentVal?.split(',').includes(opt.value);
                 return (
-                  <label key={opt.value} className="flex items-center gap-2 py-1 cursor-pointer text-xs">
+                  <label
+                    key={opt.value}
+                    className="flex items-center gap-2 py-1 cursor-pointer text-xs"
+                  >
                     <input
                       type="checkbox"
                       checked={!!selected}
@@ -507,15 +661,19 @@ const CategoryAwareFilters: React.FC<{
           const max = searchParams.get(`${attr.key}_max`) || '';
           return (
             <div key={attr.key} className="mb-5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary/60 mb-2">{attr.label} {attr.unit ? `(${attr.unit})` : ''}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary/60 mb-2">
+                {attr.label} {attr.unit ? `(${attr.unit})` : ''}
+              </p>
               <div className="flex gap-2">
                 <input
                   type="number"
                   placeholder="Min"
                   value={min}
-                  onChange={e => {
+                  onChange={(e) => {
                     const next = new URLSearchParams(searchParams);
-                    e.target.value ? next.set(`${attr.key}_min`, e.target.value) : next.delete(`${attr.key}_min`);
+                    e.target.value
+                      ? next.set(`${attr.key}_min`, e.target.value)
+                      : next.delete(`${attr.key}_min`);
                     setSearchParams(next);
                   }}
                   className="w-full px-2 py-1.5 text-xs border border-brand-primary/10 rounded-lg bg-brand-secondary/20"
@@ -524,9 +682,11 @@ const CategoryAwareFilters: React.FC<{
                   type="number"
                   placeholder="Max"
                   value={max}
-                  onChange={e => {
+                  onChange={(e) => {
                     const next = new URLSearchParams(searchParams);
-                    e.target.value ? next.set(`${attr.key}_max`, e.target.value) : next.delete(`${attr.key}_max`);
+                    e.target.value
+                      ? next.set(`${attr.key}_max`, e.target.value)
+                      : next.delete(`${attr.key}_max`);
                     setSearchParams(next);
                   }}
                   className="w-full px-2 py-1.5 text-xs border border-brand-primary/10 rounded-lg bg-brand-secondary/20"
@@ -538,8 +698,10 @@ const CategoryAwareFilters: React.FC<{
         if (attr.type === 'rating') {
           return (
             <div key={attr.key} className="mb-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary/60 mb-2">{attr.label}</p>
-              {[4, 3, 2, 1].map(r => (
+              <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary/60 mb-2">
+                {attr.label}
+              </p>
+              {[4, 3, 2, 1].map((r) => (
                 <label key={r} className="flex items-center gap-2 py-1 cursor-pointer text-xs">
                   <input
                     type="radio"
@@ -553,7 +715,9 @@ const CategoryAwareFilters: React.FC<{
                     className="accent-accent"
                   />
                   <span className="flex items-center gap-1 text-brand-primary/70">
-                    {Array.from({ length: r }).map((_, i) => <Star key={i} size={10} className="fill-amber-400 text-amber-400" />)}
+                    {Array.from({ length: r }).map((_, i) => (
+                      <Star key={i} size={10} className="fill-amber-400 text-amber-400" />
+                    ))}
                     <span className="text-[10px]">& up</span>
                   </span>
                 </label>
@@ -604,7 +768,7 @@ const ActiveFiltersBar: React.FC<{
   if (filters.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-2 pb-4 mb-2">
-      {filters.map(f => (
+      {filters.map((f) => (
         <button
           key={`${f.key}-${f.value}`}
           onClick={() => onRemove(f.key, f.value)}
@@ -622,4 +786,3 @@ const ActiveFiltersBar: React.FC<{
     </div>
   );
 };
-

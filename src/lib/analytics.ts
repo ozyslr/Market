@@ -7,7 +7,11 @@ declare global {
   interface Window {
     gtag: (...args: any[]) => void;
     fbq: (...args: any[]) => void;
-    ttq: { track: (event: string, data?: any) => void; load: (id: string) => void; page: () => void };
+    ttq: {
+      track: (event: string, data?: any) => void;
+      load: (id: string) => void;
+      page: () => void;
+    };
     dataLayer: any[];
     _trid: string;
   }
@@ -20,7 +24,9 @@ let initialized = false;
 
 function getStoredConsent(): ConsentStatus {
   try {
-    const stored = sessionStorage.getItem('mcr_analytics_consent') || localStorage.getItem('mcr_analytics_consent');
+    const stored =
+      sessionStorage.getItem('mcr_analytics_consent') ||
+      localStorage.getItem('mcr_analytics_consent');
     return (stored as ConsentStatus) || 'pending';
   } catch {
     return 'pending';
@@ -31,13 +37,17 @@ function setStoredConsent(status: ConsentStatus) {
   consentStatus = status;
   try {
     localStorage.setItem('mcr_analytics_consent', status);
-  } catch { /* noop */ }
+  } catch {
+    /* noop */
+  }
 }
 
 /** Get all configured IDs from env vars */
 function getIds() {
   return {
-    ga: import.meta.env.VITE_GA4_MEASUREMENT_ID || import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined,
+    ga:
+      import.meta.env.VITE_GA4_MEASUREMENT_ID ||
+      (import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined),
     meta: import.meta.env.VITE_META_PIXEL_ID as string | undefined,
     tiktok: import.meta.env.VITE_TIKTOK_PIXEL_ID as string | undefined,
   };
@@ -76,7 +86,9 @@ function initGA4(measurementId: string) {
   if (existing) return;
 
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function () { window.dataLayer.push(arguments); };
+  window.gtag = (...args: any[]) => {
+    window.dataLayer.push(args);
+  };
   window.gtag('js', new Date());
   window.gtag('config', measurementId, {
     send_page_view: false,
@@ -152,7 +164,6 @@ export function denyAnalytics(): void {
 
 // ─── Event Tracking ───────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnalyticsParams = Record<string, any>;
 
 /** Track event across all active analytics providers */
@@ -211,21 +222,31 @@ export function trackProductView(product: {
     contents: [{ id: product.id, item_price: product.price }],
     currency: product.currency || 'TRY',
     value: product.price,
-    items: [{
-      item_id: product.id,
-      item_name: product.name || product.title,
-      price: product.price,
-      item_category: product.category,
-      item_brand: product.brand,
-      item_variant: product.variant,
-    }],
+    items: [
+      {
+        item_id: product.id,
+        item_name: product.name || product.title,
+        price: product.price,
+        item_category: product.category,
+        item_brand: product.brand,
+        item_variant: product.variant,
+      },
+    ],
   });
 }
 
 /** Track add to cart */
 export function trackAddToCart(
-  product: { id: string; name?: string; title?: string; price: number; currency?: string; category?: string; brand?: string },
-  quantity: number = 1
+  product: {
+    id: string;
+    name?: string;
+    title?: string;
+    price: number;
+    currency?: string;
+    category?: string;
+    brand?: string;
+  },
+  quantity: number = 1,
 ): void {
   trackEvent('add_to_cart', {
     content_type: 'product',
@@ -233,21 +254,31 @@ export function trackAddToCart(
     contents: [{ id: product.id, quantity, item_price: product.price }],
     currency: product.currency || 'TRY',
     value: product.price * quantity,
-    items: [{
-      item_id: product.id,
-      item_name: product.name || product.title,
-      price: product.price,
-      quantity,
-      item_category: product.category,
-      item_brand: product.brand,
-    }],
+    items: [
+      {
+        item_id: product.id,
+        item_name: product.name || product.title,
+        price: product.price,
+        quantity,
+        item_category: product.category,
+        item_brand: product.brand,
+      },
+    ],
   });
 }
 
 /** Track remove from cart */
 export function trackRemoveFromCart(
-  product: { id: string; name?: string; title?: string; price: number; currency?: string; category?: string; brand?: string },
-  quantity: number = 1
+  product: {
+    id: string;
+    name?: string;
+    title?: string;
+    price: number;
+    currency?: string;
+    category?: string;
+    brand?: string;
+  },
+  quantity: number = 1,
 ): void {
   trackEvent('remove_from_cart', {
     content_type: 'product',
@@ -255,19 +286,27 @@ export function trackRemoveFromCart(
     contents: [{ id: product.id, quantity, item_price: product.price }],
     currency: product.currency || 'TRY',
     value: product.price * quantity,
-    items: [{
-      item_id: product.id,
-      item_name: product.name || product.title,
-      price: product.price,
-      quantity,
-      item_category: product.category,
-      item_brand: product.brand,
-    }],
+    items: [
+      {
+        item_id: product.id,
+        item_name: product.name || product.title,
+        price: product.price,
+        quantity,
+        item_category: product.category,
+        item_brand: product.brand,
+      },
+    ],
   });
 }
 
 /** Track checkout flow steps */
-export function trackCheckout(steps?: { step?: number; option?: string; payment_type?: string; currency?: string; value?: number }): void {
+export function trackCheckout(steps?: {
+  step?: number;
+  option?: string;
+  payment_type?: string;
+  currency?: string;
+  value?: number;
+}): void {
   trackEvent('begin_checkout', {
     currency: steps?.currency || 'TRY',
     value: steps?.value,
@@ -279,8 +318,24 @@ export function trackCheckout(steps?: { step?: number; option?: string; payment_
 
 /** Track completed purchase */
 export function trackPurchase(
-  order: { id: string; total: number; currency?: string; shipping?: number; tax?: number; coupon?: string },
-  products: Array<{ id: string; name?: string; title?: string; price: number; quantity: number; category?: string; brand?: string; variant?: string }>
+  order: {
+    id: string;
+    total: number;
+    currency?: string;
+    shipping?: number;
+    tax?: number;
+    coupon?: string;
+  },
+  products: Array<{
+    id: string;
+    name?: string;
+    title?: string;
+    price: number;
+    quantity: number;
+    category?: string;
+    brand?: string;
+    variant?: string;
+  }>,
 ): void {
   trackEvent('purchase', {
     transaction_id: order.id,
@@ -289,7 +344,7 @@ export function trackPurchase(
     shipping: order.shipping,
     tax: order.tax,
     coupon: order.coupon,
-    items: products.map(p => ({
+    items: products.map((p) => ({
       item_id: p.id,
       item_name: p.name || p.title,
       price: p.price,
@@ -312,7 +367,10 @@ export function trackSearch(term: string, results?: number): void {
 }
 
 /** Identify user (for logged-in users) */
-export function identifyUser(userId: string, traits?: Record<string, string | number | boolean | undefined>): void {
+export function identifyUser(
+  userId: string,
+  traits?: Record<string, string | number | boolean | undefined>,
+): void {
   const ids = getIds();
 
   // GA4 — set user ID
@@ -335,7 +393,12 @@ export function identifyUser(userId: string, traits?: Record<string, string | nu
 }
 
 /** Track pre-built view content (legacy compat) */
-export function trackViewContent(productId: string, productName: string, price: number, currency: string): void {
+export function trackViewContent(
+  productId: string,
+  productName: string,
+  price: number,
+  currency: string,
+): void {
   trackEvent('view_item', {
     content_type: 'product',
     content_ids: [productId],

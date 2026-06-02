@@ -67,7 +67,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
           setTranslations((prev) => ({ ...prev, en }));
         }
       });
-  }, [lang]);
+  }, [lang, translations]);
 
   // Persist lang choice and sync <html lang>/<html dir> (RTL support)
   useEffect(() => {
@@ -105,7 +105,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       translations,
       setTranslations,
     }),
-    [lang, t, availableLanguages, translations],
+    [lang, t, setLang, availableLanguages, translations],
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

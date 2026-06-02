@@ -1,16 +1,39 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Package, Search, Filter, MapPin, Globe,
-  ArrowRight, Download, MessageSquare,
-  ShieldCheck, ExternalLink, RefreshCw, Zap, Loader2,
-  RotateCcw, Square, CheckSquare, X,
+  Package,
+  Search,
+  Filter,
+  MapPin,
+  Globe,
+  ArrowRight,
+  Download,
+  MessageSquare,
+  ShieldCheck,
+  ExternalLink,
+  RefreshCw,
+  Zap,
+  Loader2,
+  RotateCcw,
+  Square,
+  CheckSquare,
+  X,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { getOrdersBySeller, subscribeOrdersBySeller, updateOrderStatus, batchUpdateOrders } from '@/services/orderService';
+import {
+  getOrdersBySeller,
+  subscribeOrdersBySeller,
+  updateOrderStatus,
+  batchUpdateOrders,
+} from '@/services/orderService';
 import { createNotification } from '@/services/notificationService';
-import { createCargoShipment, getTrackingStatus, getAvailableCarriers, CargoProviderName } from '@/services/cargoService';
+import {
+  createCargoShipment,
+  getTrackingStatus,
+  getAvailableCarriers,
+  CargoProviderName,
+} from '@/services/cargoService';
 import type { ShipmentRequest, TrackingResponse } from '@/services/cargoService';
 import { autoGenerateInvoice } from '@/services/invoiceService';
 import { Order } from '@/types/order';
@@ -46,12 +69,12 @@ export function SellerOrdersPage() {
   const [batchShipping, setBatchShipping] = useState(false);
 
   const shippableOrders = useMemo(
-    () => orders.filter(o => o.status === 'pending' || o.status === 'processing'),
-    [orders]
+    () => orders.filter((o) => o.status === 'pending' || o.status === 'processing'),
+    [orders],
   );
 
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
@@ -62,7 +85,7 @@ export function SellerOrdersPage() {
     if (selectedIds.size === shippableOrders.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(shippableOrders.map(o => o.id)));
+      setSelectedIds(new Set(shippableOrders.map((o) => o.id)));
     }
   };
 
@@ -71,7 +94,7 @@ export function SellerOrdersPage() {
   const handleBatchShip = async () => {
     if (selectedIds.size === 0) return;
     setBatchShipping(true);
-    const updates = Array.from(selectedIds).map(orderId => ({
+    const updates = Array.from(selectedIds).map((orderId) => ({
       orderId,
       status: 'shipped' as const,
       trackingNumber: batchTracking.trim() || undefined,
@@ -94,7 +117,10 @@ export function SellerOrdersPage() {
   };
 
   useEffect(() => {
-    if (!firebaseUser) { setLoading(false); return; }
+    if (!firebaseUser) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     const unsubscribe = subscribeOrdersBySeller(
@@ -106,12 +132,12 @@ export function SellerOrdersPage() {
 
         // Detect new orders (ones that weren't in previous snapshot)
         if (prevOrderIds.size > 0) {
-          const currentIds = new Set(realtimeOrders.map(o => o.id));
-          const newOrders = realtimeOrders.filter(o => !prevOrderIds.has(o.id));
+          const currentIds = new Set(realtimeOrders.map((o) => o.id));
+          const newOrders = realtimeOrders.filter((o) => !prevOrderIds.has(o.id));
           if (newOrders.length > 0) {
-            setNewOrderCount(prev => prev + newOrders.length);
+            setNewOrderCount((prev) => prev + newOrders.length);
             // Notify seller about new orders
-            newOrders.forEach(order => {
+            newOrders.forEach((order) => {
               createNotification(
                 firebaseUser.uid,
                 'order_status',
@@ -124,7 +150,7 @@ export function SellerOrdersPage() {
           setPrevOrderIds(currentIds);
         } else {
           // First load — seed the ID set
-          setPrevOrderIds(new Set(realtimeOrders.map(o => o.id)));
+          setPrevOrderIds(new Set(realtimeOrders.map((o) => o.id)));
         }
       },
       (err) => {
@@ -133,19 +159,29 @@ export function SellerOrdersPage() {
       },
     );
 
-    return () => { unsubscribe(); };
+    return () => {
+      unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firebaseUser]);
 
   const now = Date.now();
-  const pendingCount   = orders.filter(o => o.status === 'pending' || o.status === 'processing').length;
-  const shippedCount   = orders.filter(o => o.status === 'shipped').length;
-  const attentionCount = orders.filter(o => o.status === 'return_requested' || o.status === 'refunded').length;
-  const revenue24h     = orders
-    .filter(o => new Date(o.createdAt).getTime() > now - 86_400_000)
+  const pendingCount = orders.filter(
+    (o) => o.status === 'pending' || o.status === 'processing',
+  ).length;
+  const shippedCount = orders.filter((o) => o.status === 'shipped').length;
+  const attentionCount = orders.filter(
+    (o) => o.status === 'return_requested' || o.status === 'refunded',
+  ).length;
+  const revenue24h = orders
+    .filter((o) => new Date(o.createdAt).getTime() > now - 86_400_000)
     .reduce((sum, o) => sum + o.total, 0);
 
   // Tracking view state
-  const [trackingTarget, setTrackingTarget] = useState<{ provider: CargoProviderName; trackingNumber: string } | null>(null);
+  const [trackingTarget, setTrackingTarget] = useState<{
+    provider: CargoProviderName;
+    trackingNumber: string;
+  } | null>(null);
   const [trackingData, setTrackingData] = useState<TrackingResponse | null>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
 
@@ -185,15 +221,23 @@ export function SellerOrdersPage() {
           shipTarget.id,
           firebaseUser.uid,
           shipTarget.createdAt,
-          shipTarget.items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price, subtotal: i.subtotal })),
+          shipTarget.items.map((i) => ({
+            name: i.name,
+            quantity: i.quantity,
+            price: i.price,
+            subtotal: i.subtotal,
+          })),
           shipTarget.shippingAddress?.fullName || shipTarget.userEmail,
-          shipTarget.shippingAddress ? `${shipTarget.shippingAddress.line1}, ${shipTarget.shippingAddress.city}` : '',
+          shipTarget.shippingAddress
+            ? `${shipTarget.shippingAddress.line1}, ${shipTarget.shippingAddress.city}`
+            : '',
           shipTarget.total,
           shipTarget.currency || 'TRY',
         );
 
         createNotification(
-          firebaseUser.uid, 'order_status',
+          firebaseUser.uid,
+          'order_status',
           'Kargo Oluşturuldu',
           `${carrier} — ${result.trackingNumber} — Tahmini teslimat: ${result.estimatedDelivery ? new Date(result.estimatedDelivery).toLocaleDateString('tr-TR') : '—'}`,
         );
@@ -207,10 +251,16 @@ export function SellerOrdersPage() {
 
   const handleViewTracking = async (order: Order) => {
     if (!order.trackingNumber || !order.carrier) return;
-    setTrackingTarget({ provider: order.carrier as CargoProviderName, trackingNumber: order.trackingNumber });
+    setTrackingTarget({
+      provider: order.carrier as CargoProviderName,
+      trackingNumber: order.trackingNumber,
+    });
     setTrackingLoading(true);
     setTrackingData(null);
-    const result = await getTrackingStatus(order.carrier as CargoProviderName, order.trackingNumber);
+    const result = await getTrackingStatus(
+      order.carrier as CargoProviderName,
+      order.trackingNumber,
+    );
     setTrackingData(result);
     setTrackingLoading(false);
     // Kargo teslim edildiyse sipariş durumunu otomatik güncelle (abonelik UI'yi tazeler)
@@ -219,10 +269,13 @@ export function SellerOrdersPage() {
     }
   };
 
-  const filteredOrders = orders.filter(o => {
+  const filteredOrders = orders.filter((o) => {
     const buyer = o.shippingAddress?.fullName || o.userEmail;
-    return (filter === 'all' || o.status === filter) &&
-      (o.id.toLowerCase().includes(search.toLowerCase()) || buyer.toLowerCase().includes(search.toLowerCase()));
+    return (
+      (filter === 'all' || o.status === filter) &&
+      (o.id.toLowerCase().includes(search.toLowerCase()) ||
+        buyer.toLowerCase().includes(search.toLowerCase()))
+    );
   });
 
   return (
@@ -238,21 +291,28 @@ export function SellerOrdersPage() {
               <span className="flex items-center gap-1 text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
                 <ShieldCheck size={10} /> Escrow Protection Active
               </span>
-              <span className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
-                realtimeActive
-                  ? "bg-green-50 text-green-600 border border-green-200"
-                  : "bg-zinc-100 text-zinc-400"
-              )}>
-                <span className={cn(
-                  "w-2 h-2 rounded-full",
-                  realtimeActive ? "bg-green-500 animate-pulse" : "bg-zinc-300"
-                )} />
+              <span
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all',
+                  realtimeActive
+                    ? 'bg-green-50 text-green-600 border border-green-200'
+                    : 'bg-zinc-100 text-zinc-400',
+                )}
+              >
+                <span
+                  className={cn(
+                    'w-2 h-2 rounded-full',
+                    realtimeActive ? 'bg-green-500 animate-pulse' : 'bg-zinc-300',
+                  )}
+                />
                 {realtimeActive ? 'Canlı' : 'Bağlanıyor...'}
               </span>
               {newOrderCount > 0 && (
                 <button
-                  onClick={() => { setFilter('all'); setNewOrderCount(0); }}
+                  onClick={() => {
+                    setFilter('all');
+                    setNewOrderCount(0);
+                  }}
                   className="px-3 py-1 bg-red-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full animate-pulse hover:bg-red-600 transition-all"
                 >
                   {newOrderCount} Yeni Sipariş!
@@ -265,22 +325,22 @@ export function SellerOrdersPage() {
           </div>
 
           <div className="flex items-center gap-3">
-             <button className="px-6 py-4 bg-white border border-brand-primary/5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:shadow-xl transition-all">
-               <Download size={14} /> Manifest Export
-             </button>
-             <button
-               onClick={() => setBatchShipOpen(true)}
-               disabled={selectedIds.size === 0}
-               className={cn(
-                 "px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all",
-                 selectedIds.size > 0
-                   ? "bg-accent text-white shadow-2xl shadow-accent/20 hover:opacity-90"
-                   : "bg-brand-primary/20 text-brand-primary/40 cursor-not-allowed"
-               )}
-             >
-               <Zap size={14} />
-               {selectedIds.size > 0 ? `${selectedIds.size} Siparişi Kargola` : 'Batch Ship'}
-             </button>
+            <button className="px-6 py-4 bg-white border border-brand-primary/5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:shadow-xl transition-all">
+              <Download size={14} /> Manifest Export
+            </button>
+            <button
+              onClick={() => setBatchShipOpen(true)}
+              disabled={selectedIds.size === 0}
+              className={cn(
+                'px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all',
+                selectedIds.size > 0
+                  ? 'bg-accent text-white shadow-2xl shadow-accent/20 hover:opacity-90'
+                  : 'bg-brand-primary/20 text-brand-primary/40 cursor-not-allowed',
+              )}
+            >
+              <Zap size={14} />
+              {selectedIds.size > 0 ? `${selectedIds.size} Siparişi Kargola` : 'Batch Ship'}
+            </button>
           </div>
         </div>
 
@@ -293,238 +353,325 @@ export function SellerOrdersPage() {
 
         {/* Orders Workspace */}
         <div className="bg-white rounded-[3.5rem] shadow-sm border border-brand-primary/5 overflow-hidden">
-           {/* Filters Bar */}
-           <div className="p-8 border-b border-brand-primary/5 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex bg-brand-secondary/50 p-1.5 rounded-2xl">
-                 {(['all', 'pending', 'shipped', 'delivered'] as const).map(tab => (
-                   <button
-                    key={tab}
-                    onClick={() => setFilter(tab)}
-                    className={cn(
-                      "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                      filter === tab ? "bg-white text-brand-primary shadow-sm" : "text-brand-primary/40 hover:text-brand-primary"
-                    )}
-                   >
-                     {tab}
-                   </button>
-                 ))}
-                 <div className="w-px h-6 bg-brand-primary/10 mx-2 self-center" />
-                 <button
-                   onClick={() => setShowReturns(!showReturns)}
-                   className={cn(
-                     "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
-                     showReturns ? "bg-amber-500 text-white shadow-sm" : "text-brand-primary/40 hover:text-brand-primary"
-                   )}
-                 >
-                   <RotateCcw size={12} /> İadeler
-                 </button>
-              </div>
+          {/* Filters Bar */}
+          <div className="p-8 border-b border-brand-primary/5 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex bg-brand-secondary/50 p-1.5 rounded-2xl">
+              {(['all', 'pending', 'shipped', 'delivered'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setFilter(tab)}
+                  className={cn(
+                    'px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                    filter === tab
+                      ? 'bg-white text-brand-primary shadow-sm'
+                      : 'text-brand-primary/40 hover:text-brand-primary',
+                  )}
+                >
+                  {tab}
+                </button>
+              ))}
+              <div className="w-px h-6 bg-brand-primary/10 mx-2 self-center" />
+              <button
+                onClick={() => setShowReturns(!showReturns)}
+                className={cn(
+                  'px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2',
+                  showReturns
+                    ? 'bg-amber-500 text-white shadow-sm'
+                    : 'text-brand-primary/40 hover:text-brand-primary',
+                )}
+              >
+                <RotateCcw size={12} /> İadeler
+              </button>
+            </div>
 
-              <div className="flex-1 max-w-lg relative">
-                 <Search size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-brand-primary/20" />
-                 <input 
-                  type="text" 
-                  placeholder="Search buyer name, order serial, or destination..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full ps-12 pe-4 py-3 bg-brand-secondary/30 rounded-2xl outline-none focus:ring-4 focus:ring-accent/5 text-sm font-medium transition-all"
-                 />
-              </div>
-           </div>
+            <div className="flex-1 max-w-lg relative">
+              <Search
+                size={18}
+                className="absolute start-4 top-1/2 -translate-y-1/2 text-brand-primary/20"
+              />
+              <input
+                type="text"
+                placeholder="Search buyer name, order serial, or destination..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full ps-12 pe-4 py-3 bg-brand-secondary/30 rounded-2xl outline-none focus:ring-4 focus:ring-accent/5 text-sm font-medium transition-all"
+              />
+            </div>
+          </div>
 
-           {/* Table */}
-           <div className="overflow-x-auto">
-              <table className="w-full text-start border-collapse">
-                 <thead>
-                    <tr className="bg-brand-secondary/30 text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/40">
-                       <th className="px-6 py-6 w-12">
-                         <button onClick={toggleSelectAll} className="hover:text-accent transition-colors">
-                           {selectedIds.size > 0 && selectedIds.size === shippableOrders.length
-                             ? <CheckSquare size={18} className="text-accent" />
-                             : <Square size={18} />}
-                         </button>
-                       </th>
-                       <th className="px-4 py-6">Identity</th>
-                       <th className="px-4 py-6">Buyer Artifacts</th>
-                       <th className="px-4 py-6">Destination Hub</th>
-                       <th className="px-4 py-6">Investment</th>
-                       <th className="px-4 py-6">Workflow Status</th>
-                       <th className="px-6 py-6"></th>
-                    </tr>
-                 </thead>
-                 <tbody className="divide-y divide-brand-primary/5">
-                    {loading ? (
-                      Array.from({ length: 5 }).map((_, i) => (
-                        <TableRowSkeleton key={i} cols={6} />
-                      ))
-                    ) : filteredOrders.length === 0 ? (
-                      <tr><td colSpan={6} className="px-10 py-16 text-center">
-                        <Package size={36} className="mx-auto text-brand-primary/10 mb-3" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30">Sipariş bulunamadı</p>
-                      </td></tr>
-                    ) : filteredOrders.map((order) => {
-                      const isShippable = order.status === 'pending' || order.status === 'processing';
-                      const isSelected = selectedIds.has(order.id);
-                      return (
-                      <tr key={order.id} className={cn("group transition-colors", isSelected ? "bg-accent/5" : "hover:bg-brand-secondary/20")}>
-                         <td className="px-6 py-6">
-                           {isShippable && (
-                             <button onClick={() => toggleSelect(order.id)} className="hover:text-accent transition-colors">
-                               {isSelected
-                                 ? <CheckSquare size={18} className="text-accent" />
-                                 : <Square size={18} className="text-brand-primary/20 group-hover:text-brand-primary/50" />}
-                             </button>
-                           )}
-                         </td>
-                         <td className="px-4 py-6">
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-start border-collapse">
+              <thead>
+                <tr className="bg-brand-secondary/30 text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/40">
+                  <th className="px-6 py-6 w-12">
+                    <button
+                      onClick={toggleSelectAll}
+                      className="hover:text-accent transition-colors"
+                    >
+                      {selectedIds.size > 0 && selectedIds.size === shippableOrders.length ? (
+                        <CheckSquare size={18} className="text-accent" />
+                      ) : (
+                        <Square size={18} />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-4 py-6">Identity</th>
+                  <th className="px-4 py-6">Buyer Artifacts</th>
+                  <th className="px-4 py-6">Destination Hub</th>
+                  <th className="px-4 py-6">Investment</th>
+                  <th className="px-4 py-6">Workflow Status</th>
+                  <th className="px-6 py-6"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-brand-primary/5">
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => <TableRowSkeleton key={i} cols={6} />)
+                ) : filteredOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-10 py-16 text-center">
+                      <Package size={36} className="mx-auto text-brand-primary/10 mb-3" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
+                        Sipariş bulunamadı
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredOrders.map((order) => {
+                    const isShippable = order.status === 'pending' || order.status === 'processing';
+                    const isSelected = selectedIds.has(order.id);
+                    return (
+                      <tr
+                        key={order.id}
+                        className={cn(
+                          'group transition-colors',
+                          isSelected ? 'bg-accent/5' : 'hover:bg-brand-secondary/20',
+                        )}
+                      >
+                        <td className="px-6 py-6">
+                          {isShippable && (
+                            <button
+                              onClick={() => toggleSelect(order.id)}
+                              className="hover:text-accent transition-colors"
+                            >
+                              {isSelected ? (
+                                <CheckSquare size={18} className="text-accent" />
+                              ) : (
+                                <Square
+                                  size={18}
+                                  className="text-brand-primary/20 group-hover:text-brand-primary/50"
+                                />
+                              )}
+                            </button>
+                          )}
+                        </td>
+                        <td className="px-4 py-6">
+                          <div>
+                            <p className="font-black text-brand-primary">{order.id.slice(0, 8)}…</p>
+                            <p className="text-[10px] font-bold text-brand-primary/30 uppercase tracking-widest">
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-10 py-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-brand-secondary p-1 flex items-center justify-center">
+                              <Package size={18} className="text-brand-primary/40" />
+                            </div>
                             <div>
-                               <p className="font-black text-brand-primary">{order.id.slice(0, 8)}…</p>
-                               <p className="text-[10px] font-bold text-brand-primary/30 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString()}</p>
+                              <p className="text-sm font-bold text-brand-primary">
+                                {order.shippingAddress?.fullName || order.userEmail}
+                              </p>
+                              <p className="text-[10px] font-bold text-accent uppercase tracking-widest">
+                                {order.items.length} ürün
+                              </p>
                             </div>
-                         </td>
-                         <td className="px-10 py-6">
-                            <div className="flex items-center gap-3">
-                               <div className="w-10 h-10 rounded-xl bg-brand-secondary p-1 flex items-center justify-center">
-                                  <Package size={18} className="text-brand-primary/40" />
-                               </div>
-                               <div>
-                                  <p className="text-sm font-bold text-brand-primary">{order.shippingAddress?.fullName || order.userEmail}</p>
-                                  <p className="text-[10px] font-bold text-accent uppercase tracking-widest">{order.items.length} ürün</p>
-                               </div>
-                            </div>
-                         </td>
-                         <td className="px-10 py-6">
-                            <div className="flex items-center gap-2">
-                               <MapPin size={14} className="text-brand-primary/30" />
-                               <span className="text-sm font-bold text-brand-primary">
-                                 {order.shippingAddress ? `${order.shippingAddress.city}, ${order.shippingAddress.country}` : '—'}
-                               </span>
-                               <span className="flex items-center gap-1 text-[9px] font-black text-blue-500 uppercase tracking-widest ms-2 px-1.5 py-0.5 bg-blue-50 rounded">
-                                  <Globe size={10} /> Express
-                               </span>
-                            </div>
-                         </td>
-                         <td className="px-10 py-6">
-                            <p className="text-lg font-display font-black text-brand-primary">{order.currency} {order.total.toFixed(2)}</p>
-                         </td>
-                         <td className="px-10 py-6">
-                            <div className={cn(
-                              "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest",
-                              order.status === 'delivered' ? "bg-green-50 text-green-600" :
-                              order.status === 'shipped'   ? "bg-blue-50 text-blue-600" :
-                              order.status === 'cancelled' ? "bg-zinc-100 text-zinc-500" :
-                              "bg-orange-50 text-orange-600"
-                            )}>
-                               <div className={cn("w-2 h-2 rounded-full",
-                                 order.status === 'delivered' ? "bg-green-500" :
-                                 order.status === 'shipped'   ? "bg-blue-500" :
-                                 order.status === 'cancelled' ? "bg-zinc-400" :
-                                 "bg-orange-500"
-                               )} />
-                               {order.status}
-                            </div>
-                         </td>
-                         <td className="px-10 py-6">
-                            <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                               {(order.status === 'pending' || order.status === 'processing') && (
-                                 <button
-                                   onClick={() => { setShipTarget(order); setCarrier('PTT'); setTrackingNumber(''); setOrderNote(''); }}
-                                   className="px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
-                                 >
-                                   Kargoya Ver
-                                 </button>
-                               )}
-                               {order.status === 'shipped' && order.trackingNumber && (
-                                 <button
-                                   onClick={() => handleViewTracking(order)}
-                                   className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all"
-                                 >
-                                   Takip Et
-                                 </button>
-                               )}
-                               <button className="px-4 py-2 border border-brand-primary/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-all">
-                                  Details
-                               </button>
-                            </div>
-                         </td>
+                          </div>
+                        </td>
+                        <td className="px-10 py-6">
+                          <div className="flex items-center gap-2">
+                            <MapPin size={14} className="text-brand-primary/30" />
+                            <span className="text-sm font-bold text-brand-primary">
+                              {order.shippingAddress
+                                ? `${order.shippingAddress.city}, ${order.shippingAddress.country}`
+                                : '—'}
+                            </span>
+                            <span className="flex items-center gap-1 text-[9px] font-black text-blue-500 uppercase tracking-widest ms-2 px-1.5 py-0.5 bg-blue-50 rounded">
+                              <Globe size={10} /> Express
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-10 py-6">
+                          <p className="text-lg font-display font-black text-brand-primary">
+                            {order.currency} {order.total.toFixed(2)}
+                          </p>
+                        </td>
+                        <td className="px-10 py-6">
+                          <div
+                            className={cn(
+                              'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest',
+                              order.status === 'delivered'
+                                ? 'bg-green-50 text-green-600'
+                                : order.status === 'shipped'
+                                  ? 'bg-blue-50 text-blue-600'
+                                  : order.status === 'cancelled'
+                                    ? 'bg-zinc-100 text-zinc-500'
+                                    : 'bg-orange-50 text-orange-600',
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                'w-2 h-2 rounded-full',
+                                order.status === 'delivered'
+                                  ? 'bg-green-500'
+                                  : order.status === 'shipped'
+                                    ? 'bg-blue-500'
+                                    : order.status === 'cancelled'
+                                      ? 'bg-zinc-400'
+                                      : 'bg-orange-500',
+                              )}
+                            />
+                            {order.status}
+                          </div>
+                        </td>
+                        <td className="px-10 py-6">
+                          <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {(order.status === 'pending' || order.status === 'processing') && (
+                              <button
+                                onClick={() => {
+                                  setShipTarget(order);
+                                  setCarrier('PTT');
+                                  setTrackingNumber('');
+                                  setOrderNote('');
+                                }}
+                                className="px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
+                              >
+                                Kargoya Ver
+                              </button>
+                            )}
+                            {order.status === 'shipped' && order.trackingNumber && (
+                              <button
+                                onClick={() => handleViewTracking(order)}
+                                className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all"
+                              >
+                                Takip Et
+                              </button>
+                            )}
+                            <button className="px-4 py-2 border border-brand-primary/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-all">
+                              Details
+                            </button>
+                          </div>
+                        </td>
                       </tr>
-                      );
-                    })}
-                 </tbody>
-              </table>
-           </div>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
 
-           {/* Pagination / Batch Actions */}
-           <div className="p-8 bg-brand-secondary/10 flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                 <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
-                   {selectedIds.size > 0 ? `${selectedIds.size} sipariş seçildi` : 'Selected 0 items'}
-                 </p>
-                 <select className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none border-none cursor-pointer">
-                    <option>Global Bulk Actions</option>
-                    <option>Print Shipping Labels</option>
-                    <option>Update Customs Data</option>
-                    <option>Notify Buyers</option>
-                 </select>
-              </div>
-              <div className="flex items-center gap-2">
-                 {[1, 2, 3].map(i => (
-                   <button key={i} className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black", i === 1 ? "bg-brand-primary text-white" : "hover:bg-white")}>{i}</button>
-                 ))}
-                 <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white"><ArrowRight size={14} /></button>
-              </div>
-           </div>
+          {/* Pagination / Batch Actions */}
+          <div className="p-8 bg-brand-secondary/10 flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
+                {selectedIds.size > 0 ? `${selectedIds.size} sipariş seçildi` : 'Selected 0 items'}
+              </p>
+              <select className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none border-none cursor-pointer">
+                <option>Global Bulk Actions</option>
+                <option>Print Shipping Labels</option>
+                <option>Update Customs Data</option>
+                <option>Notify Buyers</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              {[1, 2, 3].map((i) => (
+                <button
+                  key={i}
+                  className={cn(
+                    'w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black',
+                    i === 1 ? 'bg-brand-primary text-white' : 'hover:bg-white',
+                  )}
+                >
+                  {i}
+                </button>
+              ))}
+              <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white">
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
         </div>
 
         <ReturnManagementSection uid={firebaseUser?.uid ?? ''} show={showReturns} />
 
         {/* Fulfillment Network Stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
-           <div className="lg:col-span-2 bg-brand-primary text-white rounded-[3rem] p-10 overflow-hidden relative group">
-              <Globe size={150} className="absolute -bottom-10 -end-10 text-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-              <div className="relative z-10 flex flex-col md:flex-row gap-12">
-                 <div className="flex-1">
-                    <h3 className="text-2xl font-display font-black uppercase italic mb-6">Global Logistics Hub Health</h3>
-                    <div className="space-y-6">
-                       {[
-                         { hub: 'London Gateway', load: 85, health: 'Optimal' },
-                         { hub: 'Dubai Logistics City', load: 42, health: 'Optimal' },
-                         { hub: 'Frankfurth Hub', load: 92, health: 'High Payload' }
-                       ].map((hub, i) => (
-                         <div key={i} className="space-y-1">
-                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-                               <span>{hub.hub}</span>
-                               <span className={hub.health === 'Optimal' ? "text-green-500" : "text-yellow-500"}>{hub.health}</span>
-                            </div>
-                            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                               <motion.div 
-                                 initial={{ width: 0 }}
-                                 animate={{ width: `${hub.load}%` }}
-                                 className="h-full bg-accent" 
-                               />
-                            </div>
-                         </div>
-                       ))}
+          <div className="lg:col-span-2 bg-brand-primary text-white rounded-[3rem] p-10 overflow-hidden relative group">
+            <Globe
+              size={150}
+              className="absolute -bottom-10 -end-10 text-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"
+            />
+            <div className="relative z-10 flex flex-col md:flex-row gap-12">
+              <div className="flex-1">
+                <h3 className="text-2xl font-display font-black uppercase italic mb-6">
+                  Global Logistics Hub Health
+                </h3>
+                <div className="space-y-6">
+                  {[
+                    { hub: 'London Gateway', load: 85, health: 'Optimal' },
+                    { hub: 'Dubai Logistics City', load: 42, health: 'Optimal' },
+                    { hub: 'Frankfurth Hub', load: 92, health: 'High Payload' },
+                  ].map((hub, i) => (
+                    <div key={i} className="space-y-1">
+                      <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                        <span>{hub.hub}</span>
+                        <span
+                          className={
+                            hub.health === 'Optimal' ? 'text-green-500' : 'text-yellow-500'
+                          }
+                        >
+                          {hub.health}
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${hub.load}%` }}
+                          className="h-full bg-accent"
+                        />
+                      </div>
                     </div>
-                 </div>
-                 <div className="w-full md:w-64 flex flex-col items-center justify-center text-center p-8 bg-white/5 backdrop-blur-xl rounded-[2.5rem] border border-white/10">
-                    <ShieldCheck size={48} className="text-accent mb-4" />
-                    <p className="text-sm font-black mb-2 uppercase italic">Verified Fulfillment</p>
-                    <p className="text-[10px] text-white/40 leading-relaxed uppercase tracking-widest">99.2% of your artifacts pass global customs without manual intervention.</p>
-                 </div>
+                  ))}
+                </div>
               </div>
-           </div>
+              <div className="w-full md:w-64 flex flex-col items-center justify-center text-center p-8 bg-white/5 backdrop-blur-xl rounded-[2.5rem] border border-white/10">
+                <ShieldCheck size={48} className="text-accent mb-4" />
+                <p className="text-sm font-black mb-2 uppercase italic">Verified Fulfillment</p>
+                <p className="text-[10px] text-white/40 leading-relaxed uppercase tracking-widest">
+                  99.2% of your artifacts pass global customs without manual intervention.
+                </p>
+              </div>
+            </div>
+          </div>
 
-           <div className="bg-accent text-white rounded-[3rem] p-10 flex flex-col justify-between group">
-              <div>
-                 <MessageSquare size={32} className="mb-6 opacity-40 group-hover:opacity-100 transition-opacity" />
-                 <h3 className="text-2xl font-display font-black leading-tight uppercase italic mb-4 font-black">Need Priority Support?</h3>
-                 <p className="text-sm font-medium text-white/80 leading-relaxed">Our Global Artifact Specialist team is available 24/7 for logistics and compliance escalations.</p>
-              </div>
-              <button className="w-full py-4 bg-white text-accent rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-accent/20 hover:scale-105 active:scale-95 transition-all mt-8">
-                 Access Curator Helpdesk
-              </button>
-           </div>
+          <div className="bg-accent text-white rounded-[3rem] p-10 flex flex-col justify-between group">
+            <div>
+              <MessageSquare
+                size={32}
+                className="mb-6 opacity-40 group-hover:opacity-100 transition-opacity"
+              />
+              <h3 className="text-2xl font-display font-black leading-tight uppercase italic mb-4 font-black">
+                Need Priority Support?
+              </h3>
+              <p className="text-sm font-medium text-white/80 leading-relaxed">
+                Our Global Artifact Specialist team is available 24/7 for logistics and compliance
+                escalations.
+              </p>
+            </div>
+            <button className="w-full py-4 bg-white text-accent rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-accent/20 hover:scale-105 active:scale-95 transition-all mt-8">
+              Access Curator Helpdesk
+            </button>
+          </div>
         </div>
       </div>
 
@@ -533,36 +680,66 @@ export function SellerOrdersPage() {
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl space-y-5 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-display font-black text-brand-primary uppercase italic">Kargo Takip</h3>
-              <button onClick={() => { setTrackingTarget(null); setTrackingData(null); }} className="p-2 hover:bg-brand-secondary rounded-xl transition-colors">
+              <h3 className="text-xl font-display font-black text-brand-primary uppercase italic">
+                Kargo Takip
+              </h3>
+              <button
+                onClick={() => {
+                  setTrackingTarget(null);
+                  setTrackingData(null);
+                }}
+                className="p-2 hover:bg-brand-secondary rounded-xl transition-colors"
+              >
                 <X size={20} className="text-brand-primary/40" />
               </button>
             </div>
             <div className="bg-brand-secondary/30 rounded-2xl p-4">
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-brand-primary/40 font-bold">{trackingTarget.provider}</span>
-                <span className="font-black font-mono text-brand-primary">{trackingTarget.trackingNumber}</span>
+                <span className="font-black font-mono text-brand-primary">
+                  {trackingTarget.trackingNumber}
+                </span>
               </div>
             </div>
             {trackingLoading ? (
-              <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-accent" />
+              </div>
             ) : trackingData?.success ? (
               <div className="space-y-1">
-                <div className={cn(
-                  "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest mb-4",
-                  trackingData.delivered ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"
-                )}>
+                <div
+                  className={cn(
+                    'px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest mb-4',
+                    trackingData.delivered
+                      ? 'bg-green-50 text-green-600'
+                      : 'bg-blue-50 text-blue-600',
+                  )}
+                >
                   {trackingData.delivered ? 'Teslim Edildi' : trackingData.currentStatus}
                   {trackingData.estimatedDelivery && !trackingData.delivered && (
-                    <span className="ms-2 font-bold">· Tahmini: {new Date(trackingData.estimatedDelivery).toLocaleDateString('tr-TR')}</span>
+                    <span className="ms-2 font-bold">
+                      · Tahmini:{' '}
+                      {new Date(trackingData.estimatedDelivery).toLocaleDateString('tr-TR')}
+                    </span>
                   )}
                 </div>
                 <div className="space-y-2">
                   {trackingData.events.map((event, idx) => (
                     <div key={idx} className="flex gap-3">
                       <div className="flex flex-col items-center">
-                        <div className={cn("w-2.5 h-2.5 rounded-full mt-1.5", idx === 0 ? "bg-accent" : idx === trackingData.events.length - 1 ? "bg-green-500" : "bg-brand-primary/20")} />
-                        {idx < trackingData.events.length - 1 && <div className="w-px flex-1 bg-brand-primary/10 mt-1" />}
+                        <div
+                          className={cn(
+                            'w-2.5 h-2.5 rounded-full mt-1.5',
+                            idx === 0
+                              ? 'bg-accent'
+                              : idx === trackingData.events.length - 1
+                                ? 'bg-green-500'
+                                : 'bg-brand-primary/20',
+                          )}
+                        />
+                        {idx < trackingData.events.length - 1 && (
+                          <div className="w-px flex-1 bg-brand-primary/10 mt-1" />
+                        )}
                       </div>
                       <div className="flex-1 pb-2">
                         <p className="text-xs font-black text-brand-primary">{event.status}</p>
@@ -576,14 +753,20 @@ export function SellerOrdersPage() {
                   ))}
                 </div>
                 {trackingData.labelUrl && (
-                  <a href={trackingData.labelUrl} target="_blank" rel="noopener noreferrer"
-                    className="block w-full text-center py-3 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all mt-4">
+                  <a
+                    href={trackingData.labelUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full text-center py-3 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all mt-4"
+                  >
                     Kargo Etiketini İndir
                   </a>
                 )}
               </div>
             ) : trackingData ? (
-              <p className="text-center py-8 text-red-500 font-bold text-sm">{trackingData.error || 'Takip bilgisi alınamadı'}</p>
+              <p className="text-center py-8 text-red-500 font-bold text-sm">
+                {trackingData.error || 'Takip bilgisi alınamadı'}
+              </p>
             ) : null}
           </div>
         </div>
@@ -606,37 +789,47 @@ export function SellerOrdersPage() {
       {shipTarget && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl space-y-5">
-            <h3 className="text-xl font-display font-black text-brand-primary uppercase italic">Kargo Bilgileri</h3>
+            <h3 className="text-xl font-display font-black text-brand-primary uppercase italic">
+              Kargo Bilgileri
+            </h3>
             <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
               Sipariş #{shipTarget.id.slice(-6).toUpperCase()}
             </p>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">Kargo Firması</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
+                Kargo Firması
+              </label>
               <select
                 value={carrier}
-                onChange={e => setCarrier(e.target.value)}
+                onChange={(e) => setCarrier(e.target.value)}
                 className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10"
               >
-                {CARRIERS.map(c => <option key={c}>{c}</option>)}
+                {CARRIERS.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
               </select>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">Takip Numarası (opsiyonel)</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
+                Takip Numarası (opsiyonel)
+              </label>
               <input
                 value={trackingNumber}
-                onChange={e => setTrackingNumber(e.target.value)}
+                onChange={(e) => setTrackingNumber(e.target.value)}
                 placeholder="örn. TR1234567890"
                 className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10 placeholder:text-brand-primary/20"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">Not (opsiyonel)</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
+                Not (opsiyonel)
+              </label>
               <input
                 value={orderNote}
-                onChange={e => setOrderNote(e.target.value)}
+                onChange={(e) => setOrderNote(e.target.value)}
                 placeholder="Sipariş ile ilgili not..."
                 className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10 placeholder:text-brand-primary/20"
               />
@@ -654,7 +847,13 @@ export function SellerOrdersPage() {
                 disabled={shipping}
                 className="flex-1 py-3 bg-accent text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-accent/20 hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {shipping ? <><Loader2 size={14} className="animate-spin" /> Kaydediliyor…</> : 'Kargoya Ver'}
+                {shipping ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" /> Kaydediliyor…
+                  </>
+                ) : (
+                  'Kargoya Ver'
+                )}
               </button>
             </div>
           </div>

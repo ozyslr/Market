@@ -1,6 +1,14 @@
 import {
-  collection, doc, getDoc, getDocs, setDoc, deleteDoc,
-  query, where, orderBy, Timestamp,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -23,7 +31,7 @@ export interface PricingRule {
   overstockThreshold?: number; // apply when stock is above this
   // Time-based
   startTime?: string; // HH:mm
-  endTime?: string;   // HH:mm
+  endTime?: string; // HH:mm
   daysOfWeek?: number[]; // 0=Sun, 1=Mon, ...
   // Demand-based
   minViews?: number;
@@ -46,7 +54,9 @@ const COL = 'pricingRules';
 
 // ─── CRUD ──────────────────────────────────────────────────────────────────
 
-export async function createRule(rule: Omit<PricingRule, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+export async function createRule(
+  rule: Omit<PricingRule, 'id' | 'createdAt' | 'updatedAt'>,
+): Promise<string> {
   const ref = doc(collection(db, COL));
   const now = new Date().toISOString();
   await setDoc(ref, { ...rule, createdAt: now, updatedAt: now });
@@ -63,21 +73,17 @@ export async function deleteRule(id: string): Promise<void> {
 }
 
 export async function getRulesByProduct(productId: string): Promise<PricingRule[]> {
-  const snap = await getDocs(query(
-    collection(db, COL),
-    where('productId', '==', productId),
-    orderBy('createdAt', 'desc'),
-  ));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as PricingRule);
+  const snap = await getDocs(
+    query(collection(db, COL), where('productId', '==', productId), orderBy('createdAt', 'desc')),
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PricingRule);
 }
 
 export async function getRulesBySeller(sellerId: string): Promise<PricingRule[]> {
-  const snap = await getDocs(query(
-    collection(db, COL),
-    where('sellerId', '==', sellerId),
-    orderBy('createdAt', 'desc'),
-  ));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as PricingRule);
+  const snap = await getDocs(
+    query(collection(db, COL), where('sellerId', '==', sellerId), orderBy('createdAt', 'desc')),
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PricingRule);
 }
 
 // ─── Pricing Engine ────────────────────────────────────────────────────────
@@ -123,7 +129,7 @@ export function calculateDynamicPrice(
 
   // Sort: demand_based > stock_based > time_based (most specific first)
   const sorted = [...rules]
-    .filter(r => r.enabled)
+    .filter((r) => r.enabled)
     .sort((a, b) => {
       const order = { demand_based: 0, stock_based: 1, time_based: 2 };
       return (order[a.ruleType] ?? 3) - (order[b.ruleType] ?? 3);
@@ -141,7 +147,7 @@ export function calculateDynamicPrice(
     }
 
     // Apply adjustment
-    let adjustment = 0;
+    let adjustment: number;
     if (rule.adjustmentType === 'percentage') {
       adjustment = product.price * (rule.adjustmentValue / 100);
     } else {

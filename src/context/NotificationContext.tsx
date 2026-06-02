@@ -82,6 +82,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return () => {
       if (firebaseUser) unregisterPushToken(firebaseUser.uid);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const enablePush = async () => {
@@ -108,28 +109,32 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   async function markRead(id: string) {
     await markAsRead(id);
-    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   }
 
   async function markAll() {
     if (!user) return;
     await markAllAsRead(user.id);
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const filterByType = useCallback((type: NotificationType) => {
-    return notifications.filter(n => n.type === type);
-  }, [notifications]);
+  const filterByType = useCallback(
+    (type: NotificationType) => {
+      return notifications.filter((n) => n.type === type);
+    },
+    [notifications],
+  );
 
   const typeCounts = useMemo(() => {
     const counts = { order: 0, stock: 0, price: 0, system: 0 };
-    notifications.forEach(n => {
+    notifications.forEach((n) => {
       if (n.type === 'order_status') counts.order++;
       else if (n.type === 'back_in_stock') counts.stock++;
       else if (n.type === 'price_drop') counts.price++;

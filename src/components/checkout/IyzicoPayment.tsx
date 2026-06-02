@@ -1,5 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { Loader2, CreditCard, ChevronRight, ExternalLink, AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+  Loader2,
+  CreditCard,
+  ChevronRight,
+  ExternalLink,
+  AlertCircle,
+  CheckCircle2,
+} from 'lucide-react';
 import { getActiveProvidersForRegion } from '@/services/paymentProviderService';
 import type { InstallmentOption } from '@/types/payment';
 
@@ -24,8 +31,18 @@ interface IyzicoPaymentProps {
 }
 
 export function IyzicoPayment({
-  total, currency, orderId, userId, userEmail, userName, buyerPhone,
-  region, shippingAddress, onSuccess, onBack, onError,
+  total,
+  currency,
+  orderId,
+  userId,
+  userEmail,
+  userName,
+  buyerPhone,
+  region,
+  shippingAddress,
+  onSuccess,
+  onBack,
+  onError,
 }: IyzicoPaymentProps) {
   const [installment, setInstallment] = useState(1);
   const [installmentOptions, setInstallmentOptions] = useState<InstallmentOption[]>([]);
@@ -76,9 +93,15 @@ export function IyzicoPayment({
       if (data.paymentPageUrl) {
         setStatus('redirecting');
         // Store order reference then redirect to iyzico
-        sessionStorage.setItem(`iyzico_order_${orderId}`, JSON.stringify({
-          orderId, token: data.token, total, currency,
-        }));
+        sessionStorage.setItem(
+          `iyzico_order_${orderId}`,
+          JSON.stringify({
+            orderId,
+            token: data.token,
+            total,
+            currency,
+          }),
+        );
 
         // Start polling for payment completion after redirect
         // The callback URL will redirect back to /checkout?iyzico_status=...
@@ -103,14 +126,17 @@ export function IyzicoPayment({
         </div>
         <div>
           <h3 className="text-lg font-black text-[#1A1033] uppercase tracking-tight mb-2">
-            iyzico'ya Yönlendiriliyor
+            iyzico&apos;ya Yönlendiriliyor
           </h3>
           <p className="text-sm text-[#1A1033]/50 font-medium">
             Güvenli ödeme sayfasına yönlendiriliyorsunuz...
           </p>
         </div>
         <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-[#1A1033]/30">
-          <ExternalLink size={12} /> Yeni sayfada açılmazsa <button onClick={handlePay} className="text-accent underline">tıklayın</button>
+          <ExternalLink size={12} /> Yeni sayfada açılmazsa{' '}
+          <button onClick={handlePay} className="text-accent underline">
+            tıklayın
+          </button>
         </div>
       </div>
     );
@@ -149,15 +175,18 @@ export function IyzicoPayment({
 
         {/* Quick bank logos */}
         <div className="flex flex-wrap gap-2 mb-4">
-          {bankLogos.map(b => (
-            <span key={b.name} className="px-3 py-1.5 bg-[#F8F8FA] rounded-lg text-[10px] font-bold text-[#1A1033]/40 border border-[#1A1033]/5">
+          {bankLogos.map((b) => (
+            <span
+              key={b.name}
+              className="px-3 py-1.5 bg-[#F8F8FA] rounded-lg text-[10px] font-bold text-[#1A1033]/40 border border-[#1A1033]/5"
+            >
               {b.name}
             </span>
           ))}
         </div>
 
         <div className="grid grid-cols-4 gap-2">
-          {[1, 2, 3, 6].map(num => {
+          {[1, 2, 3, 6].map((num) => {
             const isFree = num <= 1;
             const monthly = isFree ? total / num : total / num + (total * 0.01 * num) / num;
             return (
@@ -171,10 +200,14 @@ export function IyzicoPayment({
                     : 'border-[#1A1033]/10 bg-[#F8F8FA] hover:border-accent/40'
                 }`}
               >
-                <span className={`text-sm font-black ${installment === num ? 'text-accent' : 'text-[#1A1033]'}`}>
+                <span
+                  className={`text-sm font-black ${installment === num ? 'text-accent' : 'text-[#1A1033]'}`}
+                >
                   {num}
                 </span>
-                <span className="block text-[9px] font-bold text-[#1A1033]/40 uppercase tracking-widest">Taksit</span>
+                <span className="block text-[9px] font-bold text-[#1A1033]/40 uppercase tracking-widest">
+                  Taksit
+                </span>
               </button>
             );
           })}
@@ -183,9 +216,13 @@ export function IyzicoPayment({
         {installment > 1 && (
           <div className="mt-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl">
             <p className="text-[10px] font-bold text-amber-700">
-              {installment} taksit ile aylık ~{(total / installment + (total * 0.012 * installment) / installment).toFixed(2)} {currency} ödeme
+              {installment} taksit ile aylık ~
+              {(total / installment + (total * 0.012 * installment) / installment).toFixed(2)}{' '}
+              {currency} ödeme
             </p>
-            <p className="text-[9px] text-amber-500 font-medium mt-0.5">*Taksit oranları bankanıza göre değişiklik gösterebilir</p>
+            <p className="text-[9px] text-amber-500 font-medium mt-0.5">
+              *Taksit oranları bankanıza göre değişiklik gösterebilir
+            </p>
           </div>
         )}
       </div>
@@ -206,7 +243,9 @@ export function IyzicoPayment({
           className="flex-1 py-4 bg-orange-600 text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:bg-orange-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {initializing ? (
-            <><Loader2 size={16} className="animate-spin" /> Başlatılıyor...</>
+            <>
+              <Loader2 size={16} className="animate-spin" /> Başlatılıyor...
+            </>
           ) : (
             <>
               <CreditCard size={16} />

@@ -1,8 +1,16 @@
 import { motion } from 'motion/react';
 import {
-  Heart, ShieldCheck, Users, Star, Package,
-  Store, TrendingUp, ArrowRight, CheckCircle2,
-  Sparkles, Zap,
+  Heart,
+  ShieldCheck,
+  Users,
+  Star,
+  Package,
+  Store,
+  TrendingUp,
+  ArrowRight,
+  CheckCircle2,
+  Sparkles,
+  Zap,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SEO } from '@/components/common/SEO';
@@ -39,9 +47,18 @@ const values = [
 ];
 
 const milestones = [
-  { year: '2024', event: 'Benim Olan kuruldu ve Türkiye\'nin yeni nesil pazar yeri vizyonuyla yola çıktı.' },
-  { year: '2025', event: '450+ satıcı, 50.000+ ürün ve AI destekli alışveriş asistanı ile büyümeye devam etti.' },
-  { year: '2026', event: 'Global pazara açılış, bot satış motoru ve çoklu dil desteği ile sınırları aşıyoruz.' },
+  {
+    year: '2024',
+    event: "Benim Olan kuruldu ve Türkiye'nin yeni nesil pazar yeri vizyonuyla yola çıktı.",
+  },
+  {
+    year: '2025',
+    event: '450+ satıcı, 50.000+ ürün ve AI destekli alışveriş asistanı ile büyümeye devam etti.',
+  },
+  {
+    year: '2026',
+    event: 'Global pazara açılış, bot satış motoru ve çoklu dil desteği ile sınırları aşıyoruz.',
+  },
 ];
 
 export function About() {
@@ -67,7 +84,9 @@ export function About() {
           >
             <div className="px-6 py-2 bg-white/10 rounded-full border border-white/10 backdrop-blur-md flex items-center gap-3">
               <Sparkles size={14} className="text-accent" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Benim Olan Hakkında</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">
+                Benim Olan Hakkında
+              </span>
             </div>
           </motion.div>
 
@@ -76,7 +95,7 @@ export function About() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-5xl md:text-7xl font-display font-black tracking-tightest leading-none mb-6 italic uppercase"
           >
-            Türkiye'nin Yeni Nesil
+            Türkiye&apos;nin Yeni Nesil
             <br />
             <span className="text-accent">Online Pazar Yeri</span>
           </motion.h1>
@@ -87,8 +106,8 @@ export function About() {
             transition={{ delay: 0.2 }}
             className="text-lg text-white/60 max-w-2xl mx-auto mb-10 font-medium"
           >
-            Benim Olan'da alışveriş bir deneyimdir. En yeni teknolojiler, güvenilir satıcılar ve
-            benzersiz bir müşteri deneyimi ile aradığınız her şey burada.
+            Benim Olan&apos;da alışveriş bir deneyimdir. En yeni teknolojiler, güvenilir satıcılar
+            ve benzersiz bir müşteri deneyimi ile aradığınız her şey burada.
           </motion.p>
         </div>
       </section>
@@ -105,7 +124,9 @@ export function About() {
             >
               <div className="flex items-center gap-3">
                 <div className="w-1.5 h-8 bg-accent rounded-full" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-accent">Hikayemiz</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-accent">
+                  Hikayemiz
+                </span>
               </div>
               <h2 className="text-3xl md:text-5xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white leading-tight">
                 Bir Fikirle Başladı
@@ -116,9 +137,9 @@ export function About() {
                 oluşturmaktı.
               </p>
               <p className="text-brand-primary/60 dark:text-white/60 font-medium leading-relaxed">
-                Bugün, 450'den fazla seçkin satıcımız ve 50.000+ ürünümüzle Türkiye'nin en hızlı
-                büyüyen online pazar yerlerinden biriyiz. Yapay zeka destekli altyapımız, bot satış
-                motorumuz ve çoklu dil desteğimizle global bir ekosisteme dönüşüyoruz.
+                Bugün, 450&apos;den fazla seçkin satıcımız ve 50.000+ ürünümüzle Türkiye&apos;nin en
+                hızlı büyüyen online pazar yerlerinden biriyiz. Yapay zeka destekli altyapımız, bot
+                satış motorumuz ve çoklu dil desteğimizle global bir ekosisteme dönüşüyoruz.
               </p>
               <Link
                 to="/sell"
@@ -188,7 +209,9 @@ export function About() {
           <div className="max-w-3xl mx-auto text-center mb-16">
             <div className="flex justify-center items-center gap-3 mb-4">
               <div className="w-1.5 h-8 bg-accent rounded-full" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-accent">Misyonumuz</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-accent">
+                Misyonumuz
+              </span>
             </div>
             <h2 className="text-3xl md:text-5xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white leading-tight mb-6">
               Alışverişi Herkes İçin Erişilebilir Kılmak
@@ -210,7 +233,9 @@ export function About() {
                 transition={{ delay: i * 0.1 }}
                 className="p-10 bg-white dark:bg-zinc-900 rounded-[2rem] border border-brand-primary/5 dark:border-zinc-700 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all group"
               >
-                <div className={`w-16 h-16 ${v.bg} rounded-2xl flex items-center justify-center ${v.color} mb-6 group-hover:scale-110 transition-transform`}>
+                <div
+                  className={`w-16 h-16 ${v.bg} rounded-2xl flex items-center justify-center ${v.color} mb-6 group-hover:scale-110 transition-transform`}
+                >
                   <v.icon size={28} />
                 </div>
                 <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white mb-4">

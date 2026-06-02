@@ -15,9 +15,17 @@ export function registerSW(): void {
 
   // Track last online timestamp for offline page display
   window.addEventListener('online', () => {
-    try { localStorage.setItem('last_online_visit', Date.now().toString()); } catch {}
+    try {
+      localStorage.setItem('last_online_visit', Date.now().toString());
+    } catch {
+      /* empty */
+    }
   });
-  try { localStorage.setItem('last_online_visit', Date.now().toString()); } catch {}
+  try {
+    localStorage.setItem('last_online_visit', Date.now().toString());
+  } catch {
+    /* empty */
+  }
 
   window.addEventListener('load', async () => {
     try {
@@ -29,9 +37,12 @@ export function registerSW(): void {
       console.info('[PWA] SW registered:', registration.scope);
 
       // Check for updates periodically (every 60 min)
-      setInterval(() => {
-        registration.update().catch(() => {});
-      }, 60 * 60 * 1000);
+      setInterval(
+        () => {
+          registration.update().catch(() => {});
+        },
+        60 * 60 * 1000,
+      );
 
       // Handle update found
       registration.addEventListener('updatefound', () => {
@@ -41,9 +52,11 @@ export function registerSW(): void {
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             console.info('[PWA] New version ready — refresh to update.');
-            window.dispatchEvent(new CustomEvent('sw-update-ready', {
-              detail: { version: Date.now() },
-            }));
+            window.dispatchEvent(
+              new CustomEvent('sw-update-ready', {
+                detail: { version: Date.now() },
+              }),
+            );
           }
         });
       });
@@ -92,6 +105,6 @@ export function isRunningOffline(): boolean {
 export async function clearAllCaches(): Promise<void> {
   if ('caches' in window) {
     const keys = await caches.keys();
-    await Promise.all(keys.map(k => caches.delete(k)));
+    await Promise.all(keys.map((k) => caches.delete(k)));
   }
 }

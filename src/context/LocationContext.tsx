@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface DeliveryLocation {
-  country: string;      // ISO 2-letter code: 'GB' | 'TR' | 'DE' | 'US'
+  country: string; // ISO 2-letter code: 'GB' | 'TR' | 'DE' | 'US'
   city: string;
   district?: string;
-  displayText: string;  // "London, UK"
-  market: string;       // MARKETS key: 'UK' | 'TR' | 'DE' | 'US'
-  currency: string;     // 'GBP' | 'TRY' | 'EUR' | 'USD'
+  displayText: string; // "London, UK"
+  market: string; // MARKETS key: 'UK' | 'TR' | 'DE' | 'US'
+  currency: string; // 'GBP' | 'TRY' | 'EUR' | 'USD'
 }
 
 const DEFAULT_LOCATION: DeliveryLocation = {
@@ -21,7 +21,9 @@ function loadSavedLocation(): DeliveryLocation {
   try {
     const raw = localStorage.getItem('mercora_location');
     if (raw) return JSON.parse(raw) as DeliveryLocation;
-  } catch {}
+  } catch {
+    /* empty */
+  }
   return DEFAULT_LOCATION;
 }
 
@@ -42,17 +44,23 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
   const setLocation = (loc: DeliveryLocation) => {
     setLocationState(loc);
-    try { localStorage.setItem('mercora_location', JSON.stringify(loc)); } catch {}
+    try {
+      localStorage.setItem('mercora_location', JSON.stringify(loc));
+    } catch {
+      /* empty */
+    }
   };
 
   return (
-    <LocationContext.Provider value={{
-      location,
-      setLocation,
-      isLocationModalOpen,
-      setIsLocationModalOpen,
-      selectedLocation: location.displayText,
-    }}>
+    <LocationContext.Provider
+      value={{
+        location,
+        setLocation,
+        isLocationModalOpen,
+        setIsLocationModalOpen,
+        selectedLocation: location.displayText,
+      }}
+    >
       {children}
     </LocationContext.Provider>
   );

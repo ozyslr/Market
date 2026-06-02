@@ -34,20 +34,19 @@ export function CategoryPage() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([
-      getCategories(),
-      getProducts({ categoryId: id }),
-    ]).then(([cats, prods]) => {
-      setAllCategories(cats);
-      setProducts(prods);
-    }).finally(() => setLoading(false));
+    Promise.all([getCategories(), getProducts({ categoryId: id })])
+      .then(([cats, prods]) => {
+        setAllCategories(cats);
+        setProducts(prods);
+      })
+      .finally(() => setLoading(false));
   }, [id]);
 
-  const category = allCategories.find(c => c.id === id);
+  const category = allCategories.find((c) => c.id === id);
   const parentCategory = category?.parentId
-    ? allCategories.find(c => c.id === category.parentId)
+    ? allCategories.find((c) => c.id === category.parentId)
     : null;
-  const subCategories = allCategories.filter(c => c.parentId === id);
+  const subCategories = allCategories.filter((c) => c.parentId === id);
 
   const breadcrumbItems = useMemo((): BreadcrumbItem[] => {
     const items: BreadcrumbItem[] = [];
@@ -59,18 +58,23 @@ export function CategoryPage() {
   }, [category, parentCategory, id]);
 
   const sortedProducts = useMemo(() => {
-    let list = qFilter
-      ? products.filter(p =>
-          p.title.toLowerCase().includes(qFilter.toLowerCase()) ||
-          (p.brand ?? '').toLowerCase().includes(qFilter.toLowerCase())
+    const list = qFilter
+      ? products.filter(
+          (p) =>
+            p.title.toLowerCase().includes(qFilter.toLowerCase()) ||
+            (p.brand ?? '').toLowerCase().includes(qFilter.toLowerCase()),
         )
       : products;
 
     switch (sortBy) {
-      case 'price-asc':  return [...list].sort((a, b) => a.price - b.price);
-      case 'price-desc': return [...list].sort((a, b) => b.price - a.price);
-      case 'rating':     return [...list].sort((a, b) => b.rating - a.rating);
-      default:           return list;
+      case 'price-asc':
+        return [...list].sort((a, b) => a.price - b.price);
+      case 'price-desc':
+        return [...list].sort((a, b) => b.price - a.price);
+      case 'rating':
+        return [...list].sort((a, b) => b.rating - a.rating);
+      default:
+        return list;
     }
   }, [products, sortBy, qFilter]);
 
@@ -81,7 +85,9 @@ export function CategoryPage() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-brand-primary/40">
         <Package size={48} />
         <p className="text-lg font-black uppercase italic">Kategori bulunamadı</p>
-        <Link to="/" className="text-accent font-bold text-sm hover:underline">Ana Sayfaya Dön</Link>
+        <Link to="/" className="text-accent font-bold text-sm hover:underline">
+          Ana Sayfaya Dön
+        </Link>
       </div>
     );
   }
@@ -93,18 +99,20 @@ export function CategoryPage() {
         description={`${category?.name || 'Kategori'} sayfası — Benim Olan'da ${category?.name || 'kategori'} ürünlerini keşfedin.`}
         canonical={`/category/${id}`}
         lang={lang}
-        jsonLd={
-          breadcrumbSchema([
-            { name: 'Ana Sayfa', url: '/' },
-            ...(parentCategory ? [{ name: parentCategory.name, url: `/category/${parentCategory.id}` }] : []),
-            { name: category?.name || 'Kategori', url: `/category/${id}` },
-          ])
-        }
+        jsonLd={breadcrumbSchema([
+          { name: 'Ana Sayfa', url: '/' },
+          ...(parentCategory
+            ? [{ name: parentCategory.name, url: `/category/${parentCategory.id}` }]
+            : []),
+          { name: category?.name || 'Kategori', url: `/category/${id}` },
+        ])}
       />
-      <div className={cn(
-        'relative overflow-hidden',
-        heroBg ? 'h-32 md:h-44' : 'h-20 md:h-28 bg-gradient-to-r from-brand-primary to-zinc-700'
-      )}>
+      <div
+        className={cn(
+          'relative overflow-hidden',
+          heroBg ? 'h-32 md:h-44' : 'h-20 md:h-28 bg-gradient-to-r from-brand-primary to-zinc-700',
+        )}
+      >
         {heroBg && (
           <img
             src={heroBg}
@@ -124,7 +132,9 @@ export function CategoryPage() {
             </h1>
           )}
           {category?.description && (
-            <p className="text-white/60 text-xs font-bold hidden md:block">{category.description}</p>
+            <p className="text-white/60 text-xs font-bold hidden md:block">
+              {category.description}
+            </p>
           )}
         </div>
       </div>
@@ -140,13 +150,13 @@ export function CategoryPage() {
                   'shrink-0 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all border',
                   !qFilter
                     ? 'bg-accent text-white border-accent shadow-sm'
-                    : 'border-brand-primary/10 text-brand-primary/60 dark:text-white/60 hover:border-accent hover:text-accent dark:border-white/10'
+                    : 'border-brand-primary/10 text-brand-primary/60 dark:text-white/60 hover:border-accent hover:text-accent dark:border-white/10',
                 )}
               >
                 Tümü
               </Link>
               {subCategories.length > 0
-                ? subCategories.map(sub => (
+                ? subCategories.map((sub) => (
                     <Link
                       key={sub.id}
                       to={`/category/${sub.id}`}
@@ -155,7 +165,7 @@ export function CategoryPage() {
                       {sub.name}
                     </Link>
                   ))
-                : category?.items?.map(item => (
+                : category?.items?.map((item) => (
                     <Link
                       key={item.query}
                       to={`/category/${id}?q=${encodeURIComponent(item.name)}`}
@@ -163,13 +173,12 @@ export function CategoryPage() {
                         'shrink-0 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all border',
                         qFilter === item.name
                           ? 'bg-accent text-white border-accent shadow-sm'
-                          : 'border-brand-primary/10 text-brand-primary/60 dark:text-white/60 hover:border-accent hover:text-accent dark:border-white/10'
+                          : 'border-brand-primary/10 text-brand-primary/60 dark:text-white/60 hover:border-accent hover:text-accent dark:border-white/10',
                       )}
                     >
                       {item.name}
                     </Link>
-                  ))
-              }
+                  ))}
             </div>
           </div>
         </div>
@@ -191,11 +200,13 @@ export function CategoryPage() {
           {/* Sort */}
           <select
             value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
+            onChange={(e) => setSortBy(e.target.value)}
             className="px-3 py-2 rounded-xl border border-brand-primary/10 dark:border-white/10 text-[11px] font-black bg-transparent text-brand-primary dark:text-white outline-none cursor-pointer hover:border-accent transition-all"
           >
-            {SORT_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
@@ -213,13 +224,16 @@ export function CategoryPage() {
           >
             <Package size={48} strokeWidth={1} />
             <p className="text-lg font-black uppercase italic">Bu kategoride ürün bulunamadı</p>
-            <Link to="/" className="text-accent font-bold text-sm hover:underline flex items-center gap-1">
+            <Link
+              to="/"
+              className="text-accent font-bold text-sm hover:underline flex items-center gap-1"
+            >
               Ana Sayfaya Dön <ChevronRight size={14} />
             </Link>
           </motion.div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-            {sortedProducts.map(product => (
+            {sortedProducts.map((product) => (
               <ProductCard key={product.id} product={product} openInNewTab />
             ))}
           </div>

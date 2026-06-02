@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import {
-  X,
-  MessageCircle,
-  Twitter,
-  Facebook,
-  Share2,
-  Copy,
-  CheckCircle2,
-} from 'lucide-react';
+import { X, MessageCircle, Twitter, Facebook, Share2, Copy, CheckCircle2 } from 'lucide-react';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -17,24 +9,18 @@ interface ShareModalProps {
   title: string;
 }
 
-export function ShareModal({
-  isOpen,
-  onClose,
-  url,
-  title,
-}: ShareModalProps): React.ReactElement {
+export function ShareModal({ isOpen, onClose, url, title }: ShareModalProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
 
   // Check if native share is available
-  const hasNativeShare =
-    typeof navigator !== 'undefined' && 'share' in navigator;
+  const hasNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
   // Platform share handlers
   const handleWhatsApp = () => {
     window.open(
       'https://wa.me/?text=' + encodeURIComponent(title + ' ' + url),
       '_blank',
-      'noopener'
+      'noopener',
     );
   };
 
@@ -45,16 +31,15 @@ export function ShareModal({
         '&url=' +
         encodeURIComponent(url),
       '_blank',
-      'noopener'
+      'noopener',
     );
   };
 
   const handleFacebook = () => {
     window.open(
-      'https://www.facebook.com/sharer/sharer.php?u=' +
-        encodeURIComponent(url),
+      'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url),
       '_blank',
-      'noopener'
+      'noopener',
     );
   };
 
@@ -103,9 +88,18 @@ export function ShareModal({
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-full bg-white dark:bg-zinc-900 rounded-t-3xl p-6 pb-8"
-              role="dialog" aria-modal="true" aria-label="Paylaş"
-              onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}>
+            <div
+              className="w-full bg-white dark:bg-zinc-900 rounded-t-3xl p-6 pb-8"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Paylaş"
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.stopPropagation();
+                  onClose();
+                }
+              }}
+            >
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-sm font-black uppercase tracking-widest text-brand-primary dark:text-white">
@@ -134,7 +128,7 @@ export function ShareModal({
                     <MessageCircle className="w-5 h-5 text-green-500" />
                   </div>
                   <span className="text-sm font-bold text-brand-primary dark:text-white">
-                    WhatsApp'ta Paylaş
+                    WhatsApp&apos;ta Paylaş
                   </span>
                 </button>
 
@@ -149,7 +143,7 @@ export function ShareModal({
                     <Twitter className="w-5 h-5 text-sky-500" />
                   </div>
                   <span className="text-sm font-bold text-brand-primary dark:text-white">
-                    X'te Paylaş
+                    X&apos;te Paylaş
                   </span>
                 </button>
 
@@ -164,7 +158,7 @@ export function ShareModal({
                     <Facebook className="w-5 h-5 text-blue-600" />
                   </div>
                   <span className="text-sm font-bold text-brand-primary dark:text-white">
-                    Facebook'ta Paylaş
+                    Facebook&apos;ta Paylaş
                   </span>
                 </button>
 
@@ -189,9 +183,7 @@ export function ShareModal({
                 <button
                   type="button"
                   onClick={handleCopyLink}
-                  aria-label={
-                    copied ? 'Kopyalandı!' : 'Bağlantıyı Kopyala'
-                  }
+                  aria-label={copied ? 'Kopyalandı!' : 'Bağlantıyı Kopyala'}
                   className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-xl bg-brand-secondary dark:bg-zinc-800 flex items-center justify-center shrink-0">
@@ -221,7 +213,12 @@ export function ShareModal({
               role="dialog"
               aria-modal="true"
               aria-label="Paylaş"
-              onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.stopPropagation();
+                  onClose();
+                }
+              }}
               className="bg-white dark:bg-zinc-900 rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl"
               initial={{ y: 20, scale: 0.95, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
@@ -257,7 +254,7 @@ export function ShareModal({
                     <MessageCircle className="w-5 h-5 text-green-500" />
                   </div>
                   <span className="text-sm font-bold text-brand-primary dark:text-white">
-                    WhatsApp'ta Paylaş
+                    WhatsApp&apos;ta Paylaş
                   </span>
                 </button>
 
@@ -272,7 +269,7 @@ export function ShareModal({
                     <Twitter className="w-5 h-5 text-sky-500" />
                   </div>
                   <span className="text-sm font-bold text-brand-primary dark:text-white">
-                    X'te Paylaş
+                    X&apos;te Paylaş
                   </span>
                 </button>
 
@@ -287,7 +284,7 @@ export function ShareModal({
                     <Facebook className="w-5 h-5 text-blue-600" />
                   </div>
                   <span className="text-sm font-bold text-brand-primary dark:text-white">
-                    Facebook'ta Paylaş
+                    Facebook&apos;ta Paylaş
                   </span>
                 </button>
 
@@ -312,9 +309,7 @@ export function ShareModal({
                 <button
                   type="button"
                   onClick={handleCopyLink}
-                  aria-label={
-                    copied ? 'Kopyalandı!' : 'Bağlantıyı Kopyala'
-                  }
+                  aria-label={copied ? 'Kopyalandı!' : 'Bağlantıyı Kopyala'}
                   className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-xl bg-brand-secondary dark:bg-zinc-800 flex items-center justify-center shrink-0">

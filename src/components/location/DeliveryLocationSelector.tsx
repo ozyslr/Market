@@ -29,32 +29,137 @@ const MARKET_OPTIONS: Record<string, MarketConfig> = {
 // ---------------------------------------------------------------------------
 
 const UK_CITIES: string[] = [
-  'London', 'Manchester', 'Birmingham', 'Leeds', 'Liverpool', 'Glasgow', 'Edinburgh',
-  'Bristol', 'Sheffield', 'Newcastle upon Tyne', 'Nottingham', 'Southampton', 'Cardiff',
-  'Belfast', 'Leicester', 'Coventry', 'Brighton', 'Plymouth', 'Oxford', 'Cambridge',
-  'Aberdeen', 'Dundee', 'Swansea', 'Exeter', 'York', 'Bath', 'Norwich', 'Portsmouth',
-  'Stoke-on-Trent', 'Wolverhampton', 'Derby', 'Sunderland', 'Luton', 'Reading',
+  'London',
+  'Manchester',
+  'Birmingham',
+  'Leeds',
+  'Liverpool',
+  'Glasgow',
+  'Edinburgh',
+  'Bristol',
+  'Sheffield',
+  'Newcastle upon Tyne',
+  'Nottingham',
+  'Southampton',
+  'Cardiff',
+  'Belfast',
+  'Leicester',
+  'Coventry',
+  'Brighton',
+  'Plymouth',
+  'Oxford',
+  'Cambridge',
+  'Aberdeen',
+  'Dundee',
+  'Swansea',
+  'Exeter',
+  'York',
+  'Bath',
+  'Norwich',
+  'Portsmouth',
+  'Stoke-on-Trent',
+  'Wolverhampton',
+  'Derby',
+  'Sunderland',
+  'Luton',
+  'Reading',
 ];
 
 const DE_CITIES: string[] = [
-  'Berlin', 'Hamburg', 'München', 'Köln', 'Frankfurt am Main', 'Stuttgart', 'Düsseldorf',
-  'Leipzig', 'Dortmund', 'Essen', 'Bremen', 'Dresden', 'Hannover', 'Nürnberg',
-  'Duisburg', 'Bochum', 'Wuppertal', 'Bielefeld', 'Bonn', 'Münster', 'Mannheim',
-  'Karlsruhe', 'Augsburg', 'Wiesbaden', 'Aachen', 'Mönchengladbach', 'Gelsenkirchen',
-  'Braunschweig', 'Kiel', 'Chemnitz', 'Halle (Saale)', 'Magdeburg', 'Freiburg im Breisgau',
-  'Krefeld', 'Mainz', 'Lübeck', 'Erfurt', 'Oberhausen', 'Rostock', 'Kassel',
+  'Berlin',
+  'Hamburg',
+  'München',
+  'Köln',
+  'Frankfurt am Main',
+  'Stuttgart',
+  'Düsseldorf',
+  'Leipzig',
+  'Dortmund',
+  'Essen',
+  'Bremen',
+  'Dresden',
+  'Hannover',
+  'Nürnberg',
+  'Duisburg',
+  'Bochum',
+  'Wuppertal',
+  'Bielefeld',
+  'Bonn',
+  'Münster',
+  'Mannheim',
+  'Karlsruhe',
+  'Augsburg',
+  'Wiesbaden',
+  'Aachen',
+  'Mönchengladbach',
+  'Gelsenkirchen',
+  'Braunschweig',
+  'Kiel',
+  'Chemnitz',
+  'Halle (Saale)',
+  'Magdeburg',
+  'Freiburg im Breisgau',
+  'Krefeld',
+  'Mainz',
+  'Lübeck',
+  'Erfurt',
+  'Oberhausen',
+  'Rostock',
+  'Kassel',
 ];
 
 const US_CITIES: string[] = [
-  'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia',
-  'San Antonio', 'San Diego', 'Dallas', 'San Jose', 'Austin', 'Jacksonville',
-  'Fort Worth', 'Columbus', 'Charlotte', 'Indianapolis', 'San Francisco', 'Seattle',
-  'Denver', 'Nashville', 'Oklahoma City', 'El Paso', 'Washington', 'Boston',
-  'Las Vegas', 'Portland', 'Memphis', 'Louisville', 'Baltimore', 'Milwaukee',
-  'Albuquerque', 'Tucson', 'Fresno', 'Sacramento', 'Mesa', 'Atlanta', 'Kansas City',
-  'Omaha', 'Colorado Springs', 'Raleigh', 'Miami', 'Long Beach', 'Virginia Beach',
-  'Oakland', 'Minneapolis', 'Tampa', 'Arlington', 'New Orleans', 'Cleveland',
-  'Honolulu', 'Orlando',
+  'New York',
+  'Los Angeles',
+  'Chicago',
+  'Houston',
+  'Phoenix',
+  'Philadelphia',
+  'San Antonio',
+  'San Diego',
+  'Dallas',
+  'San Jose',
+  'Austin',
+  'Jacksonville',
+  'Fort Worth',
+  'Columbus',
+  'Charlotte',
+  'Indianapolis',
+  'San Francisco',
+  'Seattle',
+  'Denver',
+  'Nashville',
+  'Oklahoma City',
+  'El Paso',
+  'Washington',
+  'Boston',
+  'Las Vegas',
+  'Portland',
+  'Memphis',
+  'Louisville',
+  'Baltimore',
+  'Milwaukee',
+  'Albuquerque',
+  'Tucson',
+  'Fresno',
+  'Sacramento',
+  'Mesa',
+  'Atlanta',
+  'Kansas City',
+  'Omaha',
+  'Colorado Springs',
+  'Raleigh',
+  'Miami',
+  'Long Beach',
+  'Virginia Beach',
+  'Oakland',
+  'Minneapolis',
+  'Tampa',
+  'Arlington',
+  'New Orleans',
+  'Cleveland',
+  'Honolulu',
+  'Orlando',
 ];
 
 // ---------------------------------------------------------------------------
@@ -63,11 +168,16 @@ const US_CITIES: string[] = [
 
 function getCitiesForMarket(market: string): string[] {
   switch (market) {
-    case 'TR': return Object.keys(TURKEY_LOCATIONS).sort();
-    case 'UK': return UK_CITIES;
-    case 'DE': return DE_CITIES;
-    case 'US': return US_CITIES;
-    default: return [];
+    case 'TR':
+      return Object.keys(TURKEY_LOCATIONS).sort();
+    case 'UK':
+      return UK_CITIES;
+    case 'DE':
+      return DE_CITIES;
+    case 'US':
+      return US_CITIES;
+    default:
+      return [];
   }
 }
 
@@ -168,7 +278,10 @@ export function DeliveryLocationSelector({
   useEffect(() => {
     if (variant !== 'inline' || !isDropdownOpen) return;
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') { setIsDropdownOpen(false); onClose?.(); }
+      if (e.key === 'Escape') {
+        setIsDropdownOpen(false);
+        onClose?.();
+      }
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
@@ -180,7 +293,7 @@ export function DeliveryLocationSelector({
       setGpsError('Tarayıcınız konum hizmetini desteklemiyor.');
       return;
     }
-    let cancelled = false;
+    const cancelled = false;
     setGpsLoading(true);
     setGpsError('');
     navigator.geolocation.getCurrentPosition(
@@ -195,13 +308,11 @@ export function DeliveryLocationSelector({
           if (!res.ok) throw new Error('Nominatim request failed');
           const data = await res.json();
           if (cancelled) return;
-          const city =
-            data.address?.city || data.address?.town || data.address?.village || '';
+          const city = data.address?.city || data.address?.town || data.address?.village || '';
           const countryCode = (data.address?.country_code ?? '').toUpperCase();
           const marketKey =
-            Object.keys(MARKET_OPTIONS).find(
-              (k) => MARKET_OPTIONS[k].country === countryCode,
-            ) ?? 'UK';
+            Object.keys(MARKET_OPTIONS).find((k) => MARKET_OPTIONS[k].country === countryCode) ??
+            'UK';
           changeMarket(marketKey);
           if (city) selectCity(city);
         } catch {
@@ -211,7 +322,10 @@ export function DeliveryLocationSelector({
         }
       },
       () => {
-        if (!cancelled) { setGpsError('Konum erişimi reddedildi.'); setGpsLoading(false); }
+        if (!cancelled) {
+          setGpsError('Konum erişimi reddedildi.');
+          setGpsLoading(false);
+        }
       },
       { timeout: 10_000, enableHighAccuracy: false },
     );
@@ -266,7 +380,10 @@ export function DeliveryLocationSelector({
         {gpsLoading ? (
           <Loader2 size={18} className="text-accent animate-spin" />
         ) : (
-          <Navigation size={18} className="text-accent group-hover:scale-110 transition-transform" />
+          <Navigation
+            size={18}
+            className="text-accent group-hover:scale-110 transition-transform"
+          />
         )}
         <span className="text-xs font-black uppercase tracking-widest text-[#1A1033] dark:text-white/80">
           {gpsLoading ? 'Konum alınıyor...' : 'Mevcut Konumumu Kullan'}
@@ -529,7 +646,10 @@ export function DeliveryLocationSelector({
               {/* Inner close button */}
               <button
                 type="button"
-                onClick={() => { setIsDropdownOpen(false); onClose?.(); }}
+                onClick={() => {
+                  setIsDropdownOpen(false);
+                  onClose?.();
+                }}
                 className="absolute top-4 right-4 p-1.5 text-[#1A1033]/30
                            hover:text-[#1A1033] dark:hover:text-white transition-colors
                            rounded-lg hover:bg-[#1A1033]/5"
@@ -549,11 +669,7 @@ export function DeliveryLocationSelector({
   // MODAL variant — plain content, no outer chrome
   // ===================================================================
 
-  return (
-    <div className={className}>
-      {selectorContent}
-    </div>
-  );
+  return <div className={className}>{selectorContent}</div>;
 }
 
 export default DeliveryLocationSelector;

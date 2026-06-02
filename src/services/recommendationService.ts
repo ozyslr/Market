@@ -23,17 +23,19 @@ export async function getCollaborativeRecommendations(
 ): Promise<Product[]> {
   try {
     // Find orders containing this product
-    const ordersSnap = await getDocs(query(
-      collection(db, 'orders'),
-      where('status', 'in', ['delivered', 'paid', 'processing']),
-      limit(50),
-    ));
+    const ordersSnap = await getDocs(
+      query(
+        collection(db, 'orders'),
+        where('status', 'in', ['delivered', 'paid', 'processing']),
+        limit(50),
+      ),
+    );
 
     // Extract co-occurring product IDs
     const coOccurrence = new Map<string, number>();
     const productIds = new Set<string>();
 
-    ordersSnap.docs.forEach(doc => {
+    ordersSnap.docs.forEach((doc) => {
       const items = doc.data().items || [];
       const idsInOrder = items.map((i: any) => i.productId || i.id).filter(Boolean);
       if (!idsInOrder.includes(productId)) return; // Skip orders without the target product
@@ -88,18 +90,18 @@ export async function getContentBasedRecommendations(
 
     // Exclude the product itself
     const productsRef = collection(db, 'products');
-    let q = query(productsRef, ...constraints, limit(maxResults + 5));
+    const q = query(productsRef, ...constraints, limit(maxResults + 5));
     const snap = await getDocs(q);
 
-    let products = snap.docs
-      .map(d => ({ id: d.id, ...d.data() } as Product))
-      .filter(p => p.id !== product.id && p.isActive !== false);
+    const products = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }) as Product)
+      .filter((p) => p.id !== product.id && p.isActive !== false);
 
     // Score by tag overlap + price proximity
     const productTags = new Set(product.tags || []);
     products.sort((a, b) => {
-      const aTagOverlap = (a.tags || []).filter(t => productTags.has(t)).length;
-      const bTagOverlap = (b.tags || []).filter(t => productTags.has(t)).length;
+      const aTagOverlap = (a.tags || []).filter((t) => productTags.has(t)).length;
+      const bTagOverlap = (b.tags || []).filter((t) => productTags.has(t)).length;
       const aPriceDiff = Math.abs(a.price - product.price);
       const bPriceDiff = Math.abs(b.price - product.price);
       return bTagOverlap - aTagOverlap || aPriceDiff - bPriceDiff;
@@ -123,7 +125,9 @@ async function callGemini(prompt: string): Promise<string | null> {
     if (!res.ok) return null;
     const data = await res.json();
     return data.text ?? null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 interface RecommendationContext {
@@ -145,7 +149,7 @@ export async function getGeminiRecommendations(
   if (availableProducts.length === 0) return [];
 
   try {
-    const productCatalog = availableProducts.slice(0, 30).map(p => ({
+    const productCatalog = availableProducts.slice(0, 30).map((p) => ({
       id: p.id,
       title: p.title,
       categoryId: p.categoryId,
@@ -178,9 +182,9 @@ Return format: ["id1", "id2", ...]`;
     if (!Array.isArray(ids) || ids.length === 0) return [];
 
     // Match IDs to products, preserving AI ranking order
-    const productMap = new Map(availableProducts.map(p => [p.id, p]));
+    const productMap = new Map(availableProducts.map((p) => [p.id, p]));
     return ids
-      .map(id => productMap.get(id))
+      .map((id) => productMap.get(id))
       .filter((p): p is Product => !!p)
       .slice(0, maxResults);
   } catch {
@@ -192,20 +196,22 @@ Return format: ["id1", "id2", ...]`;
 
 export async function getTrendingProducts(maxResults = 8): Promise<Product[]> {
   try {
-    const snap = await getDocs(query(
-      collection(db, 'products'),
-      where('isActive', '==', true),
-      orderBy('rating', 'desc'),
-      limit(maxResults),
-    ));
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Product));
+    const snap = await getDocs(
+      query(
+        collection(db, 'products'),
+        where('isActive', '==', true),
+        orderBy('rating', 'desc'),
+        limit(maxResults),
+      ),
+    );
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Product);
   } catch {
     // Fallback without composite index
     try {
       const snap = await getDocs(collection(db, 'products'));
       return snap.docs
-        .map(d => ({ id: d.id, ...d.data() } as Product))
-        .filter(p => p.isActive !== false)
+        .map((d) => ({ id: d.id, ...d.data() }) as Product)
+        .filter((p) => p.isActive !== false)
         .sort((a, b) => (b.rating || 0) - (a.rating || 0))
         .slice(0, maxResults);
     } catch {
@@ -266,8 +272,8 @@ export async function getAllRecommendations(context: {
 
   // 3. AI personalized (if user context available)
   if (context.userId || context.viewedProductIds?.length || context.cartProductIds?.length) {
-    const allProducts = [...trending, ...(groups.flatMap(g => g.products))];
-    const uniqueProducts = Array.from(new Map(allProducts.map(p => [p.id, p])).values());
+    const allProducts = [...trending, ...groups.flatMap((g) => g.products)];
+    const uniqueProducts = Array.from(new Map(allProducts.map((p) => [p.id, p])).values());
     const aiRecs = await getGeminiRecommendations(
       {
         userId: context.userId,

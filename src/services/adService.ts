@@ -1,11 +1,27 @@
 import {
-  collection, doc, getDocs, setDoc, updateDoc, deleteDoc,
-  query, where, orderBy, runTransaction, increment, getDoc,
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  runTransaction,
+  increment,
+  getDoc,
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import {
-  AdCampaign, AdCampaignStatus, AdEvent, AdConfig,
-  SponsoredSlot, AdPerformance, SellerAdAnalytics, AdDailyBreakdown,
+  AdCampaign,
+  AdCampaignStatus,
+  AdEvent,
+  AdConfig,
+  SponsoredSlot,
+  AdPerformance,
+  SellerAdAnalytics,
+  AdDailyBreakdown,
 } from '../types';
 
 const CAMPAIGNS_COL = 'adCampaigns';
@@ -15,16 +31,26 @@ const CONFIG_DOC = 'adConfig';
 // ─── Default Config ────────────────────────────────────────────
 
 const DEFAULT_CONFIG: AdConfig = {
-  floorCpc: 0.50,
+  floorCpc: 0.5,
   maxSponsoredSlots: 4,
   minBid: 0.25,
-  platformFeeRate: 0.10,
+  platformFeeRate: 0.1,
 };
 
 // ─── Seller Functions ──────────────────────────────────────────
 
 export async function createAdCampaign(
-  data: Omit<AdCampaign, 'id' | 'impressions' | 'clicks' | 'spend' | 'dailySpend' | 'dailySpendDate' | 'createdAt' | 'updatedAt'>
+  data: Omit<
+    AdCampaign,
+    | 'id'
+    | 'impressions'
+    | 'clicks'
+    | 'spend'
+    | 'dailySpend'
+    | 'dailySpendDate'
+    | 'createdAt'
+    | 'updatedAt'
+  >,
 ): Promise<AdCampaign> {
   try {
     const now = new Date().toISOString();
@@ -56,7 +82,7 @@ export async function getSellerAdCampaigns(sellerId: string): Promise<AdCampaign
       orderBy('createdAt', 'desc'),
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as AdCampaign));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as AdCampaign);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, CAMPAIGNS_COL);
     return [];
@@ -103,7 +129,9 @@ export async function getAllAdCampaigns(status?: AdCampaignStatus): Promise<AdCa
       q = query(collection(db, CAMPAIGNS_COL), orderBy('createdAt', 'desc'));
     }
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) } as AdCampaign));
+    return snap.docs.map(
+      (d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }) as AdCampaign,
+    );
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, CAMPAIGNS_COL);
     return [];
@@ -178,7 +206,7 @@ export async function getSponsoredProductIds(limitCount: number = 4): Promise<st
     }
 
     active.sort((a, b) => b.cpcBid - a.cpcBid);
-    return active.slice(0, actualLimit).map(c => c.productId);
+    return active.slice(0, actualLimit).map((c) => c.productId);
   } catch {
     return [];
   }
@@ -210,7 +238,7 @@ export async function injectSponsoredProducts(
   }
 
   // Fire impressions asynchronously (non-blocking)
-  slots.forEach(slot => {
+  slots.forEach((slot) => {
     recordAdImpression(slot.productId).catch(() => {});
   });
 
@@ -229,7 +257,7 @@ export async function recordAdClick(
     // Try as campaign ID first, then as productId
     let campaign: AdCampaign | null = null;
     const docRef = doc(db, CAMPAIGNS_COL, adCampaignIdOrProductId);
-    let snap = await getDoc(docRef);
+    const snap = await getDoc(docRef);
 
     if (snap.exists()) {
       campaign = { id: snap.id, ...snap.data() } as AdCampaign;
@@ -314,9 +342,7 @@ export async function recordAdClick(
   }
 }
 
-export async function recordAdImpression(
-  productId: string,
-): Promise<void> {
+export async function recordAdImpression(productId: string): Promise<void> {
   try {
     const q = query(
       collection(db, CAMPAIGNS_COL),
@@ -360,11 +386,11 @@ export async function getAdCampaignPerformance(
       orderBy('ts', 'desc'),
     );
     const snap = await getDocs(q);
-    const events = snap.docs.map(d => d.data() as AdEvent);
+    const events = snap.docs.map((d) => d.data() as AdEvent);
 
-    const impressions = events.filter(e => e.type === 'impression').length;
-    const clicks = events.filter(e => e.type === 'click').length;
-    const spend = events.filter(e => e.type === 'click').reduce((s, e) => s + e.cost, 0);
+    const impressions = events.filter((e) => e.type === 'impression').length;
+    const clicks = events.filter((e) => e.type === 'click').length;
+    const spend = events.filter((e) => e.type === 'click').reduce((s, e) => s + e.cost, 0);
 
     // Daily breakdown
     const dailyMap = new Map<string, AdDailyBreakdown>();
@@ -372,11 +398,16 @@ export async function getAdCampaignPerformance(
       const day = e.ts.slice(0, 10);
       const existing = dailyMap.get(day) || { date: day, impressions: 0, clicks: 0, spend: 0 };
       if (e.type === 'impression') existing.impressions++;
-      if (e.type === 'click') { existing.clicks++; existing.spend += e.cost; }
+      if (e.type === 'click') {
+        existing.clicks++;
+        existing.spend += e.cost;
+      }
       dailyMap.set(day, existing);
     }
 
-    const dailyBreakdown = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+    const dailyBreakdown = Array.from(dailyMap.values()).sort((a, b) =>
+      a.date.localeCompare(b.date),
+    );
 
     return {
       impressions: c.impressions,
@@ -397,14 +428,14 @@ export async function getSellerAdAnalytics(
 ): Promise<SellerAdAnalytics> {
   try {
     const campaigns = await getSellerAdCampaigns(sellerId);
-    const activeCampaigns = campaigns.filter(c => c.status === 'active').length;
+    const activeCampaigns = campaigns.filter((c) => c.status === 'active').length;
 
     const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);
     const totalClicks = campaigns.reduce((s, c) => s + c.clicks, 0);
     const totalSpend = campaigns.reduce((s, c) => s + c.spend, 0);
     const averageCtr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
 
-    const campaignData = campaigns.map(c => ({
+    const campaignData = campaigns.map((c) => ({
       ...c,
       ctr: c.impressions > 0 ? (c.clicks / c.impressions) * 100 : 0,
       avgCpc: c.clicks > 0 ? c.spend / c.clicks : 0,
