@@ -1,3 +1,4 @@
+#!/bin/sh
 # Secret scanner — blocks commits containing API keys
 scripts/pre-commit.sh
 
