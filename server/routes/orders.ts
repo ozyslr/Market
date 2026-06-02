@@ -7,6 +7,9 @@ import { z } from 'zod';
 import { validate } from '../lib/validate.js';
 import { createOrderSet, getOrderSet, getUserOrderSets } from '../services/orderService.js';
 import { recordEntry } from '../services/ledgerService.js';
+import { transitionOrder, InvalidTransitionError } from '../services/transitionEngine.js';
+import type { OrderSetStatus, TransitionEvent } from '../services/transitionEngine.js';
+import { subOrderTransitionSchema } from '../lib/schemas.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
@@ -112,6 +115,104 @@ export function registerOrderRoutes(app: Express, deps: OrderRouteDeps) {
       return res.status(500).json({ error: err.message || 'Failed to fetch orders' });
     }
   });
+
+  /**
+   * POST /api/orders/:orderSetId/subOrders/:subOrderId/transition
+   * Seller-only endpoint to transition a SubOrder status (e.g., processing -> shipped).
+   * Requires: Firebase token, seller ownership of the SubOrder.
+   * Enforces: state machine via transitionEngine, trackingNumber required for mark_shipped (D-13).
+   */
+  app.post(
+    '/api/orders/:orderSetId/subOrders/:subOrderId/transition',
+    verifyFirebaseToken,
+    validate(subOrderTransitionSchema),
+    async (req: any, res: any) => {
+      const { orderSetId, subOrderId } = req.params;
+      const { event, trackingNumber, carrier } = req.body as {
+        event: TransitionEvent;
+        trackingNumber?: string;
+        carrier?: string;
+      };
+
+      try {
+        if (!deps.adminDb) {
+          return res.status(503).json({ error: 'Database not configured' });
+        }
+        const db = deps.adminDb;
+
+        const subOrderRef = db.collection('subOrders').doc(subOrderId);
+        const orderSetRef = db.collection('orderSets').doc(orderSetId);
+
+        let newStatus: OrderSetStatus;
+
+        await db.runTransaction(async (txn: any) => {
+          const subSnap = await txn.get(subOrderRef);
+          if (!subSnap.exists) {
+            throw Object.assign(new Error('SubOrder not found'), { statusCode: 404 });
+          }
+
+          const subData = subSnap.data()!;
+
+          // Seller ownership check (T-02-006)
+          if (subData.sellerId !== req.uid && req.role !== 'admin') {
+            throw Object.assign(new Error('Forbidden: not the seller of this SubOrder'), {
+              statusCode: 403,
+            });
+          }
+
+          const currentStatus = subData.status as OrderSetStatus;
+          const currentVersion = (subData.version as number) || 0;
+
+          // Enforce state machine
+          const result = transitionOrder(currentStatus, event, currentVersion);
+          newStatus = result.status;
+
+          const updateFields: Record<string, any> = {
+            status: result.status,
+            version: result.version,
+            updatedAt: new Date().toISOString(),
+          };
+
+          if (event === 'mark_shipped') {
+            if (trackingNumber) updateFields.trackingNumber = trackingNumber;
+            if (carrier) updateFields.carrier = carrier;
+            updateFields.shippedAt = new Date().toISOString();
+          }
+
+          txn.update(subOrderRef, updateFields);
+
+          // Check if all SubOrders are now shipped — update OrderSet aggregate
+          const orderSetSnap = await txn.get(orderSetRef);
+          if (orderSetSnap.exists) {
+            const orderSetData = orderSetSnap.data()!;
+            const subOrderIds: string[] = orderSetData.subOrderIds || [];
+
+            if (subOrderIds.length > 0 && result.status === 'shipped') {
+              // Fetch sibling subOrders (outside this transaction snapshot — best effort)
+              // We optimistically update OrderSet if this is the only subOrder
+              // For multi-subOrder sets, the parent route should reconcile separately
+              if (subOrderIds.length === 1) {
+                const osVersion = (orderSetData.version as number) || 0;
+                txn.update(orderSetRef, {
+                  status: 'shipped',
+                  version: osVersion + 1,
+                  updatedAt: new Date().toISOString(),
+                });
+              }
+            }
+          }
+        });
+
+        return res.json({ success: true, status: newStatus! });
+      } catch (err: any) {
+        if (err instanceof InvalidTransitionError) {
+          return res.status(422).json({ error: err.message });
+        }
+        const code = err.statusCode ?? 500;
+        return res.status(code).json({ error: err.message || 'Transition failed' });
+      }
+    },
+  );
 
   /**
    * GET /api/orders/:orderSetId

@@ -14,6 +14,7 @@ import {
 import type { IPaymentProvider } from '../services/paymentProvider.js';
 import { getOrderSet, transitionOrderSetStatus } from '../services/orderService.js';
 import { recordEntry } from '../services/ledgerService.js';
+import { confirmStock } from '../services/stockService.js';
 
 export interface IyzicoRouteDeps {
   /** Legacy lazy loader — kept for installment helper and legacy init. */
@@ -175,47 +176,120 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
           const verification = await iyzicoProvider.verifyPayment(token);
 
           if (verification.status === 'SUCCESS' || verification.status === 'success') {
-            // Determine orderSetId from transactions (basketId / conversationId)
             const transactions = verification.transactions as any[];
             const orderSetId: string | undefined =
               (body.basketId as string) || transactions?.[0]?.basketId;
 
             if (orderSetId && adminDb) {
-              // Transition OrderSet to paid
-              try {
-                await transitionOrderSetStatus(orderSetId, 'payment_received');
-              } catch (e) {
-                logger.warn('iyzico', 'OrderSet transition failed (may already be paid)', {
-                  orderSetId,
-                  error: (e as Error).message,
-                });
+              // ── Webhook dedup check (D-07) — idempotent processing ────────
+              // Use paymentToken as eventId for dedup key (T-02-005)
+              const eventId = token;
+              const dedupRef = adminDb.collection('processedWebhooks').doc(eventId);
+              const dedupSnap = await dedupRef.get();
+
+              if (dedupSnap.exists) {
+                // Already processed — return 200 immediately (idempotent)
+                logger.info('iyzico', 'Duplicate webhook ignored', { eventId, orderSetId });
+                return res.json({ status: 'success', duplicate: true });
               }
 
-              // Store paymentTransactionId on each SubOrder
-              for (const tx of transactions) {
-                const subOrderId = tx.subMerchantKey
-                  ? undefined // subMerchantKey identifies seller, not subOrder; skip for now
-                  : undefined;
-                if (tx.paymentTransactionId && tx.itemId) {
-                  // Find the subOrder that has this item and update it
-                  const orderSet = await getOrderSet(orderSetId);
-                  const subOrders: any[] = (orderSet as any)?.subOrders ?? [];
-                  for (const subOrder of subOrders) {
-                    const hasItem = (subOrder.items || []).some(
-                      (it: any) => it.productId === tx.itemId || it.id === tx.itemId,
-                    );
-                    if (hasItem) {
-                      await adminDb.collection('subOrders').doc(subOrder.id).update({
-                        paymentTransactionId: tx.paymentTransactionId,
+              // ── Atomic transaction: dedup marker + OrderSet transition + stock confirm (D-08) ──
+              try {
+                await adminDb.runTransaction(async (txn: any) => {
+                  // 1. Re-check dedup inside transaction (avoid race)
+                  const dedupSnapTxn = await txn.get(dedupRef);
+                  if (dedupSnapTxn.exists) {
+                    return; // Already processed by a concurrent request
+                  }
+
+                  // 2. Read and verify OrderSet is in pending/processing state
+                  const orderSetRef = adminDb.collection('orderSets').doc(orderSetId);
+                  const orderSetSnap = await txn.get(orderSetRef);
+
+                  if (!orderSetSnap.exists) {
+                    throw new Error(`OrderSet ${orderSetId} not found`);
+                  }
+
+                  const orderSetData = orderSetSnap.data()!;
+                  const currentStatus = orderSetData.status as string;
+
+                  // 3. Write dedup marker
+                  txn.set(dedupRef, {
+                    eventId,
+                    provider: 'iyzico',
+                    processedAt: new Date().toISOString(),
+                    orderSetId,
+                  });
+
+                  // 4. Transition OrderSet status (only if still pending)
+                  if (currentStatus === 'pending') {
+                    const currentVersion = (orderSetData.version as number) || 0;
+                    txn.update(orderSetRef, {
+                      status: 'processing',
+                      version: currentVersion + 1,
+                      paymentStatus: 'paid',
+                      updatedAt: new Date().toISOString(),
+                    });
+                  }
+
+                  // 5. Update SubOrders with paymentTransactionId
+                  const subOrderIds: string[] = orderSetData.subOrderIds || [];
+                  for (const subOrderId of subOrderIds) {
+                    const subRef = adminDb.collection('subOrders').doc(subOrderId);
+                    const subSnap = await txn.get(subRef);
+                    if (subSnap.exists) {
+                      const subData = subSnap.data()!;
+                      // Find matching transaction for this subOrder's items
+                      const subItems: any[] = subData.items || [];
+                      const matchingTx = transactions.find((tx: any) =>
+                        subItems.some(
+                          (item: any) => item.productId === tx.itemId || item.id === tx.itemId,
+                        ),
+                      );
+
+                      const updateFields: Record<string, any> = {
+                        status: 'processing',
                         updatedAt: new Date().toISOString(),
-                      });
+                      };
+                      if (matchingTx?.paymentTransactionId) {
+                        updateFields.paymentTransactionId = matchingTx.paymentTransactionId;
+                      }
+                      txn.update(subRef, updateFields);
                     }
                   }
-                }
-                void subOrderId; // suppress unused var
-              }
+                });
 
-              logger.info('iyzico', 'OrderSet transitioned to paid', { orderSetId });
+                // 6. Confirm stock for each item (outside main txn — non-critical, best effort)
+                const orderSet = await getOrderSet(orderSetId);
+                if (orderSet) {
+                  const subOrders: any[] = (orderSet as any).subOrders ?? [];
+                  const confirmPromises: Promise<any>[] = [];
+                  for (const subOrder of subOrders) {
+                    for (const item of subOrder.items || []) {
+                      if (item.productId && item.quantity) {
+                        confirmPromises.push(
+                          confirmStock(adminDb, item.productId, item.quantity).catch((e: Error) => {
+                            logger.warn('iyzico', 'confirmStock failed (non-critical)', {
+                              productId: item.productId,
+                              error: e.message,
+                            });
+                          }),
+                        );
+                      }
+                    }
+                  }
+                  await Promise.all(confirmPromises);
+                }
+
+                logger.info('iyzico', 'OrderSet transitioned to paid', { orderSetId });
+              } catch (txnErr: any) {
+                // Transaction failure — return 500 so iyzico retries (D-08)
+                logger.error('iyzico', 'Callback transaction failed', {
+                  error: txnErr.message,
+                  orderSetId,
+                });
+                return res.status(500).json({ error: 'Processing failed — please retry' });
+              }
             }
 
             return res.json({ status: 'success', paymentStatus: verification.status });
@@ -350,12 +424,10 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
           paymentPageUrl: result.paymentPageUrl,
         });
       } else {
-        res
-          .status(400)
-          .json({
-            error: result.errorMessage || 'iyzico initialization failed',
-            errorCode: result.errorCode,
-          });
+        res.status(400).json({
+          error: result.errorMessage || 'iyzico initialization failed',
+          errorCode: result.errorCode,
+        });
       }
     } catch (err: any) {
       logger.error('iyzico', 'Init error', { error: (err as Error).message });

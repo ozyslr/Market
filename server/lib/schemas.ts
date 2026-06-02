@@ -170,6 +170,24 @@ export const bulkStockUpdateSchema = z.object({
     .max(500),
 });
 
+// ─── SubOrder Transition (ORD-03) ────────────────────────────────────────
+
+export const subOrderTransitionSchema = z
+  .object({
+    event: z.enum(['mark_shipped']),
+    trackingNumber: z.string().min(1).optional(),
+    carrier: z.enum(['Yurtici', 'MNG', 'Aras', 'PTT', 'UPS']).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.event === 'mark_shipped' && !data.trackingNumber) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['trackingNumber'],
+        message: 'trackingNumber is required when event is mark_shipped',
+      });
+    }
+  });
+
 // ─── Server.ts inline routes ──────────────────────────────────────────────
 
 export const abandonedCartCheckSchema = z.object({
