@@ -68,7 +68,7 @@ Plans:
 
 Plans:
 
-- [ ] 02-01-PLAN.md -- Iyzico marketplace checkout: SDK extension, IPaymentProvider interface, subMerchant splits, commission-at-init ledger entry
+- [x] 02-01-PLAN.md -- Iyzico marketplace checkout: SDK extension, IPaymentProvider interface, subMerchant splits, commission-at-init ledger entry
 - [ ] 02-02-PLAN.md -- Order lifecycle (idempotent webhooks, stock reservation, seller order transition, customer timeline UI)
 - [ ] 02-03-PLAN.md -- Transactional emails: SendGrid/Resend SMTP, 6 React Email templates, trigger integration, cart abandonment
 - [ ] 02-04-PLAN.md -- Seller payouts: T+7 scheduling, iyzico approval on delivery, finance dashboard with CSV export
@@ -171,13 +171,13 @@ Plans:
 **Execution Order:**
 Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 
-| Phase                           | Plans Complete | Status      | Completed |
-| ------------------------------- | -------------- | ----------- | --------- |
-| 1. Foundation & Compliance      | 4/4 | Complete   | 2026-06-02 |
-| 2. Payment & Order Lifecycle    | 0/5            | Not started | -         |
-| 3. Seller Onboarding & KYC      | 0/--           | Not started | -         |
-| 4. Search & Discovery           | 0/--           | Not started | -         |
-| 5. Shipping & Fulfillment       | 0/--           | Not started | -         |
-| 6. Multi-Currency               | 0/--           | Not started | -         |
-| 7. Reviews & Trust              | 0/--           | Not started | -         |
-| 8. Cross-Border Compliance (v2) | 0/--           | Not started | -         |
+| Phase                           | Plans Complete | Status      | Completed  |
+| ------------------------------- | -------------- | ----------- | ---------- |
+| 1. Foundation & Compliance      | 4/4            | Complete    | 2026-06-02 |
+| 2. Payment & Order Lifecycle    | 1/5            | In Progress |            |
+| 3. Seller Onboarding & KYC      | 0/--           | Not started | -          |
+| 4. Search & Discovery           | 0/--           | Not started | -          |
+| 5. Shipping & Fulfillment       | 0/--           | Not started | -          |
+| 6. Multi-Currency               | 0/--           | Not started | -          |
+| 7. Reviews & Trust              | 0/--           | Not started | -          |
+| 8. Cross-Border Compliance (v2) | 0/--           | Not started | -          |
