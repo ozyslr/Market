@@ -25,6 +25,7 @@ import {
   Twitter,
 } from 'lucide-react';
 import { MOCK_PRODUCTS } from '@/data/mockProducts';
+import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { useLocationStore } from '@/context/LocationContext';
@@ -653,9 +654,18 @@ export function ProductDetail() {
               {/* Seller Card */}
               <SellerCard
                 sellerId={product.sellerId}
-                sellerName={product.brand || 'Mağaza'}
-                sellerRating={product.rating}
-                sellerReviewCount={product.reviewsCount}
+                sellerName={
+                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.storeName ||
+                  product.brand ||
+                  'Mağaza'
+                }
+                sellerRating={
+                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.rating ?? product.rating
+                }
+                sellerReviewCount={
+                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.reviewsCount ??
+                  product.reviewsCount
+                }
                 isFollowing={isFollowingSeller}
                 onToggleFollow={() => setIsFollowingSeller((f) => !f)}
                 onAskQuestion={() => {
