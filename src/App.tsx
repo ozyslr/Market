@@ -66,6 +66,11 @@ const About = named(() => import('./pages/About'), 'About');
 const Contact = named(() => import('./pages/Contact'), 'Contact');
 const FAQ = named(() => import('./pages/FAQ'), 'FAQ');
 const NotFound = named(() => import('./pages/NotFound'), 'NotFound');
+const PrivacyPolicy = named(() => import('./pages/PrivacyPolicy'), 'PrivacyPolicy');
+const TermsOfService = named(() => import('./pages/TermsOfService'), 'TermsOfService');
+const KVKKDisclosure = named(() => import('./pages/KVKKDisclosure'), 'KVKKDisclosure');
+const CookiePolicy = named(() => import('./pages/CookiePolicy'), 'CookiePolicy');
+const VERBISInfo = named(() => import('./pages/VERBISInfo'), 'VERBISInfo');
 
 // Seller pages
 const SellerDashboard = named(() => import('./pages/SellerDashboard'), 'SellerDashboard');
@@ -231,6 +236,12 @@ export default function App() {
                                 <Route path="/about" element={<About />} />
                                 <Route path="/contact" element={<Contact />} />
                                 <Route path="/faq" element={<FAQ />} />
+                                {/* Legal pages (D-09) */}
+                                <Route path="/privacy" element={<PrivacyPolicy />} />
+                                <Route path="/terms" element={<TermsOfService />} />
+                                <Route path="/kvkk" element={<KVKKDisclosure />} />
+                                <Route path="/cookies" element={<CookiePolicy />} />
+                                <Route path="/verbis" element={<VERBISInfo />} />
                                 <Route path="*" element={<NotFound />} />
                               </Route>
                             </Routes>

@@ -133,13 +133,23 @@ export function Footer() {
               ],
             },
             {
+              title: 'Yasal',
+              links: [
+                { label: 'Gizlilik Politikasi', to: '/privacy' },
+                { label: 'Kullanici Sozlesmesi', to: '/terms' },
+                { label: 'KVKK Aydinlatma Metni', to: '/kvkk' },
+                { label: 'Cerez Politikasi', to: '/cookies' },
+                { label: 'VERBIS', to: '/verbis' },
+              ],
+            },
+            {
               title: 'Yardım',
               links: [
                 { label: 'Müşteri Hizmetleri', to: '/support' },
                 { label: 'SSS', to: '/faq' },
                 { label: 'Canlı Yardım', to: '/support' },
                 { label: 'Yatırımcı İlişkileri', to: '/' },
-                { label: 'Kullanım Koşulları', to: '/' },
+                { label: 'Kullanım Koşulları', to: '/terms' },
               ],
             },
           ].map((section, i) => (
