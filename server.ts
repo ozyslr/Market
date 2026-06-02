@@ -172,10 +172,8 @@ async function startServer() {
 
   // â”€â”€â”€ Auth Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // verifyFirebaseToken / verifyAdmin / verifyCronSecret â†’ src/lib/authMiddleware.ts
-  const { verifyFirebaseToken, verifyAdmin, verifyCronSecret } = createAuthMiddlewares(
-    adminAuth,
-    adminDb,
-  );
+  const { verifyFirebaseToken, verifyAdmin, verifySeller, verifyBuyer, verifyCronSecret } =
+    createAuthMiddlewares(adminAuth);
 
   // â”€â”€â”€ Lightweight Input Validators â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // isFiniteNumber / isNonEmptyString / itemsSignature â†’ src/lib/serverValidators.ts
@@ -349,6 +347,43 @@ async function startServer() {
   registerSellerApiRoutes(app, adminDb!);
 
   registerGeminiRoutes(app);
+
+  // --- Custom Claims Admin API ---
+  // POST /api/admin/set-claims — Set custom claims for a user (verifyAdmin)
+  app.post('/api/admin/set-claims', verifyAdmin, async (req: any, res) => {
+    try {
+      const { uid, claims } = req.body;
+      if (!uid || typeof uid !== 'string') {
+        return res.status(400).json({ error: 'uid is required' });
+      }
+      if (!claims || !claims.role || !['admin', 'seller', 'buyer'].includes(claims.role)) {
+        return res.status(400).json({ error: 'claims.role must be admin, seller, or buyer' });
+      }
+      if (!adminAuth) {
+        return res.status(503).json({ error: 'Auth not configured' });
+      }
+      await adminAuth.setCustomUserClaims(uid, claims);
+      logger.info('admin', 'Custom claims set', { uid, role: claims.role });
+      res.json({ success: true });
+    } catch (err: any) {
+      logger.error('admin', 'Failed to set custom claims', { error: (err as Error).message });
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
+  // GET /api/admin/get-claims/:uid — Get custom claims for a user (verifyAdmin)
+  app.get('/api/admin/get-claims/:uid', verifyAdmin, async (req: any, res) => {
+    try {
+      if (!adminAuth) {
+        return res.status(503).json({ error: 'Auth not configured' });
+      }
+      const user = await adminAuth.getUser(req.params.uid);
+      res.json({ claims: user.customClaims || {} });
+    } catch (err: any) {
+      logger.error('admin', 'Failed to get custom claims', { error: (err as Error).message });
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
 
   //  Order Set API (/api/orders/*)  server/routes/orders.ts
   registerOrderRoutes(app, { adminDb, verifyFirebaseToken });

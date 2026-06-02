@@ -57,6 +57,7 @@
     "three": "^0.184.0",
     "zod": "^4.4.3"
   },
+  "lint-staged": {},
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@firebase/eslint-plugin-security-rules": "^0.0.2",

@@ -1,14 +1,12 @@
 // ─── Express auth middleware factory ─────────────────────────────────────────
-// Extracted from server.ts so the guards can be unit-tested with mocked
-// Firebase Admin handles. Behavior is identical to the original closures.
+// Provides role-based Express middleware backed by Firebase custom claims.
+// Custom claims ({ role, sellerId? }) are set via Admin SDK and verified
+// from decoded ID tokens — zero Firestore reads for role checks (Pitfall 1).
 import type { Auth } from 'firebase-admin/auth';
-import type { Firestore } from 'firebase-admin/firestore';
 
 type Req = any;
 type Res = any;
 type Next = (err?: unknown) => void;
-
-const ADMIN_OVERRIDE_EMAIL = 'ozyslr@gmail.com';
 
 const bearerToken = (req: Req): string | null => {
   const header = (req.headers?.authorization as string) || '';
@@ -16,17 +14,20 @@ const bearerToken = (req: Req): string | null => {
 };
 
 export interface AuthMiddlewares {
-  /** Verifies a Firebase ID token; attaches req.uid / req.userEmail. */
+  /** Verifies a Firebase ID token; attaches decoded.uid / decoded.userEmail. */
   verifyFirebaseToken: (req: Req, res: Res, next: Next) => Promise<void>;
-  /** Verifies the token AND that the user has role 'admin' in Firestore. */
+  /** Verifies the token AND that decoded.role === 'admin' (custom claims). */
   verifyAdmin: (req: Req, res: Res, next: Next) => Promise<void>;
+  /** Verifies the token AND that decoded.role === 'seller'. */
+  verifySeller: (req: Req, res: Res, next: Next) => Promise<void>;
+  /** Verifies the token AND that decoded.role is 'buyer' (admin also allowed). */
+  verifyBuyer: (req: Req, res: Res, next: Next) => Promise<void>;
   /** Constant-time-ish compare against process.env.CRON_SECRET. */
   verifyCronSecret: (req: Req, res: Res, next: Next) => void;
 }
 
 export function createAuthMiddlewares(
   adminAuth: Auth | null,
-  adminDb: Firestore | null,
 ): AuthMiddlewares {
   async function verifyFirebaseToken(req: Req, res: Res, next: Next) {
     const token = bearerToken(req);
@@ -36,6 +37,7 @@ export function createAuthMiddlewares(
       const decoded = await adminAuth.verifyIdToken(token);
       req.uid = decoded.uid;
       req.userEmail = decoded.email;
+      req.decodedToken = decoded; // expose for downstream claim checks
       next();
     } catch {
       res.status(401).json({ error: 'Invalid token' });
@@ -45,15 +47,53 @@ export function createAuthMiddlewares(
   async function verifyAdmin(req: Req, res: Res, next: Next) {
     const token = bearerToken(req);
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    if (!adminAuth || !adminDb) return res.status(503).json({ error: 'Auth not configured' });
+    if (!adminAuth) return res.status(503).json({ error: 'Auth not configured' });
     try {
       const decoded = await adminAuth.verifyIdToken(token);
-      const userSnap = await adminDb.collection('users').doc(decoded.uid).get();
-      const role = userSnap.data()?.role;
-      if (role !== 'admin' && decoded.email !== ADMIN_OVERRIDE_EMAIL) {
+      if (decoded.role !== 'admin') {
         return res.status(403).json({ error: 'Forbidden — admin access required' });
       }
       req.uid = decoded.uid;
+      req.userEmail = decoded.email;
+      req.decodedToken = decoded;
+      next();
+    } catch {
+      res.status(401).json({ error: 'Invalid token' });
+    }
+  }
+
+  async function verifySeller(req: Req, res: Res, next: Next) {
+    const token = bearerToken(req);
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    if (!adminAuth) return res.status(503).json({ error: 'Auth not configured' });
+    try {
+      const decoded = await adminAuth.verifyIdToken(token);
+      if (decoded.role !== 'seller') {
+        return res.status(403).json({ error: 'Forbidden — seller access required' });
+      }
+      req.uid = decoded.uid;
+      req.userEmail = decoded.email;
+      req.decodedToken = decoded;
+      req.sellerId = decoded.sellerId || null;
+      next();
+    } catch {
+      res.status(401).json({ error: 'Invalid token' });
+    }
+  }
+
+  async function verifyBuyer(req: Req, res: Res, next: Next) {
+    const token = bearerToken(req);
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    if (!adminAuth) return res.status(503).json({ error: 'Auth not configured' });
+    try {
+      const decoded = await adminAuth.verifyIdToken(token);
+      // Admin can do everything a buyer can
+      if (decoded.role !== 'buyer' && decoded.role !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden — buyer access required' });
+      }
+      req.uid = decoded.uid;
+      req.userEmail = decoded.email;
+      req.decodedToken = decoded;
       next();
     } catch {
       res.status(401).json({ error: 'Invalid token' });
@@ -70,5 +110,5 @@ export function createAuthMiddlewares(
     next();
   }
 
-  return { verifyFirebaseToken, verifyAdmin, verifyCronSecret };
+  return { verifyFirebaseToken, verifyAdmin, verifySeller, verifyBuyer, verifyCronSecret };
 }
