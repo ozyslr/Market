@@ -1,21 +1,22 @@
-﻿import express from "express";
-import { createServer as createViteServer } from "vite";
-import path from "path";
-import { fileURLToPath } from "url";
-import Stripe from "stripe";
-import dotenv from "dotenv";
-import helmet from "helmet";
-import cors from "cors";
-import rateLimit from "express-rate-limit";
-import { FieldValue } from "firebase-admin/firestore";
-import { adminDb, adminAuth } from "./src/lib/firebase-admin.js";
-import { isFiniteNumber, isNonEmptyString, itemsSignature } from "./src/lib/serverValidators.js";
-import { createAuthMiddlewares } from "./src/lib/authMiddleware.js";
-import { registerSellerApiRoutes } from "./server/routes/sellerApi.js";
-import { registerIyzicoRoutes } from "./server/routes/iyzico.js";
-import { registerStripeWebhook, registerStripeRoutes } from "./server/routes/stripe.js";
-import { registerGeminiRoutes } from "./server/routes/gemini.js";
-import { logger, httpLogger } from "./server/logger.js";
+﻿import express from 'express';
+import { createServer as createViteServer } from 'vite';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import Stripe from 'stripe';
+import dotenv from 'dotenv';
+import helmet from 'helmet';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import { FieldValue } from 'firebase-admin/firestore';
+import { adminDb, adminAuth } from './src/lib/firebase-admin.js';
+import { isFiniteNumber, isNonEmptyString, itemsSignature } from './src/lib/serverValidators.js';
+import { createAuthMiddlewares } from './src/lib/authMiddleware.js';
+import { registerSellerApiRoutes } from './server/routes/sellerApi.js';
+import { registerIyzicoRoutes } from './server/routes/iyzico.js';
+import { registerStripeWebhook, registerStripeRoutes } from './server/routes/stripe.js';
+import { registerGeminiRoutes } from './server/routes/gemini.js';
+import { registerOrderRoutes } from './server/routes/orders.js';
+import { logger, httpLogger } from './server/logger.js';
 
 dotenv.config();
 
@@ -50,85 +51,98 @@ async function startServer() {
 
   // â”€â”€â”€ Security Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // CORS â€” allow our own origin for API calls
-  app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-      ? (process.env.APP_URL || 'https://benimolan.com')
-      : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Stripe-Signature'],
-    credentials: true,
-  }));
+  app.use(
+    cors({
+      origin:
+        process.env.NODE_ENV === 'production'
+          ? process.env.APP_URL || 'https://benimolan.com'
+          : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Stripe-Signature'],
+      credentials: true,
+    }),
+  );
 
   // HTTP request logging — pino-http (auto-log every request/response)
   app.use(httpLogger);
 
   // Helmet â€” secure HTTP headers
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", // inline gerekli: GTM/analytics snippet'leri
-          // 'unsafe-eval' yalnÄ±zca geliÅŸtirmede (Vite HMR) â€” production'da kaldÄ±rÄ±ldÄ± (XSS sertleÅŸtirme)
-          ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-eval'"] : []),
-          "https://js.stripe.com",
-          "https://*.iyzipay.com",
-          "https://www.googletagmanager.com",
-        ],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://js.stripe.com"],
-        imgSrc: ["'self'", "data:", "blob:",
-          "https://firebasestorage.googleapis.com",
-          "https://*.googleapis.com",
-          "https://*.googleusercontent.com",
-          "https://*.cloudfront.net",
-          "https://*.iyzipay.com",
-          "https://images.unsplash.com",
-          "https://picsum.photos",
-          "https://*.picsum.photos",
-          "https://via.placeholder.com",
-          "https://*.placeholder.com",
-          "https://api.dicebear.com",
-          "https://www.googletagmanager.com",
-          "https://www.facebook.com",
-        ],
-        connectSrc: ["'self'",
-          "https://api.stripe.com",
-          "https://*.iyzipay.com",
-          "https://firestore.googleapis.com",
-          "https://identitytoolkit.googleapis.com",
-          "https://securetoken.googleapis.com",
-          "https://api.postcodes.io",
-          "https://*.ingest.de.sentry.io",
-          "https://*.ingest.sentry.io",
-          "https://v6.exchangerate-api.com",
-          "wss://*.firebaseio.com",
-          "https://generativelanguage.googleapis.com",
-          "https://www.google-analytics.com",
-          "https://www.facebook.com",
-          "https://connect.facebook.net",
-          // Vite HMR websocket + asset loading â€” development only
-          ...(process.env.NODE_ENV !== 'production'
-            ? ["ws://localhost:*", "ws://127.0.0.1:*", "http://localhost:*", "http://127.0.0.1:*"]
-            : []),
-        ],
-        frameSrc: ["'self'",
-          "https://js.stripe.com",
-          "https://*.iyzipay.com",
-        ],
-        fontSrc: ["'self'", "data:", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
-        manifestSrc: ["'self'"],
-        workerSrc: ["'self'", "blob:"],
-        mediaSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        formAction: ["'self'", "https://*.iyzipay.com"],
-        // Forcing https upgrade breaks http://localhost dev assets â€” production only
-        ...(process.env.NODE_ENV === 'production' ? { upgradeInsecureRequests: [] } : {}),
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'", // inline gerekli: GTM/analytics snippet'leri
+            // 'unsafe-eval' yalnÄ±zca geliÅŸtirmede (Vite HMR) â€” production'da kaldÄ±rÄ±ldÄ± (XSS sertleÅŸtirme)
+            ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-eval'"] : []),
+            'https://js.stripe.com',
+            'https://*.iyzipay.com',
+            'https://www.googletagmanager.com',
+          ],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            'https://fonts.googleapis.com',
+            'https://js.stripe.com',
+          ],
+          imgSrc: [
+            "'self'",
+            'data:',
+            'blob:',
+            'https://firebasestorage.googleapis.com',
+            'https://*.googleapis.com',
+            'https://*.googleusercontent.com',
+            'https://*.cloudfront.net',
+            'https://*.iyzipay.com',
+            'https://images.unsplash.com',
+            'https://picsum.photos',
+            'https://*.picsum.photos',
+            'https://via.placeholder.com',
+            'https://*.placeholder.com',
+            'https://api.dicebear.com',
+            'https://www.googletagmanager.com',
+            'https://www.facebook.com',
+          ],
+          connectSrc: [
+            "'self'",
+            'https://api.stripe.com',
+            'https://*.iyzipay.com',
+            'https://firestore.googleapis.com',
+            'https://identitytoolkit.googleapis.com',
+            'https://securetoken.googleapis.com',
+            'https://api.postcodes.io',
+            'https://*.ingest.de.sentry.io',
+            'https://*.ingest.sentry.io',
+            'https://v6.exchangerate-api.com',
+            'wss://*.firebaseio.com',
+            'https://generativelanguage.googleapis.com',
+            'https://www.google-analytics.com',
+            'https://www.facebook.com',
+            'https://connect.facebook.net',
+            // Vite HMR websocket + asset loading â€” development only
+            ...(process.env.NODE_ENV !== 'production'
+              ? ['ws://localhost:*', 'ws://127.0.0.1:*', 'http://localhost:*', 'http://127.0.0.1:*']
+              : []),
+          ],
+          frameSrc: ["'self'", 'https://js.stripe.com', 'https://*.iyzipay.com'],
+          fontSrc: ["'self'", 'data:', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
+          manifestSrc: ["'self'"],
+          workerSrc: ["'self'", 'blob:'],
+          mediaSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          formAction: ["'self'", 'https://*.iyzipay.com'],
+          // Forcing https upgrade breaks http://localhost dev assets â€” production only
+          ...(process.env.NODE_ENV === 'production' ? { upgradeInsecureRequests: [] } : {}),
+        },
       },
-    },
-    crossOriginEmbedderPolicy: false, // allow Stripe/iyzico iframes
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
-    hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
-  }));
+      crossOriginEmbedderPolicy: false, // allow Stripe/iyzico iframes
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+    }),
+  );
 
   // Rate limiting â€” per-IP
   const generalLimiter = rateLimit({
@@ -156,14 +170,16 @@ async function startServer() {
 
   // â”€â”€â”€ Auth Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // verifyFirebaseToken / verifyAdmin / verifyCronSecret â†’ src/lib/authMiddleware.ts
-  const { verifyFirebaseToken, verifyAdmin, verifyCronSecret } =
-    createAuthMiddlewares(adminAuth, adminDb);
+  const { verifyFirebaseToken, verifyAdmin, verifyCronSecret } = createAuthMiddlewares(
+    adminAuth,
+    adminDb,
+  );
 
   // â”€â”€â”€ Lightweight Input Validators â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // isFiniteNumber / isNonEmptyString / itemsSignature â†’ src/lib/serverValidators.ts
 
   // â”€â”€â”€ Abandoned Cart Email â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  app.post("/api/abandoned-cart/check", verifyCronSecret, async (req, res) => {
+  app.post('/api/abandoned-cart/check', verifyCronSecret, async (req, res) => {
     try {
       if (!adminDb) {
         return res.status(503).json({ error: 'Firebase Admin not configured' });
@@ -173,7 +189,8 @@ async function startServer() {
       const cutoff = new Date(Date.now() - windowHours * 60 * 60 * 1000).toISOString();
       const tooOld = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(); // skip carts >72h old
 
-      const cartsSnap = await adminDb.collection('carts')
+      const cartsSnap = await adminDb
+        .collection('carts')
         .orderBy('updatedAt', 'asc')
         .limit(100)
         .get();
@@ -193,7 +210,8 @@ async function startServer() {
         if (updatedAt > cutoff || updatedAt < tooOld) continue;
 
         // Check if reminder already sent
-        const remindersSnap = await adminDb.collection('cart_reminders')
+        const remindersSnap = await adminDb
+          .collection('cart_reminders')
           .where('userId', '==', userId)
           .orderBy('sentAt', 'desc')
           .limit(1)
@@ -220,7 +238,9 @@ async function startServer() {
             const userRecord = await adminAuth.getUser(userId);
             userEmail = userRecord.email || '';
           }
-        } catch { /* noop */ }
+        } catch {
+          /* noop */
+        }
 
         if (!userEmail) {
           results.push({ userId, itemCount: items.length, status: 'no_email' });
@@ -228,7 +248,10 @@ async function startServer() {
         }
 
         // Build product names for the email
-        const productNames = items.slice(0, 5).map((i: any) => i.productId).join(', ');
+        const productNames = items
+          .slice(0, 5)
+          .map((i: any) => i.productId)
+          .join(', ');
         const itemCount = items.reduce((s: number, i: any) => s + (i.quantity || 0), 0);
 
         // Build cart URL
@@ -310,8 +333,8 @@ async function startServer() {
   app.use(express.json());
 
   // API Routes
-  app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", environment: process.env.NODE_ENV });
+  app.get('/api/health', (_req, res) => {
+    res.json({ status: 'ok', environment: process.env.NODE_ENV });
   });
 
   // â”€â”€â”€ Stripe payment endpoints â†’ server/routes/stripe.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -325,11 +348,18 @@ async function startServer() {
 
   registerGeminiRoutes(app);
 
+  //  Order Set API (/api/orders/*)  server/routes/orders.ts
+  registerOrderRoutes(app, { adminDb, verifyFirebaseToken });
+
   // POST /api/send-push â€” Send push notification to a user
   app.post('/api/send-push', verifyFirebaseToken, async (req: any, res) => {
     try {
       const { userId, title, body, url } = req.body;
-      if (!isNonEmptyString(userId, 128) || !isNonEmptyString(title, 200) || !isNonEmptyString(body, 1000)) {
+      if (
+        !isNonEmptyString(userId, 128) ||
+        !isNonEmptyString(title, 200) ||
+        !isNonEmptyString(body, 1000)
+      ) {
         return res.status(400).json({ error: 'userId, title, body required (valid strings)' });
       }
       if (url !== undefined && !isNonEmptyString(url, 2000)) {
@@ -342,8 +372,12 @@ async function startServer() {
 
       const token = tokenDoc.data()!.token;
       await adminDb.collection('pushMessages').add({
-        userId, title, body, url: url || null,
-        status: 'pending', createdAt: new Date().toISOString(),
+        userId,
+        title,
+        body,
+        url: url || null,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
       });
       return res.json({ sent: true, token: token.slice(0, 20) + '...' });
     } catch (err: any) {
@@ -359,24 +393,36 @@ async function startServer() {
       if (!adminDb) return res.status(503).json({ error: 'Firebase Admin not initialized' });
       const schedulesSnap = await adminDb.collection('payoutSchedules').get();
       const schedules = new Map<string, any>();
-      schedulesSnap.docs.forEach(d => {
+      schedulesSnap.docs.forEach((d) => {
         const s = d.data();
         if (s.autoPayoutEnabled) schedules.set(s.sellerId, s);
       });
 
       if (schedules.size === 0) {
-        return res.json({ processed: 0, skipped: 0, failed: 0, totalAmount: 0, message: 'No auto-payout enabled sellers' });
+        return res.json({
+          processed: 0,
+          skipped: 0,
+          failed: 0,
+          totalAmount: 0,
+          message: 'No auto-payout enabled sellers',
+        });
       }
 
       const balancesSnap = await adminDb.collection('sellerBalances').get();
       const now = new Date().toISOString();
-      let processed = 0, skipped = 0, failed = 0, totalAmount = 0;
+      let processed = 0,
+        skipped = 0,
+        failed = 0,
+        totalAmount = 0;
       const details: any[] = [];
 
       for (const balanceDoc of balancesSnap.docs) {
         const balance = balanceDoc.data();
         const schedule = schedules.get(balance.sellerId);
-        if (!schedule) { skipped++; continue; }
+        if (!schedule) {
+          skipped++;
+          continue;
+        }
 
         const available = balance.availableBalance ?? 0;
         if (available < (schedule.minBalanceThreshold ?? 500)) {
@@ -389,14 +435,24 @@ async function startServer() {
           const netAmount = Math.round((available - fee) * 100) / 100;
 
           await adminDb.collection('payoutRequests').add({
-            sellerId: balance.sellerId, amount: available, fee, netAmount,
-            status: 'completed', method: 'bank_transfer', destination: 'auto',
-            autoGenerated: true, processedBy: 'cron', processedAt: now, createdAt: now,
+            sellerId: balance.sellerId,
+            amount: available,
+            fee,
+            netAmount,
+            status: 'completed',
+            method: 'bank_transfer',
+            destination: 'auto',
+            autoGenerated: true,
+            processedBy: 'cron',
+            processedAt: now,
+            createdAt: now,
           });
 
           // Update schedule
-          const schedSnap = await adminDb.collection('payoutSchedules')
-            .where('sellerId', '==', balance.sellerId).get();
+          const schedSnap = await adminDb
+            .collection('payoutSchedules')
+            .where('sellerId', '==', balance.sellerId)
+            .get();
           if (!schedSnap.empty) {
             await schedSnap.docs[0].ref.update({ lastAutoPayout: now });
           }
@@ -414,11 +470,21 @@ async function startServer() {
           details.push({ sellerId: balance.sellerId, amount: netAmount, status: 'completed' });
         } catch (err: any) {
           failed++;
-          details.push({ sellerId: balance.sellerId, amount: available, status: 'failed', reason: err.message });
+          details.push({
+            sellerId: balance.sellerId,
+            amount: available,
+            status: 'failed',
+            reason: err.message,
+          });
         }
       }
 
-      logger.info('payout', `Auto-payout completed`, { processed, skipped, failed, total: totalAmount });
+      logger.info('payout', `Auto-payout completed`, {
+        processed,
+        skipped,
+        failed,
+        total: totalAmount,
+      });
       return res.json({ processed, skipped, failed, totalAmount, details });
     } catch (err: any) {
       logger.error('payout', 'Auto-payout endpoint error', { error: (err as Error).message });
@@ -450,11 +516,11 @@ if (typeof firebase !== 'undefined') {
   });
 
   // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== 'production') {
     try {
       const vite = await createViteServer({
         server: { middlewareMode: true },
-        appType: "spa",
+        appType: 'spa',
       });
       app.use(vite.middlewares);
     } catch (err) {
@@ -479,13 +545,14 @@ if (typeof firebase !== 'undefined') {
       stack: process.env.NODE_ENV !== 'production' ? err?.stack : undefined,
     });
     res.status(err?.status || 500).json({
-      error: process.env.NODE_ENV === 'production'
-        ? 'Internal server error'
-        : (err?.message || 'Unknown error'),
+      error:
+        process.env.NODE_ENV === 'production'
+          ? 'Internal server error'
+          : err?.message || 'Unknown error',
     });
   });
 
-  app.listen(PORT, "0.0.0.0", () => {
+  app.listen(PORT, '0.0.0.0', () => {
     logger.info('server', `Benim Olan Server running`, { port: PORT });
   });
 }

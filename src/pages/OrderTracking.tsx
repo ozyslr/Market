@@ -1,40 +1,55 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-  Loader2, Package, Truck, MapPin, ArrowLeft, Navigation, Clock,
-  Phone, User, ExternalLink, ChevronRight, AlertCircle,
-  CheckCircle2, Copy, CreditCard, Gift, HelpCircle,
+  Loader2,
+  Package,
+  Truck,
+  MapPin,
+  ArrowLeft,
+  Navigation,
+  Clock,
+  Phone,
+  User,
+  ExternalLink,
+  ChevronRight,
+  AlertCircle,
+  CheckCircle2,
+  Copy,
+  CreditCard,
+  Gift,
+  HelpCircle,
+  Store,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getOrderById, updateOrderStatus } from '@/services/orderService';
+import { getOrderById, updateOrderStatus, getOrderSetDetail } from '@/services/orderService';
 import { getTrackingStatus } from '@/services/cargoService';
 import { ReorderButton } from '@/components/commerce/ReorderButton';
-import type { Order } from '@/types/order';
+import type { Order, OrderSet, SubOrder } from '@/types/order';
 import type { TrackingResponse, CargoProviderName } from '@/services/cargoService';
 import { cn } from '@/lib/utils';
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
 const STEP_LABELS: Record<string, { label: string; icon: any }> = {
-  pending:    { label: 'Hazırlanıyor', icon: Package },
+  pending: { label: 'Hazırlanıyor', icon: Package },
   processing: { label: 'Paketleniyor', icon: Package },
-  shipped:    { label: 'Kargoda', icon: Truck },
-  delivered:  { label: 'Teslim Edildi', icon: MapPin },
-  cancelled:  { label: 'İptal Edildi', icon: AlertCircle },
+  shipped: { label: 'Kargoda', icon: Truck },
+  delivered: { label: 'Teslim Edildi', icon: MapPin },
+  cancelled: { label: 'İptal Edildi', icon: AlertCircle },
 };
 
 const TIMELINE_STEPS = [
-  { key: 'ordered',   label: 'Sipariş Alındı',   icon: CheckCircle2 },
-  { key: 'preparing', label: 'Hazırlanıyor',      icon: Package },
-  { key: 'shipped',   label: 'Kargoya Verildi',   icon: Truck },
-  { key: 'delivered', label: 'Teslim Edildi',     icon: MapPin },
+  { key: 'ordered', label: 'Sipariş Alındı', icon: CheckCircle2 },
+  { key: 'preparing', label: 'Hazırlanıyor', icon: Package },
+  { key: 'shipped', label: 'Kargoya Verildi', icon: Truck },
+  { key: 'delivered', label: 'Teslim Edildi', icon: MapPin },
 ] as const;
 
 const PAYMENT_META: Record<string, { icon: any; label: string }> = {
   stripe: { icon: CreditCard, label: 'Kredi Kartı' },
   iyzico: { icon: CreditCard, label: 'Kredi Kartı' },
-  paytr:  { icon: CreditCard, label: 'Kredi Kartı' },
-  manual: { icon: Gift,       label: 'Havale / EFT' },
+  paytr: { icon: CreditCard, label: 'Kredi Kartı' },
+  manual: { icon: Gift, label: 'Havale / EFT' },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -54,8 +69,7 @@ function getStepDate(order: Order, stepKey: string): Date | null {
         return new Date(order.updatedAt);
       return null;
     case 'delivered':
-      if (order.status === 'delivered' && order.updatedAt)
-        return new Date(order.updatedAt);
+      if (order.status === 'delivered' && order.updatedAt) return new Date(order.updatedAt);
       return null;
     case 'cancelled':
       return order.updatedAt ? new Date(order.updatedAt) : null;
@@ -73,10 +87,13 @@ function EtaCountdown({ targetDate }: { targetDate: string }) {
   useEffect(() => {
     const tick = () => {
       const diff = target - Date.now();
-      if (diff <= 0) { setRemaining({ days: 0, hours: 0, minutes: 0 }); return; }
+      if (diff <= 0) {
+        setRemaining({ days: 0, hours: 0, minutes: 0 });
+        return;
+      }
       setRemaining({
-        days:    Math.floor(diff / 86400000),
-        hours:   Math.floor((diff % 86400000) / 3600000),
+        days: Math.floor(diff / 86400000),
+        hours: Math.floor((diff % 86400000) / 3600000),
         minutes: Math.floor((diff % 3600000) / 60000),
       });
     };
@@ -87,16 +104,21 @@ function EtaCountdown({ targetDate }: { targetDate: string }) {
 
   const { days, hours, minutes } = remaining;
   const label =
-    days > 0 ? `${days} gün ${hours} saat` :
-    hours > 0 ? `${hours} saat ${minutes} dk` :
-    minutes > 0 ? `${minutes} dakika` :
-    'Teslim ediliyor...';
+    days > 0
+      ? `${days} gün ${hours} saat`
+      : hours > 0
+        ? `${hours} saat ${minutes} dk`
+        : minutes > 0
+          ? `${minutes} dakika`
+          : 'Teslim ediliyor...';
 
   const isImminent = days === 0 && hours < 1;
   const colorClass =
-    days > 3 ? 'text-green-600 dark:text-green-400' :
-    days >= 1 ? 'text-amber-600 dark:text-amber-400' :
-    'text-red-600 dark:text-red-400';
+    days > 3
+      ? 'text-green-600 dark:text-green-400'
+      : days >= 1
+        ? 'text-amber-600 dark:text-amber-400'
+        : 'text-red-600 dark:text-red-400';
 
   return (
     <motion.span
@@ -117,8 +139,8 @@ function OrderTimeline({ order, currentStep }: { order: Order; currentStep: numb
 
   const timelineSteps = isCancelled
     ? [
-        { key: 'ordered' as const,   label: 'Sipariş Alındı', icon: CheckCircle2 },
-        { key: 'cancelled' as const, label: 'İptal Edildi',   icon: AlertCircle },
+        { key: 'ordered' as const, label: 'Sipariş Alındı', icon: CheckCircle2 },
+        { key: 'cancelled' as const, label: 'İptal Edildi', icon: AlertCircle },
       ]
     : [...TIMELINE_STEPS];
 
@@ -156,7 +178,7 @@ function OrderTimeline({ order, currentStep }: { order: Order; currentStep: numb
                       'absolute top-0 start-0 w-full rounded-full',
                       isCancelled && idx === 0
                         ? 'bg-gradient-to-b from-accent to-red-500'
-                        : 'bg-gradient-to-b from-accent via-accent to-accent/40'
+                        : 'bg-gradient-to-b from-accent via-accent to-accent/40',
                     )}
                     initial={{ height: '0%' }}
                     animate={{ height: isCompleted ? '100%' : '0%' }}
@@ -185,7 +207,7 @@ function OrderTimeline({ order, currentStep }: { order: Order; currentStep: numb
                       ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
                       : isActive
                         ? 'bg-accent text-white shadow-lg shadow-accent/20'
-                        : 'bg-[#F8F8FA] dark:bg-zinc-800 text-[#1A1033]/20 dark:text-zinc-600'
+                        : 'bg-[#F8F8FA] dark:bg-zinc-800 text-[#1A1033]/20 dark:text-zinc-600',
                 )}
               >
                 {isCompleted ? (
@@ -203,24 +225,33 @@ function OrderTimeline({ order, currentStep }: { order: Order; currentStep: numb
 
               {/* Content */}
               <div className="flex-1 min-w-0 pt-1.5">
-                <p className={cn(
-                  'text-sm font-black',
-                  isCancelledStep ? 'text-red-600 dark:text-red-400' :
-                  isCompleted || isActive ? 'text-[#1A1033] dark:text-white' :
-                  'text-[#1A1033]/20 dark:text-zinc-600'
-                )}>
+                <p
+                  className={cn(
+                    'text-sm font-black',
+                    isCancelledStep
+                      ? 'text-red-600 dark:text-red-400'
+                      : isCompleted || isActive
+                        ? 'text-[#1A1033] dark:text-white'
+                        : 'text-[#1A1033]/20 dark:text-zinc-600',
+                  )}
+                >
                   {step.label}
                 </p>
                 {date && (
-                  <p className={cn(
-                    'text-[11px] mt-0.5',
-                    isCompleted || isActive
-                      ? 'text-[#1A1033]/50 dark:text-zinc-400'
-                      : 'text-[#1A1033]/20 dark:text-zinc-600'
-                  )}>
+                  <p
+                    className={cn(
+                      'text-[11px] mt-0.5',
+                      isCompleted || isActive
+                        ? 'text-[#1A1033]/50 dark:text-zinc-400'
+                        : 'text-[#1A1033]/20 dark:text-zinc-600',
+                    )}
+                  >
                     {date.toLocaleDateString('tr-TR', {
-                      day: 'numeric', month: 'long', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
                     })}
                   </p>
                 )}
@@ -253,7 +284,13 @@ function OrderTimeline({ order, currentStep }: { order: Order; currentStep: numb
 
 // ─── C. Carrier Tracking Card ───────────────────────────────────────────
 
-function CarrierTrackingCard({ order, tracking }: { order: Order; tracking: TrackingResponse | null }) {
+function CarrierTrackingCard({
+  order,
+  tracking,
+}: {
+  order: Order;
+  tracking: TrackingResponse | null;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -262,12 +299,15 @@ function CarrierTrackingCard({ order, tracking }: { order: Order; tracking: Trac
       await navigator.clipboard.writeText(order.trackingNumber);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch { /* clipboard not available */ }
+    } catch {
+      /* clipboard not available */
+    }
   };
 
-  const carrierUrl = order.trackingNumber && order.carrier
-    ? `https://www.google.com/search?q=${encodeURIComponent(order.carrier + ' ' + order.trackingNumber)}`
-    : null;
+  const carrierUrl =
+    order.trackingNumber && order.carrier
+      ? `https://www.google.com/search?q=${encodeURIComponent(order.carrier + ' ' + order.trackingNumber)}`
+      : null;
 
   const lastEvent = tracking?.events?.[0] ?? null;
 
@@ -282,9 +322,7 @@ function CarrierTrackingCard({ order, tracking }: { order: Order; tracking: Trac
           <Truck size={28} className="text-accent" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-black text-[#1A1033] dark:text-white text-sm">
-            {order.carrier} Kargo
-          </p>
+          <p className="font-black text-[#1A1033] dark:text-white text-sm">{order.carrier} Kargo</p>
           <div className="flex items-center gap-2 mt-1">
             <code className="text-[11px] text-[#1A1033]/60 dark:text-zinc-400 font-mono bg-[#F8F8FA] dark:bg-zinc-800 px-2 py-0.5 rounded-lg truncate max-w-[180px]">
               {order.trackingNumber}
@@ -310,8 +348,12 @@ function CarrierTrackingCard({ order, tracking }: { order: Order; tracking: Trac
           <p className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 mb-1 font-bold uppercase tracking-wider">
             Son Guncelleme
           </p>
-          <p className="text-xs font-bold text-[#1A1033]/80 dark:text-zinc-300">{lastEvent.status}</p>
-          <p className="text-[10px] text-[#1A1033]/50 dark:text-zinc-400">{lastEvent.description}</p>
+          <p className="text-xs font-bold text-[#1A1033]/80 dark:text-zinc-300">
+            {lastEvent.status}
+          </p>
+          <p className="text-[10px] text-[#1A1033]/50 dark:text-zinc-400">
+            {lastEvent.description}
+          </p>
           <p className="text-[9px] text-[#1A1033]/30 dark:text-zinc-500 mt-0.5">
             {new Date(lastEvent.timestamp).toLocaleString('tr-TR')}
           </p>
@@ -338,53 +380,188 @@ function CarrierTrackingCard({ order, tracking }: { order: Order; tracking: Trac
 export function OrderTracking() {
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<Order | null>(null);
+  const [orderSet, setOrderSet] = useState<(OrderSet & { subOrders: SubOrder[] }) | null>(null);
   const [tracking, setTracking] = useState<TrackingResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [trackingLoading, setTrackingLoading] = useState(false);
+  const [useNewModel, setUseNewModel] = useState(false);
   const pulseRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!orderId) return;
-    getOrderById(orderId).then(o => {
-      setOrder(o);
-      setLoading(false);
-      if (o?.trackingNumber && o?.carrier) {
-        setTrackingLoading(true);
-        getTrackingStatus(o.carrier as CargoProviderName, o.trackingNumber)
-          .then(t => {
-            setTracking(t);
-            // Auto-update order status to delivered when tracking confirms delivery
-            if (t.delivered && o.status === 'shipped') {
-              updateOrderStatus(o.id, 'delivered').catch(() => {});
-              setOrder(prev => prev ? { ...prev, status: 'delivered' } : prev);
-            }
-          })
-          .finally(() => setTrackingLoading(false));
-      }
-    });
+
+    // Try new OrderSet API first, fall back to old Order model
+    getOrderSetDetail(orderId)
+      .then((os) => {
+        setOrderSet(os);
+        setUseNewModel(true);
+        setLoading(false);
+      })
+      .catch(() => {
+        // Fall back to old Order model
+        getOrderById(orderId).then((o) => {
+          setOrder(o);
+          setUseNewModel(false);
+          setLoading(false);
+          if (o?.trackingNumber && o?.carrier) {
+            setTrackingLoading(true);
+            getTrackingStatus(o.carrier as CargoProviderName, o.trackingNumber)
+              .then((t) => {
+                setTracking(t);
+                // Auto-update order status to delivered when tracking confirms delivery
+                if (t.delivered && o.status === 'shipped') {
+                  updateOrderStatus(o.id, 'delivered').catch(() => {});
+                  setOrder((prev) => (prev ? { ...prev, status: 'delivered' } : prev));
+                }
+              })
+              .finally(() => setTrackingLoading(false));
+          }
+        });
+      });
   }, [orderId]);
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-accent" />
-    </div>
-  );
-  if (!order) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-sm text-[#1A1033]/40">Sipariş bulunamadı</p>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    );
+  if (!order && !orderSet)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-sm text-[#1A1033]/40">Siparis bulunamadi</p>
+      </div>
+    );
 
-  const isShipped = order.status === 'shipped' || order.status === 'delivered';
-  const isDelivered = order.status === 'delivered';
-  const currentStep = isDelivered ? 4 : isShipped ? 3 : order.status === 'processing' ? 2 : 1;
+  if (useNewModel && orderSet) {
+    // ─── New OrderSet + SubOrder render ──────────────────────────────────────
+    const totalItems = orderSet.subOrders.reduce(
+      (sum, so) => sum + so.items.reduce((si, i) => si + i.quantity, 0),
+      0,
+    );
 
-  const paymentMeta = PAYMENT_META[order.paymentMethod] || PAYMENT_META.stripe;
+    return (
+      <div className="min-h-screen bg-[#F8F8FA] dark:bg-zinc-950 pt-24 pb-20 px-4">
+        <div className="max-w-2xl mx-auto space-y-6">
+          {/* Back */}
+          <Link
+            to="/orders"
+            className="inline-flex items-center gap-2 text-xs font-bold text-[#1A1033]/40 dark:text-zinc-500 hover:text-accent transition-colors"
+          >
+            <ArrowLeft size={14} /> Siparislerime Don
+          </Link>
+
+          {/* OrderSet Summary Card */}
+          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <span className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/30 dark:text-zinc-500">
+                  Siparis #{orderSet.id.slice(-6).toUpperCase()}
+                </span>
+                <p className="text-xs text-[#1A1033]/50 dark:text-zinc-400 mt-1">
+                  {new Date(orderSet.createdAt).toLocaleDateString('tr-TR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </p>
+                <p className="text-xs text-[#1A1033]/40 dark:text-zinc-500">
+                  {totalItems} urun, {orderSet.subOrders.length} alt siparis
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <span className="px-3 py-1 rounded-xl text-[10px] font-black uppercase bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+                  {orderSet.status}
+                </span>
+                <span className="text-xl font-black text-[#1A1033] dark:text-white">
+                  {orderSet.totalAmount.toFixed(2)} {orderSet.currency}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* SubOrders */}
+          {orderSet.subOrders.map((subOrder) => (
+            <div
+              key={subOrder.id}
+              className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800"
+            >
+              {/* SubOrder header with seller + status */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Store size={16} className="text-accent" />
+                  <span className="text-xs font-black text-[#1A1033] dark:text-white">
+                    Satici: {subOrder.sellerId.slice(0, 12)}
+                  </span>
+                </div>
+                <span
+                  className={cn(
+                    'px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider',
+                    subOrder.status === 'pending'
+                      ? 'bg-amber-50 dark:bg-amber-950 text-amber-600'
+                      : subOrder.status === 'cancelled'
+                        ? 'bg-red-50 dark:bg-red-950 text-red-600'
+                        : 'bg-blue-50 dark:bg-blue-950 text-blue-600',
+                  )}
+                >
+                  {subOrder.status}
+                </span>
+              </div>
+
+              {/* Items */}
+              <div className="space-y-2">
+                {subOrder.items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3 p-2 rounded-xl bg-[#F8F8FA]/50 dark:bg-zinc-800/30"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                      className="w-12 h-12 rounded-lg object-contain bg-white dark:bg-zinc-900 p-1 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-[#1A1033] dark:text-white line-clamp-1">
+                        {item.name}
+                      </p>
+                      <p className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500">
+                        {item.quantity} adet x {item.price.toFixed(2)}
+                      </p>
+                    </div>
+                    <p className="text-xs font-black text-[#1A1033] dark:text-white shrink-0">
+                      {item.subtotal.toFixed(2)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* SubOrder footer */}
+              <div className="mt-4 pt-3 border-t border-[#F8F8FA] dark:border-zinc-800 flex justify-between text-xs">
+                <span className="text-[#1A1033]/40 dark:text-zinc-500">Ara Toplam</span>
+                <span className="font-bold text-[#1A1033] dark:text-white">
+                  {subOrder.subtotal.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Old Order model (existing render, unchanged) ──────────────────────────
+  const o = order!;
+  const isShipped = o.status === 'shipped' || o.status === 'delivered';
+  const isDelivered = o.status === 'delivered';
+  const currentStep = isDelivered ? 4 : isShipped ? 3 : o.status === 'processing' ? 2 : 1;
+
+  const paymentMeta = PAYMENT_META[o.paymentMethod] || PAYMENT_META.stripe;
 
   return (
     <div className="min-h-screen bg-[#F8F8FA] dark:bg-zinc-950 pt-24 pb-20 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
-
         {/* Back */}
         <Link
           to="/profile"
@@ -399,33 +576,35 @@ export function OrderTracking() {
             {/* Left: order id + date + item count */}
             <div>
               <span className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/30 dark:text-zinc-500">
-                Sipariş #{order.id.slice(-6).toUpperCase()}
+                Sipariş #{o.id.slice(-6).toUpperCase()}
               </span>
               <p className="text-xs text-[#1A1033]/50 dark:text-zinc-400 mt-1">
-                {new Date(order.createdAt).toLocaleDateString('tr-TR', {
-                  day: 'numeric', month: 'long', year: 'numeric',
+                {new Date(o.createdAt).toLocaleDateString('tr-TR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
                 })}
               </p>
-              <p className="text-xs text-[#1A1033]/40 dark:text-zinc-500">
-                {order.items.length} ürün
-              </p>
+              <p className="text-xs text-[#1A1033]/40 dark:text-zinc-500">{o.items.length} ürün</p>
             </div>
             {/* Right: status badge + total */}
             <div className="flex flex-col items-end gap-2">
-              <span className={cn(
-                'px-3 py-1 rounded-xl text-[10px] font-black uppercase',
-                isDelivered
-                  ? 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400'
-                  : isShipped
-                    ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
-                    : order.status === 'cancelled'
-                      ? 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400'
-                      : 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400'
-              )}>
-                {STEP_LABELS[order.status]?.label || order.status}
+              <span
+                className={cn(
+                  'px-3 py-1 rounded-xl text-[10px] font-black uppercase',
+                  isDelivered
+                    ? 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400'
+                    : isShipped
+                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
+                      : o.status === 'cancelled'
+                        ? 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400'
+                        : 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400',
+                )}
+              >
+                {STEP_LABELS[o.status]?.label || o.status}
               </span>
               <span className="text-xl font-black text-[#1A1033] dark:text-white">
-                {order.total.toFixed(2)} ₺
+                {o.total.toFixed(2)} ₺
               </span>
             </div>
           </div>
@@ -436,14 +615,12 @@ export function OrderTracking() {
               <paymentMeta.icon size={14} className="text-[#1A1033]/40 dark:text-zinc-500" />
               <span className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 uppercase tracking-wider">
                 {paymentMeta.label}
-                {order.installment && order.installment > 1
-                  ? ` (${order.installment} taksit)`
-                  : ''}
+                {o.installment && o.installment > 1 ? ` (${o.installment} taksit)` : ''}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              {['delivered', 'paid'].includes(order.status) && (
-                <ReorderButton orderId={order.id} userId={order.userId} />
+              {['delivered', 'paid'].includes(o.status) && (
+                <ReorderButton orderId={o.id} userId={o.userId} />
               )}
               <Link
                 to="/iletisim"
@@ -457,7 +634,7 @@ export function OrderTracking() {
         </div>
 
         {/* ───── A. Vertical Timeline ───── */}
-        <OrderTimeline order={order} currentStep={currentStep} />
+        <OrderTimeline order={o} currentStep={currentStep} />
 
         {/* ───── B. Order Items Grid ───── */}
         <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
@@ -466,7 +643,7 @@ export function OrderTracking() {
           </h3>
 
           <div className="space-y-3">
-            {order.items.map((item, i) => (
+            {o.items.map((item, i) => (
               <Link
                 key={i}
                 to={`/urun/${item.productId}`}
@@ -501,33 +678,37 @@ export function OrderTracking() {
           <div className="mt-6 pt-4 border-t border-[#F8F8FA] dark:border-zinc-800 space-y-2 text-xs">
             <div className="flex justify-between">
               <span className="text-[#1A1033]/40 dark:text-zinc-500">Ara Toplam</span>
-              <span className="font-bold text-[#1A1033] dark:text-white">{order.subtotal.toFixed(2)} ₺</span>
+              <span className="font-bold text-[#1A1033] dark:text-white">
+                {o.subtotal.toFixed(2)} ₺
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#1A1033]/40 dark:text-zinc-500">Kargo</span>
-              <span className="font-bold text-[#1A1033] dark:text-white">{order.shipping.toFixed(2)} ₺</span>
+              <span className="font-bold text-[#1A1033] dark:text-white">
+                {o.shipping.toFixed(2)} ₺
+              </span>
             </div>
             <div className="flex justify-between text-sm pt-2 border-t border-[#F8F8FA] dark:border-zinc-800">
               <span className="font-black uppercase text-[#1A1033] dark:text-white">Toplam</span>
-              <span className="font-black text-accent">{order.total.toFixed(2)} ₺</span>
+              <span className="font-black text-accent">{o.total.toFixed(2)} ₺</span>
             </div>
           </div>
 
           {/* Reorder (kept below items for consistency) */}
-          {['delivered', 'paid'].includes(order.status) && (
+          {['delivered', 'paid'].includes(o.status) && (
             <div className="mt-6 pt-4 border-t border-[#F8F8FA] dark:border-zinc-800 flex justify-center">
-              <ReorderButton orderId={order.id} userId={order.userId} />
+              <ReorderButton orderId={o.id} userId={o.userId} />
             </div>
           )}
         </div>
 
         {/* ───── C. Carrier Tracking Card ───── */}
-        {isShipped && order.trackingNumber && order.carrier && (
-          <CarrierTrackingCard order={order} tracking={tracking} />
+        {isShipped && o.trackingNumber && o.carrier && (
+          <CarrierTrackingCard order={o} tracking={tracking} />
         )}
 
         {/* ───── Live Tracking Info (kept from original) ───── */}
-        {isShipped && order.trackingNumber && (
+        {isShipped && o.trackingNumber && (
           <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800 space-y-5">
             <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400 flex items-center gap-2">
               <Navigation size={16} className="text-accent" /> Canlı Takip
@@ -542,7 +723,7 @@ export function OrderTracking() {
               <div>
                 <p className="text-xs font-black text-green-700 dark:text-green-400">Kargo Yolda</p>
                 <p className="text-[10px] text-green-600/70 dark:text-green-400/60">
-                  {order.carrier} · {order.trackingNumber}
+                  {o.carrier} · {o.trackingNumber}
                 </p>
               </div>
             </div>
@@ -557,21 +738,27 @@ export function OrderTracking() {
                 {tracking.events.map((event, idx) => (
                   <div key={idx} className="flex gap-3">
                     <div className="flex flex-col items-center">
-                      <div className={cn(
-                        'w-2.5 h-2.5 rounded-full mt-1.5',
-                        idx === 0
-                          ? 'bg-accent ring-4 ring-accent/20'
-                          : idx === tracking.events.length - 1
-                            ? 'bg-green-500'
-                            : 'bg-[#1A1033]/15 dark:bg-zinc-700'
-                      )} />
+                      <div
+                        className={cn(
+                          'w-2.5 h-2.5 rounded-full mt-1.5',
+                          idx === 0
+                            ? 'bg-accent ring-4 ring-accent/20'
+                            : idx === tracking.events.length - 1
+                              ? 'bg-green-500'
+                              : 'bg-[#1A1033]/15 dark:bg-zinc-700',
+                        )}
+                      />
                       {idx < tracking.events.length - 1 && (
                         <div className="w-px flex-1 bg-[#1A1033]/10 dark:bg-zinc-800 mt-1" />
                       )}
                     </div>
                     <div className="flex-1 pb-3">
-                      <p className="text-xs font-black text-[#1A1033] dark:text-white">{event.status}</p>
-                      <p className="text-[10px] text-[#1A1033]/50 dark:text-zinc-400">{event.description}</p>
+                      <p className="text-xs font-black text-[#1A1033] dark:text-white">
+                        {event.status}
+                      </p>
+                      <p className="text-[10px] text-[#1A1033]/50 dark:text-zinc-400">
+                        {event.description}
+                      </p>
                       <p className="text-[9px] text-[#1A1033]/30 dark:text-zinc-500 flex items-center gap-2">
                         {event.location && <span>{event.location}</span>}
                         <span>{new Date(event.timestamp).toLocaleString('tr-TR')}</span>
@@ -582,7 +769,9 @@ export function OrderTracking() {
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-xs text-[#1A1033]/30 dark:text-zinc-500">Takip bilgisi alınamadı</p>
+                <p className="text-xs text-[#1A1033]/30 dark:text-zinc-500">
+                  Takip bilgisi alınamadı
+                </p>
               </div>
             )}
 
@@ -591,10 +780,14 @@ export function OrderTracking() {
               <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-2xl p-4 flex items-center gap-3">
                 <Clock size={20} className="text-blue-500" />
                 <div>
-                  <p className="text-xs font-black text-blue-700 dark:text-blue-400">Tahmini Teslimat</p>
+                  <p className="text-xs font-black text-blue-700 dark:text-blue-400">
+                    Tahmini Teslimat
+                  </p>
                   <p className="text-sm font-bold text-blue-600 dark:text-blue-300">
                     {new Date(tracking.estimatedDelivery).toLocaleDateString('tr-TR', {
-                      weekday: 'long', day: 'numeric', month: 'long',
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
                     })}
                   </p>
                   <p className="text-[10px] text-blue-500/70 dark:text-blue-300/60 mt-0.5 flex items-center gap-1">
@@ -606,7 +799,9 @@ export function OrderTracking() {
 
             {tracking?.delivered && (
               <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50 rounded-2xl p-4 text-center">
-                <p className="text-sm font-black text-green-700 dark:text-green-400">Teslim Edildi</p>
+                <p className="text-sm font-black text-green-700 dark:text-green-400">
+                  Teslim Edildi
+                </p>
                 <p className="text-[10px] text-green-600/70 dark:text-green-400/60 mt-1">
                   Siparişiniz başarıyla teslim edildi.
                 </p>

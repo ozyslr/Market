@@ -137,6 +137,22 @@ service cloud.firestore {
       allow update: if isAdmin() || isModerator();
     }
 
+    // OrderSets (Walking Skeleton) — server-side writes via Admin SDK
+    match /orderSets/{orderSetId} {
+      allow read: if isSignedIn() && (resource.data.userId == userId() || isAdmin());
+      allow create: if isSignedIn() && incoming().userId == userId();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // SubOrders — only accessible via server-side API (never direct client read)
+    match /subOrders/{subOrderId} {
+      allow read: if false;     // Must read through GET /api/orders/:orderSetId
+      allow create: if false;   // Only via orderSet transaction from server
+      allow update: if isAdmin(); // Admin tools only
+      allow delete: if false;
+    }
+
     // Activity Logs
     match /activity_logs/{logId} {
       allow create: if isSignedIn();
