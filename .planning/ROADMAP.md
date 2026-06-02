@@ -39,8 +39,15 @@ Benim Olan is a live Technical MVP transitioning to a full-scale multi-vendor ma
 3. Cookie consent banner displays with category-based opt-in (mandatory, analytics, marketing); EU users see GDPR-specific consent flow
 4. Users can access privacy policy, terms of service, KVKK disclosure text, and VERBIS registration info; users can submit data deletion requests
 5. Firestore security rules block unauthorized reads/writes across all collections; only authenticated users access their own data
-   **Plans**: TBD
+   **Plans**: 4 plans
    **UI hint**: yes
+
+Plans:
+
+- [ ] 01-01-PLAN.md -- Order Walking Skeleton: OrderSet/SubOrder types, state machine, order API, client-side order display, basic Firestore rules
+- [ ] 01-02-PLAN.md -- Commission engine with specificity priority, admin CRUD API, immutable SHA-256 hash-chain ledger
+- [ ] 01-03-PLAN.md -- KVKK/GDPR compliance: 3-tier cookie consent, dual GDPR/KVKK flow, data deletion workflow, 5 CMS-editable legal pages
+- [ ] 01-04-PLAN.md -- Firestore security rules hardening: Firebase custom claims migration, 3-role per-collection rules, schema deploy
 
 ### Phase 2: Payment & Order Lifecycle
 
@@ -158,7 +165,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 
 | Phase                           | Plans Complete | Status      | Completed |
 | ------------------------------- | -------------- | ----------- | --------- |
-| 1. Foundation & Compliance      | 0/--           | Not started | -         |
+| 1. Foundation & Compliance      | 0/4            | Planned     | -         |
 | 2. Payment & Order Lifecycle    | 0/--           | Not started | -         |
 | 3. Seller Onboarding & KYC      | 0/--           | Not started | -         |
 | 4. Search & Discovery           | 0/--           | Not started | -         |
