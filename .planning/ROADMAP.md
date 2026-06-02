@@ -15,7 +15,7 @@ Benim Olan is a live Technical MVP transitioning to a full-scale multi-vendor ma
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED).
 - v2 phases are annotated and deferred.
 
-- [ ] **Phase 1: Foundation & Compliance** — Order data model, commission engine, immutable ledger, KVKK/GDPR compliance, Firestore security rules
+- [x] **Phase 1: Foundation & Compliance** — Order data model, commission engine, immutable ledger, KVKK/GDPR compliance, Firestore security rules (completed 2026-06-02)
 - [ ] **Phase 2: Payment & Order Lifecycle** — Dual-provider payments (Iyzico TRY + Stripe EUR), escrow flow, order lifecycle, seller payouts, transactional emails
 - [ ] **Phase 3: Seller Onboarding & KYC** — KYC document upload, admin review/approval, seller store management, CSV import/export, enhanced REST API
 - [ ] **Phase 4: Search & Discovery** — Typesense full-text search, faceted filters, sort options, event-driven index updates
@@ -44,10 +44,10 @@ Benim Olan is a live Technical MVP transitioning to a full-scale multi-vendor ma
 
 Plans:
 
-- [ ] 01-01-PLAN.md -- Order Walking Skeleton: OrderSet/SubOrder types, state machine, order API, client-side order display, basic Firestore rules
-- [ ] 01-02-PLAN.md -- Commission engine with specificity priority, admin CRUD API, immutable SHA-256 hash-chain ledger
-- [ ] 01-03-PLAN.md -- KVKK/GDPR compliance: 3-tier cookie consent, dual GDPR/KVKK flow, data deletion workflow, 5 CMS-editable legal pages
-- [ ] 01-04-PLAN.md -- Firestore security rules hardening: Firebase custom claims migration, 3-role per-collection rules, schema deploy
+- [x] 01-01-PLAN.md -- Order Walking Skeleton: OrderSet/SubOrder types, state machine, order API, client-side order display, basic Firestore rules
+- [x] 01-02-PLAN.md -- Commission engine with specificity priority, admin CRUD API, immutable SHA-256 hash-chain ledger
+- [x] 01-03-PLAN.md -- KVKK/GDPR compliance: 3-tier cookie consent, dual GDPR/KVKK flow, data deletion workflow, 5 CMS-editable legal pages
+- [x] 01-04-PLAN.md -- Firestore security rules hardening: Firebase custom claims migration, 3-role per-collection rules, schema deploy
 
 ### Phase 2: Payment & Order Lifecycle
 
@@ -165,7 +165,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 
 | Phase                           | Plans Complete | Status      | Completed |
 | ------------------------------- | -------------- | ----------- | --------- |
-| 1. Foundation & Compliance      | 0/4            | Planned     | -         |
+| 1. Foundation & Compliance      | 4/4 | Complete   | 2026-06-02 |
 | 2. Payment & Order Lifecycle    | 0/--           | Not started | -         |
 | 3. Seller Onboarding & KYC      | 0/--           | Not started | -         |
 | 4. Search & Discovery           | 0/--           | Not started | -         |
