@@ -1,175 +1,86 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // -------------------------------------------------------------------------
-    // GLOBALS & HELPERS
-    // -------------------------------------------------------------------------
-    
+
+    // --- HELPERS ---------------------------------------------------------
+    // All role checks use request.auth.token.role (Firebase Custom Claims).
+    // Zero get() calls on user documents — eliminates billed reads (Pitfall 1).
     function isSignedIn() { return request.auth != null; }
-    function userId() { return request.auth.uid; }
-    function userEmail() { return request.auth.token.email; }
-    function isVerified() { return isSignedIn(); } // Adjusted for preview env
+    function isAdmin() { return isSignedIn() && request.auth.token.role == 'admin'; }
+    function isSeller() { return isSignedIn() && request.auth.token.role == 'seller'; }
+    function isBuyer() { return isSignedIn() && request.auth.token.role == 'buyer'; }
+    function getUserId() { return request.auth.uid; }
 
-    // Admin check: either special email or 'admin' role in users collection
-    function isAdmin() {
-      return isSignedIn() && (
-        (request.auth.token.keys().hasAll(['email']) && request.auth.token.email == 'ozyslr@gmail.com') ||
-        (exists(/databases/$(database)/documents/users/$(userId())) && 
-         get(/databases/$(database)/documents/users/$(userId())).data.role == 'admin')
-      );
-    }
+    // --- DEFAULT DENY ----------------------------------------------------
+    match /{document=**} { allow read, write: if isAdmin(); }
 
-    function isModerator() {
-      return isSignedIn() && 
-             exists(/databases/$(database)/documents/users/$(userId())) && 
-             get(/databases/$(database)/documents/users/$(userId())).data.role == 'moderator';
-    }
+    // --- SYSTEM ----------------------------------------------------------
+    match /system/connection-test { allow read: if true; }
 
-    function isSeller() {
-      return isSignedIn() && 
-             exists(/databases/$(database)/documents/users/$(userId())) && 
-             get(/databases/$(database)/documents/users/$(userId())).data.role == 'seller';
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    function incoming() { return request.resource.data; }
-    function existing() { return resource.data; }
-
-    // -------------------------------------------------------------------------
-    // ENTITY VALIDATION HELPERS
-    // -------------------------------------------------------------------------
-
-    function isValidUser(data) {
-      return data.keys().hasAll(['id', 'name', 'email', 'role']) &&
-             data.id == userId() &&
-             data.name is string && data.name.size() <= 100 &&
-             data.email is string && data.email.size() <= 100 &&
-             data.role in ['buyer', 'seller', 'admin', 'moderator'] &&
-             data.preferences is map;
-    }
-
-    function isValidProduct(data) {
-      return data.keys().hasAll(['id', 'sellerId', 'title', 'categoryId', 'price']) &&
-             data.title is string && data.title.size() <= 200 &&
-             data.price is number && data.price >= 0 &&
-             data.sellerId is string &&
-             (exists(/databases/$(database)/documents/sellers/$(data.sellerId)) || 
-              existsAfter(/databases/$(database)/documents/sellers/$(data.sellerId)));
-    }
-
-    function isValidSeller(data) {
-      return data.keys().hasAll(['id', 'userId', 'storeName', 'slug']) &&
-             (data.userId == userId() || isAdmin()) &&
-             data.storeName is string && data.storeName.size() <= 100 &&
-             data.slug.matches('^[a-z0-9-]+$');
-    }
-
-    // -------------------------------------------------------------------------
-    // COLLECTION RULES
-    // -------------------------------------------------------------------------
-
-    // Default Deny
-    match /{document=**} {
-      allow read, write: if isAdmin();
-    }
-
-    // System Connection Test
-    match /system/connection-test {
-      allow read: if true;
-    }
-
-    // Categories (Publicly readable)
+    // --- CATEGORIES ------------------------------------------------------
     match /categories/{cid} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Users
+    // --- USERS -----------------------------------------------------------
     match /users/{uid} {
-      allow get: if isSignedIn() && (userId() == uid || isAdmin() || isModerator());
+      allow get: if isSignedIn() && (getUserId() == uid || isAdmin());
       allow list: if isAdmin();
-      allow create: if isVerified() && isValidUser(incoming()) && uid == userId();
-      allow update: if isVerified() && (
-        (uid == userId() &&
-         incoming().id == existing().id &&
-         incoming().role == existing().role &&
-         !('stripeCustomerId' in incoming().keys() ||
-           'defaultPaymentMethodId' in incoming().keys() ||
-           'defaultPaymentMethodLast4' in incoming().keys() ||
-           'defaultPaymentMethodBrand' in incoming().keys())) ||
-        isAdmin()
+      allow create: if isSignedIn() && uid == getUserId();
+      allow update: if isSignedIn() && (
+        (getUserId() == uid && request.resource.data.role == resource.data.role) || isAdmin()
       );
+      allow delete: if false;    // use data deletion flow
     }
 
-    // Sellers
+    // --- SELLERS ---------------------------------------------------------
     match /sellers/{sellerId} {
       allow read: if true;
-      allow create: if isVerified() && (isAdmin() || (incoming().userId == userId() && isValidSeller(incoming())));
-      allow update: if isVerified() && (
-        (existing().userId == userId() && incoming().userId == existing().userId) || 
-        isAdmin()
+      allow create: if isSignedIn() && (isAdmin() || request.resource.data.userId == getUserId());
+      allow update: if isSignedIn() && (
+        (resource.data.userId == getUserId() && request.resource.data.userId == resource.data.userId) || isAdmin()
       );
+      allow delete: if isAdmin();
     }
 
-    // Products
+    // --- PRODUCTS --------------------------------------------------------
     match /products/{pid} {
       allow read: if true;
-      allow create: if isVerified() && (
-        isAdmin() || 
-        (isSeller() && isValidProduct(incoming()) && get(/databases/$(database)/documents/sellers/$(incoming().sellerId)).data.userId == userId())
-      );
-      allow update: if isVerified() && (
-        isAdmin() ||
-        (get(/databases/$(database)/documents/sellers/$(existing().sellerId)).data.userId == userId() && isValidProduct(incoming()))
-      );
-      allow delete: if isAdmin() || (get(/databases/$(database)/documents/sellers/$(existing().sellerId)).data.userId == userId());
+      allow create: if isSignedIn() && (isAdmin() || isSeller());
+      allow update: if isSignedIn() && (isAdmin() || (isSeller() && resource.data.sellerId == request.auth.token.sellerId));
+      allow delete: if isAdmin() || (isSeller() && resource.data.sellerId == request.auth.token.sellerId);
     }
 
-    // Orders
-    match /orders/{oid} {
-      allow get: if isSignedIn() && (resource.data.buyerId == userId() || isAdmin() || isModerator());
-      allow list: if isSignedIn() && (resource.data.buyerId == userId() || isAdmin() || isModerator());
-      allow create: if isSignedIn() && incoming().buyerId == userId();
-      allow update: if isAdmin() || isModerator();
-    }
-
-    // OrderSets (Walking Skeleton) — server-side writes via Admin SDK
+    // --- ORDERSETS (Plan 1) ----------------------------------------------
     match /orderSets/{orderSetId} {
-      allow read: if isSignedIn() && (resource.data.userId == userId() || isAdmin());
-      allow create: if isSignedIn() && incoming().userId == userId();
+      allow read: if isSignedIn() && (resource.data.userId == getUserId() || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.userId == getUserId();
       allow update: if isAdmin();
       allow delete: if false;
     }
 
-    // SubOrders — only accessible via server-side API (never direct client read)
+    // --- SUBORDERS (Plan 1) ----------------------------------------------
     match /subOrders/{subOrderId} {
-      allow read: if false;     // Must read through GET /api/orders/:orderSetId
-      allow create: if false;   // Only via orderSet transaction from server
-      allow update: if isAdmin(); // Admin tools only
+      allow read: if isAdmin();
+      allow create: if false;
+      allow update: if isAdmin();
       allow delete: if false;
     }
 
-    // Commission Rules — admin write, authenticated read
+    // --- COMMISSION RULES (Plan 2) ---------------------------------------
     match /commissionRules/{ruleId} {
       allow read: if isSignedIn();
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if false; // Soft-delete via update (active=false)
+      allow write: if isAdmin();
     }
 
-    // Ledger — append-only immutable storage per D-03
-    // All writes via server-side Admin SDK only (firestore.rules blocks clients)
+    // --- LEDGER (Plan 2 - Immutable) -------------------------------------
+    // Server SDK only — all client operations denied.
     match /ledger/{entryId} {
-      allow read: if isSignedIn();
-      allow create: if false;   // Only via server-side ledgerService (admin SDK bypasses rules)
-      allow update, delete: if false;  // Per D-03: append-only
+      allow read, create, update, delete: if false;
     }
 
-    // Data Deletion Requests — authenticated submit, admin read/write
+    // --- DATA DELETION REQUESTS (Plan 3) ---------------------------------
     match /dataDeletionRequests/{requestId} {
       allow read: if isAdmin();
       allow create: if isSignedIn();
@@ -177,58 +88,103 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Activity Logs
-    match /activity_logs/{logId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin();
-    }
-
-    // Carts (user owns their cart doc)
+    // --- CARTS -----------------------------------------------------------
     match /carts/{userId} {
-      allow get, create, update: if isSignedIn() && userId == userId();
-      allow delete: if isSignedIn() && userId == userId();
+      allow read, create, update, delete: if isSignedIn() && userId == getUserId();
     }
 
-    // Cart reminders (server-side only via Admin SDK — no client access)
-    match /cart_reminders/{reminderId} {
-      allow read, write: if false;
-    }
+    // --- CART REMINDERS --------------------------------------------------
+    match /cart_reminders/{reminderId} { allow read, write: if false; }
 
-    // Mail (Firebase Trigger Email — server-side only)
+    // --- MAIL (Firebase Trigger Email) -----------------------------------
     match /mail/{mailId} {
-      allow create: if isSignedIn(); // extension writes, but user can trigger
       allow read, write: if false;
+      allow create: if isSignedIn();
     }
 
-    // Events (analytics)
+    // --- EVENTS (analytics) ----------------------------------------------
     match /events/{eventId} {
       allow create: if isSignedIn();
       allow read: if isAdmin();
     }
 
-    // Chat Sessions (live support)
+    // --- CHAT SESSIONS ---------------------------------------------------
     match /chat_sessions/{sessionId} {
-      allow read: if isSignedIn() && (resource.data.userId == userId() || isAdmin());
-      allow create: if isSignedIn() && incoming().userId == userId();
-      allow update: if isSignedIn() && (
-        (resource.data.userId == userId() && incoming().userId == resource.data.userId) ||
-        isAdmin()
-      );
+      allow read: if isSignedIn() && (resource.data.userId == getUserId() || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.userId == getUserId();
+      allow update: if isSignedIn() && (resource.data.userId == getUserId() || isAdmin());
       allow delete: if isAdmin();
-
-      // Chat Messages (subcollection)
       match /messages/{messageId} {
-        allow read: if isSignedIn() && (
-          get(/databases/$(database)/documents/chat_sessions/$(sessionId)).data.userId == userId() ||
-          isAdmin()
-        );
-        allow create: if isSignedIn() && (
-          (get(/databases/$(database)/documents/chat_sessions/$(sessionId)).data.userId == userId() && incoming().role == 'user') ||
-          (isAdmin() && incoming().role == 'admin')
-        );
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
         allow update: if isAdmin();
         allow delete: if false;
       }
+    }
+
+    // --- ACTIVITY LOGS ---------------------------------------------------
+    match /activity_logs/{logId} {
+      allow create: if isSignedIn();
+      allow read: if isAdmin();
+    }
+
+    // --- ORDERS (backward compat) ----------------------------------------
+    match /orders/{oid} {
+      allow read: if isSignedIn() && (resource.data.userId == getUserId() || resource.data.buyerId == getUserId() || isAdmin());
+      allow create: if isSignedIn() && (request.resource.data.userId == getUserId() || request.resource.data.buyerId == getUserId());
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // --- SELLER BALANCES (Plan 2) ----------------------------------------
+    match /sellerBalances/{sellerId} {
+      allow read: if isSignedIn() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // --- PAYOUT SCHEDULES (Plan 2) ---------------------------------------
+    match /payoutSchedules/{scheduleId} {
+      allow read: if isSignedIn() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // --- PAYOUT REQUESTS (Plan 2) ----------------------------------------
+    match /payoutRequests/{requestId} {
+      allow read: if isSignedIn() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // --- PUSH TOKENS -----------------------------------------------------
+    match /pushTokens/{userId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && userId == getUserId();
+      allow update: if isSignedIn() && userId == getUserId();
+      allow delete: if isSignedIn() && userId == getUserId();
+    }
+
+    // --- PUSH MESSAGES ---------------------------------------------------
+    match /pushMessages/{messageId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // --- REVIEWS ---------------------------------------------------------
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isBuyer();
+      allow update: if isSignedIn() && (resource.data.userId == getUserId() || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // --- FOLLOWS ---------------------------------------------------------
+    match /follows/{followId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow delete: if isSignedIn();
     }
   }
 }
