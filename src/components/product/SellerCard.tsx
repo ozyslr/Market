@@ -28,16 +28,24 @@ export function SellerCard({
 }: SellerCardProps) {
   return (
     <div className="py-4 space-y-3">
-      <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40">Satıcı</p>
+      <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40">
+        Satıcı
+      </p>
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center font-black text-accent text-sm uppercase shrink-0">
-          {sellerName.charAt(0)}
-        </div>
+        <Link to={`/seller/${sellerId}`} className="shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center font-black text-accent text-sm uppercase shrink-0 hover:bg-accent/20 transition-colors">
+            {sellerName.charAt(0)}
+          </div>
+        </Link>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-black text-brand-primary truncate">{sellerName}</p>
+          <Link to={`/seller/${sellerId}`} className="hover:text-accent transition-colors">
+            <p className="text-sm font-black text-brand-primary truncate">{sellerName}</p>
+          </Link>
           <div className="flex items-center gap-1 mt-0.5">
             <Star size={11} fill="#FBBF24" className="text-yellow-400" />
-            <span className="text-[10px] font-bold text-brand-primary/60">{sellerRating.toFixed(1)}</span>
+            <span className="text-[10px] font-bold text-brand-primary/60">
+              {sellerRating.toFixed(1)}
+            </span>
             {sellerReviewCount > 0 && (
               <span className="text-[10px] text-brand-primary/30">({sellerReviewCount})</span>
             )}
@@ -47,7 +55,10 @@ export function SellerCard({
 
       {/* Premium badge */}
       {(sellerRating ?? 0) >= 4.5 && (
-        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-yellow-400/10 text-yellow-600 dark:text-yellow-500 border border-yellow-400/20 rounded-full w-fit" aria-label="Premium satıcı rozeti">
+        <div
+          className="flex items-center gap-1.5 px-2 py-0.5 bg-yellow-400/10 text-yellow-600 dark:text-yellow-500 border border-yellow-400/20 rounded-full w-fit"
+          aria-label="Premium satıcı rozeti"
+        >
           <Award size={10} aria-hidden="true" />
           <span className="text-[9px] font-black uppercase tracking-widest">Premium Satıcı</span>
         </div>
@@ -97,7 +108,7 @@ export function SellerCard({
               'flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border',
               isFollowing
                 ? 'bg-accent/10 text-accent border-accent/30'
-                : 'border-brand-primary/10 text-brand-primary/50 hover:border-accent hover:text-accent'
+                : 'border-brand-primary/10 text-brand-primary/50 hover:border-accent hover:text-accent',
             )}
           >
             <UserPlus size={12} />

@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  MessageSquare, Send, ChevronLeft, Circle, Loader2,
-} from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { MessageSquare, Send, ChevronLeft, Circle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import {
-  getUserConversations, getConversationMessages,
-  sendConversationMessage, markConversationRead,
+  getUserConversations,
+  getConversationMessages,
+  sendConversationMessage,
+  markConversationRead,
   subscribeToConversationMessages,
-  type Conversation, type ConversationMessage,
+  getOrCreateConversation,
+  type Conversation,
+  type ConversationMessage,
 } from '@/services/chatService';
 import { cn } from '@/lib/utils';
 import { SEO } from '@/components/common/SEO';
@@ -15,6 +18,7 @@ import { Timestamp } from 'firebase/firestore';
 
 export function MessageCenter() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
@@ -26,16 +30,33 @@ export function MessageCenter() {
 
   // Load conversations
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
-    getUserConversations(user.id).then(data => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    getUserConversations(user.id).then((data) => {
       setConversations(data);
       setLoading(false);
     });
   }, [user]);
 
+  // Handle ?sellerId=... from product page → auto-open or create conversation
+  useEffect(() => {
+    const sellerId = searchParams.get('sellerId');
+    if (!sellerId || !user || loading) return;
+    const productId = searchParams.get('productId') || undefined;
+    const productTitle = searchParams.get('productTitle') || undefined;
+    getOrCreateConversation(user.id, sellerId, productId, productTitle).then((convId) => {
+      setSelectedId(convId);
+    });
+  }, [searchParams, user, loading]);
+
   // Subscribe to messages for selected conversation
   useEffect(() => {
-    if (!selectedId) { setMessages([]); return; }
+    if (!selectedId) {
+      setMessages([]);
+      return;
+    }
     const unsub = subscribeToConversationMessages(selectedId, setMessages);
     return unsub;
   }, [selectedId]);
@@ -54,7 +75,7 @@ export function MessageCenter() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const selectedConv = conversations.find(c => c.id === selectedId);
+  const selectedConv = conversations.find((c) => c.id === selectedId);
 
   const handleSend = useCallback(async () => {
     if (!selectedId || !user || !inputText.trim()) return;
@@ -85,7 +106,8 @@ export function MessageCenter() {
     const d = new Date(ts);
     const now = new Date();
     const diff = now.getTime() - d.getTime();
-    if (diff < 86400000) return d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    if (diff < 86400000)
+      return d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     if (diff < 172800000) return 'Dün';
     return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
   };
@@ -102,7 +124,6 @@ export function MessageCenter() {
     <div className="min-h-screen bg-[#F8F8FA] p-4 lg:p-6">
       <SEO title="Mesajlarım" />
       <div className="max-w-6xl mx-auto">
-
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
@@ -112,12 +133,13 @@ export function MessageCenter() {
 
         {/* Two-panel */}
         <div className="bg-white rounded-2xl border border-[#1A1033]/5 overflow-hidden grid grid-cols-1 lg:grid-cols-[340px_1fr] min-h-[70vh]">
-
           {/* Left panel — conversation list */}
-          <div className={cn(
-            'border-r border-[#1A1033]/5 overflow-y-auto',
-            selectedId && mobileOpen ? 'hidden lg:block' : 'block',
-          )}>
+          <div
+            className={cn(
+              'border-r border-[#1A1033]/5 overflow-y-auto',
+              selectedId && mobileOpen ? 'hidden lg:block' : 'block',
+            )}
+          >
             {loading ? (
               <div className="flex justify-center py-16">
                 <Loader2 className="w-6 h-6 animate-spin text-accent" />
@@ -128,13 +150,17 @@ export function MessageCenter() {
                 <p className="text-xs font-bold text-[#1A1033]/40">Henüz mesajınız yok.</p>
               </div>
             ) : (
-              conversations.map(conv => {
-                const unread = user && conv.buyerId === user.id ? conv.unreadBuyer : conv.unreadSeller;
+              conversations.map((conv) => {
+                const unread =
+                  user && conv.buyerId === user.id ? conv.unreadBuyer : conv.unreadSeller;
                 const isBuyer = user && conv.buyerId === user.id;
                 return (
                   <button
                     key={conv.id}
-                    onClick={() => { setSelectedId(conv.id); setMobileOpen(true); }}
+                    onClick={() => {
+                      setSelectedId(conv.id);
+                      setMobileOpen(true);
+                    }}
                     className={cn(
                       'w-full text-start p-4 border-b border-[#1A1033]/5 transition-colors hover:bg-[#F8F8FA]',
                       selectedId === conv.id ? 'bg-[#F0F0FF]' : '',
@@ -162,10 +188,12 @@ export function MessageCenter() {
                             {conv.productTitle}
                           </p>
                         )}
-                        <p className={cn(
-                          'text-xs mt-1 truncate',
-                          unread > 0 ? 'font-bold text-[#1A1033]' : 'text-[#1A1033]/50',
-                        )}>
+                        <p
+                          className={cn(
+                            'text-xs mt-1 truncate',
+                            unread > 0 ? 'font-bold text-[#1A1033]' : 'text-[#1A1033]/50',
+                          )}
+                        >
                           {conv.lastMessage || 'Mesaj yok'}
                         </p>
                       </div>
@@ -180,11 +208,13 @@ export function MessageCenter() {
           </div>
 
           {/* Right panel — messages */}
-          <div className={cn(
-            'flex flex-col',
-            !selectedId && mobileOpen ? '' : '',
-            selectedId && !mobileOpen ? 'hidden lg:flex' : 'flex',
-          )}>
+          <div
+            className={cn(
+              'flex flex-col',
+              !selectedId && mobileOpen ? '' : '',
+              selectedId && !mobileOpen ? 'hidden lg:flex' : 'flex',
+            )}
+          >
             {!selectedId ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
@@ -197,7 +227,10 @@ export function MessageCenter() {
                 {/* Message header */}
                 <div className="flex items-center gap-3 p-3 border-b border-[#1A1033]/5">
                   <button
-                    onClick={() => { setSelectedId(null); setMobileOpen(false); }}
+                    onClick={() => {
+                      setSelectedId(null);
+                      setMobileOpen(false);
+                    }}
                     className="lg:hidden p-1 text-[#1A1033]/40 hover:text-accent"
                   >
                     <ChevronLeft size={20} />
@@ -209,7 +242,9 @@ export function MessageCenter() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-[#1A1033]">
-                      {selectedConv && user && selectedConv.buyerId === user.id ? 'Satıcı' : 'Alıcı'}
+                      {selectedConv && user && selectedConv.buyerId === user.id
+                        ? 'Satıcı'
+                        : 'Alıcı'}
                     </p>
                     {selectedConv?.productTitle && (
                       <p className="text-[10px] text-[#1A1033]/50">{selectedConv.productTitle}</p>
@@ -225,18 +260,25 @@ export function MessageCenter() {
                     </p>
                   )}
                   {messages.map((msg, i) => (
-                    <div key={msg.id ?? i} className={cn('flex', isMe(msg) ? 'justify-end' : 'justify-start')}>
-                      <div className={cn(
-                        'max-w-[75%] px-3 py-2 rounded-2xl text-sm leading-relaxed',
-                        isMe(msg)
-                          ? 'bg-accent text-white rounded-br-md'
-                          : 'bg-[#F0F0F5] text-[#1A1033] rounded-bl-md',
-                      )}>
+                    <div
+                      key={msg.id ?? i}
+                      className={cn('flex', isMe(msg) ? 'justify-end' : 'justify-start')}
+                    >
+                      <div
+                        className={cn(
+                          'max-w-[75%] px-3 py-2 rounded-2xl text-sm leading-relaxed',
+                          isMe(msg)
+                            ? 'bg-accent text-white rounded-br-md'
+                            : 'bg-[#F0F0F5] text-[#1A1033] rounded-bl-md',
+                        )}
+                      >
                         <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-                        <p className={cn(
-                          'text-[9px] mt-1 text-right',
-                          isMe(msg) ? 'text-white/60' : 'text-[#1A1033]/40',
-                        )}>
+                        <p
+                          className={cn(
+                            'text-[9px] mt-1 text-right',
+                            isMe(msg) ? 'text-white/60' : 'text-[#1A1033]/40',
+                          )}
+                        >
                           {msg.ts ? formatTime(msg.ts) : ''}
                         </p>
                       </div>
@@ -251,7 +293,7 @@ export function MessageCenter() {
                     <input
                       type="text"
                       value={inputText}
-                      onChange={e => setInputText(e.target.value)}
+                      onChange={(e) => setInputText(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Mesaj yazın..."
                       className="flex-1 px-4 py-2.5 bg-[#F8F8FA] rounded-xl text-sm
