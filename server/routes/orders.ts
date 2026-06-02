@@ -104,7 +104,7 @@ export function registerOrderRoutes(app: Express, deps: OrderRouteDeps) {
       }
 
       // Ownership check: only the owner or an admin can read
-      if (orderSet.userId !== req.uid) {
+      if ((orderSet as any).userId !== req.uid) {
         return res.status(403).json({ error: 'Forbidden' });
       }
 

@@ -57,21 +57,22 @@ const PAYMENT_META: Record<string, { icon: any; label: string }> = {
 function getStepDate(order: Order, stepKey: string): Date | null {
   switch (stepKey) {
     case 'ordered':
-      return o.createdAt ? new Date(o.createdAt) : null;
+      return order.createdAt ? new Date(order.createdAt) : null;
     case 'preparing':
-      if (o.paidAt) return new Date(o.paidAt);
-      if (['processing', 'shipped', 'delivered'].includes(o.status) && o.createdAt)
-        return new Date(o.createdAt);
+      if (order.paidAt) return new Date(order.paidAt);
+      if (['processing', 'shipped', 'delivered'].includes(order.status) && order.createdAt)
+        return new Date(order.createdAt);
       return null;
     case 'shipped':
-      if (o.shippedAt) return new Date(o.shippedAt);
-      if (['shipped', 'delivered'].includes(o.status) && o.updatedAt) return new Date(o.updatedAt);
+      if (order.shippedAt) return new Date(order.shippedAt);
+      if (['shipped', 'delivered'].includes(order.status) && order.updatedAt)
+        return new Date(order.updatedAt);
       return null;
     case 'delivered':
-      if (o.status === 'delivered' && o.updatedAt) return new Date(o.updatedAt);
+      if (order.status === 'delivered' && order.updatedAt) return new Date(order.updatedAt);
       return null;
     case 'cancelled':
-      return o.updatedAt ? new Date(o.updatedAt) : null;
+      return order.updatedAt ? new Date(order.updatedAt) : null;
     default:
       return null;
   }
@@ -134,7 +135,7 @@ function EtaCountdown({ targetDate }: { targetDate: string }) {
 // ─── A. Vertical Timeline ───────────────────────────────────────────────
 
 function OrderTimeline({ order, currentStep }: { order: Order; currentStep: number }) {
-  const isCancelled = o.status === 'cancelled';
+  const isCancelled = order.status === 'cancelled';
 
   const timelineSteps = isCancelled
     ? [
@@ -293,9 +294,9 @@ function CarrierTrackingCard({
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    if (!o.trackingNumber) return;
+    if (!order.trackingNumber) return;
     try {
-      await navigator.clipboard.writeText(o.trackingNumber);
+      await navigator.clipboard.writeText(order.trackingNumber);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -304,8 +305,8 @@ function CarrierTrackingCard({
   };
 
   const carrierUrl =
-    o.trackingNumber && o.carrier
-      ? `https://www.google.com/search?q=${encodeURIComponent(o.carrier + ' ' + o.trackingNumber)}`
+    order.trackingNumber && order.carrier
+      ? `https://www.google.com/search?q=${encodeURIComponent(order.carrier + ' ' + order.trackingNumber)}`
       : null;
 
   const lastEvent = tracking?.events?.[0] ?? null;
@@ -321,10 +322,10 @@ function CarrierTrackingCard({
           <Truck size={28} className="text-accent" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-black text-[#1A1033] dark:text-white text-sm">{o.carrier} Kargo</p>
+          <p className="font-black text-[#1A1033] dark:text-white text-sm">{order.carrier} Kargo</p>
           <div className="flex items-center gap-2 mt-1">
             <code className="text-[11px] text-[#1A1033]/60 dark:text-zinc-400 font-mono bg-[#F8F8FA] dark:bg-zinc-800 px-2 py-0.5 rounded-lg truncate max-w-[180px]">
-              {o.trackingNumber}
+              {order.trackingNumber}
             </code>
             <button
               onClick={handleCopy}
@@ -633,7 +634,7 @@ export function OrderTracking() {
         </div>
 
         {/* ───── A. Vertical Timeline ───── */}
-        <OrderTimeline order={order} currentStep={currentStep} />
+        <OrderTimeline order={o} currentStep={currentStep} />
 
         {/* ───── B. Order Items Grid ───── */}
         <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
@@ -703,7 +704,7 @@ export function OrderTracking() {
 
         {/* ───── C. Carrier Tracking Card ───── */}
         {isShipped && o.trackingNumber && o.carrier && (
-          <CarrierTrackingCard order={order} tracking={tracking} />
+          <CarrierTrackingCard order={o} tracking={tracking} />
         )}
 
         {/* ───── Live Tracking Info (kept from original) ───── */}

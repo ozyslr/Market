@@ -72,6 +72,7 @@ interface OrderSetDoc {
  */
 export async function createOrderSet(data: CreateOrderSetInput) {
   if (!adminDb) throw new Error('Firebase Admin not initialized');
+  const db = adminDb;
 
   const now = new Date().toISOString();
 
@@ -94,11 +95,11 @@ export async function createOrderSet(data: CreateOrderSetInput) {
   }
 
   // Create documents inside a transaction
-  const orderSetRef = adminDb.collection(ORDER_SETS_COLLECTION).doc();
-  const subOrderRefs = subOrderTotals.map(() => adminDb.collection(SUB_ORDERS_COLLECTION).doc());
+  const orderSetRef = db.collection(ORDER_SETS_COLLECTION).doc();
+  const subOrderRefs = subOrderTotals.map(() => db.collection(SUB_ORDERS_COLLECTION).doc());
   const subOrderIds = subOrderRefs.map((ref) => ref.id);
 
-  await adminDb.runTransaction(async (txn) => {
+  await db.runTransaction(async (txn) => {
     // Create OrderSet
     const orderSetDoc: OrderSetDoc = {
       userId: data.userId,
@@ -151,8 +152,9 @@ export async function createOrderSet(data: CreateOrderSetInput) {
  */
 export async function getOrderSet(orderSetId: string) {
   if (!adminDb) throw new Error('Firebase Admin not initialized');
+  const db = adminDb;
 
-  const orderSetSnap = await adminDb.collection(ORDER_SETS_COLLECTION).doc(orderSetId).get();
+  const orderSetSnap = await db.collection(ORDER_SETS_COLLECTION).doc(orderSetId).get();
   if (!orderSetSnap.exists) return null;
 
   const orderSetData = orderSetSnap.data()!;
@@ -162,7 +164,7 @@ export async function getOrderSet(orderSetId: string) {
   const subOrders: any[] = [];
   if (subOrderIds.length > 0) {
     const subOrderSnaps = await Promise.all(
-      subOrderIds.map((id: string) => adminDb.collection(SUB_ORDERS_COLLECTION).doc(id).get()),
+      subOrderIds.map((id: string) => db.collection(SUB_ORDERS_COLLECTION).doc(id).get()),
     );
     for (const snap of subOrderSnaps) {
       if (snap.exists) {
@@ -183,8 +185,9 @@ export async function getOrderSet(orderSetId: string) {
  */
 export async function getUserOrderSets(userId: string, limitCount = 50) {
   if (!adminDb) throw new Error('Firebase Admin not initialized');
+  const db = adminDb;
 
-  const snap = await adminDb
+  const snap = await db
     .collection(ORDER_SETS_COLLECTION)
     .where('userId', '==', userId)
     .orderBy('createdAt', 'desc')
@@ -203,10 +206,11 @@ export async function getUserOrderSets(userId: string, limitCount = 50) {
  */
 export async function transitionOrderSetStatus(orderSetId: string, event: TransitionEvent) {
   if (!adminDb) throw new Error('Firebase Admin not initialized');
+  const db = adminDb;
 
-  const ref = adminDb.collection(ORDER_SETS_COLLECTION).doc(orderSetId);
+  const ref = db.collection(ORDER_SETS_COLLECTION).doc(orderSetId);
 
-  await adminDb.runTransaction(async (txn) => {
+  await db.runTransaction(async (txn) => {
     const snap = await txn.get(ref);
     if (!snap.exists) {
       throw new Error(`OrderSet ${orderSetId} not found`);
@@ -227,7 +231,7 @@ export async function transitionOrderSetStatus(orderSetId: string, event: Transi
     if (result.status === 'cancelled') {
       const subOrderIds = (snap.data()!.subOrderIds as string[]) || [];
       for (const subId of subOrderIds) {
-        const subRef = adminDb.collection(SUB_ORDERS_COLLECTION).doc(subId);
+        const subRef = db.collection(SUB_ORDERS_COLLECTION).doc(subId);
         const subSnap = await txn.get(subRef);
         const subVersion = subSnap.exists ? (subSnap.data()?.version as number) || 0 : 0;
         txn.update(subRef, {
