@@ -114,14 +114,18 @@ export interface UserProfile extends User {
   spentTotal: number;
   lastLogin: string;
   phone?: string;
+  surname?: string;
+  birthDate?: string;
+  bio?: string;
+  gender?: 'male' | 'female' | 'other' | 'prefer_not';
   orders: Order[];
   savedItems: string[];
   addresses?: Address[];
   defaultAddressId?: string;
   stripeCustomerId?: string;
   defaultPaymentMethodId?: string;
-  defaultPaymentMethodLast4?: string;   // e.g. "4242" — for display only
-  defaultPaymentMethodBrand?: string;   // e.g. "visa" — for display only
+  defaultPaymentMethodLast4?: string; // e.g. "4242" — for display only
+  defaultPaymentMethodBrand?: string; // e.g. "visa" — for display only
   followedSellers?: string[];
   preferences: {
     newsletter: boolean;
