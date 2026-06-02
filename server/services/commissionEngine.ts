@@ -1,6 +1,12 @@
-// ─── Commission Engine ───────────────────────────────────────────────────────
-// Handles commission rule resolution with specificity priority and min/max limits.
-// All amounts are in integer kurus (1 TL = 100 kurus) to avoid floating-point issues.
+// ─── Commission Engine ──────────────────────────────────────────────────────
+// Server-side commission rate resolution with specificity priority:
+// 1) seller-specific active rule, 2) category-specific active rule,
+// 3) DEFAULT_RATES[categoryId], 4) global default (10%).
+// All monetary values are in integer kurus (1 TL = 100 kurus).
+
+import crypto from 'crypto';
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface CommissionRule {
   ruleId: string;
@@ -23,131 +29,148 @@ export interface CommissionResult {
   ruleId: string;
 }
 
-// ─── Default Rates (D-05) ──────────────────────────────────────────────────
+// ─── Default Rates (from D-05) ──────────────────────────────────────────────
 
-const DEFAULT_RATES: Record<string, number> = {
-  elektronik: 0.05,
-  giyim: 0.1,
-  'ev-yasam': 0.12,
-  kozmetik: 0.15,
-  mucevher: 0.08,
+export const DEFAULT_RATES: Record<string, number> = {
+  elektronik: 0.05, // 5%
+  giyim: 0.1, // 10%
+  'ev-ve-yasam': 0.12, // 12%
+  kozmetik: 0.15, // 15%
+  mucevher: 0.08, // 8%
 };
 
-const GLOBAL_DEFAULT_RATE = 0.1;
-const GLOBAL_MIN_COMMISSION = 500; // 5 TL
-const GLOBAL_MAX_COMMISSION = 50000; // 500 TL
+const GLOBAL_DEFAULT_RATE = 0.1; // 10%
+
+// ─── Rate Resolution ────────────────────────────────────────────────────────
 
 /**
- * Resolve the effective commission rate using specificity priority:
- * 1) Seller-specific active rule (lowest priority number wins)
- * 2) Category-specific active rule
- * 3) DEFAULT_RATES for the categoryId
- * 4) Global default (10%)
+ * Resolve the effective commission rate for a given seller + category.
+ *
+ * Priority order (per D-04):
+ * 1. Seller-specific active rule (for this seller + category)
+ * 2. Category-specific active rule
+ * 3. DEFAULT_RATES[categoryId]
+ * 4. Global default (0.10)
  */
 export function resolveRate(rules: CommissionRule[], sellerId: string, categoryId: string): number {
-  let sellerRule: CommissionRule | null = null;
-  let categoryRule: CommissionRule | null = null;
-  let globalRule: CommissionRule | null = null;
+  // Filter to active rules only
+  const activeRules = rules.filter((r) => r.active);
 
-  for (const rule of rules) {
-    if (!rule.active) continue;
+  // Priority 1: seller-specific rule for this seller+category
+  const sellerRule = activeRules.find(
+    (r) =>
+      r.type === 'seller' && r.scope?.sellerId === sellerId && r.scope?.categoryId === categoryId,
+  );
+  if (sellerRule) return sellerRule.rate;
 
-    if (rule.type === 'seller' && rule.scope?.sellerId === sellerId) {
-      if (!sellerRule || rule.priority < sellerRule.priority) {
-        sellerRule = rule;
-      }
-    } else if (rule.type === 'category' && rule.scope?.categoryId === categoryId) {
-      if (!categoryRule || rule.priority < categoryRule.priority) {
-        categoryRule = rule;
-      }
-    } else if (rule.type === 'global') {
-      if (!globalRule || rule.priority < globalRule.priority) {
-        globalRule = rule;
-      }
-    }
+  // Priority 2: category-specific rule
+  const categoryRule = activeRules.find(
+    (r) => r.type === 'category' && r.scope?.categoryId === categoryId,
+  );
+  if (categoryRule) return categoryRule.rate;
+
+  // Priority 3: default rate by category
+  if (DEFAULT_RATES[categoryId] !== undefined) {
+    return DEFAULT_RATES[categoryId];
   }
 
-  // Priority: seller > category > default from map > global
-  if (sellerRule) return sellerRule.rate;
-  if (categoryRule) return categoryRule.rate;
-  if (DEFAULT_RATES[categoryId] !== undefined) return DEFAULT_RATES[categoryId];
-  if (globalRule) return globalRule.rate;
+  // Priority 4: global default
   return GLOBAL_DEFAULT_RATE;
 }
 
 /**
- * Find the best matching rule (for metadata like min/max).
+ * Resolve the best matching rule for a given seller + category.
+ * Used to get min/max limits from the matched rule.
  */
-function findBestRule(
+function resolveMatchingRule(
   rules: CommissionRule[],
   sellerId: string,
   categoryId: string,
 ): CommissionRule | null {
-  let best: CommissionRule | null = null;
+  const activeRules = rules.filter((r) => r.active);
 
-  for (const rule of rules) {
-    if (!rule.active) continue;
+  // Priority 1: seller-specific rule for this seller+category
+  const sellerRule = activeRules.find(
+    (r) =>
+      r.type === 'seller' && r.scope?.sellerId === sellerId && r.scope?.categoryId === categoryId,
+  );
+  if (sellerRule) return sellerRule;
 
-    if (rule.type === 'seller' && rule.scope?.sellerId === sellerId) {
-      if (!best || rule.priority < best.priority) best = rule;
-    } else if (rule.type === 'category' && rule.scope?.categoryId === categoryId) {
-      if (!best || (best.type !== 'seller' && rule.priority < best.priority)) best = rule;
-    } else if (rule.type === 'global') {
-      if (
-        !best ||
-        (best.type !== 'seller' && best.type !== 'category' && rule.priority < best.priority)
-      )
-        best = rule;
-    }
-  }
+  // Priority 2: category-specific rule
+  const categoryRule = activeRules.find(
+    (r) => r.type === 'category' && r.scope?.categoryId === categoryId,
+  );
+  if (categoryRule) return categoryRule;
 
-  return best;
+  // Priority 3: global rule
+  const globalRule = activeRules.find((r) => r.type === 'global');
+  if (globalRule) return globalRule;
+
+  return null;
 }
 
-export interface CalculateCommissionParams {
+// ─── Commission Calculation ─────────────────────────────────────────────────
+
+/**
+ * Calculate commission for a given price, seller, and category.
+ *
+ * @param params.priceInKurus - Item price in integer kurus (e.g., 10000 = 100 TL)
+ * @param params.sellerId - Seller ID
+ * @param params.categoryId - Category ID
+ * @param params.rules - Array of commission rules to evaluate
+ * @returns CommissionResult with rate, amount, and limit flags
+ */
+export function calculateCommission(params: {
   priceInKurus: number;
   sellerId: string;
   categoryId: string;
   rules: CommissionRule[];
-}
-
-/**
- * Calculate commission for a given price, seller, and category.
- * Applies min/max limits from the matched rule. Returns integer kurus amount.
- */
-export function calculateCommission(params: CalculateCommissionParams): CommissionResult {
+}): CommissionResult {
   const { priceInKurus, sellerId, categoryId, rules } = params;
 
-  if (priceInKurus <= 0) {
-    return { rate: 0, amount: 0, minApplied: false, maxApplied: false, ruleId: '' };
+  // Handle zero price edge case
+  if (priceInKurus === 0) {
+    return {
+      rate: resolveRate(rules, sellerId, categoryId),
+      amount: 0,
+      minApplied: false,
+      maxApplied: false,
+      ruleId: '',
+    };
   }
 
+  // Resolve rate and matching rule
   const rate = resolveRate(rules, sellerId, categoryId);
-  const bestRule = findBestRule(rules, sellerId, categoryId);
+  const matchedRule = resolveMatchingRule(rules, sellerId, categoryId);
 
-  const minCom = bestRule?.minCommission ?? GLOBAL_MIN_COMMISSION;
-  const maxCom = bestRule?.maxCommission ?? GLOBAL_MAX_COMMISSION;
-  const ruleId = bestRule?.ruleId ?? '';
-
+  // Calculate raw commission amount
   let amount = Math.round(priceInKurus * rate);
+
+  // Apply min/max from the matched rule (or defaults)
   let minApplied = false;
   let maxApplied = false;
 
-  if (amount < minCom) {
-    amount = minCom;
-    minApplied = true;
+  if (matchedRule) {
+    if (amount <= matchedRule.minCommission) {
+      amount = matchedRule.minCommission;
+      minApplied = true;
+    } else if (amount >= matchedRule.maxCommission) {
+      amount = matchedRule.maxCommission;
+      maxApplied = true;
+    }
   }
 
-  if (amount > maxCom) {
-    amount = maxCom;
-    maxApplied = true;
-  }
-
-  return { rate, amount, minApplied, maxApplied, ruleId };
+  return {
+    rate,
+    amount,
+    minApplied,
+    maxApplied,
+    ruleId: matchedRule?.ruleId ?? '',
+  };
 }
 
 /**
- * Return the default rates map for admin visibility.
+ * Get the default rates map for admin display.
  */
 export function getDefaultRates(): Record<string, number> {
   return { ...DEFAULT_RATES };

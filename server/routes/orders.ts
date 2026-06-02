@@ -6,6 +6,7 @@ import type { Express } from 'express';
 import { z } from 'zod';
 import { validate } from '../lib/validate.js';
 import { createOrderSet, getOrderSet, getUserOrderSets } from '../services/orderService.js';
+import { recordEntry } from '../services/ledgerService.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
@@ -68,6 +69,29 @@ export function registerOrderRoutes(app: Express, deps: OrderRouteDeps) {
           currency,
           shippingAddress,
         });
+
+        // Record ledger entry for the order charge
+        if (deps.adminDb) {
+          try {
+            await recordEntry(deps.adminDb, {
+              orderSetId: result.id,
+              subOrderId: '',
+              sellerId: '',
+              type: 'order_charge',
+              amount: result.totalAmount,
+              currency: result.currency,
+              reference: '',
+              reason: 'Order placed',
+              createdBy: 'system',
+            });
+          } catch (ledgerErr) {
+            // Ledger recording failure is non-blocking for order creation
+            console.warn(
+              '[ledger] Failed to record order_charge entry:',
+              (ledgerErr as Error).message,
+            );
+          }
+        }
 
         return res.status(201).json(result);
       } catch (err: any) {

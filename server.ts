@@ -352,7 +352,7 @@ async function startServer() {
   //  Order Set API (/api/orders/*)  server/routes/orders.ts
   registerOrderRoutes(app, { adminDb, verifyFirebaseToken });
 
-  //  Commission & Ledger API (/api/admin/commission-rules, /api/orders/calculate-commission)
+  //  Commission Rules API (/api/commission-rules/*) - server/routes/commission.ts
   registerCommissionRoutes(app, { adminDb, verifyFirebaseToken, verifyAdmin });
 
   // POST /api/send-push â€” Send push notification to a user

@@ -153,10 +153,20 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Commission Rules — admin-only writes, authenticated reads
+    // Commission Rules — admin write, authenticated read
     match /commissionRules/{ruleId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if false; // Soft-delete via update (active=false)
+    }
+
+    // Ledger — append-only immutable storage per D-03
+    // All writes via server-side Admin SDK only (firestore.rules blocks clients)
+    match /ledger/{entryId} {
+      allow read: if isSignedIn();
+      allow create: if false;   // Only via server-side ledgerService (admin SDK bypasses rules)
+      allow update, delete: if false;  // Per D-03: append-only
     }
 
     // Activity Logs
