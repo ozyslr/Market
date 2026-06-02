@@ -31,7 +31,10 @@ import { ManualPayment } from '@/components/checkout/ManualPayment';
 import { AddressSelector } from '@/components/checkout/AddressSelector';
 import { StripePaymentForm } from '@/components/checkout/StripePaymentForm';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
+import { SavedCardSelector } from '@/components/checkout/SavedCardSelector';
+import { listPaymentMethods } from '@/services/oneClickCheckoutService';
 import type { Order, PaymentMethod, ShippingAddress } from '@/types/order';
+import type { SavedCard } from '@/types';
 import { validateCoupon, incrementCouponUsage, calcDiscount } from '@/services/couponService';
 import {
   getActiveCartCampaigns,
@@ -73,6 +76,11 @@ export function CheckoutPage() {
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [saveAddress, setSaveAddress] = useState(false);
+
+  // Saved cards for checkout
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+  const [savedCardsLoading, setSavedCardsLoading] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   // Cart campaign auto-apply
   const [cartCampaigns, setCartCampaigns] = useState<CartCampaign[]>([]);
@@ -408,6 +416,61 @@ export function CheckoutPage() {
     }
   };
 
+  // Pay with a saved card (selectedCardId)
+  const [savedCardPaying, setSavedCardPaying] = useState(false);
+  const handleSavedCardPay = async () => {
+    if (!selectedCardId || !firebaseUser) return;
+    setSavedCardPaying(true);
+    setPaymentError(null);
+    try {
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          amount: totals.total,
+          currency: currency.toLowerCase(),
+          paymentMethodId: selectedCardId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPaymentError(data.error || 'Ödeme başlatılamadı');
+        setSavedCardPaying(false);
+        return;
+      }
+      if (data.requiresAction && stripePromise) {
+        // 3DS challenge needed
+        const stripe = await stripePromise;
+        if (!stripe) {
+          setPaymentError('Stripe yüklenemedi');
+          setSavedCardPaying(false);
+          return;
+        }
+        const { error, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret);
+        if (error) {
+          setPaymentError(error.message || '3DS doğrulaması başarısız');
+          setSavedCardPaying(false);
+          return;
+        }
+        if (paymentIntent?.status === 'succeeded') {
+          await handlePaymentSuccess(paymentIntent.id);
+        } else {
+          setPaymentError('Ödeme tamamlanamadı');
+        }
+      } else {
+        // Payment succeeded immediately (no 3DS)
+        await handlePaymentSuccess(data.clientSecret.split('_secret_')[0] || data.clientSecret);
+      }
+    } catch (err: any) {
+      setPaymentError(err.message || 'Ödeme sırasında bir hata oluştu');
+    }
+    setSavedCardPaying(false);
+  };
+
   const handlePaymentSuccess = async (paymentIntentId: string) => {
     const order = await processOrder('paid', paymentIntentId);
     if (order) {
@@ -417,6 +480,17 @@ export function CheckoutPage() {
       setStep(3);
     }
   };
+
+  // Load saved cards when entering payment step
+  useEffect(() => {
+    if (step === 2 && firebaseUser) {
+      setSavedCardsLoading(true);
+      listPaymentMethods(firebaseUser).then((result) => {
+        setSavedCards(result.cards);
+        setSavedCardsLoading(false);
+      });
+    }
+  }, [step, firebaseUser]);
 
   const elementsOptions =
     clientSecret && !isMock
@@ -553,14 +627,57 @@ export function CheckoutPage() {
                     </p>
                   </div>
 
-                  {/* Payment Method Selector */}
-                  <div className="mb-6">
-                    <PaymentMethodSelector
-                      selected={paymentMethod}
-                      onChange={setPaymentMethod}
-                      region={user?.country || 'UK'}
-                    />
-                  </div>
+                  {/* Saved Cards — show when user is logged in */}
+                  {firebaseUser && (savedCards.length > 0 || savedCardsLoading) && (
+                    <div className="mb-6">
+                      <SavedCardSelector
+                        cards={savedCards}
+                        selectedCardId={selectedCardId}
+                        onSelect={(id) => {
+                          setSelectedCardId(id);
+                          if (id) setPaymentMethod('stripe');
+                        }}
+                        loading={savedCardsLoading}
+                        onCardsChange={() => {
+                          if (firebaseUser)
+                            listPaymentMethods(firebaseUser).then((r) => setSavedCards(r.cards));
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Saved card payment button */}
+                  {selectedCardId && (
+                    <div className="mb-6">
+                      <button
+                        type="button"
+                        onClick={handleSavedCardPay}
+                        disabled={savedCardPaying}
+                        className="w-full py-4 bg-accent text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                      >
+                        {savedCardPaying ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" /> Ödeniyor...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard size={18} /> Seçili Kartla Öde
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* New card payment method selector — only show when no saved card selected */}
+                  {!selectedCardId && (
+                    <div className="mb-6">
+                      <PaymentMethodSelector
+                        selected={paymentMethod}
+                        onChange={setPaymentMethod}
+                        region={user?.country || 'UK'}
+                      />
+                    </div>
+                  )}
 
                   {/* Stripe Payment */}
                   {paymentMethod === 'stripe' && clientSecret && (

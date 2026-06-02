@@ -1,7 +1,9 @@
 import React, { FormEvent, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CreditCard } from 'lucide-react';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import type { ShippingAddress } from '@/types/order';
+import { createSetupIntent, setupPaymentMethod } from '@/services/oneClickCheckoutService';
+import { useAuth } from '@/context/AuthContext';
 
 interface StripePaymentFormProps {
   total: number;
@@ -22,8 +24,10 @@ export function StripePaymentForm({
 }: StripePaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
+  const { firebaseUser, refreshUser } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveCard, setSaveCard] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -46,7 +50,22 @@ export function StripePaymentForm({
     if (stripeError) {
       setError(stripeError.message ?? 'Payment failed. Please try again.');
       setIsProcessing(false);
-    } else if (paymentIntent?.status === 'succeeded') {
+      return;
+    }
+
+    if (paymentIntent?.status === 'succeeded') {
+      // Save card for future purchases if checkbox is checked
+      if (saveCard && firebaseUser && paymentIntent.payment_method) {
+        try {
+          const pmId = paymentIntent.payment_method as string;
+          const card = (paymentIntent as any).charges?.data?.[0]?.payment_method_details?.card;
+          await setupPaymentMethod(firebaseUser, pmId, card?.last4 || '', card?.brand || '');
+          await refreshUser?.();
+        } catch (saveErr) {
+          // Card saved, non-critical — don't block order confirmation
+          console.warn('[Stripe] Failed to save card:', saveErr);
+        }
+      }
       onSuccess(paymentIntent.id);
     } else {
       setError('Unexpected payment status. Please contact support.');
@@ -59,11 +78,27 @@ export function StripePaymentForm({
       {isMock ? (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800 font-medium">
           <strong className="block mb-1 uppercase text-xs tracking-widest">Demo Mode</strong>
-          Add your Stripe keys to <code className="bg-amber-100 px-1 rounded">.env</code> to enable real
-          payments. This checkout will simulate a successful payment.
+          Add your Stripe keys to <code className="bg-amber-100 px-1 rounded">.env</code> to enable
+          real payments. This checkout will simulate a successful payment.
         </div>
       ) : (
         <PaymentElement />
+      )}
+
+      {/* Save card checkbox — only for logged-in users with real Stripe */}
+      {!isMock && firebaseUser && (
+        <label className="flex items-start gap-3 cursor-pointer group">
+          <input
+            type="checkbox"
+            checked={saveCard}
+            onChange={(e) => setSaveCard(e.target.checked)}
+            className="mt-0.5 w-4 h-4 rounded border-brand-primary/20 text-accent focus:ring-accent/30"
+          />
+          <span className="text-sm text-brand-primary/70 dark:text-zinc-400 group-hover:text-brand-primary transition-colors">
+            <CreditCard size={14} className="inline me-1 -mt-0.5" />
+            Bu kartı bir sonraki alışverişim için kaydet
+          </span>
+        </label>
       )}
 
       {error && (

@@ -8,8 +8,18 @@ import { FieldValue } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 import { logger } from '../logger.js';
 import { validate } from '../lib/validate.js';
-import { createPaymentIntentSchema, setupPaymentMethodSchema, defaultPaymentMethodSchema, oneClickCheckoutSchema, refundSchema } from '../lib/schemas.js';
-import { isFiniteNumber, isNonEmptyString, itemsSignature } from '../../src/lib/serverValidators.js';
+import {
+  createPaymentIntentSchema,
+  setupPaymentMethodSchema,
+  defaultPaymentMethodSchema,
+  oneClickCheckoutSchema,
+  refundSchema,
+} from '../lib/schemas.js';
+import {
+  isFiniteNumber,
+  isNonEmptyString,
+  itemsSignature,
+} from '../../src/lib/serverValidators.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
@@ -24,74 +34,81 @@ export interface StripeRouteDeps {
 /** Raw-body Stripe webhook. Register BEFORE express.json(). */
 export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Firestore | null) {
   // Stripe webhook needs raw body â€” parse before JSON middleware
-  app.post(
-    "/api/webhook",
-    express.raw({ type: 'application/json' }),
-    async (req, res) => {
-      const sig = req.headers['stripe-signature'] as string;
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'] as string;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-      if (!webhookSecret) {
-        logger.warn('stripe', 'Webhook secret not set â€” skipping verification');
-        return res.status(200).json({ received: true });
-      }
+    if (!webhookSecret) {
+      logger.warn('stripe', 'Webhook secret not set â€” skipping verification');
+      return res.status(200).json({ received: true });
+    }
 
-      let event: Stripe.Event;
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-      } catch (err) {
-        logger.error('stripe', 'Webhook signature verification failed', { error: (err as Error).message });
-        return res.status(400).send(`Webhook Error: ${(err as Error).message}`);
-      }
+    let event: Stripe.Event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+      logger.error('stripe', 'Webhook signature verification failed', {
+        error: (err as Error).message,
+      });
+      return res.status(400).send(`Webhook Error: ${(err as Error).message}`);
+    }
 
-      logger.info('stripe', 'Webhook received', { eventType: event.type });
+    logger.info('stripe', 'Webhook received', { eventType: event.type });
 
-      try {
-        switch (event.type) {
-          case 'checkout.session.completed': {
-            const session = event.data.object as Stripe.Checkout.Session;
-            const orderId = session.metadata?.orderId;
-            if (orderId && adminDb) {
-              await adminDb.collection('orders').doc(orderId).update({
+    try {
+      switch (event.type) {
+        case 'checkout.session.completed': {
+          const session = event.data.object as Stripe.Checkout.Session;
+          const orderId = session.metadata?.orderId;
+          if (orderId && adminDb) {
+            await adminDb
+              .collection('orders')
+              .doc(orderId)
+              .update({
                 status: 'paid',
                 paidAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 stripePaymentIntentId: session.payment_intent as string,
               });
-              logger.info('stripe', 'Order marked as paid', { orderId });
-            }
-            break;
+            logger.info('stripe', 'Order marked as paid', { orderId });
           }
-
-          case 'payment_intent.succeeded': {
-            const pi = event.data.object as Stripe.PaymentIntent;
-            logger.info('stripe', 'PaymentIntent succeeded', { piId: pi.id, amount: pi.amount, currency: pi.currency });
-            break;
-          }
-
-          case 'payment_intent.payment_failed': {
-            const failedPi = event.data.object as Stripe.PaymentIntent;
-            const failedOrderId = failedPi.metadata?.orderId;
-            if (failedOrderId && adminDb) {
-              await adminDb.collection('orders').doc(failedOrderId).update({
-                status: 'cancelled',
-                updatedAt: new Date().toISOString(),
-              });
-              logger.info('stripe', 'Order cancelled due to payment failure', { orderId: failedOrderId });
-            }
-            break;
-          }
-
-          default:
-            logger.info('stripe', 'Unhandled event type', { eventType: event.type });
+          break;
         }
-      } catch (err) {
-        logger.error('stripe', 'Webhook handler error', { error: (err as Error).message });
-      }
 
-      res.json({ received: true });
+        case 'payment_intent.succeeded': {
+          const pi = event.data.object as Stripe.PaymentIntent;
+          logger.info('stripe', 'PaymentIntent succeeded', {
+            piId: pi.id,
+            amount: pi.amount,
+            currency: pi.currency,
+          });
+          break;
+        }
+
+        case 'payment_intent.payment_failed': {
+          const failedPi = event.data.object as Stripe.PaymentIntent;
+          const failedOrderId = failedPi.metadata?.orderId;
+          if (failedOrderId && adminDb) {
+            await adminDb.collection('orders').doc(failedOrderId).update({
+              status: 'cancelled',
+              updatedAt: new Date().toISOString(),
+            });
+            logger.info('stripe', 'Order cancelled due to payment failure', {
+              orderId: failedOrderId,
+            });
+          }
+          break;
+        }
+
+        default:
+          logger.info('stripe', 'Unhandled event type', { eventType: event.type });
+      }
+    } catch (err) {
+      logger.error('stripe', 'Webhook handler error', { error: (err as Error).message });
     }
-  );
+
+    res.json({ received: true });
+  });
 }
 
 /** JSON-parsed Stripe endpoints. Register AFTER express.json(). */
@@ -99,8 +116,8 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
   const { stripe, adminDb, verifyFirebaseToken, verifyAdmin, port: PORT } = deps;
 
   // Stripe Payment Intent
-  app.post("/api/create-payment-intent", validate(createPaymentIntentSchema), async (req, res) => {
-    const { amount, currency = "gbp", orderId } = req.body;
+  app.post('/api/create-payment-intent', validate(createPaymentIntentSchema), async (req, res) => {
+    const { amount, currency = 'gbp', orderId, paymentMethodId } = req.body;
 
     // â”€â”€ Input validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (!isFiniteNumber(amount) || amount <= 0 || amount > 1_000_000) {
@@ -115,21 +132,70 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
 
     const stripeKey = process.env.STRIPE_SECRET_KEY;
 
-    if (!stripeKey || stripeKey === "YOUR_STRIPE_SECRET_KEY") {
+    if (!stripeKey || stripeKey === 'YOUR_STRIPE_SECRET_KEY') {
       logger.warn('stripe', 'Secret key not set, using mock response');
       return res.json({
-        clientSecret: "mock_secret_" + Math.random().toString(36).substring(7),
-        isMock: true
+        clientSecret: 'mock_secret_' + Math.random().toString(36).substring(7),
+        isMock: true,
       });
     }
 
     try {
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount * 100),
-        currency,
-        automatic_payment_methods: { enabled: true },
-        metadata: { orderId: orderId || '' },
-      }, orderId ? { idempotencyKey: `pi_${orderId}` } : undefined);
+      // If a saved card is selected, charge off-session with the stored PM
+      if (paymentMethodId) {
+        const authHeader = req.headers.authorization as string | undefined;
+        if (!authHeader?.startsWith('Bearer ')) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+        if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+        const token = authHeader.slice(7);
+        let uid: string;
+        try {
+          const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+          uid = decoded.user_id || decoded.sub;
+          if (!uid) throw new Error('No uid in token');
+          (req as any).uid = uid;
+        } catch {
+          return res.status(401).json({ error: 'Invalid token' });
+        }
+
+        const userDoc = await adminDb.collection('users').doc(uid).get();
+        const customerId: string = userDoc.data()?.stripeCustomerId || '';
+        if (!customerId) {
+          return res.status(400).json({ error: 'No Stripe customer found' });
+        }
+
+        const pi = await stripe.paymentIntents.create(
+          {
+            amount: Math.round(amount * 100),
+            currency,
+            customer: customerId,
+            payment_method: paymentMethodId,
+            confirm: true,
+            off_session: true,
+            metadata: { orderId: orderId || '' },
+          },
+          orderId ? { idempotencyKey: `pi_${orderId}` } : undefined,
+        );
+
+        if (pi.status === 'requires_action') {
+          return res.json({ clientSecret: pi.client_secret, requiresAction: true });
+        }
+        if (pi.status !== 'succeeded') {
+          return res.status(400).json({ error: 'Payment did not succeed', status: pi.status });
+        }
+        return res.json({ clientSecret: pi.client_secret, status: 'succeeded' });
+      }
+
+      const paymentIntent = await stripe.paymentIntents.create(
+        {
+          amount: Math.round(amount * 100),
+          currency,
+          automatic_payment_methods: { enabled: true },
+          metadata: { orderId: orderId || '' },
+        },
+        orderId ? { idempotencyKey: `pi_${orderId}` } : undefined,
+      );
 
       res.json({ clientSecret: paymentIntent.client_secret });
     } catch (error: any) {
@@ -176,18 +242,24 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
       const uid: string = req.uid;
       const userDoc = await adminDb.collection('users').doc(uid).get();
       const customerId: string = userDoc.data()?.stripeCustomerId || '';
-      if (!customerId) return res.status(400).json({ error: 'No Stripe customer found â€” call create-setup-intent first' });
+      if (!customerId)
+        return res
+          .status(400)
+          .json({ error: 'No Stripe customer found â€” call create-setup-intent first' });
 
       await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
       await stripe.customers.update(customerId, {
         invoice_settings: { default_payment_method: paymentMethodId },
       });
 
-      await adminDb.collection('users').doc(uid).update({
-        defaultPaymentMethodId: paymentMethodId,
-        defaultPaymentMethodLast4: last4 || '',
-        defaultPaymentMethodBrand: brand || '',
-      });
+      await adminDb
+        .collection('users')
+        .doc(uid)
+        .update({
+          defaultPaymentMethodId: paymentMethodId,
+          defaultPaymentMethodLast4: last4 || '',
+          defaultPaymentMethodBrand: brand || '',
+        });
 
       res.json({ success: true });
     } catch (error: any) {
@@ -208,9 +280,10 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         stripe.paymentMethods.list({ customer: customerId, type: 'card' }),
         stripe.customers.retrieve(customerId),
       ]);
-      const defaultPm = (customer && !('deleted' in customer))
-        ? ((customer.invoice_settings?.default_payment_method as string | null) || '')
-        : '';
+      const defaultPm =
+        customer && !('deleted' in customer)
+          ? (customer.invoice_settings?.default_payment_method as string | null) || ''
+          : '';
       const cards = methods.data.map((pm) => ({
         id: pm.id,
         brand: pm.card?.brand || '',
@@ -229,7 +302,8 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
   app.delete('/api/payment-methods/:id', verifyFirebaseToken, async (req: any, res) => {
     if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
     const id = req.params.id;
-    if (!isNonEmptyString(id, 128)) return res.status(400).json({ error: 'Invalid payment method id' });
+    if (!isNonEmptyString(id, 128))
+      return res.status(400).json({ error: 'Invalid payment method id' });
     try {
       const uid: string = req.uid;
       const userRef = adminDb.collection('users').doc(uid);
@@ -250,7 +324,9 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         const next = remaining.data[0];
         if (next) {
           newDefaultId = next.id;
-          await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: next.id } });
+          await stripe.customers.update(customerId, {
+            invoice_settings: { default_payment_method: next.id },
+          });
           await userRef.update({
             defaultPaymentMethodId: next.id,
             defaultPaymentMethodLast4: next.card?.last4 || '',
@@ -274,7 +350,8 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
   app.patch('/api/payment-methods/default', verifyFirebaseToken, async (req: any, res) => {
     if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
     const { paymentMethodId } = req.body || {};
-    if (!isNonEmptyString(paymentMethodId, 128)) return res.status(400).json({ error: 'paymentMethodId required' });
+    if (!isNonEmptyString(paymentMethodId, 128))
+      return res.status(400).json({ error: 'paymentMethodId required' });
     try {
       const uid: string = req.uid;
       const userRef = adminDb.collection('users').doc(uid);
@@ -284,7 +361,9 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
       const pm = await stripe.paymentMethods.retrieve(paymentMethodId);
       if (pm.customer !== customerId) return res.status(403).json({ error: 'Not your card' });
 
-      await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: paymentMethodId } });
+      await stripe.customers.update(customerId, {
+        invoice_settings: { default_payment_method: paymentMethodId },
+      });
       await userRef.update({
         defaultPaymentMethodId: paymentMethodId,
         defaultPaymentMethodLast4: pm.card?.last4 || '',
@@ -307,9 +386,13 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
       return res.status(400).json({ error: 'No items provided' });
     }
     for (const it of items) {
-      if (!isNonEmptyString(it?.productId, 128) ||
-          !isFiniteNumber(it?.quantity) || it.quantity <= 0 || it.quantity > 1000 ||
-          (it.variantId !== undefined && !isNonEmptyString(it.variantId, 128))) {
+      if (
+        !isNonEmptyString(it?.productId, 128) ||
+        !isFiniteNumber(it?.quantity) ||
+        it.quantity <= 0 ||
+        it.quantity > 1000 ||
+        (it.variantId !== undefined && !isNonEmptyString(it.variantId, 128))
+      ) {
         return res.status(400).json({ error: 'Invalid item in request' });
       }
     }
@@ -323,7 +406,13 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
       const userData = userDoc.data();
       if (!userData) return res.status(404).json({ error: 'User not found' });
 
-      const { stripeCustomerId, defaultPaymentMethodId, defaultAddressId, addresses = [], email } = userData;
+      const {
+        stripeCustomerId,
+        defaultPaymentMethodId,
+        defaultAddressId,
+        addresses = [],
+        email,
+      } = userData;
       if (!stripeCustomerId || !defaultPaymentMethodId) {
         return res.status(400).json({ error: 'No saved payment method' });
       }
@@ -368,7 +457,8 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
           const snaps = await Promise.all(refs.map((r) => tx.get(r)));
           for (let i = 0; i < items.length; i++) {
             const available = snaps[i].data()?.stock ?? 0;
-            if (available < items[i].quantity) throw new Error(`INSUFFICIENT_STOCK:${items[i].productId}`);
+            if (available < items[i].quantity)
+              throw new Error(`INSUFFICIENT_STOCK:${items[i].productId}`);
           }
           for (let i = 0; i < items.length; i++) {
             tx.update(refs[i], { stock: FieldValue.increment(-items[i].quantity) });
@@ -376,7 +466,9 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         });
       } catch (e: any) {
         if (String(e?.message).startsWith('INSUFFICIENT_STOCK')) {
-          return res.status(409).json({ status: 'failed', errorMessage: 'Yetersiz stok', detail: e.message });
+          return res
+            .status(409)
+            .json({ status: 'failed', errorMessage: 'Yetersiz stok', detail: e.message });
         }
         throw e;
       }
@@ -386,23 +478,32 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         try {
           const batch = adminDb!.batch();
           for (const it of items) {
-            batch.update(adminDb!.collection('products').doc(it.productId), { stock: FieldValue.increment(it.quantity) });
+            batch.update(adminDb!.collection('products').doc(it.productId), {
+              stock: FieldValue.increment(it.quantity),
+            });
           }
           await batch.commit();
-        } catch (e) { logger.warn('stripe', 'Stock release failed', { error: (e as Error).message }); }
+        } catch (e) {
+          logger.warn('stripe', 'Stock release failed', { error: (e as Error).message });
+        }
       };
 
       // â”€â”€ Charge off-session (idempotent on rapid double-submit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       let paymentIntent: Stripe.PaymentIntent;
       try {
-        paymentIntent = await stripe.paymentIntents.create({
-          amount: Math.round(total * 100),
-          currency,
-          customer: stripeCustomerId,
-          payment_method: defaultPaymentMethodId,
-          confirm: true,
-          off_session: true,
-        }, { idempotencyKey: `oc:${uid}:${itemsSignature(items)}:${Math.floor(Date.now() / 60000)}` });
+        paymentIntent = await stripe.paymentIntents.create(
+          {
+            amount: Math.round(total * 100),
+            currency,
+            customer: stripeCustomerId,
+            payment_method: defaultPaymentMethodId,
+            confirm: true,
+            off_session: true,
+          },
+          {
+            idempotencyKey: `oc:${uid}:${itemsSignature(items)}:${Math.floor(Date.now() / 60000)}`,
+          },
+        );
       } catch (chargeErr) {
         await releaseStock();
         throw chargeErr;
@@ -459,10 +560,13 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
       if (email) {
         try {
           const appUrl = process.env.APP_URL || `http://localhost:${PORT}`;
-          const rows = orderItems.map((i: any) =>
-            `<tr><td style="padding:8px 0;font-size:13px;color:#1A1033;">${i.name} Ã— ${i.quantity}</td>` +
-            `<td style="padding:8px 0;font-size:13px;color:#1A1033;text-align:right;font-weight:700;">${currency} ${(i.price * i.quantity).toFixed(2)}</td></tr>`
-          ).join('');
+          const rows = orderItems
+            .map(
+              (i: any) =>
+                `<tr><td style="padding:8px 0;font-size:13px;color:#1A1033;">${i.name} Ã— ${i.quantity}</td>` +
+                `<td style="padding:8px 0;font-size:13px;color:#1A1033;text-align:right;font-weight:700;">${currency} ${(i.price * i.quantity).toFixed(2)}</td></tr>`,
+            )
+            .join('');
           await adminDb.collection('mail').add({
             to: email,
             message: {
@@ -483,7 +587,9 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
             },
           });
         } catch (e) {
-          logger.warn('stripe', 'One-click checkout confirmation email failed', { error: (e as Error).message });
+          logger.warn('stripe', 'One-click checkout confirmation email failed', {
+            error: (e as Error).message,
+          });
         }
       }
 
