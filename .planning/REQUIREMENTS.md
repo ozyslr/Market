@@ -11,16 +11,16 @@
 - [ ] **PAY-02**: Müşteri Stripe ile EUR cinsinden 3D Secure ödeme yapabilir
 - [ ] **PAY-03**: Platform ödemeyi escrow'da tutar, komisyon kesintisi sonrası satıcıya payout yapar
 - [ ] **PAY-04**: İade durumunda komisyon iadesi otomatik yapılır (reverse_transfer)
-- [ ] **PAY-05**: Webhook idempotency — aynı event tekrar gelirse çift işlem yapılmaz
+- [x] **PAY-05**: Webhook idempotency — aynı event tekrar gelirse çift işlem yapılmaz
 - [ ] **PAY-06**: Satıcı finansal dashboard — bakiye, bekleyen, ödenen tutarları görür
 
 ### Sipariş Yaşam Döngüsü (ORD)
 
 - [ ] **ORD-01**: Sipariş durum makinesi: Pending → Processing → Shipped → Delivered (ve iptal/iade durumları)
 - [ ] **ORD-02**: Çok satıcılı sepette siparişler OrderSet + SubOrder olarak bölünür
-- [ ] **ORD-03**: Satıcı sipariş durumunu güncelleyebilir (Processing → Shipped)
-- [ ] **ORD-04**: Müşteri siparişini canlı takip edebilir
-- [ ] **ORD-05**: Stok rezervasyonu — ödeme sırasında stok düşülür, iptalde geri eklenir
+- [x] **ORD-03**: Satıcı sipariş durumunu güncelleyebilir (Processing → Shipped)
+- [x] **ORD-04**: Müşteri siparişini canlı takip edebilir
+- [x] **ORD-05**: Stok rezervasyonu — ödeme sırasında stok düşülür, iptalde geri eklenir
 - [ ] **ORD-06**: Sipariş geçmişi ve detay sayfası
 
 ### Satıcı Yönetimi (SEL)
@@ -109,58 +109,58 @@
 
 ## Traceability
 
-| Requirement | Phase   | Status  |
-| ----------- | ------- | ------- |
-| PAY-01      | Phase 2 | Pending |
-| PAY-02      | Phase 2 | Pending |
-| PAY-03      | Phase 2 | Pending |
-| PAY-04      | Phase 2 | Pending |
-| PAY-05      | Phase 2 | Pending |
-| PAY-06      | Phase 2 | Pending |
-| ORD-01      | Phase 1 | Pending |
-| ORD-02      | Phase 1 | Pending |
-| ORD-03      | Phase 2 | Pending |
-| ORD-04      | Phase 2 | Pending |
-| ORD-05      | Phase 2 | Pending |
-| ORD-06      | Phase 1 | Pending |
-| SEL-01      | Phase 3 | Pending |
-| SEL-02      | Phase 3 | Pending |
-| SEL-03      | Phase 3 | Pending |
-| SEL-04      | Phase 3 | Pending |
-| SEL-05      | Phase 3 | Pending |
-| SEL-06      | Phase 3 | Pending |
-| COM-01      | Phase 1 | Pending |
-| COM-02      | Phase 1 | Pending |
-| COM-03      | Phase 1 | Pending |
-| COM-04      | Phase 2 | Pending |
-| COM-05      | Phase 2 | Pending |
-| CMP-01      | Phase 1 | Pending |
-| CMP-02      | Phase 1 | Pending |
-| CMP-03      | Phase 1 | Pending |
-| CMP-04      | Phase 1 | Pending |
-| CMP-05      | Phase 1 | Pending |
-| CMP-06      | Phase 1 | Pending |
-| SRC-01      | Phase 4 | Pending |
-| SRC-02      | Phase 4 | Pending |
-| SRC-03      | Phase 4 | Pending |
-| SRC-04      | Phase 4 | Pending |
-| SRC-05      | Phase 4 | Pending |
-| SHP-01      | Phase 5 | Pending |
-| SHP-02      | Phase 5 | Pending |
-| SHP-03      | Phase 5 | Pending |
-| SHP-04      | Phase 5 | Pending |
-| SHP-05      | Phase 5 | Pending |
-| CUR-01      | Phase 6 | Pending |
-| CUR-02      | Phase 6 | Pending |
-| CUR-03      | Phase 6 | Pending |
-| CUR-04      | Phase 6 | Pending |
-| REV-01      | Phase 7 | Pending |
-| REV-02      | Phase 7 | Pending |
-| REV-03      | Phase 7 | Pending |
-| REV-04      | Phase 7 | Pending |
-| NOT-01      | Phase 2 | Pending |
-| NOT-02      | Phase 2 | Pending |
-| NOT-03      | Phase 2 | Pending |
+| Requirement | Phase   | Status   |
+| ----------- | ------- | -------- |
+| PAY-01      | Phase 2 | Pending  |
+| PAY-02      | Phase 2 | Pending  |
+| PAY-03      | Phase 2 | Pending  |
+| PAY-04      | Phase 2 | Pending  |
+| PAY-05      | Phase 2 | Complete |
+| PAY-06      | Phase 2 | Pending  |
+| ORD-01      | Phase 1 | Pending  |
+| ORD-02      | Phase 1 | Pending  |
+| ORD-03      | Phase 2 | Complete |
+| ORD-04      | Phase 2 | Complete |
+| ORD-05      | Phase 2 | Complete |
+| ORD-06      | Phase 1 | Pending  |
+| SEL-01      | Phase 3 | Pending  |
+| SEL-02      | Phase 3 | Pending  |
+| SEL-03      | Phase 3 | Pending  |
+| SEL-04      | Phase 3 | Pending  |
+| SEL-05      | Phase 3 | Pending  |
+| SEL-06      | Phase 3 | Pending  |
+| COM-01      | Phase 1 | Pending  |
+| COM-02      | Phase 1 | Pending  |
+| COM-03      | Phase 1 | Pending  |
+| COM-04      | Phase 2 | Pending  |
+| COM-05      | Phase 2 | Pending  |
+| CMP-01      | Phase 1 | Pending  |
+| CMP-02      | Phase 1 | Pending  |
+| CMP-03      | Phase 1 | Pending  |
+| CMP-04      | Phase 1 | Pending  |
+| CMP-05      | Phase 1 | Pending  |
+| CMP-06      | Phase 1 | Pending  |
+| SRC-01      | Phase 4 | Pending  |
+| SRC-02      | Phase 4 | Pending  |
+| SRC-03      | Phase 4 | Pending  |
+| SRC-04      | Phase 4 | Pending  |
+| SRC-05      | Phase 4 | Pending  |
+| SHP-01      | Phase 5 | Pending  |
+| SHP-02      | Phase 5 | Pending  |
+| SHP-03      | Phase 5 | Pending  |
+| SHP-04      | Phase 5 | Pending  |
+| SHP-05      | Phase 5 | Pending  |
+| CUR-01      | Phase 6 | Pending  |
+| CUR-02      | Phase 6 | Pending  |
+| CUR-03      | Phase 6 | Pending  |
+| CUR-04      | Phase 6 | Pending  |
+| REV-01      | Phase 7 | Pending  |
+| REV-02      | Phase 7 | Pending  |
+| REV-03      | Phase 7 | Pending  |
+| REV-04      | Phase 7 | Pending  |
+| NOT-01      | Phase 2 | Pending  |
+| NOT-02      | Phase 2 | Pending  |
+| NOT-03      | Phase 2 | Pending  |
 
 **Coverage:**
 
