@@ -153,6 +153,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Commission Rules — admin-only writes, authenticated reads
+    match /commissionRules/{ruleId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
     // Activity Logs
     match /activity_logs/{logId} {
       allow create: if isSignedIn();
