@@ -12,8 +12,11 @@ import SellerLayout from './components/layout/SellerLayout';
 // React 19 removed children from ComponentClass props — explicit wrappers restore type-safety
 const HelmetProvider = HelmetProviderOrig as ComponentType<{ children: ReactNode }>;
 
-interface ErrorBoundaryProps { fallback: ReactNode; children: ReactNode }
-const SentryErrorBoundary = (Sentry.ErrorBoundary as any) as ComponentType<ErrorBoundaryProps>;
+interface ErrorBoundaryProps {
+  fallback: ReactNode;
+  children: ReactNode;
+}
+const SentryErrorBoundary = Sentry.ErrorBoundary as any as ComponentType<ErrorBoundaryProps>;
 
 import { Footer } from './components/layout/Footer';
 import { LanguageProvider } from './context/LanguageContext';
@@ -32,11 +35,10 @@ import { NotificationProvider } from './context/NotificationContext';
 const named = <T extends ComponentType<any>>(
   importer: () => Promise<Record<string, T>>,
   name: string,
-) => lazy(() => importer().then(m => ({ default: m[name] })));
+) => lazy(() => importer().then((m) => ({ default: m[name] })));
 
-const defaultPage = <T extends ComponentType<any>>(
-  importer: () => Promise<{ default: T }>,
-) => lazy(importer);
+const defaultPage = <T extends ComponentType<any>>(importer: () => Promise<{ default: T }>) =>
+  lazy(importer);
 
 // Main layout pages
 const Home = named(() => import('./pages/Home'), 'Home');
@@ -52,7 +54,10 @@ const OrderHistory = named(() => import('./pages/OrderHistory'), 'OrderHistory')
 const OrderTracking = named(() => import('./pages/OrderTracking'), 'OrderTracking');
 const UserSupport = named(() => import('./pages/UserSupport'), 'UserSupport');
 const VisualSearch = named(() => import('./pages/VisualSearch'), 'VisualSearch');
-const ProductVerification = named(() => import('./pages/ProductVerification'), 'ProductVerification');
+const ProductVerification = named(
+  () => import('./pages/ProductVerification'),
+  'ProductVerification',
+);
 const MessageCenter = named(() => import('./pages/MessageCenter'), 'MessageCenter');
 const Campaigns = named(() => import('./pages/Campaigns'), 'Campaigns');
 const FollowedSellers = named(() => import('./pages/FollowedSellers'), 'FollowedSellers');
@@ -76,7 +81,10 @@ const SellerCertificates = named(() => import('./pages/SellerCertificates'), 'Se
 const SellerCoupons = named(() => import('./pages/SellerCoupons'), 'SellerCoupons');
 const SellerPerformance = named(() => import('./pages/SellerPerformance'), 'SellerPerformance');
 const SellerInvoices = named(() => import('./pages/SellerInvoices'), 'SellerInvoices');
-const SellerPriceAnalysis = named(() => import('./pages/SellerPriceAnalysis'), 'SellerPriceAnalysis');
+const SellerPriceAnalysis = named(
+  () => import('./pages/SellerPriceAnalysis'),
+  'SellerPriceAnalysis',
+);
 const SellerApiKeys = named(() => import('./pages/SellerApiKeys'), 'SellerApiKeys');
 const SellerMessages = named(() => import('./pages/SellerMessages'), 'SellerMessages');
 const SellerAnalytics = defaultPage(() => import('./pages/SellerAnalytics'));
@@ -86,6 +94,7 @@ const AdminDashboard = named(() => import('./pages/AdminDashboard'), 'AdminDashb
 const AdminSellerView = named(() => import('./pages/AdminSellerView'), 'AdminSellerView');
 const AdminCategories = named(() => import('./pages/AdminCategories'), 'AdminCategories');
 const ModeratorDashboard = named(() => import('./pages/ModeratorDashboard'), 'ModeratorDashboard');
+const AdminDataDeletion = named(() => import('./pages/AdminDataDeletion'), 'AdminDataDeletion');
 
 // Other
 const SellOnBenimOlan = named(() => import('./pages/SellOnBenimOlan'), 'SellOnBenimOlan');
@@ -151,84 +160,91 @@ function SellerSuspense() {
 export default function App() {
   return (
     <SentryErrorBoundary fallback={<p>Bir hata oluştu. Lütfen sayfayı yenileyin.</p>}>
-    <HelmetProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <CartProvider>
-          <WishlistProvider>
-          <FollowsProvider>
-          <NotificationProvider>
-          <LanguageProvider>
-            <LocationProvider>
-              <Router>
-                <ScrollToTop />
-                <AnalyticsTracker />
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    {/* Seller panel — full-screen, no Navbar/Footer */}
-                    <Route path="/seller" element={<SellerLayout />}>
-                      <Route element={<SellerSuspense />}>
-                        <Route path="dashboard" element={<SellerDashboard />} />
-                        <Route path="inventory" element={<SellerInventoryPage />} />
-                        <Route path="orders" element={<SellerOrdersPage />} />
-                        <Route path="finance" element={<SellerFinance />} />
-                        <Route path="settings" element={<SellerSettings />} />
-                        <Route path="import"   element={<SellerImportCenter />} />
-                        <Route path="pricing"  element={<SellerPricing />} />
-                        <Route path="analytics" element={<SellerAnalytics />} />
-                        <Route path="certificates" element={<SellerCertificates />} />
-                        <Route path="coupons" element={<SellerCoupons />} />
-                        <Route path="performance" element={<SellerPerformance />} />
-                        <Route path="invoices" element={<SellerInvoices />} />
-                        <Route path="price-analysis" element={<SellerPriceAnalysis />} />
-                        <Route path="api-keys" element={<SellerApiKeys />} />
-                        <Route path="messages" element={<SellerMessages />} />
-                      </Route>
-                    </Route>
-                    {/* All other routes — with Navbar/Footer */}
-                    <Route element={<MainLayout />}>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/product/:slug" element={<ProductDetail />} />
-                      <Route path="/cart" element={<CartPage />} />
-                      <Route path="/campaigns" element={<Campaigns />} />
-                      <Route path="/checkout" element={<CheckoutPage />} />
-                      <Route path="/moderator" element={<ModeratorDashboard />} />
-                      <Route path="/seller/:id" element={<SellerStorePage />} />
-                      <Route path="/search" element={<SearchResultsPage />} />
-                      <Route path="/category/:id" element={<CategoryPage />} />
-                      <Route path="/collection/:type" element={<CollectionPage />} />
-                      <Route path="/profile" element={<UserProfilePage />} />
-                      <Route path="/admin" element={<AdminDashboard />} />
-                      <Route path="/admin/categories" element={<AdminCategories />} />
-                      <Route path="/admin/seller/:sellerId" element={<AdminSellerView />} />
-                      <Route path="/sell" element={<SellOnBenimOlan />} />
-                      <Route path="/sell/apply" element={<SellerApplication />} />
-                      <Route path="/wishlist" element={<Wishlist />} />
-                      <Route path="/followed-sellers" element={<FollowedSellers />} />
-                      <Route path="/price-alerts" element={<PriceAlerts />} />
-                      <Route path="/orders" element={<OrderHistory />} />
-                      <Route path="/orders/:orderId" element={<OrderTracking />} />
-                      <Route path="/support" element={<UserSupport />} />
-                      <Route path="/visual-search" element={<VisualSearch />} />
-                      <Route path="/verify" element={<ProductVerification />} />
-                      <Route path="/messages" element={<MessageCenter />} />
-                      <Route path="/about" element={<About />} />
-                      <Route path="/contact" element={<Contact />} />
-                      <Route path="/faq" element={<FAQ />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Route>
-                  </Routes>
-                </Suspense>
-              </Router>
-            </LocationProvider>
-          </LanguageProvider>
-          </NotificationProvider>
-          </FollowsProvider>
-          </WishlistProvider>
-          </CartProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </HelmetProvider>
+      <HelmetProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <FollowsProvider>
+                  <NotificationProvider>
+                    <LanguageProvider>
+                      <LocationProvider>
+                        <Router>
+                          <ScrollToTop />
+                          <AnalyticsTracker />
+                          <Suspense fallback={<PageLoader />}>
+                            <Routes>
+                              {/* Seller panel — full-screen, no Navbar/Footer */}
+                              <Route path="/seller" element={<SellerLayout />}>
+                                <Route element={<SellerSuspense />}>
+                                  <Route path="dashboard" element={<SellerDashboard />} />
+                                  <Route path="inventory" element={<SellerInventoryPage />} />
+                                  <Route path="orders" element={<SellerOrdersPage />} />
+                                  <Route path="finance" element={<SellerFinance />} />
+                                  <Route path="settings" element={<SellerSettings />} />
+                                  <Route path="import" element={<SellerImportCenter />} />
+                                  <Route path="pricing" element={<SellerPricing />} />
+                                  <Route path="analytics" element={<SellerAnalytics />} />
+                                  <Route path="certificates" element={<SellerCertificates />} />
+                                  <Route path="coupons" element={<SellerCoupons />} />
+                                  <Route path="performance" element={<SellerPerformance />} />
+                                  <Route path="invoices" element={<SellerInvoices />} />
+                                  <Route path="price-analysis" element={<SellerPriceAnalysis />} />
+                                  <Route path="api-keys" element={<SellerApiKeys />} />
+                                  <Route path="messages" element={<SellerMessages />} />
+                                </Route>
+                              </Route>
+                              {/* All other routes — with Navbar/Footer */}
+                              <Route element={<MainLayout />}>
+                                <Route path="/" element={<Home />} />
+                                <Route path="/product/:slug" element={<ProductDetail />} />
+                                <Route path="/cart" element={<CartPage />} />
+                                <Route path="/campaigns" element={<Campaigns />} />
+                                <Route path="/checkout" element={<CheckoutPage />} />
+                                <Route path="/moderator" element={<ModeratorDashboard />} />
+                                <Route path="/seller/:id" element={<SellerStorePage />} />
+                                <Route path="/search" element={<SearchResultsPage />} />
+                                <Route path="/category/:id" element={<CategoryPage />} />
+                                <Route path="/collection/:type" element={<CollectionPage />} />
+                                <Route path="/profile" element={<UserProfilePage />} />
+                                <Route path="/admin" element={<AdminDashboard />} />
+                                <Route path="/admin/categories" element={<AdminCategories />} />
+                                <Route
+                                  path="/admin/seller/:sellerId"
+                                  element={<AdminSellerView />}
+                                />
+                                <Route
+                                  path="/admin/compliance/deletion-requests"
+                                  element={<AdminDataDeletion />}
+                                />
+                                <Route path="/sell" element={<SellOnBenimOlan />} />
+                                <Route path="/sell/apply" element={<SellerApplication />} />
+                                <Route path="/wishlist" element={<Wishlist />} />
+                                <Route path="/followed-sellers" element={<FollowedSellers />} />
+                                <Route path="/price-alerts" element={<PriceAlerts />} />
+                                <Route path="/orders" element={<OrderHistory />} />
+                                <Route path="/orders/:orderId" element={<OrderTracking />} />
+                                <Route path="/support" element={<UserSupport />} />
+                                <Route path="/visual-search" element={<VisualSearch />} />
+                                <Route path="/verify" element={<ProductVerification />} />
+                                <Route path="/messages" element={<MessageCenter />} />
+                                <Route path="/about" element={<About />} />
+                                <Route path="/contact" element={<Contact />} />
+                                <Route path="/faq" element={<FAQ />} />
+                                <Route path="*" element={<NotFound />} />
+                              </Route>
+                            </Routes>
+                          </Suspense>
+                        </Router>
+                      </LocationProvider>
+                    </LanguageProvider>
+                  </NotificationProvider>
+                </FollowsProvider>
+              </WishlistProvider>
+            </CartProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </HelmetProvider>
     </SentryErrorBoundary>
   );
 }

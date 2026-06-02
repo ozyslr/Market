@@ -169,6 +169,14 @@ service cloud.firestore {
       allow update, delete: if false;  // Per D-03: append-only
     }
 
+    // Data Deletion Requests — authenticated submit, admin read/write
+    match /dataDeletionRequests/{requestId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
     // Activity Logs
     match /activity_logs/{logId} {
       allow create: if isSignedIn();

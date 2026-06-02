@@ -17,6 +17,7 @@ import { registerStripeWebhook, registerStripeRoutes } from './server/routes/str
 import { registerGeminiRoutes } from './server/routes/gemini.js';
 import { registerOrderRoutes } from './server/routes/orders.js';
 import { registerCommissionRoutes } from './server/routes/commission.js';
+import { registerComplianceRoutes } from './server/routes/compliance.js';
 import { logger, httpLogger } from './server/logger.js';
 
 dotenv.config();
@@ -354,6 +355,9 @@ async function startServer() {
 
   //  Commission Rules API (/api/commission-rules/*) - server/routes/commission.ts
   registerCommissionRoutes(app, { adminDb, verifyFirebaseToken, verifyAdmin });
+
+  //  Compliance API (/api/compliance/*)  server/routes/compliance.ts
+  registerComplianceRoutes(app, { adminDb, verifyFirebaseToken, verifyAdmin });
 
   // POST /api/send-push â€” Send push notification to a user
   app.post('/api/send-push', verifyFirebaseToken, async (req: any, res) => {

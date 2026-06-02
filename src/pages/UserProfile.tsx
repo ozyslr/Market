@@ -176,6 +176,95 @@ const OrderCard: React.FC<{ order: Order; expanded?: boolean }> = ({ order, expa
   );
 };
 
+function DataDeletionButton() {
+  const [showModal, setShowModal] = React.useState(false);
+  const [reason, setReason] = React.useState('');
+  const [submitting, setSubmitting] = React.useState(false);
+  const [done, setDone] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const { getAuth } = await import('firebase/auth');
+      const current = getAuth().currentUser;
+      if (!current) throw new Error('Oturum bulunamadi');
+      const token = await current.getIdToken();
+      const res = await fetch('/api/compliance/deletion-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || 'Istek gonderilemedi');
+      }
+      setDone(true);
+      setShowModal(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      {done ? (
+        <p className="text-[10px] font-bold text-green-600 dark:text-green-400">
+          Silme talebiniz alinmistir. Admin onayindan sonra isleme alinacaktir.
+        </p>
+      ) : (
+        <button
+          onClick={() => setShowModal(true)}
+          className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all"
+        >
+          Verilerimi Sil
+        </button>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 z-[16000] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 max-w-md w-full border border-brand-primary/10">
+            <h3 className="text-sm font-black text-brand-primary dark:text-white mb-2">
+              Veri Silme Talebi
+            </h3>
+            <p className="text-[11px] text-brand-primary/60 dark:text-white/60 mb-4">
+              Verileriniz kalici olarak silinecektir. Bu islem geri alinamaz. Devam etmek
+              istediginize emin misiniz?
+            </p>
+            {error && <p className="text-[10px] text-red-500 mb-3">{error}</p>}
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Silme sebebinizi kisaca aciklayin (en az 5 karakter)"
+              className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-xs text-brand-primary dark:text-white border border-brand-primary/10 mb-4 resize-none h-20"
+              minLength={5}
+              maxLength={500}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || reason.length < 5}
+                className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all disabled:opacity-40"
+              >
+                {submitting ? 'Gonderiliyor...' : 'Onayla ve Gonder'}
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 px-4 py-2.5 border border-brand-primary/10 text-brand-primary dark:text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+              >
+                Iptal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function UserProfilePage() {
   const { user: authUser, firebaseUser, loading: authLoading } = useAuth();
   const { t, lang } = useLanguage();
@@ -885,6 +974,17 @@ export function UserProfilePage() {
         {activeTab === 'settings' && (
           <div className="max-w-xl">
             <ProfileSettings />
+            {/* Data Deletion Danger Zone */}
+            <div className="mt-8 p-5 border border-red-200 dark:border-red-800 rounded-2xl bg-red-50/30 dark:bg-red-950/20">
+              <h3 className="text-sm font-black text-red-600 dark:text-red-400 uppercase tracking-widest mb-2">
+                Verilerimi Sil
+              </h3>
+              <p className="text-[10px] text-red-500/70 dark:text-red-400/60 mb-4">
+                Bu islem hesabinizdaki tum kisisel verileri kalici olarak siler. Siparis gecmisi
+                anonimlestirilir. Bu islem geri alinamaz.
+              </p>
+              <DataDeletionButton />
+            </div>
           </div>
         )}
       </div>
