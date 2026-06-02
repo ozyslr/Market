@@ -11,11 +11,12 @@ import {
   Clock,
   AlertCircle,
   Eye,
+  CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { getOrdersByUser } from '@/services/orderService';
+import { getUserOrderSets } from '@/services/orderService';
 import { ReorderButton } from '@/components/commerce/ReorderButton';
-import type { Order, OrderStatus } from '@/types/order';
+import type { OrderSet, OrderSetStatus } from '@/types/order';
 import { cn } from '@/lib/utils';
 
 // ─── Constants ───────────────────────────────────────────────────────────
@@ -25,7 +26,7 @@ type FilterKey = 'all' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 interface FilterTab {
   key: FilterKey;
   label: string;
-  statuses: OrderStatus[];
+  statuses: OrderSetStatus[];
 }
 
 const FILTER_TABS: FilterTab[] = [
@@ -36,7 +37,7 @@ const FILTER_TABS: FilterTab[] = [
   {
     key: 'cancelled',
     label: 'İptal',
-    statuses: ['cancelled', 'refunded', 'return_requested', 'returned'],
+    statuses: ['cancelled', 'refunded', 'return_requested', 'return_rejected'] as OrderSetStatus[],
   },
 ];
 
@@ -89,6 +90,26 @@ const STATUS_STYLES: Record<
     text: 'text-zinc-600 dark:text-zinc-400',
     icon: XCircle,
   },
+  completed: {
+    bg: 'bg-green-100 dark:bg-green-900/30',
+    text: 'text-green-700 dark:text-green-300',
+    icon: CheckCircle2,
+  },
+  return_approved: {
+    bg: 'bg-orange-100 dark:bg-orange-900/30',
+    text: 'text-orange-700 dark:text-orange-300',
+    icon: AlertCircle,
+  },
+  return_rejected: {
+    bg: 'bg-zinc-100 dark:bg-zinc-800',
+    text: 'text-zinc-600 dark:text-zinc-400',
+    icon: XCircle,
+  },
+  on_hold: {
+    bg: 'bg-yellow-100 dark:bg-yellow-900/30',
+    text: 'text-yellow-700 dark:text-yellow-300',
+    icon: Clock,
+  },
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -101,6 +122,10 @@ const STATUS_LABELS: Record<string, string> = {
   refunded: 'İade Edildi',
   return_requested: 'İade Talep Edildi',
   returned: 'İade Tamamlandı',
+  completed: 'Tamamlandı',
+  return_approved: 'İade Onaylandı',
+  return_rejected: 'İade Reddedildi',
+  on_hold: 'Beklemede',
 };
 
 // ─── Skeleton ────────────────────────────────────────────────────────────
@@ -143,7 +168,7 @@ function OrderHistorySkeleton() {
 
 // ─── Status Badge ────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: OrderStatus }) {
+function StatusBadge({ status }: { status: OrderSetStatus }) {
   const style = STATUS_STYLES[status] || STATUS_STYLES.pending;
   const Icon = style.icon;
   return (
@@ -190,10 +215,8 @@ function formatPrice(amount: number, currency = 'TRY'): string {
 
 // ─── Order Card ──────────────────────────────────────────────────────────
 
-function OrderCard({ order }: { order: Order }) {
-  const displayItems = order.items.slice(0, 3);
-  const remainingCount = order.items.length - displayItems.length;
-  const displayTotal = order.totalAmount ?? order.total;
+function OrderCard({ order }: { order: OrderSet }) {
+  const subOrderCount = order.subOrderIds?.length || 0;
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-brand-primary/5 dark:border-zinc-800 p-5 mb-4 hover:shadow-lg transition-shadow">
@@ -201,7 +224,7 @@ function OrderCard({ order }: { order: Order }) {
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-zinc-500 mb-1">
-            Sipariş #{order.id.slice(0, 8).toUpperCase()}
+            Siparis #{order.id.slice(0, 8).toUpperCase()}
           </p>
           <p className="text-xs text-brand-primary/50 dark:text-zinc-500 flex items-center gap-1">
             <Clock size={11} />
@@ -211,50 +234,31 @@ function OrderCard({ order }: { order: Order }) {
         <StatusBadge status={order.status} />
       </div>
 
-      {/* Product thumbnails */}
+      {/* Sub-order count and quick info */}
       <div className="flex items-center gap-3 mb-4">
-        {displayItems.map((item, i) => (
-          <div
-            key={`${item.productId}-${i}`}
-            className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-brand-primary/5 shrink-0"
-          >
-            {item.image ? (
-              <img
-                src={item.image}
-                alt={item.title || item.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-brand-primary/20">
-                <Package size={20} />
-              </div>
-            )}
-          </div>
-        ))}
-        {remainingCount > 0 && (
-          <div className="w-16 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-brand-primary/5 flex items-center justify-center shrink-0">
-            <span className="text-[10px] font-black text-brand-primary/40 dark:text-zinc-500">
-              +{remainingCount}
-            </span>
-          </div>
-        )}
+        <div className="w-16 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-brand-primary/5 flex items-center justify-center shrink-0">
+          <Package size={24} className="text-brand-primary/30" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold text-brand-primary/70 dark:text-zinc-300">
+            {subOrderCount > 1
+              ? `${subOrderCount} farkli satcidan siparis`
+              : 'Tek satcidan siparis'}
+          </p>
+        </div>
       </div>
 
       {/* Footer row */}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-display font-black text-brand-primary dark:text-white">
-            {formatPrice(displayTotal, order.currency)}
+            {formatPrice(order.totalAmount, order.currency)}
           </p>
           <p className="text-[10px] text-brand-primary/40 dark:text-zinc-500 font-bold">
-            {order.items.reduce((sum, item) => sum + item.quantity, 0)} ürün
+            {subOrderCount} alt siparis
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {order.status === 'delivered' && (
-            <ReorderButton orderId={order.id} userId={order.userId} />
-          )}
           <Link
             to={`/orders/${order.id}`}
             className="flex items-center gap-1 py-2 px-3 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
@@ -273,7 +277,7 @@ function OrderCard({ order }: { order: Order }) {
 export function OrderHistory() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [error, setError] = useState<string | null>(null);
@@ -287,11 +291,11 @@ export function OrderHistory() {
     setLoading(true);
     setError(null);
 
-    getOrdersByUser(user.id)
+    getUserOrderSets()
       .then(setOrders)
       .catch((err) => {
         console.error('[OrderHistory] Failed to load orders:', err);
-        setError('Siparişler yüklenirken bir hata oluştu.');
+        setError('Siparisler yuklenirken bir hata olustu.');
       })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps

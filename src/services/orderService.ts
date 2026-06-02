@@ -1,8 +1,22 @@
-import { collection, doc, addDoc, getDoc, getDocs, updateDoc, query, where, orderBy, onSnapshot, writeBatch } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  addDoc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  writeBatch,
+} from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Order, OrderStatus } from '../types/order';
 import { createNotification } from './notificationService';
 import { restoreProductStock } from './productService';
+
+import type { OrderSet, SubOrder, TransitionEvent } from '../types/order';
 
 const ORDERS_COLLECTION = 'orders';
 
@@ -26,7 +40,7 @@ export function subscribeOrdersBySeller(
   return onSnapshot(
     q,
     (snap) => {
-      const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Order);
+      const orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
       onOrders(orders);
     },
     (error) => {
@@ -50,7 +64,7 @@ export function subscribeAllOrders(
   return onSnapshot(
     q,
     (snap) => {
-      const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Order);
+      const orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
       onOrders(orders);
     },
     (error) => {
@@ -79,7 +93,7 @@ export function subscribeOrdersByUser(
   return onSnapshot(
     q,
     (snap) => {
-      const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Order);
+      const orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
       onOrders(orders);
     },
     (error) => {
@@ -90,7 +104,9 @@ export function subscribeOrdersByUser(
   );
 }
 
-export async function createOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
+export async function createOrder(
+  orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>,
+): Promise<Order> {
   const now = new Date().toISOString();
   try {
     const docRef = await addDoc(collection(db, ORDERS_COLLECTION), {
@@ -120,10 +136,10 @@ export async function getOrdersByUser(userId: string): Promise<Order[]> {
     const q = query(
       collection(db, ORDERS_COLLECTION),
       where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Order);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, ORDERS_COLLECTION);
     return [];
@@ -135,10 +151,10 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
     const q = query(
       collection(db, ORDERS_COLLECTION),
       where('sellerIds', 'array-contains', sellerId),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Order);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, ORDERS_COLLECTION);
     return [];
@@ -149,7 +165,7 @@ export async function getAllOrders(): Promise<Order[]> {
   try {
     const q = query(collection(db, ORDERS_COLLECTION), orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Order);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, ORDERS_COLLECTION);
     return [];
@@ -158,15 +174,15 @@ export async function getAllOrders(): Promise<Order[]> {
 
 const STATUS_NOTIFY: Partial<Record<OrderStatus, { title: string; message: string }>> = {
   processing: { title: 'Siparişiniz Hazırlanıyor', message: 'Siparişiniz hazırlanıyor.' },
-  shipped:    { title: 'Siparişiniz Kargoya Verildi', message: 'Siparişiniz kargoya verildi.' },
-  delivered:  { title: 'Siparişiniz Teslim Edildi', message: 'Siparişiniz teslim edildi.' },
-  cancelled:  { title: 'Siparişiniz İptal Edildi', message: 'Siparişiniz iptal edildi.' },
+  shipped: { title: 'Siparişiniz Kargoya Verildi', message: 'Siparişiniz kargoya verildi.' },
+  delivered: { title: 'Siparişiniz Teslim Edildi', message: 'Siparişiniz teslim edildi.' },
+  cancelled: { title: 'Siparişiniz İptal Edildi', message: 'Siparişiniz iptal edildi.' },
 };
 
 export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,
-  extra?: Partial<Order>
+  extra?: Partial<Order>,
 ): Promise<void> {
   try {
     await updateDoc(doc(db, ORDERS_COLLECTION, orderId), {
@@ -180,10 +196,10 @@ export async function updateOrderStatus(
       const order = await getOrderById(orderId);
       if (order && order.items.length > 0) {
         await restoreProductStock(
-          order.items.map(item => ({
+          order.items.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
-          }))
+          })),
         );
       }
     }
@@ -201,7 +217,13 @@ export async function updateOrderStatus(
             message = `${carrier} ile yola çıktı. Takip No: ${tracking}`;
           }
         }
-        await createNotification(order.userId, 'order_status', msg.title, message, `/orders/${orderId}`);
+        await createNotification(
+          order.userId,
+          'order_status',
+          msg.title,
+          message,
+          `/orders/${orderId}`,
+        );
       }
     }
   } catch (error) {
@@ -215,14 +237,17 @@ export async function updateOrderStatus(
  * processes the Stripe refund, then marks the order refunded.
  * @param amount Optional partial-refund amount (major units). Omit for full refund.
  */
-export async function issueRefund(orderId: string, amount?: number): Promise<{ refundId: string | null; amount: number }> {
+export async function issueRefund(
+  orderId: string,
+  amount?: number,
+): Promise<{ refundId: string | null; amount: number }> {
   const { getAuth } = await import('firebase/auth');
   const current = getAuth().currentUser;
   if (!current) throw new Error('Oturum bulunamadı');
   const token = await current.getIdToken();
   const res = await fetch('/api/refund', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ orderId, ...(amount !== undefined ? { amount } : {}) }),
   });
   const data = await res.json().catch(() => ({}));
@@ -291,10 +316,12 @@ export async function batchUpdateOrders(updates: BatchOrderUpdate[]): Promise<Ba
           const order = await getOrderById(orderId);
           if (order && order.items.length > 0) {
             await restoreProductStock(
-              order.items.map(item => ({ productId: item.productId, quantity: item.quantity }))
+              order.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
             );
           }
-        } catch { /* stock restore failure shouldn't block the batch result */ }
+        } catch {
+          /* stock restore failure shouldn't block the batch result */
+        }
       }
 
       // Send notification
@@ -303,16 +330,103 @@ export async function batchUpdateOrders(updates: BatchOrderUpdate[]): Promise<Ba
         try {
           const order = await getOrderById(orderId);
           if (order?.userId) {
-            await createNotification(order.userId, 'order_status', msg.title, msg.message, `/orders/${orderId}`);
+            await createNotification(
+              order.userId,
+              'order_status',
+              msg.title,
+              msg.message,
+              `/orders/${orderId}`,
+            );
           }
-        } catch { /* notification failure shouldn't block */ }
+        } catch {
+          /* notification failure shouldn't block */
+        }
       }
     }
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, `${ORDERS_COLLECTION}/batch`);
     result.failCount = updates.length;
-    result.errors = updates.map(u => ({ orderId: u.orderId, error: 'Batch write failed' }));
+    result.errors = updates.map((u) => ({ orderId: u.orderId, error: 'Batch write failed' }));
   }
 
   return result;
+}
+
+// ─── OrderSet / SubOrder API Functions (Order Walking Skeleton) ─────────────
+
+/**
+ * Create an OrderSet via the server API.
+ * Sends the buyer's Firebase ID token for server-side verification.
+ */
+export async function createOrderSet(
+  items: Array<{
+    productId: string;
+    sellerId: string;
+    name: string;
+    image: string;
+    price: number;
+    quantity: number;
+    subtotal: number;
+  }>,
+  currency: string,
+  shippingAddress: any,
+): Promise<OrderSet> {
+  const { getAuth } = await import('firebase/auth');
+  const current = getAuth().currentUser;
+  if (!current) throw new Error('Oturum bulunamadi');
+  const token = await current.getIdToken();
+
+  const res = await fetch('/api/orders/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ items, currency, shippingAddress }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Siparis olusturulamadi');
+  return data as OrderSet;
+}
+
+/**
+ * Fetch all OrderSets for the current user via the server API.
+ */
+export async function getUserOrderSets(): Promise<OrderSet[]> {
+  const { getAuth } = await import('firebase/auth');
+  const current = getAuth().currentUser;
+  if (!current) return [];
+  const token = await current.getIdToken();
+
+  const res = await fetch('/api/orders', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || 'Siparisler yuklenemedi');
+  }
+  return res.json();
+}
+
+/**
+ * Fetch a single OrderSet with SubOrders via the server API.
+ */
+export async function getOrderSetDetail(
+  orderSetId: string,
+): Promise<OrderSet & { subOrders: SubOrder[] }> {
+  const { getAuth } = await import('firebase/auth');
+  const current = getAuth().currentUser;
+  if (!current) throw new Error('Oturum bulunamadi');
+  const token = await current.getIdToken();
+
+  const res = await fetch(`/api/orders/${orderSetId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    if (res.status === 404) throw new Error('Siparis bulunamadi');
+    if (res.status === 403) throw new Error('Bu siparise erisim izniniz yok');
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || 'Siparis detayi yuklenemedi');
+  }
+  return res.json();
 }
