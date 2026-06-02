@@ -24,6 +24,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getOrderById, updateOrderStatus, getOrderSetDetail } from '@/services/orderService';
 import { getTrackingStatus } from '@/services/cargoService';
 import { ReorderButton } from '@/components/commerce/ReorderButton';
+import { OrderTimeline } from '@/components/orders/OrderTimeline';
+import { SellerOrderActions } from '@/components/orders/SellerOrderActions';
 import type { Order, OrderSet, SubOrder } from '@/types/order';
 import type { TrackingResponse, CargoProviderName } from '@/services/cargoService';
 import { cn } from '@/lib/utils';
@@ -134,7 +136,7 @@ function EtaCountdown({ targetDate }: { targetDate: string }) {
 
 // ─── A. Vertical Timeline ───────────────────────────────────────────────
 
-function OrderTimeline({ order, currentStep }: { order: Order; currentStep: number }) {
+function LegacyOrderTimeline({ order, currentStep }: { order: Order; currentStep: number }) {
   const isCancelled = order.status === 'cancelled';
 
   const timelineSteps = isCancelled
@@ -480,6 +482,9 @@ export function OrderTracking() {
             </div>
           </div>
 
+          {/* Order lifecycle timeline (OrderSet level) */}
+          <OrderTimeline status={orderSet.status} />
+
           {/* SubOrders */}
           {orderSet.subOrders.map((subOrder) => (
             <div
@@ -494,18 +499,16 @@ export function OrderTracking() {
                     Satici: {subOrder.sellerId.slice(0, 12)}
                   </span>
                 </div>
-                <span
-                  className={cn(
-                    'px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider',
-                    subOrder.status === 'pending'
-                      ? 'bg-amber-50 dark:bg-amber-950 text-amber-600'
-                      : subOrder.status === 'cancelled'
-                        ? 'bg-red-50 dark:bg-red-950 text-red-600'
-                        : 'bg-blue-50 dark:bg-blue-950 text-blue-600',
-                  )}
-                >
-                  {subOrder.status}
-                </span>
+                <SellerOrderActions
+                  subOrderId={subOrder.id}
+                  orderSetId={orderSet.id}
+                  currentStatus={subOrder.status}
+                  onTransition={() => {
+                    getOrderSetDetail(orderSet.id)
+                      .then((os) => setOrderSet(os))
+                      .catch(() => {});
+                  }}
+                />
               </div>
 
               {/* Items */}
@@ -634,7 +637,7 @@ export function OrderTracking() {
         </div>
 
         {/* ───── A. Vertical Timeline ───── */}
-        <OrderTimeline order={o} currentStep={currentStep} />
+        <LegacyOrderTimeline order={o} currentStep={currentStep} />
 
         {/* ───── B. Order Items Grid ───── */}
         <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">

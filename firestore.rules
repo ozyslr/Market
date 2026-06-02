@@ -80,6 +80,12 @@ service cloud.firestore {
       allow read, create, update, delete: if false;
     }
 
+    // --- PROCESSED WEBHOOKS (Plan 02-02 — D-07) --------------------------
+    // Server Admin SDK only — all client access denied (T-02-005).
+    match /processedWebhooks/{eventId} {
+      allow read, write: if false;
+    }
+
     // --- DATA DELETION REQUESTS (Plan 3) ---------------------------------
     match /dataDeletionRequests/{requestId} {
       allow read: if isAdmin();

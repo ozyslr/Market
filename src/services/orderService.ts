@@ -430,3 +430,34 @@ export async function getOrderSetDetail(
   }
   return res.json();
 }
+
+/**
+ * Transition a SubOrder's status (seller action, e.g. mark_shipped).
+ * Calls POST /api/orders/:orderSetId/subOrders/:subOrderId/transition with Firebase auth.
+ */
+export async function transitionSubOrderStatus(
+  orderSetId: string,
+  subOrderId: string,
+  event: string,
+  extra?: Record<string, unknown>,
+): Promise<{ success: boolean; status: string }> {
+  const { getAuth } = await import('firebase/auth');
+  const current = getAuth().currentUser;
+  if (!current) throw new Error('Oturum bulunamadi');
+  const token = await current.getIdToken();
+
+  const res = await fetch(`/api/orders/${orderSetId}/subOrders/${subOrderId}/transition`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ event, ...extra }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || 'Durum gecisi basarisiz oldu');
+  }
+  return res.json();
+}
