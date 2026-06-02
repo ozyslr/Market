@@ -491,7 +491,7 @@ export function SellerStorePage() {
                       ))}
                     </div>
                     <p className="text-xs font-black uppercase tracking-widest text-brand-primary/40">
-                      Verified Industry Score
+                      Onaylı Sektör Puanı
                     </p>
                   </div>
                   <div className="col-span-2 bg-white rounded-[2.5rem] p-10 shadow-sm border border-brand-primary/5 flex flex-col justify-center">
@@ -533,7 +533,7 @@ export function SellerStorePage() {
                             />
                           </div>
                           <div>
-                            <p className="font-bold text-brand-primary">Verified Curator</p>
+                            <p className="font-bold text-brand-primary">Onaylı Alıcı</p>
                             <div className="flex gap-0.5 mt-1">
                               {[1, 2, 3, 4, 5].map((i) => (
                                 <Star
@@ -546,7 +546,7 @@ export function SellerStorePage() {
                           </div>
                         </div>
                         <span className="text-[10px] font-bold text-brand-primary/30 uppercase tracking-widest">
-                          2 weeks ago
+                          2 hafta önce
                         </span>
                       </div>
                       <p className="text-brand-primary/60 leading-relaxed font-medium">
