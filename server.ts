@@ -16,6 +16,7 @@ import { registerIyzicoRoutes } from './server/routes/iyzico.js';
 import { registerStripeWebhook, registerStripeRoutes } from './server/routes/stripe.js';
 import { registerGeminiRoutes } from './server/routes/gemini.js';
 import { registerOrderRoutes } from './server/routes/orders.js';
+import { registerCommissionRoutes } from './server/routes/commission.js';
 import { logger, httpLogger } from './server/logger.js';
 
 dotenv.config();
@@ -350,6 +351,9 @@ async function startServer() {
 
   //  Order Set API (/api/orders/*)  server/routes/orders.ts
   registerOrderRoutes(app, { adminDb, verifyFirebaseToken });
+
+  //  Commission Rules API (/api/commission-rules/*) - server/routes/commission.ts
+  registerCommissionRoutes(app, { adminDb, verifyFirebaseToken, verifyAdmin });
 
   // POST /api/send-push â€” Send push notification to a user
   app.post('/api/send-push', verifyFirebaseToken, async (req: any, res) => {
