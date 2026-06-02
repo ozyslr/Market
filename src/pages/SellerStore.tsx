@@ -148,10 +148,10 @@ export function SellerStorePage() {
                   </span>
                   <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-brand-primary">
                     <Star size={14} className="text-yellow-400 fill-yellow-400" /> {seller.rating} (
-                    {seller.reviewsCount} reviews)
+                    {seller.reviewsCount} değerlendirme)
                   </span>
                   <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-brand-primary">
-                    <UserPlus size={14} className="text-accent" /> {seller.followers} Followers
+                    <UserPlus size={14} className="text-accent" /> {seller.followers} Takipçi
                   </span>
                 </div>
               </div>
@@ -187,16 +187,16 @@ export function SellerStorePage() {
         <aside className="lg:col-span-3 space-y-8">
           <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-brand-primary/5">
             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-brand-primary/30 mb-6">
-              Fulfillment Health
+              Satıcı Performansı
             </h3>
             <div className="space-y-6">
               <div className="p-4 bg-brand-secondary rounded-2xl border border-brand-primary/5">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-bold uppercase text-brand-primary/40">
-                    Ship Speed
+                    Kargo Hızı
                   </span>
                   <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">
-                    Fast
+                    Hızlı
                   </span>
                 </div>
                 <div className="text-lg font-black text-brand-primary">
@@ -206,10 +206,10 @@ export function SellerStorePage() {
               <div className="p-4 bg-brand-secondary rounded-2xl border border-brand-primary/5">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-bold uppercase text-brand-primary/40">
-                    Compliance
+                    Uyumluluk
                   </span>
                   <span className="text-[10px] font-black text-accent uppercase tracking-widest">
-                    Top Tier
+                    En Üst
                   </span>
                 </div>
                 <div className="text-lg font-black text-brand-primary">
@@ -226,14 +226,14 @@ export function SellerStorePage() {
             />
             <Award size={24} className="text-accent mb-4" />
             <h4 className="text-xl font-display font-black leading-tight mb-4 uppercase italic">
-              Global Multi-Hub <br /> Seller
+              Küresel Çok Merkezli <br /> Satıcı
             </h4>
             <p className="text-xs text-white/60 font-medium leading-relaxed">
-              This merchant stocks inventory in UK, Germany, and Dubai fulfillment centers for rapid
-              global delivery.
+              Bu satıcı, hızlı küresel teslimat için İngiltere, Almanya ve Dubai'deki depolarda stok
+              bulundurmaktadır.
             </p>
             <button className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-accent hover:gap-4 transition-all">
-              Verify Credentials <ArrowRight size={14} />
+              Kimlik Bilgilerini Doğrula <ArrowRight size={14} />
             </button>
           </div>
         </aside>
@@ -244,9 +244,9 @@ export function SellerStorePage() {
           <div className="flex items-center justify-between border-b border-brand-primary/5 mb-8 overflow-x-auto">
             <div className="flex items-center gap-10">
               {[
-                { id: 'products', label: 'Artisan Artifacts', count: sellerProducts.length },
-                { id: 'about', label: 'Workshop Story', count: null },
-                { id: 'reviews', label: 'Trust Metrics', count: '1.2k' },
+                { id: 'products', label: 'Ürünler', count: sellerProducts.length },
+                { id: 'about', label: 'Hakkında', count: null },
+                { id: 'reviews', label: 'Değerlendirmeler', count: '1.2k' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -314,7 +314,7 @@ export function SellerStorePage() {
                     />
                     <input
                       type="text"
-                      placeholder="Search items in this workshop..."
+                      placeholder="Mağazada ürün ara..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full ps-12 pe-4 py-4 bg-white rounded-2xl border border-brand-primary/5 focus:ring-4 focus:ring-accent/5 outline-none font-medium text-sm transition-all"

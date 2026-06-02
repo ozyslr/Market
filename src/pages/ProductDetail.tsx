@@ -666,6 +666,9 @@ export function ProductDetail() {
                   MOCK_SELLERS.find((s) => s.id === product.sellerId)?.reviewsCount ??
                   product.reviewsCount
                 }
+                sellerFollowersCount={
+                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.followersCount
+                }
                 isFollowing={isFollowingSeller}
                 onToggleFollow={() => setIsFollowingSeller((f) => !f)}
                 onAskQuestion={() => {

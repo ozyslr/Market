@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, ChevronRight, UserPlus, Award, Zap, Truck } from 'lucide-react';
+import { Star, ChevronRight, UserPlus, Award, Zap, Truck, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SellerCardProps {
@@ -8,6 +8,7 @@ interface SellerCardProps {
   sellerName: string;
   sellerRating?: number;
   sellerReviewCount?: number;
+  sellerFollowersCount?: number;
   isFollowing?: boolean;
   onToggleFollow?: () => void;
   onAskQuestion?: () => void;
@@ -20,6 +21,7 @@ export function SellerCard({
   sellerName,
   sellerRating = 4.8,
   sellerReviewCount = 0,
+  sellerFollowersCount,
   isFollowing = false,
   onToggleFollow,
   onAskQuestion,
@@ -48,6 +50,11 @@ export function SellerCard({
             </span>
             {sellerReviewCount > 0 && (
               <span className="text-[10px] text-brand-primary/30">({sellerReviewCount})</span>
+            )}
+            {sellerFollowersCount !== undefined && (
+              <span className="text-[10px] text-brand-primary/30 flex items-center gap-0.5 ms-1">
+                <Users size={10} /> {sellerFollowersCount}
+              </span>
             )}
           </div>
         </div>
