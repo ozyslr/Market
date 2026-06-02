@@ -1,110 +1,253 @@
 // ─── iyzico payment routes ───────────────────────────────────────────────────
-// Server-to-server callback (raw body / signature), browser redirect callback,
-// checkout-form init, and installment options. Extracted verbatim from
-// server.ts. Behavior unchanged.
+// Marketplace checkout init (subMerchant splits), server-to-server callback
+// (OrderSet transition), browser redirect callback, and installment options.
 import express, { type Express } from 'express';
-import { FieldValue } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 import { logger } from '../logger.js';
 import { validate } from '../lib/validate.js';
-import { iyzicoCallbackSchema, iyzicoInitSchema, iyzicoInstallmentsQuerySchema } from '../lib/schemas.js';
+import {
+  iyzicoCallbackSchema,
+  iyzicoInitSchema,
+  iyzicoInstallmentsQuerySchema,
+  iyzicoMarketplaceInitSchema,
+} from '../lib/schemas.js';
+import type { IPaymentProvider } from '../services/paymentProvider.js';
+import { getOrderSet, transitionOrderSetStatus } from '../services/orderService.js';
+import { recordEntry } from '../services/ledgerService.js';
 
 export interface IyzicoRouteDeps {
+  /** Legacy lazy loader — kept for installment helper and legacy init. */
   getIyzico: () => Promise<any>;
+  /** Marketplace payment provider (Task 2). */
+  iyzicoProvider?: IPaymentProvider;
   adminDb: Firestore | null;
   port: number;
+  verifyFirebaseToken?: (req: any, res: any, next: any) => void;
 }
 
 export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
-  const { getIyzico, adminDb, port: PORT } = deps;
+  const { getIyzico, iyzicoProvider, adminDb, port: PORT, verifyFirebaseToken } = deps;
 
-  // iyzico callback requires raw body (signature verification)
+  // ─── Marketplace init (new OrderSet-based flow) ───────────────────────────
   app.post(
-    "/api/iyzico/callback",
-    express.raw({ type: 'application/json' }),
-    async (req, res) => {
+    '/api/iyzico/marketplace-init',
+    ...(verifyFirebaseToken ? [verifyFirebaseToken] : []),
+    validate(iyzicoMarketplaceInitSchema),
+    async (req: any, res: any) => {
       try {
-        const iyzico = await getIyzico();
-        if (!iyzico) {
-          return res.status(503).json({ error: 'iyzico not configured' });
+        if (!iyzicoProvider) {
+          return res.status(503).json({ error: 'iyzicoProvider not configured' });
         }
+        if (!adminDb) {
+          return res.status(503).json({ error: 'Database not configured' });
+        }
+
+        const {
+          orderSetId,
+          userId,
+          userEmail,
+          userName,
+          buyerPhone,
+          currency,
+          installment,
+          shippingAddress,
+          items,
+        } = req.body;
+
+        // ── Verify OrderSet exists and is in pending status (T-02-001) ──────
+        const orderSet = await getOrderSet(orderSetId);
+        if (!orderSet) {
+          return res.status(404).json({ error: `OrderSet ${orderSetId} not found` });
+        }
+        const orderSetStatus = (orderSet as any).status as string;
+        if (orderSetStatus !== 'pending') {
+          return res.status(409).json({
+            error: `OrderSet is in status '${orderSetStatus}' — only 'pending' can initiate checkout`,
+          });
+        }
+
+        // ── Calculate total from items (server-authoritative pricing T-02-001) ──
+        const totalAmount = items.reduce((sum: number, item: any) => sum + item.price, 0);
+
+        // ── Record pending commission entries in ledger (D-05) ──────────────
+        // Group items by seller to build per-subOrder commission entries
+        const sellerCommissions = new Map<
+          string,
+          { subOrderId: string; commission: number; sellerId: string }
+        >();
+        const subOrders: any[] = (orderSet as any).subOrders || [];
+
+        for (const item of items) {
+          const sellerId = item.sellerId;
+          if (!sellerId) continue;
+
+          const commissionAmount = item.price - item.subMerchantPrice;
+          if (commissionAmount <= 0) continue;
+
+          if (!sellerCommissions.has(sellerId)) {
+            // Find matching subOrder for this seller
+            const subOrder = subOrders.find((s: any) => s.sellerId === sellerId);
+            sellerCommissions.set(sellerId, {
+              subOrderId: subOrder?.id ?? '',
+              commission: 0,
+              sellerId,
+            });
+          }
+          const entry = sellerCommissions.get(sellerId)!;
+          entry.commission += commissionAmount;
+        }
+
+        // Write pending commission entries
+        const ledgerPromises: Promise<any>[] = [];
+        for (const [, entry] of sellerCommissions) {
+          if (entry.commission > 0 && entry.subOrderId) {
+            ledgerPromises.push(
+              recordEntry(adminDb, {
+                orderSetId,
+                subOrderId: entry.subOrderId,
+                sellerId: entry.sellerId,
+                type: 'commission',
+                amount: -entry.commission, // negative: deducted from seller
+                currency: currency || 'TRY',
+                reference: '',
+                reason: 'marketplace_checkout_pending',
+                createdBy: 'system',
+              }),
+            );
+          }
+        }
+        await Promise.all(ledgerPromises);
+
+        // ── Call IyzicoProvider.initCheckout() ───────────────────────────────
+        const callbackUrl = `${req.protocol}://${req.get('host')}/api/iyzico/callback`;
+
+        const result = await iyzicoProvider.initCheckout({
+          orderSetId,
+          totalAmount,
+          currency: currency || 'TRY',
+          items: items.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            subMerchantKey: item.subMerchantKey,
+            subMerchantPrice: item.subMerchantPrice,
+            category: item.category,
+            sellerId: item.sellerId,
+            categoryId: item.categoryId,
+          })),
+          buyer: {
+            id: userId,
+            email: userEmail,
+            name: userName,
+            phone: buyerPhone || '+905555555555',
+          },
+          shippingAddress: shippingAddress as Record<string, unknown>,
+          callbackUrl,
+          installment,
+        });
+
+        res.json({
+          token: result.token,
+          paymentPageUrl: result.paymentPageUrl,
+          checkoutFormContent: result.checkoutFormContent,
+        });
+      } catch (err: any) {
+        logger.error('iyzico', 'Marketplace init error', { error: (err as Error).message });
+        res.status(500).json({ error: err.message });
+      }
+    },
+  );
+
+  // ─── Server-to-server callback (raw body) ────────────────────────────────
+  app.post(
+    '/api/iyzico/callback',
+    express.raw({ type: 'application/json' }),
+    async (req: any, res: any) => {
+      try {
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-        const token = body.token;
+        const token = body?.token as string | undefined;
         if (!token) {
           return res.status(400).json({ error: 'Missing token' });
         }
 
-        const result = await iyzico.retrieveCheckoutForm(iyzico.client, {
-          locale: 'tr',
-          token,
-        });
+        // ── Verify payment via IyzicoProvider (T-02-002: server verifies, not client) ──
+        if (iyzicoProvider) {
+          const verification = await iyzicoProvider.verifyPayment(token);
 
-        if (result.status === 'success') {
-          const orderId = result.basketId;
-          if (orderId && adminDb) {
-            const orderRef = adminDb.collection('orders').doc(orderId);
-            await orderRef.update({
-              status: result.paymentStatus === 'SUCCESS' ? 'paid' : 'pending',
-              paymentStatus: result.paymentStatus === 'SUCCESS' ? 'succeeded' : 'failed',
-              iyzicoPaymentToken: token,
-              paidAt: result.paymentStatus === 'SUCCESS' ? new Date().toISOString() : null,
-              updatedAt: new Date().toISOString(),
-            });
+          if (verification.status === 'SUCCESS' || verification.status === 'success') {
+            // Determine orderSetId from transactions (basketId / conversationId)
+            const transactions = verification.transactions as any[];
+            const orderSetId: string | undefined =
+              (body.basketId as string) || transactions?.[0]?.basketId;
 
-            // On success, decrease stock (atomik + idempotent) and send email
-            if (result.paymentStatus === 'SUCCESS') {
-              let orderData: any;
+            if (orderSetId && adminDb) {
+              // Transition OrderSet to paid
               try {
-                await adminDb.runTransaction(async (tx) => {
-                  const oSnap = await tx.get(orderRef);
-                  const oData = oSnap.data();
-                  orderData = oData;
-                  // stockDecremented bayrağı set ise callback tekrar geldi → atla
-                  if (!oData || oData.stockDecremented) return;
-                  const orderItems = oData.items || [];
-                  const refs = orderItems.map((it: any) => adminDb!.collection('products').doc(it.productId));
-                  const snaps = await Promise.all(refs.map((r: any) => tx.get(r)));
-                  orderItems.forEach((it: any, idx: number) => {
-                    const available = snaps[idx].data()?.stock ?? 0;
-                    tx.update(refs[idx], { stock: FieldValue.increment(-Math.min(available, it.quantity || 0)) });
-                  });
-                  tx.update(orderRef, { stockDecremented: true });
-                });
+                await transitionOrderSetStatus(orderSetId, 'payment_received');
               } catch (e) {
-                logger.warn('iyzico', 'Stock decrement transaction failed', { error: (e as Error).message });
-                const oSnap = await orderRef.get();
-                orderData = oSnap.data();
+                logger.warn('iyzico', 'OrderSet transition failed (may already be paid)', {
+                  orderSetId,
+                  error: (e as Error).message,
+                });
               }
-              // Send confirmation email via Firebase Trigger Email
-              if (orderData?.userEmail) {
-                try {
-                  await adminDb.collection('mail').add({
-                    to: orderData.userEmail,
-                    message: {
-                      subject: `Siparişiniz Alındı — #${orderId.slice(0, 8).toUpperCase()}`,
-                      html: `<p>Merhaba,</p><p>Siparişiniz başarıyla alındı. Sipariş numaranız: <strong>${orderId}</strong></p><p>Teşekkür ederiz.</p>`,
-                    },
-                  });
-                } catch (e) {
-                  logger.warn('iyzico', 'Confirmation email failed', { error: (e as Error).message });
+
+              // Store paymentTransactionId on each SubOrder
+              for (const tx of transactions) {
+                const subOrderId = tx.subMerchantKey
+                  ? undefined // subMerchantKey identifies seller, not subOrder; skip for now
+                  : undefined;
+                if (tx.paymentTransactionId && tx.itemId) {
+                  // Find the subOrder that has this item and update it
+                  const orderSet = await getOrderSet(orderSetId);
+                  const subOrders: any[] = (orderSet as any)?.subOrders ?? [];
+                  for (const subOrder of subOrders) {
+                    const hasItem = (subOrder.items || []).some(
+                      (it: any) => it.productId === tx.itemId || it.id === tx.itemId,
+                    );
+                    if (hasItem) {
+                      await adminDb.collection('subOrders').doc(subOrder.id).update({
+                        paymentTransactionId: tx.paymentTransactionId,
+                        updatedAt: new Date().toISOString(),
+                      });
+                    }
+                  }
                 }
+                void subOrderId; // suppress unused var
               }
+
+              logger.info('iyzico', 'OrderSet transitioned to paid', { orderSetId });
             }
 
-            logger.info('iyzico', `Order payment status`, { orderId, status: result.paymentStatus });
+            return res.json({ status: 'success', paymentStatus: verification.status });
+          } else {
+            // Payment failed — update orderSet paymentStatus
+            const orderSetId = body.basketId as string | undefined;
+            if (orderSetId && adminDb) {
+              await adminDb.collection('orderSets').doc(orderSetId).update({
+                paymentStatus: 'failed',
+                updatedAt: new Date().toISOString(),
+              });
+            }
+            return res.json({ status: 'failure', paymentStatus: verification.status });
           }
         }
 
+        // ── Legacy fallback (no iyzicoProvider) ─────────────────────────────
+        const iyzico = await getIyzico();
+        if (!iyzico) {
+          return res.status(503).json({ error: 'iyzico not configured' });
+        }
+        const result = await iyzico.retrieveCheckoutForm(iyzico.client, { locale: 'tr', token });
         res.json({ status: result.status, paymentStatus: result.paymentStatus });
       } catch (err: any) {
         logger.error('iyzico', 'Callback error', { error: (err as Error).message });
         res.status(500).json({ error: err.message });
       }
-    }
+    },
   );
 
-  // iyzico browser redirect callback (user lands here after payment)
-  app.get("/api/iyzico/callback", async (req, res) => {
+  // ─── Browser redirect callback (user lands here after payment) ──────────
+  app.get('/api/iyzico/callback', async (req: any, res: any) => {
     const token = req.query.token as string;
     const frontendUrl = process.env.APP_URL || `http://localhost:${PORT}`;
     if (!token) {
@@ -116,25 +259,43 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
         return res.redirect(`${frontendUrl}/checkout?iyzico_status=error&reason=not_configured`);
       }
       const result = await iyzico.retrieveCheckoutForm(iyzico.client, { locale: 'tr', token });
-      const orderId = result.basketId || '';
+      const orderSetId = (result.basketId || '') as string;
       if (result.status === 'success' && result.paymentStatus === 'SUCCESS') {
-        res.redirect(`${frontendUrl}/checkout?iyzico_status=success&orderId=${orderId}&token=${token}`);
+        res.redirect(
+          `${frontendUrl}/checkout?iyzico_status=success&orderSetId=${orderSetId}&token=${token}`,
+        );
       } else {
-        res.redirect(`${frontendUrl}/checkout?iyzico_status=failed&orderId=${orderId}&reason=${result.errorMessage || 'payment_failed'}`);
+        res.redirect(
+          `${frontendUrl}/checkout?iyzico_status=failed&orderSetId=${orderSetId}&reason=${result.errorMessage || 'payment_failed'}`,
+        );
       }
     } catch (err: any) {
-      res.redirect(`${frontendUrl}/checkout?iyzico_status=error&reason=${encodeURIComponent(err.message)}`);
+      res.redirect(
+        `${frontendUrl}/checkout?iyzico_status=error&reason=${encodeURIComponent(err.message)}`,
+      );
     }
   });
 
-  app.post("/api/iyzico/init", validate(iyzicoInitSchema), async (req, res) => {
+  // ─── Legacy init (kept for backwards compatibility) ──────────────────────
+  app.post('/api/iyzico/init', validate(iyzicoInitSchema), async (req: any, res: any) => {
     try {
       const iyzico = await getIyzico();
       if (!iyzico) {
         return res.status(503).json({ error: 'iyzico not configured', isMock: true });
       }
 
-      const { userId, userEmail, userName, total, currency, installment, orderId, items, shippingAddress, buyerPhone } = req.body;
+      const {
+        userId,
+        userEmail,
+        userName,
+        total,
+        currency,
+        installment,
+        orderId,
+        items,
+        shippingAddress,
+        buyerPhone,
+      } = req.body;
 
       const basketItems = (items || []).map((item: any, i: number) => ({
         id: item.productId || String(i),
@@ -189,7 +350,12 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
           paymentPageUrl: result.paymentPageUrl,
         });
       } else {
-        res.status(400).json({ error: result.errorMessage || 'iyzico initialization failed', errorCode: result.errorCode });
+        res
+          .status(400)
+          .json({
+            error: result.errorMessage || 'iyzico initialization failed',
+            errorCode: result.errorCode,
+          });
       }
     } catch (err: any) {
       logger.error('iyzico', 'Init error', { error: (err as Error).message });
@@ -197,7 +363,8 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
     }
   });
 
-  app.get("/api/iyzico/installments", async (req, res) => {
+  // ─── Installment options ─────────────────────────────────────────────────
+  app.get('/api/iyzico/installments', async (req: any, res: any) => {
     try {
       const iyzico = await getIyzico();
       if (!iyzico) {

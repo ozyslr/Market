@@ -13,6 +13,7 @@ import { isFiniteNumber, isNonEmptyString, itemsSignature } from './src/lib/serv
 import { createAuthMiddlewares } from './src/lib/authMiddleware.js';
 import { registerSellerApiRoutes } from './server/routes/sellerApi.js';
 import { registerIyzicoRoutes } from './server/routes/iyzico.js';
+import { IyzicoProvider } from './server/services/paymentProvider.js';
 import { registerStripeWebhook, registerStripeRoutes } from './server/routes/stripe.js';
 import { registerGeminiRoutes } from './server/routes/gemini.js';
 import { registerOrderRoutes } from './server/routes/orders.js';
@@ -341,7 +342,14 @@ async function startServer() {
   registerStripeRoutes(app, { stripe, adminDb, verifyFirebaseToken, verifyAdmin, port: PORT });
 
   // â”€â”€â”€ iyzico API â†’ server/routes/iyzico.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  registerIyzicoRoutes(app, { getIyzico, adminDb, port: PORT });
+  const iyzicoProvider = new IyzicoProvider({ getIyzico });
+  registerIyzicoRoutes(app, {
+    getIyzico,
+    iyzicoProvider,
+    adminDb,
+    verifyFirebaseToken,
+    port: PORT,
+  });
 
   // â”€â”€â”€ Seller REST API (/api/v1) â†’ server/routes/sellerApi.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   registerSellerApiRoutes(app, adminDb!);

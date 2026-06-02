@@ -61,17 +61,50 @@ export const iyzicoInitSchema = z.object({
   currency: z.string().length(3),
   installment: z.number().int().min(1).optional(),
   orderId: z.string().min(1),
-  items: z.array(
-    z.object({
-      id: z.string().min(1),
-      name: z.string().min(1),
-      category: z.string().optional(),
-      price: z.number().finite().nonnegative(),
-      quantity: z.number().int().positive().optional(),
-    }),
-  ).min(1),
+  items: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        category: z.string().optional(),
+        price: z.number().finite().nonnegative(),
+        quantity: z.number().int().positive().optional(),
+      }),
+    )
+    .min(1),
   shippingAddress: addressSchema,
   buyerPhone: z.string().min(1).optional(),
+});
+
+// ─── iyzico Marketplace Init Schema (OrderSet-based) ─────────────────────────
+
+export const iyzicoMarketplaceInitSchema = z.object({
+  orderSetId: z.string().min(1),
+  userId: z.string().min(1),
+  userEmail: z.string().email(),
+  userName: z.string().min(1),
+  buyerPhone: z.string().optional(),
+  currency: z.string().length(3),
+  installment: z.number().int().min(1).optional(),
+  shippingAddress: addressSchema,
+  items: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        category: z.string().optional(),
+        price: z.number().finite().nonnegative(),
+        subMerchantKey: z.string().min(1),
+        subMerchantPrice: z.number().finite().nonnegative(),
+        sellerId: z.string().optional(),
+        categoryId: z.string().optional(),
+      }),
+    )
+    .min(1),
+});
+
+export const iyzicoWebhookSchema = z.object({
+  token: z.string().min(1),
 });
 
 export const iyzicoCallbackSchema = z.object({
@@ -125,13 +158,16 @@ export const updateProductSchema = z.object({
 });
 
 export const bulkStockUpdateSchema = z.object({
-  items: z.array(
-    z.object({
-      productId: z.string().min(1),
-      stock: z.number().int().nonnegative().optional(),
-      price: z.number().finite().nonnegative().optional(),
-    }),
-  ).min(1).max(500),
+  items: z
+    .array(
+      z.object({
+        productId: z.string().min(1),
+        stock: z.number().int().nonnegative().optional(),
+        price: z.number().finite().nonnegative().optional(),
+      }),
+    )
+    .min(1)
+    .max(500),
 });
 
 // ─── Server.ts inline routes ──────────────────────────────────────────────
