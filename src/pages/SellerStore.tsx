@@ -332,7 +332,7 @@ export function SellerStorePage() {
                     <option value="newest">En Yeniler</option>
                   </select>
                   <button className="px-8 py-4 bg-white rounded-2xl border border-brand-primary/5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-brand-secondary transition-all">
-                    <Filter size={16} /> Filters
+                    <Filter size={16} /> Filtrele
                   </button>
                 </div>
 
@@ -398,7 +398,7 @@ export function SellerStorePage() {
                 <div className="max-w-2xl mx-auto space-y-8">
                   <div className="space-y-4">
                     <h2 className="text-3xl font-display font-black tracking-tight uppercase italic text-brand-primary">
-                      The Artisan&apos;s Manifest
+                      Hikayemiz
                     </h2>
                     <p className="text-brand-primary/60 leading-relaxed text-lg font-medium">
                       {seller.description}
@@ -408,7 +408,7 @@ export function SellerStorePage() {
                   <div className="grid grid-cols-2 gap-8 py-8 border-y border-brand-primary/5">
                     <div>
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
-                        Location
+                        Konum
                       </h4>
                       <p className="font-bold text-brand-primary flex items-center gap-2">
                         <MapPin size={16} className="text-accent" /> {seller.origin}
@@ -416,24 +416,25 @@ export function SellerStorePage() {
                     </div>
                     <div>
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
-                        Merchant Active
+                        Satıcı Aktif
                       </h4>
                       <p className="font-bold text-brand-primary flex items-center gap-2">
-                        <History size={16} className="text-accent" /> Since {seller.joinedDate}
+                        <History size={16} className="text-accent" /> {seller.joinedDate} tarihinden
+                        beri
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-6">
                     <h3 className="text-xl font-display font-black tracking-tight text-brand-primary">
-                      Certified Sustainable Production
+                      Sertifikalar
                     </h3>
                     <div className="flex flex-wrap gap-3">
                       {[
-                        'B-Corp Certified',
-                        'CO2 Neutral fulfillment',
-                        'Artisan Wage Guaranteed',
-                        'Repairable Design',
+                        'B-Corp Sertifikalı',
+                        'CO2 Nötr Kargo',
+                        'Adil Ücret Garantisi',
+                        'Onarılabilir Tasarım',
                       ].map((badge) => (
                         <span
                           key={badge}
@@ -444,6 +445,32 @@ export function SellerStorePage() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Ek bilgiler: iade politikası + kargo notu */}
+                  {(sellerData.returnPolicy || sellerData.shippingNote) && (
+                    <div className="space-y-6 pt-4">
+                      {sellerData.returnPolicy && (
+                        <div>
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
+                            İade Politikası
+                          </h4>
+                          <p className="text-sm text-brand-primary/60 leading-relaxed">
+                            {sellerData.returnPolicy}
+                          </p>
+                        </div>
+                      )}
+                      {sellerData.shippingNote && (
+                        <div>
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
+                            Kargo Notu
+                          </h4>
+                          <p className="text-sm text-brand-primary/60 leading-relaxed">
+                            {sellerData.shippingNote}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ) : (
