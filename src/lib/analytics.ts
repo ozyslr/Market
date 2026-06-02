@@ -17,12 +17,41 @@ declare global {
   }
 }
 
+// ─── 3-Tier Consent Model (D-07: GDPR/KVKK compliant) ─────────────────────
+
+type ConsentLevel = 'accepted' | 'denied';
+
+export interface ConsentPreferences {
+  mandatory: true;
+  analytics: ConsentLevel;
+  marketing: ConsentLevel;
+  region: 'TR' | 'EU' | 'OTHER';
+  expiresAt: string; // 6 months from grant, ISO string
+}
+
 type ConsentStatus = 'pending' | 'granted' | 'denied';
 
-let consentStatus: ConsentStatus = getStoredConsent();
+let consentPreferences: ConsentPreferences | null = getStoredConsent();
 let initialized = false;
 
-function getStoredConsent(): ConsentStatus {
+function getStoredConsent(): ConsentPreferences | null {
+  try {
+    const raw = localStorage.getItem('mcr_consent');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ConsentPreferences;
+    // Check expiry
+    if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+      localStorage.removeItem('mcr_consent');
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/** Legacy consent status for backwards compatibility */
+function getStoredLegacyConsent(): ConsentStatus {
   try {
     const stored =
       sessionStorage.getItem('mcr_analytics_consent') ||
@@ -33,13 +62,32 @@ function getStoredConsent(): ConsentStatus {
   }
 }
 
-function setStoredConsent(status: ConsentStatus) {
-  consentStatus = status;
+function setStoredConsent(prefs: ConsentPreferences) {
+  consentPreferences = prefs;
   try {
-    localStorage.setItem('mcr_analytics_consent', status);
+    localStorage.setItem('mcr_consent', JSON.stringify(prefs));
   } catch {
     /* noop */
   }
+}
+
+// Migration from legacy single-status consent
+function migrateLegacyConsent(): ConsentPreferences | null {
+  const legacy = getStoredLegacyConsent();
+  if (legacy === 'pending' || !legacy) return null;
+  const prefs: ConsentPreferences = {
+    mandatory: true,
+    analytics: legacy === 'granted' ? 'accepted' : 'denied',
+    marketing: legacy === 'granted' ? 'accepted' : 'denied',
+    region: detectRegion(),
+    expiresAt: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+  };
+  setStoredConsent(prefs);
+  // Clear legacy key
+  try {
+    localStorage.removeItem('mcr_analytics_consent');
+  } catch {}
+  return prefs;
 }
 
 /** Get all configured IDs from env vars */
@@ -59,9 +107,114 @@ export function isAnalyticsConfigured(): boolean {
   return !!(ids.ga || ids.meta || ids.tiktok);
 }
 
+/** Detect user region for GDPR/KVKK compliance */
+export function detectRegion(): 'TR' | 'EU' | 'OTHER' {
+  // Check navigator.language for Turkish
+  if (typeof navigator !== 'undefined') {
+    const lang = navigator.language || '';
+    if (lang.startsWith('tr')) return 'TR';
+
+    // Check timezone for Turkey (UTC+3, Europe/Istanbul)
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      if (tz.includes('Istanbul') || tz.includes('Turkey')) return 'TR';
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // Check for EU languages/countries as GDPR indicator
+  if (typeof navigator !== 'undefined') {
+    const lang = (navigator.language || '').toLowerCase();
+    const euLangs = [
+      'de',
+      'fr',
+      'it',
+      'es',
+      'nl',
+      'pl',
+      'pt',
+      'sv',
+      'da',
+      'fi',
+      'el',
+      'cs',
+      'sk',
+      'hu',
+      'ro',
+      'bg',
+      'hr',
+      'sl',
+      'et',
+      'lv',
+      'lt',
+      'mt',
+    ];
+    if (euLangs.some((l) => lang.startsWith(l))) return 'EU';
+  }
+
+  return 'OTHER';
+}
+
+/** Check if user is in GDPR zone */
+export function isEU(): boolean {
+  const prefs = consentPreferences || getStoredConsent();
+  return prefs?.region === 'EU' || detectRegion() === 'EU';
+}
+
+// ─── New 3-Tier Consent API ───────────────────────────────────────────────
+
+/** Set granular consent preferences */
+export function setConsent(
+  prefs: Omit<ConsentPreferences, 'mandatory' | 'region' | 'expiresAt'>,
+): void {
+  const full: ConsentPreferences = {
+    mandatory: true,
+    analytics: prefs.analytics,
+    marketing: prefs.marketing,
+    region: detectRegion(),
+    expiresAt: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+  };
+  setStoredConsent(full);
+  initialized = false;
+
+  // If analytics accepted, init tracking now
+  if (full.analytics === 'accepted') {
+    initAnalytics();
+  } else {
+    // Ensure GA4 consent is set to denied for analytics
+    if (window.gtag) {
+      window.gtag('consent', 'update', { analytics_storage: 'denied' });
+    }
+  }
+}
+
+/** Get consent preferences (with migration from legacy) */
+export function getPreferences(): ConsentPreferences | null {
+  if (consentPreferences) return consentPreferences;
+  const migrated = migrateLegacyConsent();
+  if (migrated) {
+    consentPreferences = migrated;
+    return migrated;
+  }
+  return null;
+}
+
+/** Check if analytics consent is given */
+export function hasAnalyticsConsent(): boolean {
+  return consentPreferences?.analytics === 'accepted';
+}
+
+/** Check if marketing consent is given */
+export function hasMarketingConsent(): boolean {
+  return consentPreferences?.marketing === 'accepted';
+}
+
 /** Initialize all analytics scripts (only after consent) */
 export function initAnalytics(): void {
-  if (initialized || consentStatus !== 'granted') return;
+  if (initialized) return;
+  const prefs = consentPreferences || getStoredConsent();
+  if (!prefs || prefs.analytics !== 'accepted') return;
   initialized = true;
   const ids = getIds();
 
@@ -70,13 +223,13 @@ export function initAnalytics(): void {
     initGA4(ids.ga);
   }
 
-  // Meta Pixel
-  if (ids.meta) {
+  // Meta Pixel (marketing consent required)
+  if (ids.meta && prefs.marketing === 'accepted') {
     initMetaPixel(ids.meta);
   }
 
-  // TikTok Pixel
-  if (ids.tiktok) {
+  // TikTok Pixel (marketing consent required)
+  if (ids.tiktok && prefs.marketing === 'accepted') {
     initTikTokPixel(ids.tiktok);
   }
 }
@@ -139,27 +292,40 @@ function initTikTokPixel(pixelId: string) {
   document.head.appendChild(script);
 }
 
-// ─── Consent Management ───────────────────────────────────────────────────
+// ─── Consent Management (Backward Compat + New API) ───────────────────────
 
+/** Legacy: get single consent status for backward compat */
 export function getConsent(): ConsentStatus {
-  return consentStatus;
+  const prefs = consentPreferences || getStoredConsent();
+  if (!prefs) return 'pending';
+  if (prefs.analytics === 'accepted') return 'granted';
+  return 'denied';
 }
 
-/** Accept analytics cookies — load scripts and track */
+/** Accept all cookies — backward compat + new 3-tier */
 export function acceptAnalytics(): void {
-  setStoredConsent('granted');
-  initialized = false; // allow re-init
-  initAnalytics();
+  // Migrate if needed
+  if (!consentPreferences) {
+    const legacy = getStoredLegacyConsent();
+    if (legacy === 'pending') {
+      // Set both analytics + marketing accepted
+    }
+  }
+  setConsent({ analytics: 'accepted', marketing: 'accepted' });
   trackEvent('page_view', { page_title: document.title, page_location: window.location.href });
 }
 
-/** Deny analytics cookies — stop all tracking */
+/** Deny all non-mandatory cookies */
 export function denyAnalytics(): void {
-  setStoredConsent('denied');
-  // GA4 consent update
+  setConsent({ analytics: 'denied', marketing: 'denied' });
   if (window.gtag) {
     window.gtag('consent', 'update', { analytics_storage: 'denied', ad_storage: 'denied' });
   }
+}
+
+/** Accept analytics only (not marketing) */
+export function acceptAnalyticsOnly(): void {
+  setConsent({ analytics: 'accepted', marketing: 'denied' });
 }
 
 // ─── Event Tracking ───────────────────────────────────────────────────────
@@ -168,14 +334,20 @@ export type AnalyticsParams = Record<string, any>;
 
 /** Track event across all active analytics providers */
 export function trackEvent(eventName: string, params?: AnalyticsParams): void {
-  if (consentStatus !== 'granted') return;
+  const prefs = consentPreferences || getStoredConsent();
+  if (!prefs || prefs.analytics !== 'accepted') return;
 
   const ids = getIds();
+  const isMarketingEvent = ['purchase', 'add_to_cart', 'begin_checkout'].includes(eventName);
+  const marketingOk = prefs.marketing === 'accepted';
 
-  // GA4
+  // GA4 (analytics consent suffices)
   if (ids.ga && window.gtag) {
     window.gtag('event', eventName, params);
   }
+
+  // Marketing pixels only if marketing consent
+  if (!marketingOk && isMarketingEvent) return;
 
   // Meta Pixel
   if (ids.meta && window.fbq) {
