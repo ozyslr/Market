@@ -188,6 +188,21 @@ export const subOrderTransitionSchema = z
     }
   });
 
+// ─── Admin Refund Routes ──────────────────────────────────────────────────────
+
+export const adminRefundSchema = z.object({
+  orderSetId: z.string().min(1),
+  subOrderId: z.string().min(1).optional(),
+  paymentTransactionId: z.string().optional(),
+  isFullRefund: z.boolean().default(true),
+  reason: z.string().max(500).optional(),
+});
+
+export const cancelOrderSchema = z.object({
+  orderSetId: z.string().min(1),
+  reason: z.string().max(500).optional(),
+});
+
 // ─── Server.ts inline routes ──────────────────────────────────────────────
 
 export const abandonedCartCheckSchema = z.object({

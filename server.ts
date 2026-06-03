@@ -22,6 +22,7 @@ import { registerComplianceRoutes } from './server/routes/compliance.js';
 import { registerPayoutRoutes } from './server/routes/payouts.js';
 import { registerFinanceRoutes } from './server/routes/finance.js';
 import { registerEmailRoutes } from './server/routes/email.js';
+import { registerRefundRoutes } from './server/routes/refund.js';
 import { sendAbandonedCartEmail } from './server/services/emailService.js';
 import { logger, httpLogger } from './server/logger.js';
 
@@ -406,6 +407,9 @@ async function startServer() {
 
   // ─── Email Trigger Config (/api/email/*) ─────────────────────────────────
   registerEmailRoutes(app, { adminDb, verifyAdmin });
+
+  // ─── Admin Refund + Cancel Order Routes ──────────────────────────────────
+  registerRefundRoutes(app, { adminDb, getIyzico, verifyAdmin });
 
   // â”€â”€â”€ Legacy Scheduled Auto-Payout (sellerBalances â€” kept for backward compat) â”€â”€
   // The new T+7 ledger-based payout is handled by registerPayoutRoutes above.
