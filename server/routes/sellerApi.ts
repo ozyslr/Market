@@ -1,8 +1,10 @@
-﻿// â”€â”€â”€ Seller REST API (/api/v1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Seller REST API (/api/v1) ────────────────────────────────────────────────
 // Public, API-key-authenticated endpoints for sellers to manage their own
 // products, inventory and orders. Extracted verbatim from server.ts.
 // All endpoints require: Authorization: Bearer bo_<api_key>
 import type { Express } from 'express';
+import { createHash, timingSafeEqual, randomBytes } from 'crypto';
+import { FieldValue } from 'firebase-admin/firestore';
 import { validate } from '../lib/validate.js';
 import { createProductSchema, updateProductSchema, bulkStockUpdateSchema } from '../lib/schemas.js';
 import type { Firestore } from 'firebase-admin/firestore';
@@ -15,61 +17,179 @@ const API_RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
   'inventory:write': { max: 100, windowMs: 60000 },
 };
 
-const apiRateStore = new Map<string, { count: number; resetAt: number }>();
+// ─── Hash helpers ────────────────────────────────────────────────────────────
 
-export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
+function hashApiKey(rawKey: string): string {
+  return createHash('sha256').update(rawKey, 'utf8').digest('hex');
+}
+
+function verifyApiKey(rawKey: string, storedHash: string): boolean {
+  const a = Buffer.from(hashApiKey(rawKey), 'hex');
+  const b = Buffer.from(storedHash, 'hex');
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
+
+// ─── Firestore-backed rate limit ─────────────────────────────────────────────
+
+async function checkApiRateLimit(
+  adminDb: Firestore,
+  sellerId: string,
+  permission: string,
+): Promise<{ allowed: boolean; remaining: number }> {
+  const limit = API_RATE_LIMITS[permission] || { max: 100, windowMs: 60000 };
+  const MAX = limit.max;
+  const WINDOW = limit.windowMs;
+  const key = `${sellerId}:${permission}`;
+  const ref = adminDb.collection('apiRateLimits').doc(key);
+
+  return adminDb.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const now = Date.now();
+    if (!snap.exists || now > (snap.data()?.resetAt ?? 0)) {
+      tx.set(ref, { count: 1, resetAt: now + WINDOW, max: MAX, windowMs: WINDOW });
+      return { allowed: true, remaining: MAX - 1 };
+    }
+    const count = snap.data()!.count as number;
+    if (count >= MAX) return { allowed: false, remaining: 0 };
+    tx.update(ref, { count: FieldValue.increment(1) });
+    return { allowed: true, remaining: MAX - count - 1 };
+  });
+}
+
+export function registerSellerApiRoutes(
+  app: Express,
+  adminDb: Firestore,
+  verifyFirebaseToken?: (req: any, res: any, next: any) => void,
+) {
+  // MIGRATION NOTE: existing API keys hashed with the old djb2 algorithm are now
+  // invalid. Sellers must regenerate their API keys from the dashboard.
+  console.warn(
+    '[sellerApi] MIGRATION: existing API keys hashed with old algorithm are now invalid. ' +
+      'Sellers must regenerate their API keys.',
+  );
+
   async function authenticateApiKey(
     req: any,
-  ): Promise<{ sellerId: string; permissions: string[] } | null> {
+  ): Promise<{ sellerId: string; permissions: string[]; keyId: string } | null> {
     const auth = req.headers?.authorization || '';
     if (!auth.startsWith('Bearer bo_')) return null;
-    const rawKey = auth.slice(7);
+    const rawKey = auth.slice(7); // "Bearer " = 7 chars → gives "bo_..."
     try {
-      const hashedKey = Math.abs(
-        rawKey.split('').reduce((h: number, c: string) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0),
-      )
-        .toString(16)
-        .padStart(8, '0');
-      const snap = await adminDb
-        .collection('apiKeys')
-        .where('key', '==', hashedKey)
-        .where('isActive', '==', true)
-        .limit(1)
-        .get();
+      const snap = await adminDb.collection('apiKeys').where('isActive', '==', true).get();
       if (snap.empty) return null;
-      const data = snap.docs[0].data();
-      // Update usage
-      snap.docs[0].ref
-        .update({ lastUsedAt: new Date().toISOString(), usageCount: (data.usageCount || 0) + 1 })
-        .catch(() => {});
-      return { sellerId: data.sellerId, permissions: data.permissions || [] };
+
+      for (const docSnap of snap.docs) {
+        const data = docSnap.data();
+        const storedHash: string = data.keyHash || data.key || '';
+
+        // Reject old 8-char djb2 hashes (SHA-256 hashes are 64 hex chars)
+        if (storedHash.length !== 64) {
+          // Key is old format — skip (caller will get 401 with KEY_REHASH_REQUIRED
+          // if NO valid key matches at the end)
+          continue;
+        }
+
+        if (verifyApiKey(rawKey, storedHash)) {
+          // Update usage
+          docSnap.ref
+            .update({
+              lastUsedAt: new Date().toISOString(),
+              usageCount: (data.usageCount || 0) + 1,
+            })
+            .catch(() => {});
+          return {
+            sellerId: data.sellerId,
+            permissions: data.permissions || [],
+            keyId: docSnap.id,
+          };
+        }
+      }
+
+      // Check if there are any old-format keys for this seller to give helpful error
+      const hasOldKeys = snap.docs.some((d) => {
+        const h: string = d.data().keyHash || d.data().key || '';
+        return h.length !== 64;
+      });
+      if (hasOldKeys) {
+        // Signal to caller to return KEY_REHASH_REQUIRED
+        return null;
+      }
+      return null;
     } catch {
       return null;
     }
   }
 
-  function checkApiRateLimit(sellerId: string, permission: string): boolean {
-    const now = Date.now();
-    const key = `${sellerId}:${permission}`;
-    const entry = apiRateStore.get(key);
-    const limit = API_RATE_LIMITS[permission] || { max: 100, windowMs: 60000 };
-    if (!entry || now > entry.resetAt) {
-      apiRateStore.set(key, { count: 1, resetAt: now + limit.windowMs });
-      return true;
+  // ─── POST /api/v1/keys — create API key (Firebase-authenticated) ────────────
+  app.post('/api/v1/keys', async (req: any, res: any) => {
+    // Verify Firebase ID token
+    const authHeader = req.headers?.authorization || '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Firebase kimlik doğrulaması gerekli.' });
     }
-    if (entry.count >= limit.max) return false;
-    entry.count++;
-    return true;
-  }
+    const idToken = authHeader.slice(7);
+    let uid: string;
+    try {
+      // Use firebase-admin auth to verify the ID token
+      const { getAuth } = await import('firebase-admin/auth');
+      const decoded = await getAuth().verifyIdToken(idToken);
+      uid = decoded.uid;
+    } catch {
+      return res
+        .status(401)
+        .json({ error: 'Geçersiz veya süresi dolmuş kimlik doğrulama tokeni.' });
+    }
 
-  // GET /api/v1/products â€” list seller's products
-  app.get('/api/v1/products', async (req, res) => {
+    const { name, permissions } = req.body || {};
+    if (!name || typeof name !== 'string' || name.trim().length < 1) {
+      return res.status(400).json({ error: 'Anahtar adı gereklidir.' });
+    }
+    if (!Array.isArray(permissions) || permissions.length === 0) {
+      return res.status(400).json({ error: 'En az bir izin seçilmelidir.' });
+    }
+
+    try {
+      // Generate raw key server-side using cryptographically secure random bytes
+      const rawKey = 'bo_' + randomBytes(32).toString('hex');
+      const keyHash = hashApiKey(rawKey);
+      const keyPrefix = rawKey.slice(0, 10);
+      const now = new Date().toISOString();
+
+      const docData = {
+        keyHash,
+        keyPrefix,
+        name: name.trim(),
+        permissions,
+        sellerId: uid,
+        isActive: true,
+        usageCount: 0,
+        createdAt: now,
+        lastUsedAt: null,
+      };
+
+      const ref = await adminDb.collection('apiKeys').add(docData);
+
+      // Return rawKey ONCE — it is never stored in Firestore
+      return res.status(201).json({ rawKey, keyId: ref.id });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // GET /api/v1/products — list seller's products
+  app.get('/api/v1/products', async (req: any, res: any) => {
     const auth = await authenticateApiKey(req);
-    if (!auth) return res.status(401).json({ error: 'Unauthorized â€” geÃ§ersiz API anahtarÄ±' });
+    if (!auth)
+      return res.status(401).json({
+        error: 'Geçersiz API anahtarı. Lütfen yeni bir anahtar oluşturun.',
+        code: 'KEY_REHASH_REQUIRED',
+      });
     if (!auth.permissions.includes('products:read') && !auth.permissions.includes('inventory:read'))
-      return res.status(403).json({ error: 'Bu iÅŸlem iÃ§in yetkiniz yok (products:read)' });
-    if (!checkApiRateLimit(auth.sellerId, 'products:read'))
-      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±. LÃ¼tfen bekleyin.' });
+      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok (products:read)' });
+    const rateCheck = await checkApiRateLimit(adminDb, auth.sellerId, 'products:read');
+    if (!rateCheck.allowed)
+      return res.status(429).json({ error: 'Hız limiti aşıldı. 60 saniye içinde tekrar deneyin.' });
 
     try {
       const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
@@ -85,33 +205,43 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
     }
   });
 
-  // GET /api/v1/products/:id â€” get single product
-  app.get('/api/v1/products/:id', async (req, res) => {
+  // GET /api/v1/products/:id — get single product
+  app.get('/api/v1/products/:id', async (req: any, res: any) => {
     const auth = await authenticateApiKey(req);
-    if (!auth) return res.status(401).json({ error: 'Unauthorized' });
-    if (!checkApiRateLimit(auth.sellerId, 'products:read'))
-      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
+    if (!auth)
+      return res.status(401).json({
+        error: 'Geçersiz API anahtarı. Lütfen yeni bir anahtar oluşturun.',
+        code: 'KEY_REHASH_REQUIRED',
+      });
+    const rateCheck = await checkApiRateLimit(adminDb, auth.sellerId, 'products:read');
+    if (!rateCheck.allowed)
+      return res.status(429).json({ error: 'Hız limiti aşıldı. 60 saniye içinde tekrar deneyin.' });
 
     try {
       const doc = await adminDb.collection('products').doc(req.params.id).get();
-      if (!doc.exists) return res.status(404).json({ error: 'ÃœrÃ¼n bulunamadÄ±' });
+      if (!doc.exists) return res.status(404).json({ error: 'Ürün bulunamadı' });
       const product: any = { id: doc.id, ...doc.data() };
       if (product.sellerId !== auth.sellerId)
-        return res.status(403).json({ error: 'Bu Ã¼rÃ¼n size ait deÄŸil' });
+        return res.status(403).json({ error: 'Bu ürün size ait değil' });
       return res.json({ product });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
   });
 
-  // POST /api/v1/products â€” create product
-  app.post('/api/v1/products', async (req, res) => {
+  // POST /api/v1/products — create product
+  app.post('/api/v1/products', async (req: any, res: any) => {
     const auth = await authenticateApiKey(req);
-    if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+    if (!auth)
+      return res.status(401).json({
+        error: 'Geçersiz API anahtarı. Lütfen yeni bir anahtar oluşturun.',
+        code: 'KEY_REHASH_REQUIRED',
+      });
     if (!auth.permissions.includes('products:write'))
-      return res.status(403).json({ error: 'Bu iÅŸlem iÃ§in yetkiniz yok (products:write)' });
-    if (!checkApiRateLimit(auth.sellerId, 'products:write'))
-      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
+      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok (products:write)' });
+    const rateCheck = await checkApiRateLimit(adminDb, auth.sellerId, 'products:write');
+    if (!rateCheck.allowed)
+      return res.status(429).json({ error: 'Hız limiti aşıldı. 60 saniye içinde tekrar deneyin.' });
 
     try {
       const { title, price, stock, categoryId, brand, description, images, currency } = req.body;
@@ -150,21 +280,26 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
     }
   });
 
-  // PUT /api/v1/products/:id â€” update product
-  app.put('/api/v1/products/:id', async (req, res) => {
+  // PUT /api/v1/products/:id — update product
+  app.put('/api/v1/products/:id', async (req: any, res: any) => {
     const auth = await authenticateApiKey(req);
-    if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+    if (!auth)
+      return res.status(401).json({
+        error: 'Geçersiz API anahtarı. Lütfen yeni bir anahtar oluşturun.',
+        code: 'KEY_REHASH_REQUIRED',
+      });
     if (!auth.permissions.includes('products:write'))
       return res.status(403).json({ error: 'Yetkiniz yok (products:write)' });
-    if (!checkApiRateLimit(auth.sellerId, 'products:write'))
-      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
+    const rateCheck = await checkApiRateLimit(adminDb, auth.sellerId, 'products:write');
+    if (!rateCheck.allowed)
+      return res.status(429).json({ error: 'Hız limiti aşıldı. 60 saniye içinde tekrar deneyin.' });
 
     try {
       const docRef = adminDb.collection('products').doc(req.params.id);
       const snap = await docRef.get();
-      if (!snap.exists) return res.status(404).json({ error: 'ÃœrÃ¼n bulunamadÄ±' });
+      if (!snap.exists) return res.status(404).json({ error: 'Ürün bulunamadı' });
       if (snap.data()!.sellerId !== auth.sellerId)
-        return res.status(403).json({ error: 'Bu Ã¼rÃ¼n size ait deÄŸil' });
+        return res.status(403).json({ error: 'Bu ürün size ait değil' });
 
       // D-11: validate fields that are present in partial update (T-03-08)
       if (
@@ -204,20 +339,25 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
     }
   });
 
-  // PUT /api/v1/products/stock â€” batch stock/price update
-  app.put('/api/v1/products/stock', async (req, res) => {
+  // PUT /api/v1/products/stock — batch stock/price update
+  app.put('/api/v1/products/stock', async (req: any, res: any) => {
     const auth = await authenticateApiKey(req);
-    if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+    if (!auth)
+      return res.status(401).json({
+        error: 'Geçersiz API anahtarı. Lütfen yeni bir anahtar oluşturun.',
+        code: 'KEY_REHASH_REQUIRED',
+      });
     if (!auth.permissions.includes('inventory:write'))
       return res.status(403).json({ error: 'Yetkiniz yok (inventory:write)' });
-    if (!checkApiRateLimit(auth.sellerId, 'inventory:write'))
-      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
+    const rateCheck = await checkApiRateLimit(adminDb, auth.sellerId, 'inventory:write');
+    if (!rateCheck.allowed)
+      return res.status(429).json({ error: 'Hız limiti aşıldı. 60 saniye içinde tekrar deneyin.' });
 
     try {
       const { items } = req.body; // [{ productId, stock, price }]
       if (!Array.isArray(items) || items.length === 0)
         return res.status(400).json({ error: 'items[] dizisi gerekli' });
-      if (items.length > 500) return res.status(400).json({ error: 'Tek seferde max 500 Ã¼rÃ¼n' });
+      if (items.length > 500) return res.status(400).json({ error: 'Tek seferde max 500 ürün' });
 
       const batch = adminDb.batch();
       const now = new Date().toISOString();
@@ -235,14 +375,19 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
     }
   });
 
-  // GET /api/v1/orders â€” list seller's orders
-  app.get('/api/v1/orders', async (req, res) => {
+  // GET /api/v1/orders — list seller's orders
+  app.get('/api/v1/orders', async (req: any, res: any) => {
     const auth = await authenticateApiKey(req);
-    if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+    if (!auth)
+      return res.status(401).json({
+        error: 'Geçersiz API anahtarı. Lütfen yeni bir anahtar oluşturun.',
+        code: 'KEY_REHASH_REQUIRED',
+      });
     if (!auth.permissions.includes('orders:read'))
-      return res.status(403).json({ error: 'Bu iÅŸlem iÃ§in yetkiniz yok (orders:read)' });
-    if (!checkApiRateLimit(auth.sellerId, 'orders:read'))
-      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
+      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok (orders:read)' });
+    const rateCheck = await checkApiRateLimit(adminDb, auth.sellerId, 'orders:read');
+    if (!rateCheck.allowed)
+      return res.status(429).json({ error: 'Hız limiti aşıldı. 60 saniye içinde tekrar deneyin.' });
 
     try {
       const status = req.query.status as string;
@@ -256,31 +401,37 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
     }
   });
 
-  // GET /api/v1/orders/:id â€” get single order
-  app.get('/api/v1/orders/:id', async (req, res) => {
+  // GET /api/v1/orders/:id — get single order
+  app.get('/api/v1/orders/:id', async (req: any, res: any) => {
     const auth = await authenticateApiKey(req);
-    if (!auth) return res.status(401).json({ error: 'Unauthorized' });
-    if (!checkApiRateLimit(auth.sellerId, 'orders:read'))
-      return res.status(429).json({ error: 'Rate limit aÅŸÄ±ldÄ±' });
+    if (!auth)
+      return res.status(401).json({
+        error: 'Geçersiz API anahtarı. Lütfen yeni bir anahtar oluşturun.',
+        code: 'KEY_REHASH_REQUIRED',
+      });
+    const rateCheck = await checkApiRateLimit(adminDb, auth.sellerId, 'orders:read');
+    if (!rateCheck.allowed)
+      return res.status(429).json({ error: 'Hız limiti aşıldı. 60 saniye içinde tekrar deneyin.' });
 
     try {
       const doc = await adminDb.collection('orders').doc(req.params.id).get();
-      if (!doc.exists) return res.status(404).json({ error: 'SipariÅŸ bulunamadÄ±' });
+      if (!doc.exists) return res.status(404).json({ error: 'Sipariş bulunamadı' });
       const order: any = { id: doc.id, ...doc.data() };
       if (!order.sellerIds?.includes(auth.sellerId))
-        return res.status(403).json({ error: 'Bu sipariÅŸ size ait deÄŸil' });
+        return res.status(403).json({ error: 'Bu sipariş size ait değil' });
       return res.json({ order });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
   });
 
-  // GET /api/v1 â€” API info / health
-  app.get('/api/v1', (_req, res) => {
+  // GET /api/v1 — API info / health
+  app.get('/api/v1', (_req: any, res: any) => {
     return res.json({
       api: 'Benim Olan Seller REST API',
       version: '1.0.0',
       endpoints: [
+        'POST   /api/v1/keys',
         'GET    /api/v1/products',
         'GET    /api/v1/products/:id',
         'POST   /api/v1/products',
