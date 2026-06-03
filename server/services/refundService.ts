@@ -22,6 +22,8 @@ export interface ProcessRefundResult {
   refundId: string;
   ledgerEntryIds: string[];
   status: 'refunded' | 'partially_refunded';
+  refundedAmount: number;
+  currency: string;
 }
 
 export interface CancelOrderParams {
@@ -241,6 +243,8 @@ export async function processRefund(
     refundId,
     ledgerEntryIds,
     status: isFullRefund ? 'refunded' : 'partially_refunded',
+    refundedAmount: isFullRefund ? originalTotal : (refundAmount ?? originalTotal),
+    currency,
   };
 }
 

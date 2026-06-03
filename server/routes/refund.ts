@@ -58,8 +58,8 @@ export function registerRefundRoutes(app: Express, deps: RefundRouteDeps): void 
               orderSetId,
               orderSetDoc.customerEmail as string,
               (orderSetDoc.customerName as string) ?? '',
-              0, // amount unknown at this point without full order read
-              'TRY',
+              result.refundedAmount,
+              result.currency,
             ).catch(() => {});
           }
         }
