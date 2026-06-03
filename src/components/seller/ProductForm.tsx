@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { X, Plus, Trash2, Upload, Sparkles, ImageIcon, Loader2 } from 'lucide-react';
+import { X, Plus, Trash2, Upload, Sparkles, ImageIcon, Loader2, AlertCircle } from 'lucide-react';
 import { CategorySelect } from './CategorySelect';
+import { cn } from '../../lib/utils';
 import { uploadImage } from '../../lib/storage';
 import {
   generateProductDescription,
@@ -35,15 +36,28 @@ export interface ProductFormData {
 }
 
 const EMPTY_FORM: ProductFormData = {
-  title: '', brand: '', sku: '', categoryId: '', tags: [],
-  description: '', longDescription: '', specifications: {},
-  price: 0, oldPrice: undefined, currency: 'TRY', stock: 0, images: [],
-  weight: 0, originCountry: 'Türkiye', hsCode: '',
+  title: '',
+  brand: '',
+  sku: '',
+  categoryId: '',
+  tags: [],
+  description: '',
+  longDescription: '',
+  specifications: {},
+  price: 0,
+  oldPrice: undefined,
+  currency: 'TRY',
+  stock: 0,
+  images: [],
+  weight: 0,
+  originCountry: 'Türkiye',
+  hsCode: '',
   estimatedDeliveryDays: 3,
   deliveryTerms: '3-5 iş günü içinde kargo',
   returnPolicy: '14 gün iade hakkı',
   freeShipping: false,
-  visibility: 'public', metaDescription: '',
+  visibility: 'public',
+  metaDescription: '',
 };
 
 interface ProductFormProps {
@@ -61,10 +75,12 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
   const [specKey, setSpecKey] = useState('');
   const [specVal, setSpecVal] = useState('');
   const [aiLoading, setAiLoading] = useState<'desc' | 'meta' | 'image' | 'tags' | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [serverError, setServerError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function update<K extends keyof ProductFormData>(key: K, val: ProductFormData[K]) {
-    setForm(prev => ({ ...prev, [key]: val }));
+    setForm((prev) => ({ ...prev, [key]: val }));
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -72,26 +88,66 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
     if (!files.length) return;
     setUploading(true);
     try {
-      const urls = await Promise.all(files.map(f => uploadImage(f, 'products')));
+      const urls = await Promise.all(files.map((f) => uploadImage(f, 'products')));
       update('images', [...form.images, ...urls]);
-    } finally { setUploading(false); }
+    } finally {
+      setUploading(false);
+    }
   }
 
   function addTag() {
     const t = tagInput.trim();
-    if (t && !form.tags.includes(t)) { update('tags', [...form.tags, t]); setTagInput(''); }
+    if (t && !form.tags.includes(t)) {
+      update('tags', [...form.tags, t]);
+      setTagInput('');
+    }
   }
 
   function addSpec() {
     if (specKey.trim()) {
       update('specifications', { ...form.specifications, [specKey.trim()]: specVal.trim() });
-      setSpecKey(''); setSpecVal('');
+      setSpecKey('');
+      setSpecVal('');
     }
   }
 
+  function validateForm(): boolean {
+    // Client-side validation per UI-SPEC Surface 4 (D-11)
+    const next: Record<string, string> = {};
+    if (!form.images || form.images.length < 1) {
+      next.images = 'At least 1 product photo is required';
+    }
+    if (!form.categoryId) {
+      next.category = 'Please select a category';
+    }
+    if (!form.price || form.price <= 0) {
+      next.price = 'Enter a valid price';
+    }
+    if (form.stock < 0) {
+      next.stock = 'Stock cannot be negative';
+    }
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  }
+
   async function handleSubmit(action: 'draft' | 'publish') {
+    setServerError(null);
+    if (!validateForm()) {
+      // Scroll to top of the scrollable body so the banner/errors are visible
+      document
+        .querySelector('[data-product-form-body]')
+        ?.scrollTo?.({ top: 0, behavior: 'smooth' });
+      return;
+    }
     setSaving(true);
-    try { await onSubmit(form, action); } finally { setSaving(false); }
+    try {
+      await onSubmit(form, action);
+      setErrors({});
+    } catch (err: any) {
+      setServerError(err?.message || 'Ürün kaydedilemedi. Lütfen tekrar deneyin.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!isOpen) return null;
@@ -100,40 +156,59 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
     <div className="fixed inset-0 z-50 flex">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative ms-auto w-full max-w-2xl h-full bg-zinc-900 flex flex-col shadow-2xl overflow-hidden">
-
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-700 flex-shrink-0">
           <h2 className="text-lg font-semibold text-white">
             {initial?.title ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}
           </h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white"><X size={20} /></button>
+          <button onClick={onClose} className="text-zinc-400 hover:text-white">
+            <X size={20} />
+          </button>
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+        <div data-product-form-body className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+          {/* Server validation error banner */}
+          {serverError && (
+            <div className="bg-red-50 border-s-4 border-red-600 rounded-lg px-4 py-3 flex items-start gap-2">
+              <AlertCircle size={16} className="text-red-600 mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-red-700">{serverError}</span>
+            </div>
+          )}
 
           {/* 1 — Temel Bilgiler */}
           <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Temel Bilgiler</h3>
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
+              Temel Bilgiler
+            </h3>
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Ürün Adı *</label>
-                <input value={form.title} onChange={e => update('title', e.target.value)}
+                <input
+                  value={form.title}
+                  onChange={(e) => update('title', e.target.value)}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                  placeholder="Ürün adını girin" />
+                  placeholder="Ürün adını girin"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1">Marka</label>
-                  <input value={form.brand} onChange={e => update('brand', e.target.value)}
+                  <input
+                    value={form.brand}
+                    onChange={(e) => update('brand', e.target.value)}
                     className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                    placeholder="Marka adı" />
+                    placeholder="Marka adı"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1">SKU</label>
-                  <input value={form.sku} onChange={e => update('sku', e.target.value)}
+                  <input
+                    value={form.sku}
+                    onChange={(e) => update('sku', e.target.value)}
                     className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                    placeholder="Stok kodu" />
+                    placeholder="Stok kodu"
+                  />
                 </div>
               </div>
             </div>
@@ -141,8 +216,21 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
 
           {/* 2 — Kategori & Etiketler */}
           <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Kategori & Etiketler</h3>
-            <CategorySelect value={form.categoryId} onChange={id => update('categoryId', id)} />
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
+              Kategori & Etiketler
+            </h3>
+            <div className={errors.category ? 'rounded-lg ring-2 ring-red-300' : ''}>
+              <CategorySelect
+                value={form.categoryId}
+                onChange={(id) => {
+                  update('categoryId', id);
+                  if (errors.category) setErrors((e) => ({ ...e, category: '' }));
+                }}
+              />
+            </div>
+            {errors.category && (
+              <p className="text-sm text-red-600 mt-1">Please select a category</p>
+            )}
             <div className="mt-3">
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs text-zinc-400">Etiketler</label>
@@ -157,7 +245,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                     });
                     if (tags.length > 0) {
                       const existing = new Set(form.tags);
-                      const newTags = tags.filter(t => !existing.has(t));
+                      const newTags = tags.filter((t) => !existing.has(t));
                       update('tags', [...form.tags, ...newTags]);
                     }
                     setAiLoading(null);
@@ -174,19 +262,37 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                 </button>
               </div>
               <div className="flex gap-2">
-                <input value={tagInput} onChange={e => setTagInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                <input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
                   className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                  placeholder="Etiket yaz + Enter" />
-                <button onClick={addTag} className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg">
+                  placeholder="Etiket yaz + Enter"
+                />
+                <button
+                  onClick={addTag}
+                  className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg"
+                >
                   <Plus size={14} className="text-white" />
                 </button>
               </div>
               <div className="flex flex-wrap gap-2 mt-2">
-                {form.tags.map(tag => (
-                  <span key={tag} className="flex items-center gap-1 bg-zinc-700 text-zinc-300 text-xs px-2 py-1 rounded-full">
+                {form.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="flex items-center gap-1 bg-zinc-700 text-zinc-300 text-xs px-2 py-1 rounded-full"
+                  >
                     {tag}
-                    <button onClick={() => update('tags', form.tags.filter(t => t !== tag))}><X size={10} /></button>
+                    <button
+                      onClick={() =>
+                        update(
+                          'tags',
+                          form.tags.filter((t) => t !== tag),
+                        )
+                      }
+                    >
+                      <X size={10} />
+                    </button>
                   </span>
                 ))}
               </div>
@@ -196,7 +302,9 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
           {/* 3 — Görseller */}
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Görseller</h3>
+              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
+                Görseller
+              </h3>
               <button
                 onClick={async () => {
                   setAiLoading('image');
@@ -218,51 +326,111 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                 AI Görsel Oluştur
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-3 mb-3">
+            <div
+              className={cn(
+                'grid grid-cols-3 gap-3 mb-3 rounded-lg',
+                errors.images ? 'border border-red-300 p-2' : '',
+              )}
+            >
               {form.images.map((url, i) => (
-                <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-zinc-800">
-                  <img src={url} alt="Ürün görseli" className="w-full h-full object-cover" loading="lazy" />
-                  <button onClick={() => update('images', form.images.filter((_, j) => j !== i))}
-                    className="absolute top-1 end-1 bg-red-600/80 hover:bg-red-600 rounded-full p-1">
+                <div
+                  key={i}
+                  className="relative aspect-square rounded-lg overflow-hidden bg-zinc-800"
+                >
+                  <img
+                    src={url}
+                    alt="Ürün görseli"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <button
+                    onClick={() =>
+                      update(
+                        'images',
+                        form.images.filter((_, j) => j !== i),
+                      )
+                    }
+                    className="absolute top-1 end-1 bg-red-600/80 hover:bg-red-600 rounded-full p-1"
+                  >
                     <Trash2 size={10} className="text-white" />
                   </button>
                 </div>
               ))}
-              <button onClick={() => fileRef.current?.click()} disabled={uploading}
-                className="aspect-square rounded-lg border-2 border-dashed border-zinc-600 hover:border-emerald-500 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-emerald-400 transition-colors disabled:opacity-50">
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="aspect-square rounded-lg border-2 border-dashed border-zinc-600 hover:border-emerald-500 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-emerald-400 transition-colors disabled:opacity-50"
+              >
                 <Upload size={20} />
                 <span className="text-xs">{uploading ? 'Yükleniyor...' : 'Görsel Ekle'}</span>
               </button>
             </div>
-            <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageUpload}
+            />
+            {errors.images && (
+              <p className="text-sm text-red-600 mt-1">At least 1 product photo is required</p>
+            )}
           </section>
 
           {/* 4 — Fiyat & Stok */}
           <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Fiyat & Stok</h3>
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
+              Fiyat & Stok
+            </h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Satış Fiyatı *</label>
-                <input type="number" min={0} step={0.01} value={form.price}
-                  onChange={e => update('price', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={form.price}
+                  onChange={(e) => update('price', parseFloat(e.target.value) || 0)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                />
+                {errors.price && <p className="text-sm text-red-600 mt-1">Enter a valid price</p>}
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1">Eski Fiyat (indirim için)</label>
-                <input type="number" min={0} step={0.01} value={form.oldPrice ?? ''}
-                  onChange={e => update('oldPrice', e.target.value ? parseFloat(e.target.value) : undefined)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
+                <label className="block text-xs text-zinc-400 mb-1">
+                  Eski Fiyat (indirim için)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={form.oldPrice ?? ''}
+                  onChange={(e) =>
+                    update('oldPrice', e.target.value ? parseFloat(e.target.value) : undefined)
+                  }
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                />
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Stok Adedi *</label>
-                <input type="number" min={0} value={form.stock}
-                  onChange={e => update('stock', parseInt(e.target.value) || 0)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
+                <input
+                  type="number"
+                  min={0}
+                  value={form.stock}
+                  onChange={(e) => update('stock', parseInt(e.target.value) || 0)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                />
+                {errors.stock && (
+                  <p className="text-sm text-red-600 mt-1">Stock cannot be negative</p>
+                )}
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Para Birimi</label>
-                <select value={form.currency} onChange={e => update('currency', e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white">
+                <select
+                  value={form.currency}
+                  onChange={(e) => update('currency', e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                >
                   <option value="TRY">TRY — Türk Lirası</option>
                   <option value="USD">USD — Dolar</option>
                   <option value="EUR">EUR — Euro</option>
@@ -275,7 +443,9 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
           {/* 5 — Açıklamalar */}
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Açıklamalar</h3>
+              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
+                Açıklamalar
+              </h3>
               <button
                 onClick={async () => {
                   setAiLoading('desc');
@@ -300,40 +470,70 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Kısa Açıklama *</label>
-                <textarea rows={3} value={form.description} onChange={e => update('description', e.target.value)}
+                <textarea
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => update('description', e.target.value)}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
-                  placeholder="Ürün özeti (AI ile oluşturmak için 'AI ile Oluştur' butonunu kullanın)" />
+                  placeholder="Ürün özeti (AI ile oluşturmak için 'AI ile Oluştur' butonunu kullanın)"
+                />
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Detaylı Açıklama</label>
-                <textarea rows={5} value={form.longDescription} onChange={e => update('longDescription', e.target.value)}
+                <textarea
+                  rows={5}
+                  value={form.longDescription}
+                  onChange={(e) => update('longDescription', e.target.value)}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
-                  placeholder="Tam ürün açıklaması, özellikler, kullanım talimatları..." />
+                  placeholder="Tam ürün açıklaması, özellikler, kullanım talimatları..."
+                />
               </div>
             </div>
           </section>
 
           {/* 6 — Teknik Özellikler */}
           <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Teknik Özellikler</h3>
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
+              Teknik Özellikler
+            </h3>
             <div className="flex gap-2 mb-2">
-              <input value={specKey} onChange={e => setSpecKey(e.target.value)}
+              <input
+                value={specKey}
+                onChange={(e) => setSpecKey(e.target.value)}
                 placeholder="Özellik (ör. Renk)"
-                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
-              <input value={specVal} onChange={e => setSpecVal(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSpec())}
+                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+              />
+              <input
+                value={specVal}
+                onChange={(e) => setSpecVal(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSpec())}
                 placeholder="Değer (ör. Siyah)"
-                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
-              <button onClick={addSpec} className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg">
+                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+              />
+              <button
+                onClick={addSpec}
+                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg"
+              >
                 <Plus size={14} className="text-white" />
               </button>
             </div>
             {Object.entries(form.specifications).map(([k, v]) => (
-              <div key={k} className="flex items-center justify-between bg-zinc-800 px-3 py-2 rounded-lg mb-1 text-sm">
-                <span className="text-zinc-300"><span className="text-zinc-500">{k}:</span> {v as string}</span>
-                <button onClick={() => {
-                  const s = { ...form.specifications }; delete s[k]; update('specifications', s);
-                }}><Trash2 size={12} className="text-red-400" /></button>
+              <div
+                key={k}
+                className="flex items-center justify-between bg-zinc-800 px-3 py-2 rounded-lg mb-1 text-sm"
+              >
+                <span className="text-zinc-300">
+                  <span className="text-zinc-500">{k}:</span> {v as string}
+                </span>
+                <button
+                  onClick={() => {
+                    const s = { ...form.specifications };
+                    delete s[k];
+                    update('specifications', s);
+                  }}
+                >
+                  <Trash2 size={12} className="text-red-400" />
+                </button>
               </div>
             ))}
           </section>
@@ -363,20 +563,35 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             <div>
               <label className="block text-xs text-zinc-400 mb-1">
                 Meta Açıklama
-                <span className={`ms-2 ${form.metaDescription.length > 160 ? 'text-red-400' : 'text-zinc-600'}`}>
+                <span
+                  className={`ms-2 ${form.metaDescription.length > 160 ? 'text-red-400' : 'text-zinc-600'}`}
+                >
                   {form.metaDescription.length}/160
                 </span>
               </label>
-              <textarea rows={2} value={form.metaDescription}
-                onChange={e => update('metaDescription', e.target.value)} maxLength={170}
+              <textarea
+                rows={2}
+                value={form.metaDescription}
+                onChange={(e) => update('metaDescription', e.target.value)}
+                maxLength={170}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
-                placeholder="Arama sonuçlarında görünen özet" />
-              <p className="text-xs text-zinc-600 mt-1">Boş bırakılırsa kısa açıklama kullanılır.</p>
+                placeholder="Arama sonuçlarında görünen özet"
+              />
+              <p className="text-xs text-zinc-600 mt-1">
+                Boş bırakılırsa kısa açıklama kullanılır.
+              </p>
             </div>
             <div className="mt-3 p-3 bg-zinc-800 rounded-lg space-y-0.5">
-              <p className="text-xs text-blue-400 font-medium truncate">{form.title || 'Ürün Adı'}</p>
+              <p className="text-xs text-blue-400 font-medium truncate">
+                {form.title || 'Ürün Adı'}
+              </p>
               <p className="text-xs text-green-500 truncate">
-                benimolan.com/product/{(form.title || 'urun').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50)}
+                benimolan.com/product/
+                {(form.title || 'urun')
+                  .toLowerCase()
+                  .replace(/\s+/g, '-')
+                  .replace(/[^a-z0-9-]/g, '')
+                  .slice(0, 50)}
               </p>
               <p className="text-xs text-zinc-400 line-clamp-2">
                 {form.metaDescription || form.description || 'Meta açıklama önizlemesi...'}
@@ -386,74 +601,114 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
 
           {/* 8 — Kargo & Teslimat */}
           <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Kargo & Teslimat</h3>
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
+              Kargo & Teslimat
+            </h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Ağırlık (kg)</label>
-                <input type="number" min={0} step={0.01} value={form.weight}
-                  onChange={e => update('weight', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={form.weight}
+                  onChange={(e) => update('weight', parseFloat(e.target.value) || 0)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                />
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Tahmini Teslimat (gün)</label>
-                <input type="number" min={1} max={60} value={form.estimatedDeliveryDays}
-                  onChange={e => update('estimatedDeliveryDays', parseInt(e.target.value) || 3)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={form.estimatedDeliveryDays}
+                  onChange={(e) => update('estimatedDeliveryDays', parseInt(e.target.value) || 3)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                />
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Menşei Ülke</label>
-                <input value={form.originCountry} onChange={e => update('originCountry', e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
+                <input
+                  value={form.originCountry}
+                  onChange={(e) => update('originCountry', e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                />
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">HS Kodu</label>
-                <input value={form.hsCode} onChange={e => update('hsCode', e.target.value)}
+                <input
+                  value={form.hsCode}
+                  onChange={(e) => update('hsCode', e.target.value)}
                   placeholder="Gümrük tarifesi kodu"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                />
               </div>
             </div>
             <div className="space-y-3 mt-3">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Teslimat Koşulları</label>
-                <input value={form.deliveryTerms} onChange={e => update('deliveryTerms', e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
+                <input
+                  value={form.deliveryTerms}
+                  onChange={(e) => update('deliveryTerms', e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                />
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">İade Politikası</label>
-                <input value={form.returnPolicy} onChange={e => update('returnPolicy', e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white" />
+                <input
+                  value={form.returnPolicy}
+                  onChange={(e) => update('returnPolicy', e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                />
               </div>
               <label className="flex items-center gap-3 cursor-pointer bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5">
-                <input type="checkbox" checked={form.freeShipping}
-                  onChange={e => update('freeShipping', e.target.checked)}
-                  className="w-4 h-4 accent-green-500" />
-                <span className="text-sm text-white">Ücretsiz kargo (bu üründe kargo ücreti alınmaz)</span>
+                <input
+                  type="checkbox"
+                  checked={form.freeShipping}
+                  onChange={(e) => update('freeShipping', e.target.checked)}
+                  className="w-4 h-4 accent-green-500"
+                />
+                <span className="text-sm text-white">
+                  Ücretsiz kargo (bu üründe kargo ücreti alınmaz)
+                </span>
               </label>
             </div>
           </section>
 
           {/* 9 — Yayın Ayarları */}
           <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Yayın Ayarları</h3>
-            <select value={form.visibility} onChange={e => update('visibility', e.target.value as ProductFormData['visibility'])}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white">
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
+              Yayın Ayarları
+            </h3>
+            <select
+              value={form.visibility}
+              onChange={(e) =>
+                update('visibility', e.target.value as ProductFormData['visibility'])
+              }
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+            >
               <option value="public">Herkese Açık</option>
               <option value="hidden">Gizli (Linki olanlar görür)</option>
               <option value="draft">Taslak (Yalnızca ben)</option>
             </select>
           </section>
-
         </div>
 
         {/* Footer */}
         <div className="border-t border-zinc-700 px-6 py-4 flex gap-3 flex-shrink-0">
-          <button onClick={() => handleSubmit('draft')} disabled={saving}
-            className="flex-1 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white text-sm rounded-lg disabled:opacity-50">
+          <button
+            onClick={() => handleSubmit('draft')}
+            disabled={saving}
+            className="flex-1 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white text-sm rounded-lg disabled:opacity-50"
+          >
             Taslak Kaydet
           </button>
-          <button onClick={() => handleSubmit('publish')}
+          <button
+            onClick={() => handleSubmit('publish')}
             disabled={saving || !form.title || !form.price || !form.categoryId}
-            className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg disabled:opacity-50">
+            className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg disabled:opacity-50"
+          >
             {saving ? 'Kaydediliyor...' : 'Onaya Gönder'}
           </button>
         </div>

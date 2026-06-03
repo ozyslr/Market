@@ -18,22 +18,34 @@ const API_RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
 const apiRateStore = new Map<string, { count: number; resetAt: number }>();
 
 export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
-  async function authenticateApiKey(req: any): Promise<{ sellerId: string; permissions: string[] } | null> {
+  async function authenticateApiKey(
+    req: any,
+  ): Promise<{ sellerId: string; permissions: string[] } | null> {
     const auth = req.headers?.authorization || '';
     if (!auth.startsWith('Bearer bo_')) return null;
     const rawKey = auth.slice(7);
     try {
-      const hashedKey = Math.abs(rawKey.split('').reduce((h: number, c: string) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0)).toString(16).padStart(8, '0');
-      const snap = await adminDb.collection('apiKeys')
+      const hashedKey = Math.abs(
+        rawKey.split('').reduce((h: number, c: string) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0),
+      )
+        .toString(16)
+        .padStart(8, '0');
+      const snap = await adminDb
+        .collection('apiKeys')
         .where('key', '==', hashedKey)
         .where('isActive', '==', true)
-        .limit(1).get();
+        .limit(1)
+        .get();
       if (snap.empty) return null;
       const data = snap.docs[0].data();
       // Update usage
-      snap.docs[0].ref.update({ lastUsedAt: new Date().toISOString(), usageCount: (data.usageCount || 0) + 1 }).catch(() => {});
+      snap.docs[0].ref
+        .update({ lastUsedAt: new Date().toISOString(), usageCount: (data.usageCount || 0) + 1 })
+        .catch(() => {});
       return { sellerId: data.sellerId, permissions: data.permissions || [] };
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
 
   function checkApiRateLimit(sellerId: string, permission: string): boolean {
@@ -61,10 +73,12 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
 
     try {
       const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
-      const snap = await adminDb.collection('products')
+      const snap = await adminDb
+        .collection('products')
         .where('sellerId', '==', auth.sellerId)
-        .limit(limit).get();
-      const products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        .limit(limit)
+        .get();
+      const products = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       return res.json({ count: products.length, products });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -82,7 +96,8 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
       const doc = await adminDb.collection('products').doc(req.params.id).get();
       if (!doc.exists) return res.status(404).json({ error: 'ÃœrÃ¼n bulunamadÄ±' });
       const product: any = { id: doc.id, ...doc.data() };
-      if (product.sellerId !== auth.sellerId) return res.status(403).json({ error: 'Bu Ã¼rÃ¼n size ait deÄŸil' });
+      if (product.sellerId !== auth.sellerId)
+        return res.status(403).json({ error: 'Bu Ã¼rÃ¼n size ait deÄŸil' });
       return res.json({ product });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -100,18 +115,33 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
 
     try {
       const { title, price, stock, categoryId, brand, description, images, currency } = req.body;
-      if (!title || !price) return res.status(400).json({ error: 'title ve price zorunludur' });
+      // D-11: server-side product validation (T-03-08) before Firestore write
+      if (!title || typeof title !== 'string' || title.trim().length < 1)
+        return res.status(400).json({ error: 'title is required' });
+      if (typeof price !== 'number' || price <= 0)
+        return res.status(400).json({ error: 'price must be a positive number' });
+      if (!images || !Array.isArray(images) || images.length < 1)
+        return res.status(400).json({ error: 'At least one product image is required' });
+      if (!categoryId || typeof categoryId !== 'string' || categoryId.trim().length < 1)
+        return res.status(400).json({ error: 'categoryId is required' });
 
       const now = new Date().toISOString();
       const product = {
-        title, price: Number(price), stock: Number(stock) || 0,
-        categoryId: categoryId || 'genel', brand: brand || '', description: description || '',
+        title,
+        price: Number(price),
+        stock: Number(stock) || 0,
+        categoryId: categoryId || 'genel',
+        brand: brand || '',
+        description: description || '',
         images: images || ['https://images.unsplash.com/photo-1542382257-80dedb725088?w=800'],
         currency: currency || 'TRY',
         sellerId: auth.sellerId,
         status: 'pending',
-        rating: 0, reviewsCount: 0, featured: false,
-        createdAt: now, updatedAt: now,
+        rating: 0,
+        reviewsCount: 0,
+        featured: false,
+        createdAt: now,
+        updatedAt: now,
       };
       const ref = await adminDb.collection('products').add(product);
       return res.status(201).json({ product: { id: ref.id, ...product } });
@@ -133,9 +163,36 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
       const docRef = adminDb.collection('products').doc(req.params.id);
       const snap = await docRef.get();
       if (!snap.exists) return res.status(404).json({ error: 'ÃœrÃ¼n bulunamadÄ±' });
-      if (snap.data()!.sellerId !== auth.sellerId) return res.status(403).json({ error: 'Bu Ã¼rÃ¼n size ait deÄŸil' });
+      if (snap.data()!.sellerId !== auth.sellerId)
+        return res.status(403).json({ error: 'Bu Ã¼rÃ¼n size ait deÄŸil' });
 
-      const allowed = ['title', 'price', 'stock', 'description', 'brand', 'categoryId', 'images', 'currency'];
+      // D-11: validate fields that are present in partial update (T-03-08)
+      if (
+        req.body.images !== undefined &&
+        (!Array.isArray(req.body.images) || req.body.images.length < 1)
+      )
+        return res.status(400).json({ error: 'At least one product image is required' });
+      if (
+        req.body.categoryId !== undefined &&
+        (typeof req.body.categoryId !== 'string' || req.body.categoryId.trim().length < 1)
+      )
+        return res.status(400).json({ error: 'categoryId is required' });
+      if (
+        req.body.price !== undefined &&
+        (typeof req.body.price !== 'number' || req.body.price <= 0)
+      )
+        return res.status(400).json({ error: 'price must be a positive number' });
+
+      const allowed = [
+        'title',
+        'price',
+        'stock',
+        'description',
+        'brand',
+        'categoryId',
+        'images',
+        'currency',
+      ];
       const updates: Record<string, any> = { updatedAt: new Date().toISOString() };
       for (const key of allowed) {
         if (req.body[key] !== undefined) updates[key] = req.body[key];
@@ -158,7 +215,8 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
 
     try {
       const { items } = req.body; // [{ productId, stock, price }]
-      if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'items[] dizisi gerekli' });
+      if (!Array.isArray(items) || items.length === 0)
+        return res.status(400).json({ error: 'items[] dizisi gerekli' });
       if (items.length > 500) return res.status(400).json({ error: 'Tek seferde max 500 Ã¼rÃ¼n' });
 
       const batch = adminDb.batch();
@@ -191,7 +249,7 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
       let query = adminDb.collection('orders').where('sellerIds', 'array-contains', auth.sellerId);
       if (status) query = query.where('status', '==', status);
       const snap = await query.limit(100).get();
-      const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       return res.json({ count: orders.length, orders });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -209,7 +267,8 @@ export function registerSellerApiRoutes(app: Express, adminDb: Firestore) {
       const doc = await adminDb.collection('orders').doc(req.params.id).get();
       if (!doc.exists) return res.status(404).json({ error: 'SipariÅŸ bulunamadÄ±' });
       const order: any = { id: doc.id, ...doc.data() };
-      if (!order.sellerIds?.includes(auth.sellerId)) return res.status(403).json({ error: 'Bu sipariÅŸ size ait deÄŸil' });
+      if (!order.sellerIds?.includes(auth.sellerId))
+        return res.status(403).json({ error: 'Bu sipariÅŸ size ait deÄŸil' });
       return res.json({ order });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
