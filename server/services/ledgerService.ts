@@ -16,6 +16,7 @@ export interface LedgerEntry {
   type: 'order_charge' | 'commission' | 'payout' | 'refund' | 'adjustment';
   amount: number; // in kurus, positive or negative
   currency: string;
+  status?: 'pending' | 'collected' | 'released' | 'reversed';
   previousHash: string; // SHA-256 of previous entry
   hash: string; // SHA-256 of this entry's data
   reference: string; // optional: Stripe transfer ID, etc.
@@ -103,6 +104,7 @@ export async function recordEntry(
       type: entry.type,
       amount: entry.amount,
       currency: entry.currency,
+      status: (entry.status ?? 'pending') as 'pending' | 'collected' | 'released' | 'reversed',
       previousHash,
       hash,
       reference: entry.reference || '',
@@ -144,6 +146,52 @@ export async function getEntriesBySeller(
   const snap = await adminDb
     .collection(LEDGER_COLLECTION)
     .where('sellerId', '==', sellerId)
+    .orderBy('createdAt', 'asc')
+    .get();
+
+  return snap.docs.map((d) => d.data() as LedgerEntry);
+}
+
+/**
+ * Update the status of a ledger entry atomically.
+ */
+export async function updateEntryStatus(
+  adminDb: Firestore,
+  entryId: string,
+  newStatus: LedgerEntry['status'],
+): Promise<void> {
+  const docRef = adminDb.collection(LEDGER_COLLECTION).doc(entryId);
+  await docRef.update({ status: newStatus });
+}
+
+/**
+ * Get all ledger entries with a specific status.
+ */
+export async function getEntriesByStatus(
+  adminDb: Firestore,
+  status: LedgerEntry['status'],
+): Promise<LedgerEntry[]> {
+  const snap = await adminDb
+    .collection(LEDGER_COLLECTION)
+    .where('status', '==', status)
+    .orderBy('createdAt', 'asc')
+    .get();
+
+  return snap.docs.map((d) => d.data() as LedgerEntry);
+}
+
+/**
+ * Get all ledger entries for a specific seller filtered by status.
+ */
+export async function getEntriesBySellerAndStatus(
+  adminDb: Firestore,
+  sellerId: string,
+  status: LedgerEntry['status'],
+): Promise<LedgerEntry[]> {
+  const snap = await adminDb
+    .collection(LEDGER_COLLECTION)
+    .where('sellerId', '==', sellerId)
+    .where('status', '==', status)
     .orderBy('createdAt', 'asc')
     .get();
 

@@ -10,12 +10,14 @@ import { recordEntry } from '../services/ledgerService.js';
 import { transitionOrder, InvalidTransitionError } from '../services/transitionEngine.js';
 import type { OrderSetStatus, TransitionEvent } from '../services/transitionEngine.js';
 import { subOrderTransitionSchema } from '../lib/schemas.js';
+import { processDelivery } from '../services/payoutService.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
 export interface OrderRouteDeps {
   adminDb: any;
   verifyFirebaseToken: Middleware;
+  getIyzico?: () => Promise<any>;
 }
 
 // ─── Validation Schemas ───────────────────────────────────────────────────────
@@ -202,6 +204,24 @@ export function registerOrderRoutes(app: Express, deps: OrderRouteDeps) {
             }
           }
         });
+
+        // Delivery hook: trigger iyzico approval + ledger status update (non-blocking)
+        if (newStatus! === 'delivered') {
+          const db = deps.adminDb;
+          const subSnap = await db.collection('subOrders').doc(subOrderId).get();
+          const subData = subSnap.exists ? subSnap.data() : {};
+          const paymentTransactionId = subData?.paymentTransactionId || null;
+
+          processDelivery(
+            deps.adminDb,
+            orderSetId,
+            subOrderId,
+            paymentTransactionId,
+            deps.getIyzico || null,
+          ).catch((err: Error) => {
+            console.warn('[payout] processDelivery failed (non-blocking):', err.message);
+          });
+        }
 
         return res.json({ success: true, status: newStatus! });
       } catch (err: any) {

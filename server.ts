@@ -19,6 +19,8 @@ import { registerGeminiRoutes } from './server/routes/gemini.js';
 import { registerOrderRoutes } from './server/routes/orders.js';
 import { registerCommissionRoutes } from './server/routes/commission.js';
 import { registerComplianceRoutes } from './server/routes/compliance.js';
+import { registerPayoutRoutes } from './server/routes/payouts.js';
+import { registerFinanceRoutes } from './server/routes/finance.js';
 import { logger, httpLogger } from './server/logger.js';
 
 dotenv.config();
@@ -394,7 +396,7 @@ async function startServer() {
   });
 
   //  Order Set API (/api/orders/*)  server/routes/orders.ts
-  registerOrderRoutes(app, { adminDb, verifyFirebaseToken });
+  registerOrderRoutes(app, { adminDb, verifyFirebaseToken, getIyzico });
 
   //  Commission Rules API (/api/commission-rules/*) - server/routes/commission.ts
   registerCommissionRoutes(app, { adminDb, verifyFirebaseToken, verifyAdmin });
@@ -436,10 +438,13 @@ async function startServer() {
     }
   });
 
-  // â”€â”€â”€ Scheduled Auto-Payout Endpoint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // POST /api/process-scheduled-payouts
-  // Called by external cron (e.g. cron-job.org) every Monday at 3 AM
-  app.post('/api/process-scheduled-payouts', verifyCronSecret, async (_req, res) => {
+  // â”€â”€â”€ Payout + Finance Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  registerPayoutRoutes(app, { adminDb, verifyAdmin, verifyCronSecret, verifyFirebaseToken });
+  registerFinanceRoutes(app, { adminDb, verifyFirebaseToken });
+
+  // â”€â”€â”€ Legacy Scheduled Auto-Payout (sellerBalances â€” kept for backward compat) â”€â”€
+  // The new T+7 ledger-based payout is handled by registerPayoutRoutes above.
+  app.post('/api/process-scheduled-payouts-legacy', verifyCronSecret, async (_req, res) => {
     try {
       if (!adminDb) return res.status(503).json({ error: 'Firebase Admin not initialized' });
       const schedulesSnap = await adminDb.collection('payoutSchedules').get();
