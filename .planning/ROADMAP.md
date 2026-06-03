@@ -88,8 +88,15 @@ Plans:
 4. Seller manages products via dashboard -- add, edit, stock update, price change; validates minimum 1 photo and required category
 5. Seller imports/exports products via CSV with header validation and error reporting
 6. Seller REST API exposes CRUD endpoints for products and orders with API key authentication and rate limiting
-   **Plans**: TBD
+   **Plans**: 4 plans
    **UI hint**: yes
+
+Plans:
+
+- [ ] 03-01-PLAN.md -- KYC pipeline: private Storage + signed URLs, Stripe Identity, Iyzico sub-merchant + Stripe Connect Express provisioning on approval, admin review panel
+- [ ] 03-02-PLAN.md -- Store page hardening (slug/copy, logo/banner upload, about counter) + product management client+server validation (min-1-photo, required-category)
+- [ ] 03-03-PLAN.md -- CSV bulk import (papaparse + Zod + SSRF-safe image fetch + error report) and product CSV export
+- [ ] 03-04-PLAN.md -- REST API hardening: SHA-256 key hash + timingSafeEqual + Firestore rate limit + UTF-8 fix + raw-key-once UI
 
 ### Phase 4: Search & Discovery
 
@@ -175,7 +182,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 | ------------------------------- | -------------- | ----------- | ---------- |
 | 1. Foundation & Compliance      | 4/4            | Complete    | 2026-06-02 |
 | 2. Payment & Order Lifecycle    | 5/5            | Complete    | 2026-06-03 |
-| 3. Seller Onboarding & KYC      | 0/--           | Not started | -          |
+| 3. Seller Onboarding & KYC      | 0/4            | Not started | -          |
 | 4. Search & Discovery           | 0/--           | Not started | -          |
 | 5. Shipping & Fulfillment       | 0/--           | Not started | -          |
 | 6. Multi-Currency               | 0/--           | Not started | -          |
