@@ -21,6 +21,8 @@ import { registerCommissionRoutes } from './server/routes/commission.js';
 import { registerComplianceRoutes } from './server/routes/compliance.js';
 import { registerPayoutRoutes } from './server/routes/payouts.js';
 import { registerFinanceRoutes } from './server/routes/finance.js';
+import { registerEmailRoutes } from './server/routes/email.js';
+import { sendAbandonedCartEmail } from './server/services/emailService.js';
 import { logger, httpLogger } from './server/logger.js';
 
 dotenv.config();
@@ -174,12 +176,12 @@ async function startServer() {
   app.use('/api/one-click-checkout', paymentLimiter);
 
   // â”€â”€â”€ Auth Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // verifyFirebaseToken / verifyAdmin / verifyCronSecret â†’ src/lib/authMiddleware.ts
+  // verifyFirebaseToken / verifyAdmin / verifyCronSecret â†' src/lib/authMiddleware.ts
   const { verifyFirebaseToken, verifyAdmin, verifySeller, verifyBuyer, verifyCronSecret } =
     createAuthMiddlewares(adminAuth);
 
   // â”€â”€â”€ Lightweight Input Validators â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // isFiniteNumber / isNonEmptyString / itemsSignature â†’ src/lib/serverValidators.ts
+  // isFiniteNumber / isNonEmptyString / itemsSignature â†' src/lib/serverValidators.ts
 
   // â”€â”€â”€ Abandoned Cart Email â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post('/api/abandoned-cart/check', verifyCronSecret, async (req, res) => {
@@ -188,7 +190,7 @@ async function startServer() {
         return res.status(503).json({ error: 'Firebase Admin not configured' });
       }
 
-      const { windowHours = 2, maxReminders = 2 } = req.body;
+      const { windowHours = 1, maxReminders = 2 } = req.body;
       const cutoff = new Date(Date.now() - windowHours * 60 * 60 * 1000).toISOString();
       const tooOld = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(); // skip carts >72h old
 
@@ -259,54 +261,14 @@ async function startServer() {
 
         // Build cart URL
         const appUrl = process.env.APP_URL || 'https://benimolan.com';
+        const cartUrl = `${appUrl}/cart`;
 
-        // Build abandoned cart email HTML
-        const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#F8F8FA;font-family:'Helvetica Neue',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F8FA;padding:32px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:24px;overflow:hidden;max-width:100%;">
-        <tr><td style="background:linear-gradient(135deg,#7C3AED,#1A1033);padding:32px 40px;text-align:center;">
-          <h1 style="margin:0;color:#fff;font-size:24px;font-weight:900;letter-spacing:-1px;font-style:italic;">MERCORA</h1>
-        </td></tr>
-        <tr><td style="padding:32px 40px;text-align:center;">
-          <div style="font-size:48px;margin-bottom:16px;">ðŸ›’</div>
-          <h2 style="margin:0 0 8px;font-size:20px;font-weight:900;color:#1A1033;">Sepetinde ${itemCount} Ã¼rÃ¼n kaldÄ±!</h2>
-          <p style="margin:0 0 24px;font-size:13px;color:#666;line-height:1.6;">
-            Sepetine eklediÄŸin Ã¼rÃ¼nler hala seni bekliyor.<br>
-            KaÃ§Ä±rmadan tamamlamak ister misin?
-          </p>
-          <a href="${appUrl}/cart"
-             style="display:inline-block;padding:14px 36px;background:#7C3AED;color:#fff;text-decoration:none;border-radius:12px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:2px;box-shadow:0 8px 24px rgba(124,58,237,0.3);">
-            Sepete DÃ¶n
-          </a>
-          <p style="margin:20px 0 0;font-size:10px;color:#bbb;font-weight:700;text-transform:uppercase;letter-spacing:1px;">
-            ${items.length} farklÄ± Ã¼rÃ¼n sepetinde seni bekliyor
-          </p>
-        </td></tr>
-        <tr><td style="padding:24px 40px;background:#F8F8FA;text-align:center;border-top:1px solid #eee;">
-          <p style="margin:0;font-size:10px;color:#bbb;font-weight:700;text-transform:uppercase;letter-spacing:2px;">
-            Benim Olan Â· Bu email otomatik gÃ¶nderilmiÅŸtir
-          </p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-
-        // Send via Firebase Trigger Email
+        // Send via Resend email service
         const reminderCount = remindersSnap.empty ? 0 : remindersSnap.docs[0].data().count;
-        await adminDb.collection('mail').add({
-          to: userEmail,
-          message: {
-            subject: `Sepetinde ${itemCount} Ã¼rÃ¼n kaldÄ± â€” Benim Olan`,
-            html: emailHtml,
-          },
-        });
+        const cartItems = items
+          .slice(0, 10)
+          .map((i: any) => ({ name: i.productId || 'Urun', image: undefined }));
+        await sendAbandonedCartEmail(userEmail, 'Musteri', cartItems, cartUrl);
 
         // Record the reminder
         await adminDb.collection('cart_reminders').add({
@@ -328,7 +290,7 @@ async function startServer() {
     }
   });
 
-  // â”€â”€â”€ Stripe webhook (raw body) â†’ server/routes/stripe.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€â”€ Stripe webhook (raw body) â†' server/routes/stripe.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // MUST register before express.json() so the raw body survives for signature verification
   registerStripeWebhook(app, stripe, adminDb);
 
@@ -340,10 +302,10 @@ async function startServer() {
     res.json({ status: 'ok', environment: process.env.NODE_ENV });
   });
 
-  // â”€â”€â”€ Stripe payment endpoints â†’ server/routes/stripe.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€â”€ Stripe payment endpoints â†' server/routes/stripe.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   registerStripeRoutes(app, { stripe, adminDb, verifyFirebaseToken, verifyAdmin, port: PORT });
 
-  // â”€â”€â”€ iyzico API â†’ server/routes/iyzico.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€â”€ iyzico API â†' server/routes/iyzico.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const iyzicoProvider = new IyzicoProvider({ getIyzico });
   registerIyzicoRoutes(app, {
     getIyzico,
@@ -353,7 +315,7 @@ async function startServer() {
     port: PORT,
   });
 
-  // â”€â”€â”€ Seller REST API (/api/v1) â†’ server/routes/sellerApi.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€â”€ Seller REST API (/api/v1) â†' server/routes/sellerApi.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   registerSellerApiRoutes(app, adminDb!);
 
   registerGeminiRoutes(app);
@@ -441,6 +403,9 @@ async function startServer() {
   // â”€â”€â”€ Payout + Finance Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   registerPayoutRoutes(app, { adminDb, verifyAdmin, verifyCronSecret, verifyFirebaseToken });
   registerFinanceRoutes(app, { adminDb, verifyFirebaseToken });
+
+  // ─── Email Trigger Config (/api/email/*) ─────────────────────────────────
+  registerEmailRoutes(app, { adminDb, verifyAdmin });
 
   // â”€â”€â”€ Legacy Scheduled Auto-Payout (sellerBalances â€” kept for backward compat) â”€â”€
   // The new T+7 ledger-based payout is handled by registerPayoutRoutes above.

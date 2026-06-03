@@ -1,17 +1,21 @@
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+// ─── Client-side email service ────────────────────────────────────────────
+// NOTE: Email sending is now handled server-side via Resend (server/services/emailService.ts).
+// Order confirmation emails fire automatically from the Iyzico payment callback.
+// This module is kept for backward compatibility but the sendOrderConfirmationEmail
+// function is a no-op — the server fires emails on payment success.
+
 import type { Order } from '@/types/order';
 
 function buildOrderEmailHtml(order: Order): string {
   const currencySymbol = order.currency === 'GBP' ? '£' : order.currency === 'USD' ? '$' : '₺';
   const itemRows = order.items
     .map(
-      item => `
+      (item) => `
         <tr>
           <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#1A1033;">${item.name}</td>
           <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;text-align:center;font-size:13px;color:#666;">${item.quantity}</td>
           <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;text-align:right;font-size:13px;font-weight:700;color:#1A1033;">${currencySymbol}${item.subtotal.toFixed(2)}</td>
-        </tr>`
+        </tr>`,
     )
     .join('');
 
@@ -75,12 +79,16 @@ function buildOrderEmailHtml(order: Order): string {
           </table>
 
           <!-- Shipping Address -->
-          ${addr ? `
+          ${
+            addr
+              ? `
           <div style="margin-top:28px;padding:20px;background:#F8F8FA;border-radius:16px;">
             <h3 style="margin:0 0 10px;font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:#999;">Teslimat Adresi</h3>
             <p style="margin:0;font-size:13px;font-weight:700;color:#1A1033;">${addr.fullName}</p>
             <p style="margin:4px 0 0;font-size:12px;color:#666;line-height:1.6;">${addr.line1}<br>${addr.city}, ${addr.postalCode}<br>${addr.country}</p>
-          </div>` : ''}
+          </div>`
+              : ''
+          }
 
           <!-- CTA -->
           <div style="margin-top:32px;text-align:center;">
@@ -105,17 +113,12 @@ function buildOrderEmailHtml(order: Order): string {
 </html>`;
 }
 
-export async function sendOrderConfirmationEmail(order: Order): Promise<void> {
-  try {
-    await addDoc(collection(db, 'mail'), {
-      to: order.userEmail,
-      message: {
-        subject: `Siparişiniz Onaylandı — #${order.id.slice(0, 12).toUpperCase()}`,
-        html: buildOrderEmailHtml(order),
-      },
-    });
-  } catch (error) {
-    // Firebase Trigger Email extension kurulu değilse sessizce geç
-    console.warn('[emailService] Trigger Email extension kurulu olmayabilir:', error);
-  }
+/**
+ * @deprecated Email sending is now handled server-side via Resend.
+ * Order confirmation emails fire automatically from the Iyzico payment callback.
+ * This function is a no-op kept for backward compatibility.
+ */
+export async function sendOrderConfirmationEmail(_order: Order): Promise<void> {
+  // No-op: server-side emailService.ts fires this automatically after payment success.
+  // See server/routes/iyzico.ts callback handler.
 }

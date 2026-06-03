@@ -11,6 +11,10 @@ import { transitionOrder, InvalidTransitionError } from '../services/transitionE
 import type { OrderSetStatus, TransitionEvent } from '../services/transitionEngine.js';
 import { subOrderTransitionSchema } from '../lib/schemas.js';
 import { processDelivery } from '../services/payoutService.js';
+import {
+  sendShippingUpdateEmail,
+  sendDeliveryConfirmationEmail,
+} from '../services/emailService.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
@@ -204,6 +208,34 @@ export function registerOrderRoutes(app: Express, deps: OrderRouteDeps) {
             }
           }
         });
+
+        // ── Email triggers (non-blocking) ────────────────────────────────────
+        if (newStatus! === 'shipped' || newStatus! === 'delivered') {
+          // Fetch OrderSet to get customer email
+          getOrderSet(orderSetId)
+            .then((orderSet) => {
+              if (!orderSet) return;
+              const osData = orderSet as any;
+              const customerEmail: string = osData.userEmail || '';
+              const customerName: string = osData.userName || osData.userEmail || 'Müşteri';
+              if (!customerEmail) return;
+
+              if (newStatus! === 'shipped') {
+                sendShippingUpdateEmail(
+                  orderSetId,
+                  customerEmail,
+                  customerName,
+                  carrier || '',
+                  trackingNumber || '',
+                ).catch(() => {});
+              } else if (newStatus! === 'delivered') {
+                sendDeliveryConfirmationEmail(orderSetId, customerEmail, customerName).catch(
+                  () => {},
+                );
+              }
+            })
+            .catch(() => {}); // non-blocking
+        }
 
         // Delivery hook: trigger iyzico approval + ledger status update (non-blocking)
         if (newStatus! === 'delivered') {

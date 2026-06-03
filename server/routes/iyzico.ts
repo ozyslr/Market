@@ -15,6 +15,7 @@ import type { IPaymentProvider } from '../services/paymentProvider.js';
 import { getOrderSet, transitionOrderSetStatus } from '../services/orderService.js';
 import { recordEntry } from '../services/ledgerService.js';
 import { confirmStock } from '../services/stockService.js';
+import { sendOrderConfirmationEmail, sendNewSellerOrderEmail } from '../services/emailService.js';
 
 export interface IyzicoRouteDeps {
   /** Legacy lazy loader — kept for installment helper and legacy init. */
@@ -279,6 +280,78 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
                     }
                   }
                   await Promise.all(confirmPromises);
+
+                  // ── Send order confirmation + seller notification emails (non-blocking) ──
+                  const orderSetData = orderSet as any;
+                  const customerEmail: string = orderSetData.userEmail || '';
+                  const customerName: string =
+                    orderSetData.userName || orderSetData.userEmail || 'Müşteri';
+                  const currency: string = orderSetData.currency || 'TRY';
+                  const totalAmount: number = orderSetData.totalAmount || 0;
+                  const shippingAddress: any = orderSetData.shippingAddress;
+
+                  // Flatten items for order confirmation
+                  const allItems: Array<{ name: string; quantity: number; price: number }> = [];
+                  for (const sub of subOrders) {
+                    for (const item of sub.items || []) {
+                      allItems.push({
+                        name: item.name || item.productId || 'Ürün',
+                        quantity: item.quantity || 1,
+                        price: item.price || item.subtotal || 0,
+                      });
+                    }
+                  }
+
+                  if (customerEmail) {
+                    sendOrderConfirmationEmail(
+                      orderSetId,
+                      customerEmail,
+                      customerName,
+                      allItems,
+                      totalAmount,
+                      currency,
+                      shippingAddress,
+                    ).catch(() => {}); // already non-blocking inside, belt-and-suspenders
+                  }
+
+                  // Seller notifications — one per subOrder
+                  if (adminDb) {
+                    for (const sub of subOrders) {
+                      const sellerId: string = sub.sellerId;
+                      if (!sellerId) continue;
+                      const sellerItems = (sub.items || []).map((i: any) => ({
+                        name: i.name || i.productId || 'Ürün',
+                        quantity: i.quantity || 1,
+                      }));
+                      const subTotal: number = (sub.items || []).reduce(
+                        (s: number, i: any) => s + (i.subtotal || i.price || 0),
+                        0,
+                      );
+
+                      // Fetch seller email asynchronously (best effort)
+                      adminDb
+                        .collection('users')
+                        .doc(sellerId)
+                        .get()
+                        .then((snap: any) => {
+                          const sellerData = snap.exists ? snap.data() : {};
+                          const sellerEmail: string = sellerData?.email || '';
+                          const sellerName: string =
+                            sellerData?.displayName || sellerData?.storeName || 'Satıcı';
+                          if (sellerEmail) {
+                            sendNewSellerOrderEmail(
+                              orderSetId,
+                              sellerEmail,
+                              sellerName,
+                              sellerItems,
+                              subTotal,
+                              currency,
+                            ).catch(() => {});
+                          }
+                        })
+                        .catch(() => {}); // non-blocking
+                    }
+                  }
                 }
 
                 logger.info('iyzico', 'OrderSet transitioned to paid', { orderSetId });
