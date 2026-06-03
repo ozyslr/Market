@@ -100,7 +100,7 @@ Plans:
 
 **Wave 2** _(blocked on Wave 1 completion)_
 
-- [ ] 03-03-PLAN.md -- CSV bulk import (papaparse + Zod + SSRF-safe image fetch + error report) and product CSV export
+- [x] 03-03-PLAN.md -- CSV bulk import (papaparse + Zod + SSRF-safe image fetch + error report) and product CSV export
 - [ ] 03-04-PLAN.md -- REST API hardening: SHA-256 key hash + timingSafeEqual + Firestore rate limit + UTF-8 fix + raw-key-once UI
 
 ### Phase 4: Search & Discovery
