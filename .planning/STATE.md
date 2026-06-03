@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: '2026-06-03T15:08:24.572Z'
-last_activity: 2026-06-03 -- Phase 03 planning complete
+stopped_at: Phase 03 Plan 01 complete
+last_updated: '2026-06-03T16:30:00.000Z'
+last_activity: 2026-06-03 -- Phase 03 Plan 01 (KYC onboarding pipeline) completed
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 13
-  completed_plans: 9
-  percent: 25
+  completed_plans: 10
+  percent: 28
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-02)
 
 **Core value:** Saticilarin KYC onayiyla magaza acabildigi ve musterilerin guvenli alisveris yapabildigi eksiksiz pazar yeri deneyimi
-**Current focus:** Phase 02 — payment-order-lifecycle
+**Current focus:** Phase 03 — seller-onboarding-kyc
 
 ## Current Position
 
-Phase: 02 — COMPLETE
-Plan: 5 of 5
-Status: Ready to execute
-Last activity: 2026-06-03 -- Phase 03 planning complete
+Phase: 03 (seller-onboarding-kyc) — EXECUTING
+Plan: 2 of 4
+Status: Executing Phase 03
+Last activity: 2026-06-03 -- Phase 03 Plan 01 (KYC onboarding pipeline) completed
 
 Progress: [██████████] 100%
 
@@ -66,7 +66,11 @@ _Updated after each plan completion_
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- (none yet -- first planning session)
+- D-04: KYC documents stored as storagePath in Firestore, never public URLs; 5-min signed URLs for admin viewing
+- D-05: Stripe Identity auto-verification (doc + selfie) for all sellers; result via webhook
+- D-06: 3-doc gate — Submit disabled until identity/tax_certificate/bank_iban all uploaded
+- D-01/D-02: EU sellers → Stripe Connect Express provisioned idempotently on admin approval
+- D-03: TR sellers → Iyzico subMerchantCreate idempotently on admin approval
 
 ### Pending Todos
 
@@ -84,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-03T10:57:10.519Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-seller-onboarding-kyc/03-UI-SPEC.md
+Last session: 2026-06-03T16:30:00.000Z
+Stopped at: Phase 03 Plan 01 complete
+Resume file: .planning/phases/03-seller-onboarding-kyc/03-02-PLAN.md
