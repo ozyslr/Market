@@ -1,6 +1,10 @@
 // ─── Payment Provider Abstraction (D-02) ─────────────────────────────────────
 // IPaymentProvider interface enabling future provider swap (TR→Iyzico, EU→Stripe).
 // IyzicoProvider wraps the iyzico.cjs SDK with marketplace subMerchant splits.
+// StripeConnectProvider handles EU seller Stripe Connect Express onboarding (D-02).
+
+import type Stripe from 'stripe';
+import type { Firestore } from 'firebase-admin/firestore';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -221,11 +225,104 @@ export class IyzicoProvider implements IPaymentProvider {
   }
 }
 
+// ─── StripeConnectProvider ────────────────────────────────────────────────────
+// Handles Stripe Connect Express account creation + hosted onboarding (D-02).
+// EU sellers: admin approval triggers provisionAccount → seller gets onboardingUrl.
+
+interface StripeConnectProviderDeps {
+  stripe: Stripe;
+  adminDb: Firestore;
+}
+
+export interface StripeConnectProvisionResult {
+  accountId: string;
+  onboardingUrl: string;
+  alreadyProvisioned?: boolean;
+}
+
+export class StripeConnectProvider {
+  private readonly stripe: Stripe;
+  private readonly adminDb: Firestore;
+
+  constructor(deps: StripeConnectProviderDeps) {
+    this.stripe = deps.stripe;
+    this.adminDb = deps.adminDb;
+  }
+
+  // Idempotent: reads sellers/{sellerId}.stripeAccountId before creating (T-03-05).
+  async provisionAccount(
+    sellerId: string,
+    sellerEmail: string,
+    country: string,
+  ): Promise<StripeConnectProvisionResult> {
+    // ── Idempotency guard (T-03-03, T-03-05) ─────────────────────────────────
+    const sellerSnap = await this.adminDb.collection('sellers').doc(sellerId).get();
+    const sellerData = sellerSnap.data() ?? {};
+    if (sellerData.stripeAccountId) {
+      // Already provisioned — return existing accountId without creating a new one
+      const existingLink = await this.stripe.accountLinks.create({
+        account: sellerData.stripeAccountId as string,
+        refresh_url: `${process.env.APP_URL ?? ''}/seller/dashboard?connect=refresh`,
+        return_url: `${process.env.APP_URL ?? ''}/seller/dashboard?connect=complete`,
+        type: 'account_onboarding',
+      });
+      return {
+        accountId: sellerData.stripeAccountId as string,
+        onboardingUrl: existingLink.url,
+        alreadyProvisioned: true,
+      };
+    }
+
+    // ── Create Stripe Connect Express account ─────────────────────────────────
+    const account = await this.stripe.accounts.create({
+      type: 'express',
+      country,
+      email: sellerEmail,
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+      business_type: 'individual',
+    });
+
+    // ── Persist accountId to sellers doc ─────────────────────────────────────
+    await this.adminDb.collection('sellers').doc(sellerId).update({
+      stripeAccountId: account.id,
+      stripeOnboardingStatus: 'pending',
+      updatedAt: new Date().toISOString(),
+    });
+
+    // ── Create hosted onboarding link ─────────────────────────────────────────
+    const accountLink = await this.stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: `${process.env.APP_URL ?? ''}/seller/dashboard?connect=refresh`,
+      return_url: `${process.env.APP_URL ?? ''}/seller/dashboard?connect=complete`,
+      type: 'account_onboarding',
+    });
+
+    return { accountId: account.id, onboardingUrl: accountLink.url };
+  }
+}
+
 // ─── Factory ──────────────────────────────────────────────────────────────────
 
-export function createPaymentProvider(type: 'iyzico', deps: IyzicoProviderDeps): IPaymentProvider {
+type ProviderType = 'iyzico' | 'stripe-connect';
+type ProviderDeps = IyzicoProviderDeps | StripeConnectProviderDeps;
+
+export function createPaymentProvider(type: 'iyzico', deps: IyzicoProviderDeps): IPaymentProvider;
+export function createPaymentProvider(
+  type: 'stripe-connect',
+  deps: StripeConnectProviderDeps,
+): StripeConnectProvider;
+export function createPaymentProvider(
+  type: ProviderType,
+  deps: ProviderDeps,
+): IPaymentProvider | StripeConnectProvider {
   if (type === 'iyzico') {
-    return new IyzicoProvider(deps);
+    return new IyzicoProvider(deps as IyzicoProviderDeps);
+  }
+  if (type === 'stripe-connect') {
+    return new StripeConnectProvider(deps as StripeConnectProviderDeps);
   }
   throw new Error(`Unknown payment provider type: ${type}`);
 }

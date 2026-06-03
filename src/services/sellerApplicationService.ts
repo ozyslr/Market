@@ -1,6 +1,25 @@
-import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc, query, where, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+} from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
 import { notifyAdmins } from './notificationService';
+
+// ─── KYC Document type (D-06) ─────────────────────────────────────────────────
+// storagePath is stored in Firestore — never a signed URL or public URL (T-03-01).
+
+export interface KycDocument {
+  docType: 'identity' | 'tax_certificate' | 'bank_iban';
+  storagePath: string;
+  uploadedAt: string;
+  fileName: string;
+}
 
 export interface SellerApplication {
   id: string;
@@ -12,9 +31,17 @@ export interface SellerApplication {
   phone: string;
   origin: string;
   taxId?: string;
+  bankIban?: string;
+  address?: string;
+  firstName?: string;
+  lastName?: string;
   businessRegistration?: string;
-  /** KYC belgeleri (kimlik, vergi levhası vb.) — Firebase Storage URL'leri */
-  kycDocuments?: { name: string; url: string }[];
+  /** KYC documents — stored as storagePath refs, never public URLs (D-04) */
+  kycDocuments?: KycDocument[];
+  /** Stripe Identity verification status — set by webhook (D-05) */
+  identityVerificationStatus?: 'pending' | 'verified' | 'requires_input';
+  identitySessionId?: string;
+  identityVerificationError?: string;
   website?: string;
   socialMedia?: { platform: string; url: string }[];
   productCategories: string[];
@@ -27,14 +54,37 @@ export interface SellerApplication {
   createdAt: string;
 }
 
+// ─── hasAllRequiredDocs ───────────────────────────────────────────────────────
+// Client-side gate (mirrors server-side check in kycService.ts, T-03-07).
+
+export function hasAllRequiredDocs(app: SellerApplication): boolean {
+  const docs = app.kycDocuments ?? [];
+  const presentTypes = new Set(docs.map((d) => d.docType));
+  return (
+    presentTypes.has('identity') &&
+    presentTypes.has('tax_certificate') &&
+    presentTypes.has('bank_iban')
+  );
+}
+
 const COL = 'sellerApplications';
 
-export async function submitApplication(data: Omit<SellerApplication, 'id' | 'createdAt' | 'status'>): Promise<string> {
+export async function submitApplication(
+  data: Omit<SellerApplication, 'id' | 'createdAt' | 'status'>,
+): Promise<string> {
   const id = `app-${Date.now()}`;
   try {
+    // ── Slug uniqueness guard (Pitfall 8) ──────────────────────────────────────
+    let slug = data.slug;
+    const slugSnap = await getDocs(query(collection(db, COL), where('slug', '==', slug)));
+    if (!slugSnap.empty) {
+      slug = `${slug}-${Date.now().toString(36)}`;
+    }
+
     await setDoc(doc(db, COL, id), {
       ...data,
       id,
+      slug,
       status: 'pending',
       createdAt: new Date().toISOString(),
     });
@@ -51,12 +101,14 @@ export async function submitApplication(data: Omit<SellerApplication, 'id' | 'cr
   }
 }
 
-export async function getApplications(status?: 'pending' | 'approved' | 'rejected'): Promise<SellerApplication[]> {
+export async function getApplications(
+  status?: 'pending' | 'approved' | 'rejected',
+): Promise<SellerApplication[]> {
   try {
     const ref = collection(db, COL);
     const q = status ? query(ref, where('status', '==', status)) : ref;
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as SellerApplication));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as SellerApplication);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, COL);
     return [];

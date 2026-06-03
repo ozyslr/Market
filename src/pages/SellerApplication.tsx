@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { submitApplication } from '@/services/sellerApplicationService';
+import { submitApplication, type KycDocument } from '@/services/sellerApplicationService';
 import { uploadImage } from '@/lib/storage';
 
 const MAX_DOC_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -58,7 +58,7 @@ export function SellerApplication() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [docs, setDocs] = useState<{ name: string; url: string }[]>([]);
+  const [docs, setDocs] = useState<KycDocument[]>([]);
   const [uploading, setUploading] = useState(false);
   const [docError, setDocError] = useState('');
 
@@ -91,8 +91,17 @@ export function SellerApplication() {
     }
     setUploading(true);
     try {
+      // Legacy path — Task 3 replaces this with the 3-doc slot upload flow
       const url = await uploadImage(file, `kyc/${user.id}`);
-      setDocs((prev) => [...prev, { name: file.name, url }]);
+      setDocs((prev) => [
+        ...prev,
+        {
+          docType: 'identity' as const,
+          storagePath: url,
+          uploadedAt: new Date().toISOString(),
+          fileName: file.name,
+        },
+      ]);
     } catch {
       setDocError('Belge yüklenemedi. Lütfen tekrar deneyin.');
     } finally {
@@ -100,7 +109,8 @@ export function SellerApplication() {
     }
   };
 
-  const removeDoc = (url: string) => setDocs((prev) => prev.filter((d) => d.url !== url));
+  const removeDoc = (storagePath: string) =>
+    setDocs((prev) => prev.filter((d) => d.storagePath !== storagePath));
   const toggleCategory = (cat: string) => {
     setForm((p) => ({
       ...p,
@@ -320,16 +330,16 @@ export function SellerApplication() {
                   <ul className="mt-2 space-y-1.5">
                     {docs.map((d) => (
                       <li
-                        key={d.url}
+                        key={d.storagePath}
                         className="flex items-center gap-2 text-xs bg-zinc-50 dark:bg-zinc-800 rounded-lg px-3 py-2"
                       >
                         <FileText size={14} className="text-violet-600 shrink-0" />
                         <span className="flex-1 truncate font-bold text-brand-primary dark:text-white">
-                          {d.name}
+                          {d.fileName}
                         </span>
                         <button
                           type="button"
-                          onClick={() => removeDoc(d.url)}
+                          onClick={() => removeDoc(d.storagePath)}
                           className="text-brand-primary/40 hover:text-red-500 font-black"
                           aria-label="Belgeyi kaldır"
                         >

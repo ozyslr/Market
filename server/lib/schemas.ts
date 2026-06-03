@@ -216,3 +216,20 @@ export const sendPushSchema = z.object({
   body: z.string().min(1).max(1000),
   url: z.string().url().optional(),
 });
+
+// ─── KYC Routes (Phase 3) ─────────────────────────────────────────────────────
+
+export const kycUploadUrlSchema = z.object({
+  sellerId: z.string().min(1),
+  docType: z.enum(['identity', 'tax_certificate', 'bank_iban']),
+  fileName: z.string().min(1),
+});
+
+export const identityVerifySchema = z.object({
+  applicationId: z.string().min(1),
+});
+
+export const approveSellerSchema = z.object({
+  adminNote: z.string().optional(),
+  rejectionReason: z.string().optional(),
+});
