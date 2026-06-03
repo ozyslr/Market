@@ -12,7 +12,7 @@
 - [ ] **PAY-03**: Platform ödemeyi escrow'da tutar, komisyon kesintisi sonrası satıcıya payout yapar
 - [ ] **PAY-04**: İade durumunda komisyon iadesi otomatik yapılır (reverse_transfer)
 - [x] **PAY-05**: Webhook idempotency — aynı event tekrar gelirse çift işlem yapılmaz
-- [ ] **PAY-06**: Satıcı finansal dashboard — bakiye, bekleyen, ödenen tutarları görür
+- [x] **PAY-06**: Satıcı finansal dashboard — bakiye, bekleyen, ödenen tutarları görür
 
 ### Sipariş Yaşam Döngüsü (ORD)
 
@@ -37,8 +37,8 @@
 - [ ] **COM-01**: Kategori bazlı değişken komisyon oranları (%5-20)
 - [ ] **COM-02**: Komisyon motoru — satıcıya özel oran > kategori varsayılanı
 - [ ] **COM-03**: Değişmez (immutable) işlem defteri — tüm komisyon ve payout kayıtları
-- [ ] **COM-04**: Otomatik payout zamanlaması (T+7 gün)
-- [ ] **COM-05**: Satıcı payout geçmişi ve bekleyen bakiye görüntüleme
+- [x] **COM-04**: Otomatik payout zamanlaması (T+7 gün)
+- [x] **COM-05**: Satıcı payout geçmişi ve bekleyen bakiye görüntüleme
 
 ### Hukuki Uyum (CMP)
 
@@ -116,7 +116,7 @@
 | PAY-03      | Phase 2 | Pending  |
 | PAY-04      | Phase 2 | Pending  |
 | PAY-05      | Phase 2 | Complete |
-| PAY-06      | Phase 2 | Pending  |
+| PAY-06      | Phase 2 | Complete |
 | ORD-01      | Phase 1 | Pending  |
 | ORD-02      | Phase 1 | Pending  |
 | ORD-03      | Phase 2 | Complete |
@@ -132,8 +132,8 @@
 | COM-01      | Phase 1 | Pending  |
 | COM-02      | Phase 1 | Pending  |
 | COM-03      | Phase 1 | Pending  |
-| COM-04      | Phase 2 | Pending  |
-| COM-05      | Phase 2 | Pending  |
+| COM-04      | Phase 2 | Complete |
+| COM-05      | Phase 2 | Complete |
 | CMP-01      | Phase 1 | Pending  |
 | CMP-02      | Phase 1 | Pending  |
 | CMP-03      | Phase 1 | Pending  |
