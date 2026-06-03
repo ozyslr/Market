@@ -36,6 +36,7 @@ import {
   Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'motion/react';
 
 type ImportTab = 'overview' | 'xml' | 'csv' | 'mapping' | 'logs' | 'templates';
 
@@ -227,6 +228,127 @@ export function SellerImportCenter() {
   const [bulkProgress, setBulkProgress] = useState(0);
   const [bulkUploading, setBulkUploading] = useState(false);
   const csvRef = useRef<HTMLInputElement>(null);
+
+  // Server CSV import state (SEL-05)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    imported: number;
+    skipped: number;
+    errors: { row: number; field: string; reason: string }[];
+  } | null>(null);
+  const serverCsvRef = useRef<HTMLInputElement>(null);
+
+  function pickServerFile(file: File | undefined) {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setImportResult({
+        imported: 0,
+        skipped: 0,
+        errors: [{ row: 0, field: 'file', reason: 'Only .csv files are accepted' }],
+      });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setImportResult({
+        imported: 0,
+        skipped: 0,
+        errors: [{ row: 0, field: 'file', reason: 'File exceeds 10 MB limit' }],
+      });
+      return;
+    }
+    setImportResult(null);
+    setSelectedFile(file);
+  }
+
+  function formatSize(bytes: number): string {
+    return bytes < 1024 * 1024
+      ? `${(bytes / 1024).toFixed(1)} KB`
+      : `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  }
+
+  async function getAuthToken(): Promise<string> {
+    const { getAuth } = await import('firebase/auth');
+    const current = getAuth().currentUser;
+    return current ? current.getIdToken() : '';
+  }
+
+  async function handleServerImport() {
+    if (!selectedFile || !user) return;
+    setIsImporting(true);
+    setImportResult(null);
+    try {
+      const token = await getAuthToken();
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      const resp = await fetch('/api/products/csv-import', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        setImportResult({
+          imported: 0,
+          skipped: 0,
+          errors: [{ row: 0, field: 'server', reason: data.error || 'Import failed' }],
+        });
+      } else {
+        setImportResult(data);
+        setSelectedFile(null);
+        if (serverCsvRef.current) serverCsvRef.current.value = '';
+      }
+    } catch (err: any) {
+      setImportResult({
+        imported: 0,
+        skipped: 0,
+        errors: [{ row: 0, field: 'network', reason: err?.message || 'Network error' }],
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
+  function downloadErrorReport() {
+    if (!importResult?.errors.length) return;
+    const csv =
+      '\uFEFF' +
+      Papa.unparse(importResult.errors, {
+        header: true,
+        columns: ['row', 'field', 'reason'],
+      });
+    const date = new Date().toISOString().split('T')[0];
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `import-errors-${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  async function handleExport() {
+    if (!user) return;
+    setIsExporting(true);
+    try {
+      const token = await getAuthToken();
+      const resp = await fetch('/api/products/csv-export', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!resp.ok) throw new Error('Export failed');
+      const blob = await resp.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'products-export.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      /* swallow — export is best-effort */
+    } finally {
+      setIsExporting(false);
+    }
+  }
 
   useEffect(() => {
     if (!user?.id) return;
@@ -715,6 +837,135 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
       {/* ── CSV UPLOAD ── */}
       {activeTab === 'csv' && (
         <div className="space-y-6 max-w-3xl">
+          {/* Export button — top-right of CSV tab content area (SEL-05) */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="flex items-center gap-2 border border-zinc-600 text-zinc-300 hover:bg-zinc-700 px-3 py-2 rounded-lg text-sm disabled:opacity-50 transition-colors"
+            >
+              {isExporting ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Download size={14} />
+              )}
+              {isExporting ? 'Dışa aktarılıyor…' : 'Ürünleri Dışa Aktar'}
+            </button>
+          </div>
+
+          {/* Server-side CSV import (validated, partial import, error report) */}
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              pickServerFile(e.dataTransfer.files[0]);
+            }}
+            onClick={() => serverCsvRef.current?.click()}
+            className={cn(
+              'border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center min-h-48 text-center cursor-pointer transition-colors',
+              isDragging
+                ? 'border-[var(--accent,#6418E5)] bg-[var(--accent-soft,rgba(100,24,229,0.1))]'
+                : 'border-zinc-600 hover:border-emerald-500',
+            )}
+          >
+            <FileUp size={32} className="text-zinc-400 mb-2" />
+            <p className="text-base text-zinc-300">Drop your CSV here or click to browse</p>
+            <p className="text-sm text-zinc-500 mt-1">
+              Max 10 MB · UTF-8 encoded · .csv files only
+            </p>
+            {selectedFile && (
+              <div className="mt-4 inline-flex items-center gap-2 bg-zinc-700 rounded-full px-3 py-1">
+                <FileText size={14} className="text-zinc-300" />
+                <span className="text-xs text-zinc-200">{selectedFile.name}</span>
+                <span className="text-xs text-zinc-400">{formatSize(selectedFile.size)}</span>
+              </div>
+            )}
+          </div>
+          <input
+            ref={serverCsvRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={(e) => pickServerFile(e.target.files?.[0])}
+          />
+
+          {/* Import button + indeterminate progress */}
+          <div>
+            <button
+              onClick={handleServerImport}
+              disabled={!selectedFile || isImporting}
+              className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-colors"
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" /> Importing… please wait
+                </>
+              ) : (
+                'Import Products'
+              )}
+            </button>
+            {isImporting && (
+              <div className="h-1 w-full bg-zinc-700 mt-3 overflow-hidden rounded-full">
+                <div className="h-full w-1/2 bg-emerald-500 animate-pulse" />
+              </div>
+            )}
+          </div>
+
+          {/* Import result banner */}
+          {importResult && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className={cn(
+                'rounded-lg p-4 border',
+                importResult.imported > 0
+                  ? 'bg-green-900/20 border-green-700'
+                  : 'bg-red-900/20 border-red-700',
+              )}
+            >
+              <div className="flex items-center gap-2">
+                {importResult.imported > 0 ? (
+                  <CheckCircle size={20} className="text-green-500" />
+                ) : (
+                  <XCircle size={20} className="text-red-500" />
+                )}
+                <h4
+                  className={cn(
+                    'font-semibold',
+                    importResult.imported > 0 ? 'text-green-300' : 'text-red-300',
+                  )}
+                >
+                  {importResult.imported > 0 ? 'Import complete' : 'Import failed'}
+                </h4>
+              </div>
+              <p className="text-sm text-zinc-300 mt-1">
+                {importResult.imported} products imported / {importResult.skipped} rows skipped
+              </p>
+              {importResult.skipped > 0 && (
+                <button
+                  onClick={downloadErrorReport}
+                  className="mt-3 flex items-center gap-2 border border-zinc-500 text-zinc-200 px-3 py-1 rounded text-sm hover:bg-zinc-700 transition-colors"
+                >
+                  <Download size={14} /> Download Error Report
+                </button>
+              )}
+            </motion.div>
+          )}
+
+          <div className="border-t border-zinc-700 pt-2 text-xs text-zinc-500">
+            Hızlı (istemci taraflı) önizleme yükleme — aşağıda
+          </div>
+
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
