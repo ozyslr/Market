@@ -94,6 +94,13 @@ export interface Seller {
     shipSpeed: string;
     compliance: string;
   };
+  /** Stripe Connect Express (EU sellers) */
+  stripeAccountId?: string;
+  stripeOnboardingStatus?: 'pending' | 'complete';
+  payoutsEnabled?: boolean;
+  /** Iyzico sub-merchant (TR sellers) */
+  iyzicoSubMerchantKey?: string;
+  iyzicoOnboardingStatus?: 'pending' | 'complete';
 }
 
 export interface Order {
