@@ -23,6 +23,7 @@ import { registerPayoutRoutes } from './server/routes/payouts.js';
 import { registerFinanceRoutes } from './server/routes/finance.js';
 import { registerEmailRoutes } from './server/routes/email.js';
 import { registerRefundRoutes } from './server/routes/refund.js';
+import { registerCsvImportRoutes } from './server/routes/csvImport.js';
 import { sendAbandonedCartEmail } from './server/services/emailService.js';
 import { logger, httpLogger } from './server/logger.js';
 
@@ -410,6 +411,9 @@ async function startServer() {
 
   // ─── Admin Refund + Cancel Order Routes ──────────────────────────────────
   registerRefundRoutes(app, { adminDb, getIyzico, verifyAdmin });
+
+  // ─── CSV Bulk Import / Export Routes (SEL-05) ────────────────────────────
+  registerCsvImportRoutes(app, { adminDb, verifyFirebaseToken });
 
   // â”€â”€â”€ Legacy Scheduled Auto-Payout (sellerBalances â€” kept for backward compat) â”€â”€
   // The new T+7 ledger-based payout is handled by registerPayoutRoutes above.
