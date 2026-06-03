@@ -10,12 +10,14 @@ import {
   iyzicoInitSchema,
   iyzicoInstallmentsQuerySchema,
   iyzicoMarketplaceInitSchema,
+  approveSellerSchema,
 } from '../lib/schemas.js';
 import type { IPaymentProvider } from '../services/paymentProvider.js';
 import { getOrderSet, transitionOrderSetStatus } from '../services/orderService.js';
 import { recordEntry } from '../services/ledgerService.js';
 import { confirmStock } from '../services/stockService.js';
 import { sendOrderConfirmationEmail, sendNewSellerOrderEmail } from '../services/emailService.js';
+import { hasAllRequiredDocs, type KycDocumentRef } from '../services/kycService.js';
 
 export interface IyzicoRouteDeps {
   /** Legacy lazy loader — kept for installment helper and legacy init. */
@@ -25,10 +27,11 @@ export interface IyzicoRouteDeps {
   adminDb: Firestore | null;
   port: number;
   verifyFirebaseToken?: (req: any, res: any, next: any) => void;
+  verifyAdmin?: (req: any, res: any, next: any) => void;
 }
 
 export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
-  const { getIyzico, iyzicoProvider, adminDb, port: PORT, verifyFirebaseToken } = deps;
+  const { getIyzico, iyzicoProvider, adminDb, port: PORT, verifyFirebaseToken, verifyAdmin } = deps;
 
   // ─── Marketplace init (new OrderSet-based flow) ───────────────────────────
   app.post(
@@ -507,6 +510,117 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
       res.status(500).json({ error: err.message });
     }
   });
+
+  // ─── Admin: Approve TR seller — provision Iyzico sub-merchant ───────────
+  // POST /api/admin/seller/:id/approve-tr (T-03-02, D-03)
+  // Idempotent: checks iyzicoSubMerchantKey before calling subMerchantCreate (T-03-05).
+  app.post(
+    '/api/admin/seller/:id/approve-tr',
+    ...(verifyAdmin ? [verifyAdmin] : []),
+    validate(approveSellerSchema),
+    async (req: any, res: any) => {
+      if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+      const sellerId = req.params.id;
+
+      try {
+        // Fetch application
+        const appSnap = await adminDb.collection('sellerApplications').doc(sellerId).get();
+        if (!appSnap.exists) {
+          return res.status(404).json({ error: 'Application not found' });
+        }
+        const appData = appSnap.data() as any;
+        const kycDocs: KycDocumentRef[] = appData.kycDocuments ?? [];
+
+        // 3-doc gate (T-03-07)
+        if (!hasAllRequiredDocs(kycDocs)) {
+          return res.status(400).json({
+            error:
+              'All 3 KYC documents (identity, tax_certificate, bank_iban) must be uploaded before approval',
+          });
+        }
+
+        // Idempotency guard (T-03-05)
+        const sellerSnap = await adminDb.collection('sellers').doc(sellerId).get();
+        const sellerData = sellerSnap.data() ?? {};
+        if (sellerData.iyzicoSubMerchantKey) {
+          logger.info('kyc', 'approve-tr: already provisioned', { sellerId });
+          return res.json({
+            alreadyProvisioned: true,
+            subMerchantKey: sellerData.iyzicoSubMerchantKey,
+          });
+        }
+
+        // Build sub-merchant request from application data
+        const iyzico = await getIyzico();
+        if (!iyzico) {
+          return res.status(503).json({ error: 'iyzico not configured' });
+        }
+
+        const { subMerchantCreate } = await import('../iyzico.cjs');
+        const applicationId = sellerId;
+        const request = {
+          locale: 'tr',
+          conversationId: applicationId,
+          subMerchantExternalId: sellerId,
+          subMerchantType: 'PERSONAL',
+          address: appData.address ?? 'TR',
+          taxOffice: appData.taxId ? 'Vergi Dairesi' : undefined,
+          taxNumber: appData.taxId ?? undefined,
+          legalCompanyTitle: appData.storeName ?? '',
+          email: appData.userEmail ?? '',
+          gsmNumber: appData.phone ?? '',
+          name: appData.storeName ?? '',
+          iban: appData.bankIban ?? '',
+          identityNumber: appData.taxId ?? '11111111111',
+          currency: 'TRY',
+        };
+
+        const result = (await subMerchantCreate(iyzico.client, request)) as Record<string, unknown>;
+
+        if (result.status !== 'success') {
+          logger.error('kyc', 'Iyzico subMerchantCreate failed', {
+            sellerId,
+            errorMessage: result.errorMessage,
+          });
+          return res.status(502).json({
+            error: (result.errorMessage as string) ?? 'Iyzico sub-merchant creation failed',
+          });
+        }
+
+        const subMerchantKey = result.subMerchantKey as string;
+
+        // Persist sub-merchant key + update application status
+        await adminDb
+          .collection('sellers')
+          .doc(sellerId)
+          .set(
+            {
+              iyzicoSubMerchantKey: subMerchantKey,
+              iyzicoOnboardingStatus: 'complete',
+              updatedAt: new Date().toISOString(),
+            },
+            { merge: true },
+          );
+        await adminDb
+          .collection('sellerApplications')
+          .doc(sellerId)
+          .update({
+            status: 'approved',
+            reviewedAt: new Date().toISOString(),
+            adminNote: req.body.adminNote ?? '',
+          });
+
+        logger.info('kyc', 'TR seller approved — Iyzico sub-merchant provisioned', {
+          sellerId,
+          subMerchantKey,
+        });
+        res.json({ subMerchantKey });
+      } catch (err: any) {
+        logger.error('kyc', 'approve-tr error', { error: err.message });
+        res.status(500).json({ error: err.message });
+      }
+    },
+  );
 
   // ─── Installment options ─────────────────────────────────────────────────
   app.get('/api/iyzico/installments', async (req: any, res: any) => {

@@ -1,4 +1,4 @@
-﻿// â”€â”€â”€ Stripe payment routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+﻿// ─── Stripe payment routes ────────────────────────────────────────────────────
 // Extracted verbatim from server.ts. The webhook needs the raw request body and
 // MUST be registered BEFORE express.json(); registerStripeWebhook handles that
 // half, registerStripeRoutes handles the JSON-parsed endpoints.
@@ -14,12 +14,22 @@ import {
   defaultPaymentMethodSchema,
   oneClickCheckoutSchema,
   refundSchema,
+  kycUploadUrlSchema,
+  identityVerifySchema,
+  approveSellerSchema,
 } from '../lib/schemas.js';
 import {
   isFiniteNumber,
   isNonEmptyString,
   itemsSignature,
 } from '../../src/lib/serverValidators.js';
+import {
+  getKycUploadUrl,
+  getKycSignedUrl,
+  hasAllRequiredDocs,
+  type KycDocumentRef,
+} from '../services/kycService.js';
+import { StripeConnectProvider } from '../services/paymentProvider.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
@@ -95,6 +105,71 @@ export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Fir
             });
             logger.info('stripe', 'Order cancelled due to payment failure', {
               orderId: failedOrderId,
+            });
+          }
+          break;
+        }
+
+        // ── Stripe Connect: account onboarding complete ────────────────────
+        case 'account.updated': {
+          const account = event.data.object as Stripe.Account;
+          if (account.payouts_enabled && account.charges_enabled && adminDb) {
+            const snap = await adminDb
+              .collection('sellers')
+              .where('stripeAccountId', '==', account.id)
+              .limit(1)
+              .get();
+            if (!snap.empty) {
+              await snap.docs[0].ref.update({
+                stripeOnboardingStatus: 'complete',
+                payoutsEnabled: true,
+                updatedAt: new Date().toISOString(),
+              });
+              logger.info('stripe', 'Seller Connect onboarding complete', {
+                sellerId: snap.docs[0].id,
+                accountId: account.id,
+              });
+            }
+          }
+          break;
+        }
+
+        // ── Stripe Identity: verification passed ───────────────────────────
+        case 'identity.verification_session.verified': {
+          const vs = event.data.object as Stripe.Identity.VerificationSession;
+          const applicationId = vs.metadata?.applicationId;
+          if (applicationId && adminDb) {
+            await adminDb.collection('sellerApplications').doc(applicationId).update({
+              identityVerificationStatus: 'verified',
+              identitySessionId: vs.id,
+              updatedAt: new Date().toISOString(),
+            });
+            logger.info('stripe', 'Identity verification passed', {
+              applicationId,
+              sessionId: vs.id,
+            });
+          }
+          break;
+        }
+
+        // ── Stripe Identity: verification requires input ───────────────────
+        case 'identity.verification_session.requires_input': {
+          const vs = event.data.object as Stripe.Identity.VerificationSession;
+          const applicationId = vs.metadata?.applicationId;
+          if (applicationId && adminDb) {
+            await adminDb
+              .collection('sellerApplications')
+              .doc(applicationId)
+              .update({
+                identityVerificationStatus: 'requires_input',
+                identitySessionId: vs.id,
+                identityVerificationError: vs.last_error?.reason ?? 'Verification failed',
+                updatedAt: new Date().toISOString(),
+              });
+            logger.info('stripe', 'Identity verification requires input', {
+              applicationId,
+              sessionId: vs.id,
+              reason: vs.last_error?.reason,
             });
           }
           break;
@@ -604,7 +679,169 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     }
   });
 
-  // â”€â”€â”€ Refund (admin only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── KYC: Generate upload URL (seller only) ───────────────────────────────
+  // POST /api/kyc/upload-url — returns { uploadUrl, storagePath }
+  // Enforces req.uid === sellerId (T-03-04).
+  app.post(
+    '/api/kyc/upload-url',
+    verifyFirebaseToken,
+    validate(kycUploadUrlSchema),
+    async (req: any, res: any) => {
+      if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+      const { sellerId, docType, fileName } = req.body;
+
+      // Ownership check — seller can only upload to their own kyc path (T-03-04)
+      if (req.uid !== sellerId) {
+        return res
+          .status(403)
+          .json({ error: 'Forbidden: sellerId does not match authenticated user' });
+      }
+
+      try {
+        const result = await getKycUploadUrl(sellerId, docType, fileName);
+        res.json(result);
+      } catch (err: any) {
+        logger.error('kyc', 'Upload URL error', { error: err.message });
+        res.status(500).json({ error: err.message });
+      }
+    },
+  );
+
+  // ─── KYC: Start Stripe Identity verification (seller only) ──────────────
+  // POST /api/kyc/identity-verify — returns { verificationUrl, sessionId }
+  // Idempotent: reuses existing session if not yet verified (T-03-06).
+  app.post(
+    '/api/kyc/identity-verify',
+    verifyFirebaseToken,
+    validate(identityVerifySchema),
+    async (req: any, res: any) => {
+      if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+      const { applicationId } = req.body;
+
+      try {
+        const appSnap = await adminDb.collection('sellerApplications').doc(applicationId).get();
+        if (!appSnap.exists) {
+          return res.status(404).json({ error: 'Application not found' });
+        }
+        const appData = appSnap.data() as any;
+
+        // Idempotency: reuse session if already verified or in progress (T-03-06)
+        if (appData.identitySessionId && appData.identityVerificationStatus === 'verified') {
+          return res.json({ alreadyVerified: true });
+        }
+
+        const session = await stripe.identity.verificationSessions.create(
+          {
+            type: 'document',
+            options: {
+              document: {
+                allowed_types: ['driving_license', 'id_card', 'passport'],
+                require_live_capture: true,
+                require_matching_selfie: true,
+              },
+            },
+            provided_details: { email: appData.userEmail ?? '' },
+            metadata: { sellerId: req.uid, applicationId },
+          },
+          { idempotencyKey: `identity-${applicationId}` },
+        );
+
+        // Store sessionId on application for webhook correlation
+        await adminDb.collection('sellerApplications').doc(applicationId).update({
+          identitySessionId: session.id,
+          identityVerificationStatus: 'pending',
+          updatedAt: new Date().toISOString(),
+        });
+
+        logger.info('kyc', 'Identity verification session created', {
+          applicationId,
+          sessionId: session.id,
+        });
+        res.json({ verificationUrl: session.url, sessionId: session.id });
+      } catch (err: any) {
+        logger.error('kyc', 'Identity verify error', { error: err.message });
+        res.status(500).json({ error: err.message });
+      }
+    },
+  );
+
+  // ─── KYC: Get signed read URL (admin only) ────────────────────────────────
+  // GET /api/kyc/signed-url/:encodedPath — returns { url } (5-min TTL, T-03-01)
+  // storagePath is never rendered in DOM — only the signed URL is returned.
+  app.get('/api/kyc/signed-url/:encodedPath', verifyAdmin, async (req: any, res: any) => {
+    if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+    try {
+      const storagePath = decodeURIComponent(req.params.encodedPath);
+      // Validate path is within kyc/ namespace (defence-in-depth)
+      if (!storagePath.startsWith('kyc/')) {
+        return res.status(400).json({ error: 'Invalid storage path' });
+      }
+      const url = await getKycSignedUrl(storagePath);
+      res.json({ url });
+    } catch (err: any) {
+      logger.error('kyc', 'Signed URL error', { error: err.message });
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ─── Admin: Approve EU seller — provision Stripe Connect Express ─────────
+  // POST /api/admin/seller/:id/approve-eu (T-03-03, D-01, D-02)
+  app.post(
+    '/api/admin/seller/:id/approve-eu',
+    verifyAdmin,
+    validate(approveSellerSchema),
+    async (req: any, res: any) => {
+      if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+      const sellerId = req.params.id;
+
+      try {
+        const appSnap = await adminDb.collection('sellerApplications').doc(sellerId).get();
+        if (!appSnap.exists) {
+          return res.status(404).json({ error: 'Application not found' });
+        }
+        const appData = appSnap.data() as any;
+        const kycDocs: KycDocumentRef[] = appData.kycDocuments ?? [];
+
+        // 3-doc gate (T-03-07)
+        if (!hasAllRequiredDocs(kycDocs)) {
+          return res.status(400).json({
+            error:
+              'All 3 KYC documents (identity, tax_certificate, bank_iban) must be uploaded before approval',
+          });
+        }
+
+        const connectProvider = new StripeConnectProvider({ stripe, adminDb });
+        const country = appData.origin === 'TR' ? 'TR' : (appData.origin ?? 'GB');
+        const result = await connectProvider.provisionAccount(
+          sellerId,
+          appData.userEmail ?? '',
+          country,
+        );
+
+        // Update application status
+        await adminDb
+          .collection('sellerApplications')
+          .doc(sellerId)
+          .update({
+            status: 'approved',
+            reviewedAt: new Date().toISOString(),
+            adminNote: req.body.adminNote ?? '',
+          });
+
+        logger.info('kyc', 'EU seller approved — Stripe Connect provisioned', {
+          sellerId,
+          accountId: result.accountId,
+          alreadyProvisioned: result.alreadyProvisioned ?? false,
+        });
+        res.json({ onboardingUrl: result.onboardingUrl, accountId: result.accountId });
+      } catch (err: any) {
+        logger.error('kyc', 'approve-eu error', { error: err.message });
+        res.status(500).json({ error: err.message });
+      }
+    },
+  );
+
+  // ─── Refund (admin only) ──────────────────────────────────────────────────
   app.post('/api/refund', verifyAdmin, async (req: any, res) => {
     try {
       if (!adminDb) return res.status(503).json({ error: 'Firestore not configured' });
