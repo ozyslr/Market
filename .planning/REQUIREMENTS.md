@@ -10,7 +10,7 @@
 - [ ] **PAY-01**: Müşteri Iyzico ile TRY cinsinden 3D Secure ödeme yapabilir
 - [ ] **PAY-02**: Müşteri Stripe ile EUR cinsinden 3D Secure ödeme yapabilir
 - [ ] **PAY-03**: Platform ödemeyi escrow'da tutar, komisyon kesintisi sonrası satıcıya payout yapar
-- [ ] **PAY-04**: İade durumunda komisyon iadesi otomatik yapılır (reverse_transfer)
+- [x] **PAY-04**: İade durumunda komisyon iadesi otomatik yapılır (reverse_transfer)
 - [x] **PAY-05**: Webhook idempotency — aynı event tekrar gelirse çift işlem yapılmaz
 - [x] **PAY-06**: Satıcı finansal dashboard — bakiye, bekleyen, ödenen tutarları görür
 
@@ -114,7 +114,7 @@
 | PAY-01      | Phase 2 | Pending  |
 | PAY-02      | Phase 2 | Pending  |
 | PAY-03      | Phase 2 | Pending  |
-| PAY-04      | Phase 2 | Pending  |
+| PAY-04      | Phase 2 | Complete |
 | PAY-05      | Phase 2 | Complete |
 | PAY-06      | Phase 2 | Complete |
 | ORD-01      | Phase 1 | Pending  |
