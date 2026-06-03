@@ -96,7 +96,7 @@ Plans:
 **Wave 1**
 
 - [x] 03-01-PLAN.md -- KYC pipeline: private Storage + signed URLs, Stripe Identity, Iyzico sub-merchant + Stripe Connect Express provisioning on approval, admin review panel
-- [ ] 03-02-PLAN.md -- Store page hardening (slug/copy, logo/banner upload, about counter) + product management client+server validation (min-1-photo, required-category)
+- [x] 03-02-PLAN.md -- Store page hardening (slug/copy, logo/banner upload, about counter) + product management client+server validation (min-1-photo, required-category)
 
 **Wave 2** _(blocked on Wave 1 completion)_
 
@@ -187,7 +187,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 | ------------------------------- | -------------- | ----------- | ---------- |
 | 1. Foundation & Compliance      | 4/4            | Complete    | 2026-06-02 |
 | 2. Payment & Order Lifecycle    | 5/5            | Complete    | 2026-06-03 |
-| 3. Seller Onboarding & KYC      | 1/4            | In progress | 03-01 done |
+| 3. Seller Onboarding & KYC      | 2/4            | In progress | 03-02 done |
 | 4. Search & Discovery           | 0/--           | Not started | -          |
 | 5. Shipping & Fulfillment       | 0/--           | Not started | -          |
 | 6. Multi-Currency               | 0/--           | Not started | -          |
