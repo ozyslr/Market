@@ -81,9 +81,9 @@
 
 ### Eposta ve Bildirim (NOT)
 
-- [ ] **NOT-01**: İşlemsel epostalar — sipariş onayı, kargo, teslimat, iade
-- [ ] **NOT-02**: Sepet terk hatırlatma epostası (mevcut geliştirildi)
-- [ ] **NOT-03**: Satıcıya yeni sipariş bildirimi
+- [x] **NOT-01**: İşlemsel epostalar — sipariş onayı, kargo, teslimat, iade
+- [x] **NOT-02**: Sepet terk hatırlatma epostası (mevcut geliştirildi)
+- [x] **NOT-03**: Satıcıya yeni sipariş bildirimi
 
 ## v2 Requirements
 
@@ -158,9 +158,9 @@
 | REV-02      | Phase 7 | Pending  |
 | REV-03      | Phase 7 | Pending  |
 | REV-04      | Phase 7 | Pending  |
-| NOT-01      | Phase 2 | Pending  |
-| NOT-02      | Phase 2 | Pending  |
-| NOT-03      | Phase 2 | Pending  |
+| NOT-01      | Phase 2 | Complete |
+| NOT-02      | Phase 2 | Complete |
+| NOT-03      | Phase 2 | Complete |
 
 **Coverage:**
 
