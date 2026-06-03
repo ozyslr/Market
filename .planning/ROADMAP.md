@@ -93,8 +93,13 @@ Plans:
 
 Plans:
 
+**Wave 1**
+
 - [ ] 03-01-PLAN.md -- KYC pipeline: private Storage + signed URLs, Stripe Identity, Iyzico sub-merchant + Stripe Connect Express provisioning on approval, admin review panel
 - [ ] 03-02-PLAN.md -- Store page hardening (slug/copy, logo/banner upload, about counter) + product management client+server validation (min-1-photo, required-category)
+
+**Wave 2** _(blocked on Wave 1 completion)_
+
 - [ ] 03-03-PLAN.md -- CSV bulk import (papaparse + Zod + SSRF-safe image fetch + error report) and product CSV export
 - [ ] 03-04-PLAN.md -- REST API hardening: SHA-256 key hash + timingSafeEqual + Firestore rate limit + UTF-8 fix + raw-key-once UI
 
