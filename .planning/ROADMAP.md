@@ -17,7 +17,7 @@ Benim Olan is a live Technical MVP transitioning to a full-scale multi-vendor ma
 
 - [x] **Phase 1: Foundation & Compliance** — Order data model, commission engine, immutable ledger, KVKK/GDPR compliance, Firestore security rules (completed 2026-06-02)
 - [x] **Phase 2: Payment & Order Lifecycle** — Dual-provider payments (Iyzico TRY + Stripe EUR), escrow flow, order lifecycle, seller payouts, transactional emails (completed 2026-06-03)
-- [ ] **Phase 3: Seller Onboarding & KYC** — KYC document upload, admin review/approval, seller store management, CSV import/export, enhanced REST API
+- [x] **Phase 3: Seller Onboarding & KYC** — KYC document upload, admin review/approval, seller store management, CSV import/export, enhanced REST API (completed 2026-06-03)
 - [ ] **Phase 4: Search & Discovery** — Typesense full-text search, faceted filters, sort options, event-driven index updates
 - [ ] **Phase 5: Shipping & Fulfillment** — Entegi (TR) + EasyPost (EU) carrier integration, live tracking, delivery confirmation, returns workflow
 - [ ] **Phase 6: Multi-Currency** — Exchange rate service, TRY-based pricing with EUR display, rate locking at checkout, TRY-only settlement
@@ -101,7 +101,7 @@ Plans:
 **Wave 2** _(blocked on Wave 1 completion)_
 
 - [x] 03-03-PLAN.md -- CSV bulk import (papaparse + Zod + SSRF-safe image fetch + error report) and product CSV export
-- [ ] 03-04-PLAN.md -- REST API hardening: SHA-256 key hash + timingSafeEqual + Firestore rate limit + UTF-8 fix + raw-key-once UI
+- [x] 03-04-PLAN.md -- REST API hardening: SHA-256 key hash + timingSafeEqual + Firestore rate limit + UTF-8 fix + raw-key-once UI
 
 ### Phase 4: Search & Discovery
 
