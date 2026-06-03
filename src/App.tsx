@@ -208,6 +208,7 @@ export default function App() {
                                 <Route path="/checkout" element={<CheckoutPage />} />
                                 <Route path="/moderator" element={<ModeratorDashboard />} />
                                 <Route path="/seller/:id" element={<SellerStorePage />} />
+                                <Route path="/store/:slug" element={<SellerStorePage />} />
                                 <Route path="/search" element={<SearchResultsPage />} />
                                 <Route path="/category/:id" element={<CategoryPage />} />
                                 <Route path="/collection/:type" element={<CollectionPage />} />

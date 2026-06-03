@@ -18,7 +18,14 @@ import {
   ArrowRight,
   Award,
   History,
+  Copy,
+  Check,
+  Camera,
+  Loader2,
 } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, updateDoc } from 'firebase/firestore';
+import { storage, db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { MOCK_USER } from '@/data/mockUser';
@@ -30,7 +37,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useFollows } from '@/context/FollowsContext';
 
 export function SellerStorePage() {
-  const { id } = useParams();
+  const { id, slug: slugParam } = useParams();
   const [activeTab, setActiveTab] = useState<'products' | 'about' | 'reviews'>('products');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,8 +49,96 @@ export function SellerStorePage() {
   const navigate = useNavigate();
   const { isFollowing, toggleFollow, loading: followLoading } = useFollows();
 
+  // Route param: /seller/:id OR /store/:slug
+  const routeKey = slugParam ?? id;
+
   // Find seller from mock data or use the first one as fallback
-  const sellerData = MOCK_SELLERS.find((s) => s.id === id || s.slug === id) || MOCK_SELLERS[0];
+  const sellerData =
+    MOCK_SELLERS.find((s) => s.id === routeKey || s.slug === routeKey) || MOCK_SELLERS[0];
+
+  // Store URL (shareable, public)
+  const storeSlug = sellerData.slug || sellerData.id;
+  const storeUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/store/${storeSlug}`
+      : `https://benim-olan.com/store/${storeSlug}`;
+
+  // Slug copy state
+  const [copied, setCopied] = useState(false);
+  function copyToClipboard() {
+    navigator.clipboard.writeText(storeUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  // Is the logged-in user the owner of this store?
+  const isOwner = !!firebaseUser && user?.id === sellerData.id;
+
+  // Store management: logo / banner upload + about counter (owner only)
+  const [aboutText, setAboutText] = useState(sellerData.description || '');
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(sellerData.logoUrl || '');
+  const [bannerUrl, setBannerUrl] = useState(sellerData.bannerUrl || '');
+  const [saving, setSaving] = useState(false);
+  const [savedMsg, setSavedMsg] = useState(false);
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 2 * 1024 * 1024) return; // max 2 MB
+    setLogoUploading(true);
+    try {
+      const storageRef = ref(storage, `store-assets/${sellerData.id}/logo`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setLogoUrl(url);
+      await updateDoc(doc(db, 'sellers', sellerData.id), {
+        logoUrl: url,
+        updatedAt: new Date().toISOString(),
+      });
+    } finally {
+      setLogoUploading(false);
+    }
+  }
+
+  async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) return; // max 5 MB
+    setBannerUploading(true);
+    try {
+      const storageRef = ref(storage, `store-assets/${sellerData.id}/banner`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setBannerUrl(url);
+      await updateDoc(doc(db, 'sellers', sellerData.id), {
+        bannerUrl: url,
+        updatedAt: new Date().toISOString(),
+      });
+    } finally {
+      setBannerUploading(false);
+    }
+  }
+
+  async function handleSaveStore() {
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, 'sellers', sellerData.id), {
+        aboutText,
+        logoUrl,
+        bannerUrl,
+        updatedAt: new Date().toISOString(),
+      });
+      setSavedMsg(true);
+      setTimeout(() => setSavedMsg(false), 3000);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const seller = {
     name: sellerData.storeName,
@@ -54,10 +149,8 @@ export function SellerStorePage() {
     isVerified: sellerData.isVerified,
     joinedDate: sellerData.joinedDate,
     description: sellerData.description || 'Sertifikalı Benim Olan Satıcısı.',
-    banner: sellerData.bannerUrl || 'https://picsum.photos/seed/shop/1920/1080?blur=4',
-    avatar:
-      sellerData.logoUrl ||
-      `https://api.dicebear.com/7.x/initials/svg?seed=${sellerData.storeName}`,
+    banner: bannerUrl || 'https://picsum.photos/seed/shop/1920/1080?blur=4',
+    avatar: logoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${sellerData.storeName}`,
     fulfillment: sellerData.fulfillmentHealth,
   };
 
@@ -174,13 +267,147 @@ export function SellerStorePage() {
                   Mesaj Gönder
                 </button>
               )}
-              <button className="p-4 bg-white rounded-2xl border border-brand-primary/5 shadow-sm hover:scale-110 transition-transform">
-                <Share2 size={18} />
+              <button
+                onClick={copyToClipboard}
+                title="Mağaza bağlantısını kopyala"
+                className="p-4 bg-white rounded-2xl border border-brand-primary/5 shadow-sm hover:scale-110 transition-transform"
+              >
+                {copied ? <Check size={18} className="text-green-500" /> : <Share2 size={18} />}
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Shareable store URL */}
+      <div className="max-w-7xl mx-auto px-6 mt-6">
+        <div className="bg-white rounded-2xl border border-brand-primary/5 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
+            Mağaza Bağlantısı
+          </span>
+          <div className="flex-1 flex items-center gap-2">
+            <input
+              type="text"
+              readOnly
+              value={storeUrl}
+              className="flex-1 ps-3 pe-3 py-2 bg-brand-secondary/30 rounded-xl border border-brand-primary/5 text-sm font-medium text-brand-primary/70 outline-none text-start"
+            />
+            <button
+              onClick={copyToClipboard}
+              className="p-2 bg-accent/10 text-accent rounded-xl hover:bg-accent/20 transition-all"
+              title="Kopyala"
+            >
+              {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+            </button>
+          </div>
+          {copied && (
+            <span className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-lg">
+              Store URL copied!
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Store management (owner only): logo / banner upload + about counter */}
+      {isOwner && (
+        <div className="max-w-7xl mx-auto px-6 mt-6">
+          <div className="bg-white rounded-2xl border border-brand-primary/5 shadow-sm p-6 space-y-6">
+            <h3 className="text-xs font-black uppercase tracking-widest text-brand-primary/40">
+              Mağaza Yönetimi
+            </h3>
+            <div className="flex flex-col md:flex-row gap-6 md:items-center">
+              {/* Logo upload (circular) */}
+              <div className="relative w-20 h-20 shrink-0">
+                <img
+                  src={
+                    logoUrl ||
+                    `https://api.dicebear.com/7.x/initials/svg?seed=${sellerData.storeName}`
+                  }
+                  alt="Mağaza logosu"
+                  className="w-20 h-20 object-cover rounded-full border-2 border-accent"
+                />
+                <label className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center cursor-pointer opacity-0 hover:opacity-100 transition-opacity">
+                  {logoUploading ? (
+                    <Loader2 size={20} className="text-white animate-spin" />
+                  ) : (
+                    <Camera size={20} className="text-white" />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleLogoUpload}
+                  />
+                </label>
+              </div>
+              {/* Banner upload (16:4) */}
+              <div className="relative flex-1 w-full">
+                <img
+                  src={bannerUrl || 'https://picsum.photos/seed/shop/1920/480?blur=4'}
+                  alt="Mağaza afişi"
+                  className="w-full h-24 md:h-32 object-cover rounded-lg"
+                />
+                <label className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center cursor-pointer opacity-0 hover:opacity-100 transition-opacity">
+                  {bannerUploading ? (
+                    <Loader2 size={20} className="text-white animate-spin" />
+                  ) : (
+                    <Camera size={20} className="text-white" />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleBannerUpload}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* About / description with char counter */}
+            <div>
+              <label className="block text-xs text-brand-primary/40 mb-1 text-start">
+                Hakkında
+              </label>
+              <textarea
+                rows={4}
+                maxLength={500}
+                value={aboutText}
+                onChange={(e) => setAboutText(e.target.value)}
+                className="w-full ps-3 pe-3 py-2 bg-brand-secondary/30 rounded-xl border border-brand-primary/5 text-sm text-brand-primary outline-none resize-none text-start"
+                placeholder="Mağazanızı tanıtın..."
+              />
+              <div
+                className={cn(
+                  'text-sm text-end mt-1',
+                  aboutText.length >= 500
+                    ? 'text-red-500'
+                    : aboutText.length >= 450
+                      ? 'text-amber-500'
+                      : 'text-gray-400',
+                )}
+              >
+                {aboutText.length} / 500
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-3">
+              {savedMsg && (
+                <span className="text-xs font-bold text-green-600 bg-green-50 px-3 py-2 rounded-lg text-center">
+                  Changes saved
+                </span>
+              )}
+              <button
+                onClick={handleSaveStore}
+                disabled={saving}
+                className="w-full sm:w-auto px-6 py-3 bg-accent text-white rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {saving ? <Loader2 size={16} className="animate-spin" /> : null}
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-6 mt-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
         {/* Sidebar Info */}
