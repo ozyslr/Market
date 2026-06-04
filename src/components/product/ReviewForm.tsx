@@ -1,15 +1,17 @@
 import React, { useRef, useState } from 'react';
 import { Star, X, Upload } from 'lucide-react';
+import { uploadReviewPhoto } from '@/services/reviewService';
 
 export interface ReviewFormData {
   rating: number;
   comment: string;
   photos: string[];
-  photoFiles: File[];
   categoryRatings: { quality: number; shipping: number; description: number };
 }
 
 interface Props {
+  productId: string;
+  userId: string;
   onSubmit: (data: ReviewFormData) => Promise<void>;
   onCancel: () => void;
 }
@@ -22,45 +24,68 @@ const CATEGORY_LABELS = {
 
 const RATING_LABELS = ['', 'Çok Kötü', 'Kötü', 'Orta', 'İyi', 'Mükemmel'];
 
-export function ReviewForm({ onSubmit, onCancel }: Props) {
+const MAX_PHOTOS = 5;
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB
+
+export function ReviewForm({ productId, userId, onSubmit, onCancel }: Props) {
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [categoryRatings, setCategoryRatings] = useState({ quality: 0, shipping: 0, description: 0 });
+  const [photos, setPhotos] = useState<string[]>([]); // uploaded Storage URLs
+  const [categoryRatings, setCategoryRatings] = useState({
+    quality: 0,
+    shipping: 0,
+    description: 0,
+  });
   const [submitting, setSubmitting] = useState(false);
-  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
-    if (photos.length + files.length > 3) {
-      setPhotoError('En fazla 3 fotoğraf ekleyebilirsiniz.');
+    e.target.value = '';
+    if (files.length === 0) return;
+    setPhotoError('');
+
+    if (photos.length + files.length > MAX_PHOTOS) {
+      setPhotoError('En fazla 5 fotoğraf ekleyebilirsiniz.');
       return;
     }
-    const oversized = files.filter(f => f.size > 500 * 1024);
-    if (oversized.length > 0) {
-      setPhotoError('Her fotoğraf en fazla 500KB olabilir.');
-    } else {
-      setPhotoError('');
+    const nonImage = files.some((f) => !f.type.startsWith('image/'));
+    if (nonImage) {
+      setPhotoError('Yalnızca resim dosyaları yükleyebilirsiniz.');
+      return;
     }
-    const valid = files.filter(f => f.size <= 500 * 1024);
-    valid.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = ev => setPhotos(prev => [...prev, ev.target!.result as string]);
-      reader.readAsDataURL(file);
-    });
-    setPhotoFiles(prev => [...prev, ...valid]);
-    e.target.value = '';
+    const oversized = files.some((f) => f.size > MAX_PHOTO_BYTES);
+    if (oversized) {
+      setPhotoError('Her fotoğraf en fazla 5MB olabilir.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      for (const file of files) {
+        const url = await uploadReviewPhoto(file, productId, userId);
+        setPhotos((prev) => [...prev, url]);
+      }
+    } catch {
+      setPhotoError('Fotoğraf yüklenirken bir hata oluştu. Tekrar deneyin.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function removePhoto(index: number) {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!comment.trim()) return;
+    if (!comment.trim() || uploading) return;
     setSubmitting(true);
     try {
-      await onSubmit({ rating, comment: comment.trim(), photos, photoFiles, categoryRatings });
+      await onSubmit({ rating, comment: comment.trim(), photos, categoryRatings });
     } finally {
       setSubmitting(false);
     }
@@ -69,12 +94,19 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
   const displayRating = hoverRating || rating;
 
   return (
-    <form onSubmit={handleSubmit} className="bg-brand-secondary/30 rounded-[2rem] p-8 border border-brand-primary/5 space-y-6">
-      <h4 className="text-sm font-black uppercase tracking-widest text-brand-primary">Değerlendirmenizi Yazın</h4>
+    <form
+      onSubmit={handleSubmit}
+      className="bg-brand-secondary/30 rounded-[2rem] p-8 border border-brand-primary/5 space-y-6"
+    >
+      <h4 className="text-sm font-black uppercase tracking-widest text-brand-primary">
+        Değerlendirmenizi Yazın
+      </h4>
 
       {/* Genel puan */}
       <div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">Genel Puan</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">
+          Genel Puan
+        </p>
         <div className="flex items-center gap-2">
           {Array.from({ length: 5 }).map((_, i) => (
             <button
@@ -99,7 +131,7 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
 
       {/* Kategori puanları */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {(Object.keys(CATEGORY_LABELS) as Array<keyof typeof CATEGORY_LABELS>).map(key => (
+        {(Object.keys(CATEGORY_LABELS) as Array<keyof typeof CATEGORY_LABELS>).map((key) => (
           <div key={key}>
             <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
               {CATEGORY_LABELS[key]}
@@ -109,7 +141,7 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
                 <button
                   key={i}
                   type="button"
-                  onClick={() => setCategoryRatings(prev => ({ ...prev, [key]: i + 1 }))}
+                  onClick={() => setCategoryRatings((prev) => ({ ...prev, [key]: i + 1 }))}
                 >
                   <Star
                     size={18}
@@ -126,7 +158,7 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
       {/* Yorum */}
       <textarea
         value={comment}
-        onChange={e => setComment(e.target.value)}
+        onChange={(e) => setComment(e.target.value)}
         placeholder="Ürün hakkındaki deneyiminizi paylaşın..."
         rows={4}
         required
@@ -136,36 +168,41 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
       {/* Fotoğraf yükleme */}
       <div>
         <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">
-          Fotoğraf Ekle (maks. 3, her biri maks. 500KB)
+          Fotoğraf Ekle (maks. 5, her biri maks. 5MB)
         </p>
         <div className="flex flex-wrap gap-3">
           {photos.map((p, i) => (
             <div key={i} className="relative w-20 h-20">
               <img
                 src={p}
-                alt=""
+                alt={`Yorum fotoğrafı ${i + 1}`}
                 className="w-full h-full object-cover rounded-xl border border-brand-primary/10"
               />
               <button
                 type="button"
-                onClick={() => {
-                  setPhotos(prev => prev.filter((_, idx) => idx !== i));
-                  setPhotoFiles(prev => prev.filter((_, idx) => idx !== i));
-                }}
+                aria-label="Fotoğrafı kaldır"
+                onClick={() => removePhoto(i)}
                 className="absolute -top-1.5 -end-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
               >
                 <X size={10} />
               </button>
             </div>
           ))}
-          {photos.length < 3 && (
+          {photos.length < MAX_PHOTOS && (
             <button
               type="button"
+              disabled={uploading}
               onClick={() => fileRef.current?.click()}
-              className="w-20 h-20 border-2 border-dashed border-brand-primary/20 rounded-xl flex flex-col items-center justify-center gap-1 hover:border-accent transition-colors"
+              className="w-20 h-20 border-2 border-dashed border-brand-primary/20 rounded-xl flex flex-col items-center justify-center gap-1 hover:border-accent transition-colors disabled:opacity-50"
             >
-              <Upload size={16} className="text-brand-primary/30" />
-              <span className="text-[9px] font-black text-brand-primary/30">Ekle</span>
+              {uploading ? (
+                <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Upload size={16} className="text-brand-primary/30" />
+                  <span className="text-[9px] font-black text-brand-primary/30">Ekle</span>
+                </>
+              )}
             </button>
           )}
         </div>
@@ -184,7 +221,7 @@ export function ReviewForm({ onSubmit, onCancel }: Props) {
       <div className="flex gap-3">
         <button
           type="submit"
-          disabled={submitting || !comment.trim()}
+          disabled={submitting || uploading || !comment.trim()}
           className="px-8 py-3 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40 hover:bg-brand-primary transition-all flex items-center gap-2"
         >
           {submitting && (

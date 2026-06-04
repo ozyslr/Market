@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Star,
   ThumbsUp,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   X,
   Store,
   Pencil,
@@ -48,7 +50,8 @@ export function ReviewCard({
   const [submittingReply, setSubmittingReply] = useState(false);
   const [localResponse, setLocalResponse] = useState(review.sellerResponse);
   const [showFullComment, setShowFullComment] = useState(false);
-  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const photos = review.photos ?? [];
   const [isEditing, setIsEditing] = useState(false);
   const [editRating, setEditRating] = useState(review.rating);
   const [editComment, setEditComment] = useState(review.comment);
@@ -56,6 +59,23 @@ export function ReviewCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isOwner = !!currentUserId && currentUserId === review.userId;
+
+  const lightboxOpen = lightboxIndex !== null;
+  const showPrev = () =>
+    setLightboxIndex((i) => (i === null ? null : (i - 1 + photos.length) % photos.length));
+  const showNext = () => setLightboxIndex((i) => (i === null ? null : (i + 1) % photos.length));
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setLightboxIndex(null);
+      else if (e.key === 'ArrowLeft') showPrev();
+      else if (e.key === 'ArrowRight') showNext();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lightboxOpen, photos.length]);
 
   async function handleSaveEdit() {
     if (!editComment.trim() || savingEdit) return;
@@ -223,15 +243,20 @@ export function ReviewCard({
       )}
 
       {/* Fotoğraflar */}
-      {review.photos && review.photos.length > 0 && (
+      {photos.length > 0 && (
         <div className="flex gap-2 mb-4 flex-wrap">
-          {review.photos.map((photo, i) => (
+          {photos.map((photo, i) => (
             <button
               key={i}
-              onClick={() => setLightboxPhoto(photo)}
+              onClick={() => setLightboxIndex(i)}
+              aria-label={`Yorum fotoğrafı ${i + 1} büyüt`}
               className="w-20 h-20 rounded-xl overflow-hidden border border-brand-primary/10 hover:border-accent transition-colors"
             >
-              <img src={photo} alt="Yorum fotoğrafı" className="w-full h-full object-cover" />
+              <img
+                src={photo}
+                alt={`Yorum fotoğrafı ${i + 1}`}
+                className="w-full h-full object-cover"
+              />
             </button>
           ))}
         </div>
@@ -344,20 +369,48 @@ export function ReviewCard({
       )}
 
       {/* Fotoğraf lightbox */}
-      {lightboxPhoto && (
+      {lightboxOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setLightboxPhoto(null)}
+          onClick={() => setLightboxIndex(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Yorum fotoğrafı görüntüleyici"
         >
           <button
             className="absolute top-4 end-4 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-            onClick={() => setLightboxPhoto(null)}
+            onClick={() => setLightboxIndex(null)}
+            aria-label="Kapat"
           >
             <X size={18} />
           </button>
+          {photos.length > 1 && (
+            <>
+              <button
+                className="absolute start-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  showPrev();
+                }}
+                aria-label="Önceki fotoğraf"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                className="absolute end-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  showNext();
+                }}
+                aria-label="Sonraki fotoğraf"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </>
+          )}
           <img
-            src={lightboxPhoto}
-            alt="Büyük görünüm"
+            src={photos[lightboxIndex!]}
+            alt={`Yorum fotoğrafı ${lightboxIndex! + 1}`}
             className="max-h-[80vh] max-w-[90vw] object-contain rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           />

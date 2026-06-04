@@ -10,7 +10,6 @@ import {
   checkUserReview,
   updateReview,
   deleteReview,
-  uploadReviewPhoto,
 } from '@/services/reviewService';
 import { RatingSummary } from './RatingSummary';
 import { ReviewFilters, SortOption, FilterOption } from './ReviewFilters';
@@ -80,14 +79,7 @@ export function ReviewSection({
     setSubmitError('');
 
     try {
-      // Upload photos to Firebase Storage → resulting https URLs are sent to the server.
-      let photoUrls = data.photos;
-      if (data.photoFiles && data.photoFiles.length > 0) {
-        photoUrls = await Promise.all(
-          data.photoFiles.map((file) => uploadReviewPhoto(file, productId, currentUserId)),
-        );
-      }
-
+      // Photos are already uploaded to Storage by ReviewForm; data.photos holds the URLs.
       // The server requires each category rating to be 1-5; omit the block entirely
       // when the buyer left categories unrated (form defaults them to 0).
       const cr = data.categoryRatings;
@@ -99,7 +91,7 @@ export function ReviewSection({
         rating: data.rating,
         comment: data.comment,
         userName: currentUserName,
-        photos: photoUrls,
+        photos: data.photos,
         categoryRatings: hasCategoryRatings ? cr : undefined,
       });
       setReviewSubmitted(true);
@@ -204,7 +196,12 @@ export function ReviewSection({
                 <p className="text-xs font-bold text-red-600">{submitError}</p>
               </div>
             )}
-            <ReviewForm onSubmit={handleSubmitReview} onCancel={() => setShowReviewForm(false)} />
+            <ReviewForm
+              productId={productId}
+              userId={currentUserId || ''}
+              onSubmit={handleSubmitReview}
+              onCancel={() => setShowReviewForm(false)}
+            />
           </>
         )}
       </div>
