@@ -24,6 +24,9 @@ import { registerFinanceRoutes } from './server/routes/finance.js';
 import { registerEmailRoutes } from './server/routes/email.js';
 import { registerRefundRoutes } from './server/routes/refund.js';
 import { registerCsvImportRoutes } from './server/routes/csvImport.js';
+import { registerShippingRoutes } from './server/routes/shipping.js';
+import { registerCarrierWebhook } from './server/routes/carrierWebhook.js';
+import { registerCarrierPollRoutes } from './server/routes/carrierPoll.js';
 import { sendAbandonedCartEmail } from './server/services/emailService.js';
 import { logger, httpLogger } from './server/logger.js';
 
@@ -296,6 +299,10 @@ async function startServer() {
   // MUST register before express.json() so the raw body survives for signature verification
   registerStripeWebhook(app, stripe, adminDb);
 
+  // ─── EasyPost carrier webhook (raw body) → server/routes/carrierWebhook.ts ─
+  // MUST also register before express.json() for HMAC verification to work
+  registerCarrierWebhook(app, { adminDb });
+
   // JSON parser for all other routes
   app.use(express.json());
 
@@ -414,6 +421,12 @@ async function startServer() {
 
   // ─── CSV Bulk Import / Export Routes (SEL-05) ────────────────────────────
   registerCsvImportRoutes(app, { adminDb, verifyFirebaseToken });
+
+  // ─── Shipping label creation → server/routes/shipping.ts ────────────────
+  registerShippingRoutes(app, { adminDb, verifyFirebaseToken, verifySeller });
+
+  // ─── Carrier cron routes (Entegi poll + delay check) ────────────────────
+  registerCarrierPollRoutes(app, { adminDb, verifyCronSecret });
 
   // â”€â”€â”€ Legacy Scheduled Auto-Payout (sellerBalances â€” kept for backward compat) â”€â”€
   // The new T+7 ledger-based payout is handled by registerPayoutRoutes above.
