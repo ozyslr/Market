@@ -19,7 +19,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { getCategories } from '@/services/productService';
-import { getFacetedFilters } from '@/services/searchService';
+import { getFacetedFilters, normalizeTR } from '@/services/searchService';
 import { Category, FilterAttribute, Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/commerce/ProductCard';
@@ -28,21 +28,21 @@ import { useLanguage } from '@/context/LanguageContext';
 import { SEO } from '@/components/common/SEO';
 import { SearchResultsSkeleton } from '@/components/ui/Skeleton';
 
-function normalizeTR(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/ş/g, 's')
-    .replace(/ğ/g, 'g')
-    .replace(/ü/g, 'u')
-    .replace(/ö/g, 'o')
-    .replace(/ı/g, 'i')
-    .replace(/ç/g, 'c')
-    .replace(/İ/g, 'i')
-    .replace(/Ş/g, 's')
-    .replace(/Ğ/g, 'g')
-    .replace(/Ü/g, 'u')
-    .replace(/Ö/g, 'o')
-    .replace(/Ç/g, 'c');
+function mapSortValue(v: string): string {
+  switch (v) {
+    case 'price-asc':
+      return 'price-asc';
+    case 'price-desc':
+      return 'price-desc';
+    case 'best-selling':
+      return 'popular';
+    case 'rating':
+      return 'rating';
+    case 'newest':
+      return 'newest';
+    default:
+      return v;
+  }
 }
 
 function isProductInCategory(product: Product, catId: string, allCategories: Category[]): boolean {
@@ -223,12 +223,13 @@ export function SearchResultsPage() {
   });
 
   if (sortBy) {
+    const mappedSort = mapSortValue(sortBy);
     results = [...results].sort((a, b) => {
-      if (sortBy === 'price-asc') return a.price - b.price;
-      if (sortBy === 'price-desc') return b.price - a.price;
-      if (sortBy === 'rating') return b.rating - a.rating;
-      if (sortBy === 'popular') return (b.reviewsCount ?? 0) - (a.reviewsCount ?? 0);
-      if (sortBy === 'newest') return (b.createdAt ?? '').localeCompare(a.createdAt ?? '');
+      if (mappedSort === 'price-asc') return a.price - b.price;
+      if (mappedSort === 'price-desc') return b.price - a.price;
+      if (mappedSort === 'rating') return b.rating - a.rating;
+      if (mappedSort === 'popular') return (b.reviewsCount ?? 0) - (a.reviewsCount ?? 0);
+      if (mappedSort === 'newest') return (b.createdAt ?? '').localeCompare(a.createdAt ?? '');
       return 0;
     });
   }
@@ -254,7 +255,6 @@ export function SearchResultsPage() {
       brands: selectedBrands.length > 0 ? selectedBrands : undefined,
       inStock: inStockParam || undefined,
       freeShipping: searchParams.get('freeShipping') === '1' || undefined,
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
     [
       priceMin,
