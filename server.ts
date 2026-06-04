@@ -27,6 +27,7 @@ import { registerCsvImportRoutes } from './server/routes/csvImport.js';
 import { registerShippingRoutes } from './server/routes/shipping.js';
 import { registerCarrierWebhook } from './server/routes/carrierWebhook.js';
 import { registerCarrierPollRoutes } from './server/routes/carrierPoll.js';
+import { registerReturnsRoutes } from './server/routes/returns.js';
 import { sendAbandonedCartEmail } from './server/services/emailService.js';
 import { logger, httpLogger } from './server/logger.js';
 
@@ -427,6 +428,15 @@ async function startServer() {
 
   // ─── Carrier cron routes (Entegi poll + delay check) ────────────────────
   registerCarrierPollRoutes(app, { adminDb, verifyCronSecret });
+
+  // ─── Returns workflow routes (SHP-05) → server/routes/returns.ts ─────────
+  registerReturnsRoutes(app, {
+    adminDb,
+    verifyFirebaseToken,
+    verifyAdmin,
+    verifySeller,
+    getIyzico,
+  });
 
   // â”€â”€â”€ Legacy Scheduled Auto-Payout (sellerBalances â€” kept for backward compat) â”€â”€
   // The new T+7 ledger-based payout is handled by registerPayoutRoutes above.
