@@ -7,7 +7,8 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   GoogleAuthProvider,
-  signOut
+  signOut,
+  signInAnonymously,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
@@ -17,6 +18,7 @@ import { notifyAdmins } from '../services/notificationService';
 interface AuthContextType {
   user: UserProfile | null;
   firebaseUser: FirebaseUser | null;
+  isAnonymous: boolean;
   loading: boolean;
   login: () => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
@@ -32,10 +34,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const isAnonymous = firebaseUser?.isAnonymous ?? false;
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fUser) => {
       setFirebaseUser(fUser);
       if (fUser) {
+        if (fUser.isAnonymous) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
         try {
           const userDoc = await getDoc(doc(db, 'users', fUser.uid));
           if (userDoc.exists()) {
@@ -63,8 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               preferences: {
                 newsletter: true,
                 personalizedDeals: true,
-                pushNotifications: false
-              }
+                pushNotifications: false,
+              },
             };
             await setDoc(doc(db, 'users', fUser.uid), newUser);
             setUser(newUser);
@@ -76,11 +85,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ).catch(() => {});
           }
         } catch (error) {
-          console.error("Error fetching user profile:", error);
+          console.error('Error fetching user profile:', error);
           handleFirestoreError(error, OperationType.WRITE, `users/${fUser?.uid}`);
         }
       } else {
         setUser(null);
+        signInAnonymously(auth).catch(() => setLoading(false));
+        return;
       }
       setLoading(false);
     });
@@ -93,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error("Login Error:", error);
+      console.error('Login Error:', error);
     }
   };
 
@@ -116,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       lastLogin: new Date().toISOString(),
       orders: [],
       savedItems: [],
-      preferences: { newsletter: true, personalizedDeals: true, pushNotifications: false }
+      preferences: { newsletter: true, personalizedDeals: true, pushNotifications: false },
     };
     await setDoc(doc(db, 'users', fbUser.uid), newUser);
     setUser(newUser);
@@ -126,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signOut(auth);
     } catch (error) {
-      console.error("Logout Error:", error);
+      console.error('Logout Error:', error);
     }
   };
 
@@ -139,7 +150,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, firebaseUser, loading, login, loginWithEmail, registerWithEmail, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        firebaseUser,
+        isAnonymous,
+        loading,
+        login,
+        loginWithEmail,
+        registerWithEmail,
+        logout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
