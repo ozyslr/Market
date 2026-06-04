@@ -6,6 +6,7 @@ service cloud.firestore {
     // All role checks use request.auth.token.role (Firebase Custom Claims).
     // Zero get() calls on user documents — eliminates billed reads (Pitfall 1).
     function isSignedIn() { return request.auth != null; }
+    function isFullUser() { return isSignedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
     function isAdmin() { return isSignedIn() && request.auth.token.role == 'admin'; }
     function isSeller() { return isSignedIn() && request.auth.token.role == 'seller'; }
     function isBuyer() { return isSignedIn() && request.auth.token.role == 'buyer'; }
@@ -25,10 +26,10 @@ service cloud.firestore {
 
     // --- USERS -----------------------------------------------------------
     match /users/{uid} {
-      allow get: if isSignedIn() && (getUserId() == uid || isAdmin());
+      allow get: if isFullUser() && (getUserId() == uid || isAdmin());
       allow list: if isAdmin();
-      allow create: if isSignedIn() && uid == getUserId();
-      allow update: if isSignedIn() && (
+      allow create: if isFullUser() && uid == getUserId();
+      allow update: if isFullUser() && (
         (getUserId() == uid && request.resource.data.role == resource.data.role) || isAdmin()
       );
       allow delete: if false;    // use data deletion flow
@@ -37,8 +38,8 @@ service cloud.firestore {
     // --- SELLERS ---------------------------------------------------------
     match /sellers/{sellerId} {
       allow read: if true;
-      allow create: if isSignedIn() && (isAdmin() || request.resource.data.userId == getUserId());
-      allow update: if isSignedIn() && (
+      allow create: if isFullUser() && (isAdmin() || request.resource.data.userId == getUserId());
+      allow update: if isFullUser() && (
         (resource.data.userId == getUserId() && request.resource.data.userId == resource.data.userId) || isAdmin()
       );
       allow delete: if isAdmin();
@@ -54,8 +55,8 @@ service cloud.firestore {
 
     // --- ORDERSETS (Plan 1) ----------------------------------------------
     match /orderSets/{orderSetId} {
-      allow read: if isSignedIn() && (resource.data.userId == getUserId() || isAdmin());
-      allow create: if isSignedIn() && request.resource.data.userId == getUserId();
+      allow read: if isFullUser() && (resource.data.userId == getUserId() || isAdmin());
+      allow create: if isFullUser() && request.resource.data.userId == getUserId();
       allow update: if isAdmin();
       allow delete: if false;
     }
@@ -70,7 +71,7 @@ service cloud.firestore {
 
     // --- COMMISSION RULES (Plan 2) ---------------------------------------
     match /commissionRules/{ruleId} {
-      allow read: if isSignedIn();
+      allow read: if isFullUser();
       allow write: if isAdmin();
     }
 
@@ -89,14 +90,14 @@ service cloud.firestore {
     // --- DATA DELETION REQUESTS (Plan 3) ---------------------------------
     match /dataDeletionRequests/{requestId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn();
+      allow create: if isFullUser();
       allow update: if isAdmin();
       allow delete: if false;
     }
 
     // --- CARTS -----------------------------------------------------------
     match /carts/{userId} {
-      allow read, create, update, delete: if isSignedIn() && userId == getUserId();
+      allow read, create, update, delete: if isFullUser() && userId == getUserId();
     }
 
     // --- CART REMINDERS --------------------------------------------------
@@ -104,8 +105,9 @@ service cloud.firestore {
 
     // --- MAIL (Firebase Trigger Email) -----------------------------------
     match /mail/{mailId} {
-      allow read, write: if false;
-      allow create: if isSignedIn();
+      allow read: if false;
+      allow create: if isFullUser();
+      allow update, delete: if false;
     }
 
     // --- EVENTS (analytics) ----------------------------------------------
@@ -116,13 +118,13 @@ service cloud.firestore {
 
     // --- CHAT SESSIONS ---------------------------------------------------
     match /chat_sessions/{sessionId} {
-      allow read: if isSignedIn() && (resource.data.userId == getUserId() || isAdmin());
-      allow create: if isSignedIn() && request.resource.data.userId == getUserId();
-      allow update: if isSignedIn() && (resource.data.userId == getUserId() || isAdmin());
+      allow read: if isFullUser() && (resource.data.userId == getUserId() || isAdmin());
+      allow create: if isFullUser() && request.resource.data.userId == getUserId();
+      allow update: if isFullUser() && (resource.data.userId == getUserId() || isAdmin());
       allow delete: if isAdmin();
       match /messages/{messageId} {
-        allow read: if isSignedIn();
-        allow create: if isSignedIn();
+        allow read: if isFullUser();
+        allow create: if isFullUser();
         allow update: if isAdmin();
         allow delete: if false;
       }
@@ -130,33 +132,33 @@ service cloud.firestore {
 
     // --- ACTIVITY LOGS ---------------------------------------------------
     match /activity_logs/{logId} {
-      allow create: if isSignedIn();
+      allow create: if isFullUser();
       allow read: if isAdmin();
     }
 
     // --- ORDERS (backward compat) ----------------------------------------
     match /orders/{oid} {
-      allow read: if isSignedIn() && (resource.data.userId == getUserId() || resource.data.buyerId == getUserId() || isAdmin());
-      allow create: if isSignedIn() && (request.resource.data.userId == getUserId() || request.resource.data.buyerId == getUserId());
+      allow read: if isFullUser() && (resource.data.userId == getUserId() || resource.data.buyerId == getUserId() || isAdmin());
+      allow create: if isFullUser() && (request.resource.data.userId == getUserId() || request.resource.data.buyerId == getUserId());
       allow update: if isAdmin();
       allow delete: if false;
     }
 
     // --- SELLER BALANCES (Plan 2) ----------------------------------------
     match /sellerBalances/{sellerId} {
-      allow read: if isSignedIn() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
+      allow read: if isFullUser() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
       allow write: if isAdmin();
     }
 
     // --- PAYOUT SCHEDULES (Plan 2) ---------------------------------------
     match /payoutSchedules/{scheduleId} {
-      allow read: if isSignedIn() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
+      allow read: if isFullUser() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
       allow write: if isAdmin();
     }
 
     // --- PAYOUT REQUESTS (Plan 2) ----------------------------------------
     match /payoutRequests/{requestId} {
-      allow read: if isSignedIn() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
+      allow read: if isFullUser() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
       allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if false;
@@ -165,15 +167,15 @@ service cloud.firestore {
     // --- PUSH TOKENS -----------------------------------------------------
     match /pushTokens/{userId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn() && userId == getUserId();
-      allow update: if isSignedIn() && userId == getUserId();
-      allow delete: if isSignedIn() && userId == getUserId();
+      allow create: if isFullUser() && userId == getUserId();
+      allow update: if isFullUser() && userId == getUserId();
+      allow delete: if isFullUser() && userId == getUserId();
     }
 
     // --- PUSH MESSAGES ---------------------------------------------------
     match /pushMessages/{messageId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn();
+      allow create: if isFullUser();
       allow update: if false;
       allow delete: if false;
     }
@@ -181,16 +183,16 @@ service cloud.firestore {
     // --- REVIEWS ---------------------------------------------------------
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if isSignedIn() && isBuyer();
-      allow update: if isSignedIn() && (resource.data.userId == getUserId() || isAdmin());
+      allow create: if isFullUser() && isBuyer();
+      allow update: if isFullUser() && (resource.data.userId == getUserId() || isAdmin());
       allow delete: if isAdmin();
     }
 
     // --- FOLLOWS ---------------------------------------------------------
     match /follows/{followId} {
       allow read: if true;
-      allow create: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create: if isFullUser();
+      allow delete: if isFullUser();
     }
   }
 }
