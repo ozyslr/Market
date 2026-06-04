@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Bell, CheckCheck, ShieldAlert, Package, TrendingDown, Star, Truck, Settings } from 'lucide-react';
+import {
+  Bell,
+  CheckCheck,
+  ShieldAlert,
+  Package,
+  TrendingDown,
+  Star,
+  Truck,
+  Settings,
+  MessageCircle,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '@/context/NotificationContext';
@@ -22,6 +32,7 @@ const TYPE_ICON: Record<NotificationType, React.ElementType> = {
   price_drop: TrendingDown,
   back_in_stock: Truck,
   review_approved: Star,
+  new_question: MessageCircle,
   payout: Truck,
   moderation: Settings,
 };
@@ -32,6 +43,7 @@ const TYPE_COLOR: Record<NotificationType, string> = {
   price_drop: 'text-green-500',
   back_in_stock: 'text-indigo-500',
   review_approved: 'text-yellow-500',
+  new_question: 'text-accent',
   payout: 'text-emerald-500',
   moderation: 'text-orange-500',
 };
@@ -62,17 +74,19 @@ export function NotificationsPanel({ show, onToggle, onClose }: NotificationsPan
 
   if (!user) return null;
 
-  const filteredNotifications = activeTab === 'all'
-    ? notifications
-    : activeTab === 'system'
-      ? notifications.filter(n => SYSTEM_TYPES.includes(n.type))
-      : notifications.filter(n => n.type === activeTab);
+  const filteredNotifications =
+    activeTab === 'all'
+      ? notifications
+      : activeTab === 'system'
+        ? notifications.filter((n) => SYSTEM_TYPES.includes(n.type))
+        : notifications.filter((n) => n.type === activeTab);
 
   const unreadCountForTab = (tab: TabId): number => {
     if (tab === 'all') return unreadCount;
-    const unread = tab === 'system'
-      ? notifications.filter(n => SYSTEM_TYPES.includes(n.type) && !n.read)
-      : notifications.filter(n => n.type === tab && !n.read);
+    const unread =
+      tab === 'system'
+        ? notifications.filter((n) => SYSTEM_TYPES.includes(n.type) && !n.read)
+        : notifications.filter((n) => n.type === tab && !n.read);
     return unread.length;
   };
 
@@ -110,16 +124,21 @@ export function NotificationsPanel({ show, onToggle, onClose }: NotificationsPan
               className="absolute end-0 top-[calc(100%+8px)] w-80 bg-white dark:bg-zinc-950 border border-brand-primary/10 dark:border-white/10 rounded-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] z-[9999] overflow-hidden"
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-brand-primary/5 dark:border-white/5">
-                <span className="text-xs font-black uppercase tracking-widest text-brand-primary dark:text-white">Bildirimler</span>
+                <span className="text-xs font-black uppercase tracking-widest text-brand-primary dark:text-white">
+                  Bildirimler
+                </span>
                 {unreadCount > 0 && (
-                  <button onClick={() => markAllAsRead()} className="flex items-center gap-1 text-[10px] font-bold text-accent hover:underline">
+                  <button
+                    onClick={() => markAllAsRead()}
+                    className="flex items-center gap-1 text-[10px] font-bold text-accent hover:underline"
+                  >
                     <CheckCheck size={12} /> Tümünü Okundu İşaretle
                   </button>
                 )}
               </div>
               {/* Category tabs */}
               <div className="flex gap-1 px-3 py-2 border-b border-brand-primary/5 dark:border-white/5 overflow-x-auto">
-                {TABS.map(tab => {
+                {TABS.map((tab) => {
                   const isActive = activeTab === tab.id;
                   const count = unreadCountForTab(tab.id);
                   return (
@@ -134,9 +153,11 @@ export function NotificationsPanel({ show, onToggle, onClose }: NotificationsPan
                     >
                       {tab.label}
                       {count > 0 && (
-                        <span className={`min-w-[14px] h-[14px] rounded-full text-[8px] font-bold flex items-center justify-center px-1 ${
-                          isActive ? 'bg-white/25 text-white' : 'bg-accent/10 text-accent'
-                        }`}>
+                        <span
+                          className={`min-w-[14px] h-[14px] rounded-full text-[8px] font-bold flex items-center justify-center px-1 ${
+                            isActive ? 'bg-white/25 text-white' : 'bg-accent/10 text-accent'
+                          }`}
+                        >
                           {count > 9 ? '9+' : count}
                         </span>
                       )}
@@ -151,7 +172,7 @@ export function NotificationsPanel({ show, onToggle, onClose }: NotificationsPan
                     <p className="text-xs font-bold">Henüz bildirim yok</p>
                   </div>
                 ) : (
-                  filteredNotifications.map(n => {
+                  filteredNotifications.map((n) => {
                     const Icon = TYPE_ICON[n.type] ?? Bell;
                     const iconColor = TYPE_COLOR[n.type] ?? 'text-accent';
                     return (
@@ -159,7 +180,10 @@ export function NotificationsPanel({ show, onToggle, onClose }: NotificationsPan
                         key={n.id}
                         onClick={() => {
                           if (!n.read) markRead(n.id);
-                          if (n.link) { navigate(n.link); onClose(); }
+                          if (n.link) {
+                            navigate(n.link);
+                            onClose();
+                          }
                         }}
                         className={`w-full text-start px-4 py-3 hover:bg-brand-secondary/50 dark:hover:bg-zinc-900 transition-colors flex items-start gap-3 ${!n.read ? 'bg-accent/5' : ''}`}
                       >
@@ -168,10 +192,16 @@ export function NotificationsPanel({ show, onToggle, onClose }: NotificationsPan
                         </span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-[11px] font-bold text-brand-primary dark:text-white leading-tight">{n.title}</p>
-                            <span className="text-[9px] text-brand-primary/40 dark:text-white/40 whitespace-nowrap shrink-0">{relativeTime(n.createdAt)}</span>
+                            <p className="text-[11px] font-bold text-brand-primary dark:text-white leading-tight">
+                              {n.title}
+                            </p>
+                            <span className="text-[9px] text-brand-primary/40 dark:text-white/40 whitespace-nowrap shrink-0">
+                              {relativeTime(n.createdAt)}
+                            </span>
                           </div>
-                          <p className="text-[10px] text-brand-primary/60 dark:text-white/60 mt-0.5 leading-tight">{n.message}</p>
+                          <p className="text-[10px] text-brand-primary/60 dark:text-white/60 mt-0.5 leading-tight">
+                            {n.message}
+                          </p>
                         </div>
                       </button>
                     );

@@ -198,6 +198,25 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isFullUser() && resource.data.userId == getUserId());
     }
 
+    // --- PRODUCT QUESTIONS (Phase 7 — REV-04) ----------------------------
+    // Anyone can read; any full user can ask. Only the product's seller (matched
+    // via the denormalised sellerId) or an admin may write the public answer.
+    // A field-guarded clause still lets any signed-in user cast a helpful vote
+    // without touching the answer/sellerId fields (T-07-10, T-07-11).
+    match /productQuestions/{questionId} {
+      allow read: if true;
+      allow create: if isFullUser();
+      allow update: if isAdmin()
+        || (isSignedIn() && request.auth.token.sellerId == resource.data.sellerId)
+        || (
+          isSignedIn() &&
+          request.resource.data.sellerId == resource.data.sellerId &&
+          request.resource.data.answer == resource.data.answer &&
+          request.resource.data.answeredBy == resource.data.answeredBy
+        );
+      allow delete: if isAdmin();
+    }
+
     // --- FOLLOWS ---------------------------------------------------------
     match /follows/{followId} {
       allow read: if true;

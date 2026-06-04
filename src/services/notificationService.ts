@@ -1,6 +1,14 @@
 import {
-  collection, query, where, limit,
-  getDocs, addDoc, updateDoc, doc, writeBatch, serverTimestamp
+  collection,
+  query,
+  where,
+  limit,
+  getDocs,
+  addDoc,
+  updateDoc,
+  doc,
+  writeBatch,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 
@@ -9,6 +17,7 @@ export type NotificationType =
   | 'price_drop'
   | 'back_in_stock'
   | 'review_approved'
+  | 'new_question'
   | 'payout'
   | 'moderation'
   | 'admin_alert';
@@ -33,8 +42,13 @@ export async function createNotification(
 ): Promise<void> {
   try {
     await addDoc(collection(db, 'notifications'), {
-      userId, type, title, message,
-      link: link ?? null, read: false, createdAt: serverTimestamp(),
+      userId,
+      type,
+      title,
+      message,
+      link: link ?? null,
+      read: false,
+      createdAt: serverTimestamp(),
     });
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, 'notifications');
@@ -43,7 +57,9 @@ export async function createNotification(
   try {
     const { queuePushNotification } = await import('./pushNotificationService');
     queuePushNotification(userId, title, message, link).catch(() => {});
-  } catch { /* push service unavailable */ }
+  } catch {
+    /* push service unavailable */
+  }
 }
 
 export async function notifyAdmins(
@@ -54,8 +70,10 @@ export async function notifyAdmins(
 ): Promise<void> {
   try {
     const snap = await getDocs(query(collection(db, 'users'), where('role', '==', 'admin')));
-    await Promise.all(snap.docs.map(d => createNotification(d.id, type, title, message, link)));
-  } catch { /* admin notification failure must never block the caller */ }
+    await Promise.all(snap.docs.map((d) => createNotification(d.id, type, title, message, link)));
+  } catch {
+    /* admin notification failure must never block the caller */
+  }
 }
 
 export async function getUserNotifications(userId: string, maxCount = 50): Promise<Notification[]> {
@@ -66,11 +84,13 @@ export async function getUserNotifications(userId: string, maxCount = 50): Promi
       limit(maxCount),
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({
-      id: d.id,
-      ...(d.data() as Omit<Notification, 'id'>),
-      createdAt: d.data().createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
-    })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return snap.docs
+      .map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<Notification, 'id'>),
+        createdAt: d.data().createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch (error) {
     handleFirestoreError(error, OperationType.GET, 'notifications');
     return [];
@@ -95,7 +115,7 @@ export async function markAllAsRead(userId: string): Promise<void> {
     const snap = await getDocs(q);
     if (snap.empty) return;
     const batch = writeBatch(db);
-    snap.docs.forEach(d => batch.update(d.ref, { read: true }));
+    snap.docs.forEach((d) => batch.update(d.ref, { read: true }));
     await batch.commit();
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, 'notifications/markAllRead');
@@ -103,7 +123,7 @@ export async function markAllAsRead(userId: string): Promise<void> {
 }
 
 export function getUnreadCount(notifications: Notification[]): number {
-  return notifications.filter(n => !n.read).length;
+  return notifications.filter((n) => !n.read).length;
 }
 
 /**
@@ -116,13 +136,19 @@ export async function notifyOrderStatusChange(
 ): Promise<void> {
   const statusLabels: Record<string, { title: string; message: string }> = {
     processing: { title: 'Siparişiniz Hazırlanıyor', message: 'Siparişiniz hazırlanıyor.' },
-    shipped:    { title: 'Siparişiniz Kargoya Verildi', message: 'Siparişiniz kargoya verildi.' },
-    delivered:  { title: 'Siparişiniz Teslim Edildi', message: 'Siparişiniz teslim edildi.' },
-    cancelled:  { title: 'Siparişiniz İptal Edildi', message: 'Siparişiniz iptal edildi.' },
+    shipped: { title: 'Siparişiniz Kargoya Verildi', message: 'Siparişiniz kargoya verildi.' },
+    delivered: { title: 'Siparişiniz Teslim Edildi', message: 'Siparişiniz teslim edildi.' },
+    cancelled: { title: 'Siparişiniz İptal Edildi', message: 'Siparişiniz iptal edildi.' },
   };
   const label = statusLabels[status];
   if (!label) return;
-  await createNotification(userId, 'order_status', label.title, label.message, `/orders/${orderId}`);
+  await createNotification(
+    userId,
+    'order_status',
+    label.title,
+    label.message,
+    `/orders/${orderId}`,
+  );
 }
 
 /**
@@ -147,10 +173,7 @@ export async function notifyPriceDrop(
 /**
  * Convenience: notify a user when an out-of-stock product becomes available again.
  */
-export async function notifyStockAvailable(
-  userId: string,
-  productTitle: string,
-): Promise<void> {
+export async function notifyStockAvailable(userId: string, productTitle: string): Promise<void> {
   await createNotification(
     userId,
     'back_in_stock',

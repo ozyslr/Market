@@ -424,6 +424,7 @@ export interface FeaturedDeal {
 export interface ProductQuestion {
   id: string;
   productId: string;
+  sellerId?: string;
   userId: string;
   userName: string;
   text: string;

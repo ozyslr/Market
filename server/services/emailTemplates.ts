@@ -269,6 +269,35 @@ export function newSellerOrderHtml(params: NewSellerOrderParams): string {
   return wrapInLayout(content);
 }
 
+// ─── New Question (seller) ──────────────────────────────────────────────────
+
+export function newQuestionHtml(
+  sellerName: string,
+  productName: string,
+  questionText: string,
+  questionLink: string,
+): string {
+  const safeQuestion = questionText.slice(0, 500);
+  const content = `
+    <tr><td style="background:#7C3AED;padding:24px 40px;text-align:center;">
+      <p style="margin:0;color:#fff;font-size:20px;font-weight:900;">💬 Yeni Soru</p>
+      <p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:12px;">${productName}</p>
+    </td></tr>
+    <tr><td style="padding:32px 40px;">
+      <p style="margin:0 0 16px;font-size:14px;color:#666;">Merhaba ${sellerName}, bir alıcı ürününüz hakkında soru sordu:</p>
+      <div style="background:#F8F8FA;border-radius:16px;padding:16px;margin-bottom:24px;">
+        <p style="margin:0;font-size:14px;color:#1A1033;font-weight:600;line-height:1.5;">${safeQuestion}</p>
+      </div>
+      <div style="text-align:center;">
+        <a href="${questionLink}" style="display:inline-block;padding:14px 32px;background:#7C3AED;color:#fff;text-decoration:none;border-radius:12px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:2px;box-shadow:0 8px 24px rgba(124,58,237,0.3);">
+          Soruyu Yanıtla
+        </a>
+      </div>
+    </td></tr>`;
+
+  return wrapInLayout(content);
+}
+
 // ─── Abandoned Cart ────────────────────────────────────────────────────────
 
 export interface AbandonedCartParams {

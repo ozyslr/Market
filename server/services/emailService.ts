@@ -11,6 +11,7 @@ import {
   refundNotificationHtml,
   newSellerOrderHtml,
   abandonedCartHtml,
+  newQuestionHtml,
 } from './emailTemplates.js';
 
 // ─── Provider initialisation ───────────────────────────────────────────────
@@ -72,6 +73,27 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
 }
 
 // ─── Typed convenience senders ────────────────────────────────────────────
+
+export async function sendNewQuestionEmail(
+  to: string,
+  sellerName: string,
+  productName: string,
+  questionText: string,
+  questionLink: string,
+): Promise<void> {
+  try {
+    const html = newQuestionHtml(sellerName, productName, questionText, questionLink);
+    await sendEmail({
+      to,
+      subject: `Yeni Soru: ${productName}`,
+      html,
+    });
+  } catch (err: any) {
+    logger.error('email', 'sendNewQuestionEmail failed (non-blocking)', {
+      error: err.message,
+    });
+  }
+}
 
 export async function sendOrderConfirmationEmail(
   orderSetId: string,

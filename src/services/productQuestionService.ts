@@ -1,10 +1,20 @@
 import {
-  collection, addDoc, getDocs, getDoc,
-  query, where, orderBy, updateDoc, doc,
-  arrayUnion, arrayRemove, increment,
+  collection,
+  addDoc,
+  getDocs,
+  getDoc,
+  query,
+  where,
+  orderBy,
+  updateDoc,
+  doc,
+  arrayUnion,
+  arrayRemove,
+  increment,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ProductQuestion } from '@/types';
+import { createNotification } from './notificationService';
 
 export async function getQuestions(productId: string): Promise<ProductQuestion[]> {
   try {
@@ -14,7 +24,7 @@ export async function getQuestions(productId: string): Promise<ProductQuestion[]
       orderBy('createdAt', 'desc'),
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as ProductQuestion));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as ProductQuestion);
   } catch {
     return [];
   }
@@ -27,8 +37,20 @@ export async function askQuestion(
   text: string,
   category?: 'size' | 'shipping' | 'stock' | 'other',
 ): Promise<ProductQuestion> {
+  // Resolve the product's seller so the question carries sellerId (the Firestore
+  // rule authorises answers by matching request.auth.token.sellerId, and the
+  // seller notification needs it). Denormalised at ask time, not client-chosen.
+  let sellerId: string | undefined;
+  try {
+    const productSnap = await getDoc(doc(db, 'products', productId));
+    if (productSnap.exists()) sellerId = productSnap.data().sellerId;
+  } catch {
+    /* product lookup is best-effort; the question still posts */
+  }
+
   const data = {
     productId,
+    sellerId: sellerId ?? null,
     userId,
     userName,
     text,
@@ -36,7 +58,35 @@ export async function askQuestion(
     createdAt: new Date().toISOString(),
   };
   const ref = await addDoc(collection(db, 'productQuestions'), data);
-  return { id: ref.id, ...data };
+
+  // Notify the seller — in-app + email — fire-and-forget; failures must not block.
+  if (sellerId) {
+    createNotification(
+      sellerId,
+      'new_question',
+      'Yeni Soru',
+      `"${text.slice(0, 60)}" — Bir alıcı ürününüz için soru sordu.`,
+      '/seller/questions',
+    ).catch(() => {});
+
+    void (async () => {
+      try {
+        const { getAuth } = await import('firebase/auth');
+        const current = getAuth().currentUser;
+        if (!current) return;
+        const token = await current.getIdToken();
+        await fetch('/api/reviews/notify-seller-question', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ productId, questionId: ref.id, questionText: text }),
+        });
+      } catch {
+        /* email notification is best-effort */
+      }
+    })();
+  }
+
+  return { id: ref.id, ...data, sellerId: sellerId ?? undefined };
 }
 
 export async function answerQuestion(

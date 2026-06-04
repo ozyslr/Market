@@ -7,6 +7,7 @@
 import type { Express } from 'express';
 import { z } from 'zod';
 import { validate } from '../lib/validate.js';
+import { sendNewQuestionEmail } from '../services/emailService.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
@@ -16,6 +17,12 @@ export interface ReviewRouteDeps {
 }
 
 // ─── Validation Schema ─────────────────────────────────────────────────────────
+
+const notifyQuestionSchema = z.object({
+  productId: z.string().min(1),
+  questionId: z.string().min(1),
+  questionText: z.string().min(1).max(2000),
+});
 
 const submitReviewSchema = z.object({
   productId: z.string().min(1),
@@ -139,6 +146,63 @@ export function registerReviewRoutes(app: Express, deps: ReviewRouteDeps) {
         return res.status(201).json({ data: { id: ref.id, ...review } });
       } catch (err: any) {
         return res.status(500).json({ error: err.message || 'Failed to submit review' });
+      }
+    },
+  );
+
+  /**
+   * POST /api/reviews/notify-seller-question
+   * Sends the seller an email when a buyer posts a question (REV-04). The seller's
+   * email/PII is resolved server-side and never returned to the client (T-07-12).
+   * Best-effort: any failure responds 200 so the question flow is never blocked.
+   */
+  app.post(
+    '/api/reviews/notify-seller-question',
+    verifyFirebaseToken,
+    validate(notifyQuestionSchema),
+    async (req: any, res: any) => {
+      try {
+        if (!adminDb) return res.status(200).json({ ok: false, reason: 'db-unconfigured' });
+        const { productId, questionText } = req.body;
+
+        const productSnap = await adminDb.collection('products').doc(productId).get();
+        if (!productSnap.exists) return res.status(200).json({ ok: false, reason: 'no-product' });
+        const product = productSnap.data();
+        const sellerId: string | undefined = product?.sellerId;
+        const productName: string = product?.title || product?.name || 'Ürününüz';
+        if (!sellerId) return res.status(200).json({ ok: false, reason: 'no-seller' });
+
+        // Resolve seller email + display name (sellers doc first, then user doc).
+        let email: string | undefined;
+        let sellerName = 'Satıcı';
+        const sellerSnap = await adminDb.collection('sellers').doc(sellerId).get();
+        if (sellerSnap.exists) {
+          const s = sellerSnap.data();
+          email = s?.email || s?.contactEmail || s?.ownerEmail;
+          sellerName = s?.storeName || s?.name || sellerName;
+        }
+        if (!email) {
+          const userSnap = await adminDb.collection('users').doc(sellerId).get();
+          if (userSnap.exists) {
+            const u = userSnap.data();
+            email = u?.email;
+            sellerName = u?.displayName || u?.name || sellerName;
+          }
+        }
+        if (!email) return res.status(200).json({ ok: false, reason: 'no-email' });
+
+        const appUrl = process.env.APP_URL || 'https://benimolan.com';
+        await sendNewQuestionEmail(
+          email,
+          sellerName,
+          productName,
+          questionText,
+          `${appUrl}/seller/questions`,
+        );
+        return res.status(200).json({ ok: true });
+      } catch (err: any) {
+        // Non-blocking: never fail the question flow on a notification error.
+        return res.status(200).json({ ok: false, reason: err.message });
       }
     },
   );
