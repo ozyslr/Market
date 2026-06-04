@@ -177,7 +177,11 @@ export function registerReturnsRoutes(app: Express, deps: ReturnsRouteDeps): voi
       const subOrderData = subOrderSnap.exists ? (subOrderSnap.data() as any) : {};
       const buyerCountry: string = subOrderData?.shippingAddress?.country ?? 'TR';
 
-      // Generate return label
+      // Fetch seller profile for return label receiver fields (CR-03)
+      const sellerSnap = await db.collection('sellers').doc(returnData.sellerId).get();
+      const sellerData: any = sellerSnap.exists ? sellerSnap.data()! : {};
+
+      // Generate return label (can fail — no Firestore side-effects yet)
       const providerName = routeCarrierByRegion(buyerCountry);
       const shipmentResp = await createCargoShipment(providerName, {
         orderId: returnData.orderSetId,
@@ -185,30 +189,17 @@ export function registerReturnsRoutes(app: Express, deps: ReturnsRouteDeps): voi
         senderAddress: subOrderData?.shippingAddress?.line1 ?? '',
         senderCity: subOrderData?.shippingAddress?.city ?? '',
         senderPhone: subOrderData?.shippingAddress?.phone ?? '',
-        receiverName: returnData.sellerId, // seller receives returned goods
-        receiverAddress: '',
-        receiverCity: '',
-        receiverPhone: '',
+        receiverName: sellerData.storeName || sellerData.name || 'Satıcı',
+        receiverAddress: sellerData.address || sellerData.storeAddress || '',
+        receiverCity: sellerData.city || '',
+        receiverPhone: sellerData.phone || sellerData.phoneNumber || '',
         packageCount: 1,
         receiverCountry: buyerCountry,
         isReturn: true,
       });
 
-      const now = new Date().toISOString();
-
-      // Update return doc: approved state
-      await db
-        .collection('returns')
-        .doc(returnId)
-        .update({
-          status: 'approved',
-          approvedBy: req.uid,
-          returnTrackingNumber: shipmentResp.trackingNumber,
-          returnLabelUrl: shipmentResp.labelUrl ?? '',
-          updatedAt: now,
-        });
-
-      // Trigger refund engine (T-05-05 — subOrderId from doc, never body)
+      // Trigger refund engine (can fail — no Firestore side-effects yet; CR-02)
+      // T-05-05: subOrderId from doc, never from request body
       const refundResult = await processRefund(db, deps.getIyzico as any, {
         orderSetId: returnData.orderSetId,
         subOrderId: returnData.subOrderId,
@@ -216,13 +207,21 @@ export function registerReturnsRoutes(app: Express, deps: ReturnsRouteDeps): voi
         reason: returnData.reason,
       });
 
-      // Update return doc: refunded state
-      await db.collection('returns').doc(returnId).update({
-        status: 'refunded',
-        refundId: refundResult.refundId,
-        ledgerEntryIds: refundResult.ledgerEntryIds,
-        updatedAt: new Date().toISOString(),
-      });
+      const now = new Date().toISOString();
+
+      // Single atomic write — only reached when both label and refund succeeded (CR-02)
+      await db
+        .collection('returns')
+        .doc(returnId)
+        .update({
+          status: 'refunded',
+          approvedBy: req.uid,
+          returnTrackingNumber: shipmentResp.trackingNumber,
+          returnLabelUrl: shipmentResp.labelUrl ?? '',
+          refundId: refundResult.refundId,
+          ledgerEntryIds: refundResult.ledgerEntryIds,
+          updatedAt: now,
+        });
 
       // Non-blocking email notification
       void (async () => {
@@ -230,11 +229,11 @@ export function registerReturnsRoutes(app: Express, deps: ReturnsRouteDeps): voi
           const { sendRefundNotificationEmail } = await import('../services/emailService.js');
           const orderSetSnap = await db.collection('orderSets').doc(returnData.orderSetId).get();
           const orderSetDoc = orderSetSnap.exists ? orderSetSnap.data() : null;
-          if (orderSetDoc?.customerEmail) {
+          if (orderSetDoc?.userEmail) {
             await sendRefundNotificationEmail(
               returnData.orderSetId,
-              orderSetDoc.customerEmail as string,
-              (orderSetDoc.customerName as string) ?? '',
+              orderSetDoc.userEmail as string,
+              (orderSetDoc.userName as string) ?? '',
               refundResult.refundedAmount,
               refundResult.currency,
             );
