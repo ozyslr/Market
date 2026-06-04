@@ -82,10 +82,10 @@ None yet.
 
 ### Quick Tasks Completed
 
-| #          | Description                                                                                                                     | Date       | Commit  | Status                                                | Directory                                                                                                           |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| 260604-e5f | Firestore-only search improvement: best-selling sort, sort options, faceted filtering, client-side search polish (no Typesense) | 2026-06-04 | 60d9b63 |                                                       | [260604-e5f-firestore-only-search-improvement-best-s](./quick/260604-e5f-firestore-only-search-improvement-best-s/) |
-| 260604-gxl | Firebase Anonymous Auth for guest analytics events + firestore.rules isAnonymous (isFullUser) hardening                         | 2026-06-04 | 1c0f94f | Needs Review (awaiting Console enable + rules deploy) | [260604-gxl-firebase-anonymous-auth-for-guest-analyt](./quick/260604-gxl-firebase-anonymous-auth-for-guest-analyt/) |
+| #          | Description                                                                                                                     | Date       | Commit  | Status                                               | Directory                                                                                                           |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 260604-e5f | Firestore-only search improvement: best-selling sort, sort options, faceted filtering, client-side search polish (no Typesense) | 2026-06-04 | 60d9b63 |                                                      | [260604-e5f-firestore-only-search-improvement-best-s](./quick/260604-e5f-firestore-only-search-improvement-best-s/) |
+| 260604-gxl | Firebase Anonymous Auth for guest analytics events + firestore.rules isAnonymous (isFullUser) hardening                         | 2026-06-04 | 1c0f94f | Rules deployed ✓ — awaiting Console Anonymous enable | [260604-gxl-firebase-anonymous-auth-for-guest-analyt](./quick/260604-gxl-firebase-anonymous-auth-for-guest-analyt/) |
 
 ## Deferred Items
 
