@@ -17,6 +17,7 @@ import { IyzicoProvider } from './server/services/paymentProvider.js';
 import { registerStripeWebhook, registerStripeRoutes } from './server/routes/stripe.js';
 import { registerGeminiRoutes } from './server/routes/gemini.js';
 import { registerOrderRoutes } from './server/routes/orders.js';
+import { registerReviewRoutes } from './server/routes/reviews.js';
 import { registerCommissionRoutes } from './server/routes/commission.js';
 import { registerComplianceRoutes } from './server/routes/compliance.js';
 import { registerPayoutRoutes } from './server/routes/payouts.js';
@@ -369,6 +370,9 @@ async function startServer() {
 
   //  Order Set API (/api/orders/*)  server/routes/orders.ts
   registerOrderRoutes(app, { adminDb, verifyFirebaseToken, getIyzico });
+
+  //  Reviews API (/api/reviews)  server/routes/reviews.ts (verified-purchase gated)
+  registerReviewRoutes(app, { adminDb, verifyFirebaseToken });
 
   //  Commission Rules API (/api/commission-rules/*) - server/routes/commission.ts
   registerCommissionRoutes(app, { adminDb, verifyFirebaseToken, verifyAdmin });
