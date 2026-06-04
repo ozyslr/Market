@@ -20,7 +20,7 @@ const APP_URL = process.env.APP_URL || 'https://benimolan.com';
 
 let resendClient: any = null;
 
-function getResendClient(): any | null {
+async function getResendClient(): Promise<any | null> {
   if (resendClient !== undefined && resendClient !== null) return resendClient;
 
   const apiKey = process.env.RESEND_API_KEY;
@@ -30,9 +30,9 @@ function getResendClient(): any | null {
     return null;
   }
 
-  // Lazy import — avoids hard failure at module load when key is absent
+  // Lazy ESM import — avoids hard failure at module load when key is absent
   try {
-    const { Resend } = require('resend');
+    const { Resend } = await import('resend');
     resendClient = new Resend(apiKey);
   } catch (err: any) {
     logger.error('email', 'Failed to initialise Resend client', { error: err.message });
@@ -51,7 +51,7 @@ export interface SendEmailParams {
 }
 
 export async function sendEmail(params: SendEmailParams): Promise<void> {
-  const client = getResendClient();
+  const client = await getResendClient();
   if (!client) {
     logger.warn('email', 'Email not sent (no provider configured)', {
       to: params.to,
