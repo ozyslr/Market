@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Star, ThumbsUp, ChevronDown, ChevronUp, X, Store, Pencil, Trash2, Camera } from 'lucide-react';
+import {
+  Star,
+  ThumbsUp,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Store,
+  Pencil,
+  Trash2,
+  Camera,
+} from 'lucide-react';
 import { CheckCircle2 } from 'lucide-react';
 import { Review } from '@/types';
 import { voteReviewHelpful, addSellerResponse } from '@/services/reviewService';
@@ -20,7 +30,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   description: 'Uygunluk',
 };
 
-export function ReviewCard({ review, currentUserId, isSeller, currentUserName, onDelete, onEdit }: Props) {
+export function ReviewCard({
+  review,
+  currentUserId,
+  isSeller,
+  currentUserName,
+  onDelete,
+  onEdit,
+}: Props) {
   const [helpfulCount, setHelpfulCount] = useState(review.helpfulCount || 0);
   const [hasVoted, setHasVoted] = useState(
     currentUserId ? (review.helpfulVoters || []).includes(currentUserId) : false,
@@ -61,7 +78,7 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
     try {
       const newCount = await voteReviewHelpful(review.id, currentUserId);
       setHelpfulCount(newCount);
-      setHasVoted(v => !v);
+      setHasVoted((v) => !v);
     } finally {
       setVoting(false);
     }
@@ -103,7 +120,9 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
         {review.verified && (
           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-600 rounded-full border border-green-200">
             <CheckCircle2 size={11} />
-            <span className="text-[9px] font-black uppercase tracking-widest">Onaylı Alıcı</span>
+            <span className="text-[9px] font-black uppercase tracking-widest">
+              Doğrulanmış Alıcı
+            </span>
           </div>
         )}
       </div>
@@ -121,7 +140,10 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
         {review.categoryRatings &&
           Object.entries(review.categoryRatings).map(([key, val]) =>
             val && val > 0 ? (
-              <span key={key} className="ms-2 text-[9px] font-bold text-brand-primary/40 bg-brand-secondary/50 px-2 py-0.5 rounded-lg">
+              <span
+                key={key}
+                className="ms-2 text-[9px] font-bold text-brand-primary/40 bg-brand-secondary/50 px-2 py-0.5 rounded-lg"
+              >
                 {CATEGORY_LABELS[key] ?? key}: {val}/5
               </span>
             ) : null,
@@ -149,7 +171,7 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
           </div>
           <textarea
             value={editComment}
-            onChange={e => setEditComment(e.target.value)}
+            onChange={(e) => setEditComment(e.target.value)}
             rows={3}
             maxLength={2000}
             className="w-full px-3 py-2 bg-white border border-brand-primary/10 rounded-xl text-sm outline-none focus:border-accent resize-none"
@@ -165,7 +187,11 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
             </button>
             <button
               type="button"
-              onClick={() => { setIsEditing(false); setEditRating(review.rating); setEditComment(review.comment); }}
+              onClick={() => {
+                setIsEditing(false);
+                setEditRating(review.rating);
+                setEditComment(review.comment);
+              }}
               className="px-4 py-2 border border-brand-primary/10 rounded-xl text-[10px] font-black uppercase tracking-wider text-brand-primary/50"
             >
               İptal
@@ -179,13 +205,17 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
           </p>
           {isLongComment && (
             <button
-              onClick={() => setShowFullComment(v => !v)}
+              onClick={() => setShowFullComment((v) => !v)}
               className="flex items-center gap-1 text-[10px] font-black text-accent mb-3"
             >
               {showFullComment ? (
-                <><ChevronUp size={12} /> Daha az göster</>
+                <>
+                  <ChevronUp size={12} /> Daha az göster
+                </>
               ) : (
-                <><ChevronDown size={12} /> Devamını oku</>
+                <>
+                  <ChevronDown size={12} /> Devamını oku
+                </>
               )}
             </button>
           )}
@@ -223,7 +253,7 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
         </button>
         {isSeller && !localResponse && (
           <button
-            onClick={() => setShowReplyForm(v => !v)}
+            onClick={() => setShowReplyForm((v) => !v)}
             className="text-[10px] font-black uppercase text-brand-primary/40 hover:text-accent transition-colors"
           >
             Yanıtla
@@ -276,7 +306,7 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
         <div className="mt-3 ms-4 flex gap-2">
           <input
             value={replyText}
-            onChange={e => setReplyText(e.target.value)}
+            onChange={(e) => setReplyText(e.target.value)}
             placeholder="Satıcı yanıtı..."
             maxLength={1000}
             className="flex-1 px-3 py-2 bg-white border border-brand-primary/10 rounded-xl text-xs outline-none focus:border-accent"
@@ -302,7 +332,9 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
         <div className="mt-3 ms-4 ps-3 border-s-2 border-accent/30 bg-accent/5 rounded-e-xl py-2 pe-3">
           <div className="flex items-center gap-1.5 mb-1">
             <Store size={11} className="text-accent" />
-            <span className="text-[9px] font-black uppercase text-accent tracking-widest">Satıcı Yanıtı</span>
+            <span className="text-[9px] font-black uppercase text-accent tracking-widest">
+              Satıcı Yanıtı
+            </span>
             <span className="text-[9px] text-brand-primary/30 font-bold">
               · {localResponse.createdAt.split('T')[0]}
             </span>
@@ -327,7 +359,7 @@ export function ReviewCard({ review, currentUserId, isSeller, currentUserName, o
             src={lightboxPhoto}
             alt="Büyük görünüm"
             className="max-h-[80vh] max-w-[90vw] object-contain rounded-2xl"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       )}

@@ -180,12 +180,22 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // --- REVIEWS ---------------------------------------------------------
+    // --- REVIEWS (Phase 7 — REV-01) --------------------------------------
+    // Creation is server-only (Admin SDK via POST /api/reviews): the server
+    // verifies a Delivered SubOrder and sets verified/status itself, so client
+    // direct writes are denied (T-07-01, T-07-02). Client updates are still
+    // allowed for helpful-votes, seller responses and owner edits, but may NOT
+    // escalate the trust fields verified/status/userId.
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if isFullUser() && isBuyer();
-      allow update: if isFullUser() && (resource.data.userId == getUserId() || isAdmin());
-      allow delete: if isAdmin();
+      allow create: if false; // server Admin SDK only
+      allow update: if isAdmin() || (
+        isFullUser() &&
+        request.resource.data.verified == resource.data.verified &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.userId == resource.data.userId
+      );
+      allow delete: if isAdmin() || (isFullUser() && resource.data.userId == getUserId());
     }
 
     // --- FOLLOWS ---------------------------------------------------------
