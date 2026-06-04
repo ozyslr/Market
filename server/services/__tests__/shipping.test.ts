@@ -24,8 +24,9 @@ const minimalReq: ShipmentRequest = {
   receiverCity: 'Berlin',
   receiverPhone: '+491701234567',
   receiverCountry: 'TR',
-  weight: 1.5,
-  description: 'Test package',
+  packageCount: 1,
+  totalWeight: 1.5,
+  notes: 'Test package',
 };
 
 // ─── routeCarrierByRegion ─────────────────────────────────────────────────────
