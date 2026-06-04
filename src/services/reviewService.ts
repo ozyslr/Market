@@ -1,4 +1,19 @@
-import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, where, orderBy, limit, arrayUnion, arrayRemove, increment, onSnapshot } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+  orderBy,
+  limit,
+  arrayUnion,
+  arrayRemove,
+  increment,
+  onSnapshot,
+} from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Review } from '../types';
@@ -12,31 +27,45 @@ export interface ReviewStats {
   avgCategoryRatings: { quality: number; shipping: number; description: number };
 }
 
-export async function addReview(
-  review: Omit<Review, 'id' | 'status'>,
-  requireApproval = false,
-): Promise<Review> {
-  try {
-    const status = requireApproval ? ('pending' as const) : ('approved' as const);
-    const fullReview = { ...review, status };
-    const docRef = await addDoc(collection(db, REVIEWS_COLLECTION), fullReview);
-    return { ...fullReview, id: docRef.id };
-  } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, REVIEWS_COLLECTION);
-    throw error;
-  }
+export interface SubmitReviewPayload {
+  productId: string;
+  rating: number;
+  comment: string;
+  userName?: string;
+  photos?: string[];
+  categoryRatings?: { quality?: number; shipping?: number; description?: number };
+}
+
+/**
+ * Submit a review through the server endpoint (D-01). The server confirms a
+ * Delivered SubOrder before writing the review via the Admin SDK and sets
+ * `verified`/`status` itself — the client must never send those fields, and
+ * direct client writes to the `reviews` collection are denied by firestore.rules.
+ */
+export async function submitReview(payload: SubmitReviewPayload): Promise<Review> {
+  const { getAuth } = await import('firebase/auth');
+  const current = getAuth().currentUser;
+  if (!current) throw new Error('Oturum bulunamadı');
+  const token = await current.getIdToken();
+
+  const res = await fetch('/api/reviews', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Yorum gönderilemedi');
+  return data.data as Review;
 }
 
 export async function getReviewsByProduct(productId: string): Promise<Review[]> {
   try {
-    const q = query(
-      collection(db, REVIEWS_COLLECTION),
-      where('productId', '==', productId),
-    );
+    const q = query(collection(db, REVIEWS_COLLECTION), where('productId', '==', productId));
     const snap = await getDocs(q);
     return snap.docs
-      .map(d => ({ id: d.id, ...d.data() }) as Review)
-      .filter(r => r.status === 'approved')
+      .map((d) => ({ id: d.id, ...d.data() }) as Review)
+      .filter((r) => r.status === 'approved')
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, REVIEWS_COLLECTION);
@@ -48,16 +77,13 @@ export function subscribeToProductReviews(
   productId: string,
   callback: (reviews: Review[]) => void,
 ): () => void {
-  const q = query(
-    collection(db, REVIEWS_COLLECTION),
-    where('productId', '==', productId),
-  );
+  const q = query(collection(db, REVIEWS_COLLECTION), where('productId', '==', productId));
   return onSnapshot(
     q,
-    snap => {
+    (snap) => {
       const reviews = snap.docs
-        .map(d => ({ id: d.id, ...d.data() }) as Review)
-        .filter(r => r.status === 'approved')
+        .map((d) => ({ id: d.id, ...d.data() }) as Review)
+        .filter((r) => r.status === 'approved')
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       callback(reviews);
     },
@@ -72,7 +98,7 @@ export async function checkUserReview(productId: string, userId: string): Promis
       where('productId', '==', productId),
       where('userId', '==', userId),
       where('status', '==', 'approved'),
-      limit(1)
+      limit(1),
     );
     const snap = await getDocs(q);
     return !snap.empty;
@@ -108,7 +134,7 @@ export async function deleteReview(reviewId: string): Promise<void> {
 export async function getAllReviews(): Promise<Review[]> {
   try {
     const snap = await getDocs(collection(db, REVIEWS_COLLECTION));
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Review);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, REVIEWS_COLLECTION);
     return [];
@@ -148,9 +174,12 @@ export async function rejectReview(reviewId: string): Promise<void> {
 
 export function computeReviewStats(reviews: Review[]): ReviewStats {
   const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  let qualitySum = 0, shippingSum = 0, descSum = 0, catCount = 0;
+  let qualitySum = 0,
+    shippingSum = 0,
+    descSum = 0,
+    catCount = 0;
 
-  reviews.forEach(r => {
+  reviews.forEach((r) => {
     distribution[r.rating] = (distribution[r.rating] || 0) + 1;
     if (r.categoryRatings) {
       qualitySum += r.categoryRatings.quality || 0;

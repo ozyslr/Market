@@ -6,13 +6,12 @@ import {
   subscribeToProductReviews,
   computeReviewStats,
   ReviewStats,
-  addReview,
+  submitReview,
   checkUserReview,
   updateReview,
   deleteReview,
   uploadReviewPhoto,
 } from '@/services/reviewService';
-import { getSiteSettings } from '@/services/settingsService';
 import { RatingSummary } from './RatingSummary';
 import { ReviewFilters, SortOption, FilterOption } from './ReviewFilters';
 import { ReviewCard } from './ReviewCard';
@@ -38,7 +37,6 @@ interface Props {
 
 export function ReviewSection({
   productId,
-  sellerId,
   productRating,
   currentUserId,
   currentUserName,
@@ -56,6 +54,7 @@ export function ReviewSection({
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const reviewsRef = useRef<HTMLDivElement>(null);
 
   const handleScrollToReviews = () => {
@@ -64,7 +63,7 @@ export function ReviewSection({
 
   useEffect(() => {
     setLoading(true);
-    const unsubscribe = subscribeToProductReviews(productId, r => {
+    const unsubscribe = subscribeToProductReviews(productId, (r) => {
       setReviews(r);
       setStats(computeReviewStats(r));
       setLoading(false);
@@ -78,37 +77,37 @@ export function ReviewSection({
 
   async function handleSubmitReview(data: ReviewFormData) {
     if (!currentUserId || !currentUserName) return;
+    setSubmitError('');
 
-    // Upload photos to Firebase Storage
-    let photoUrls = data.photos;
-    if (data.photoFiles && data.photoFiles.length > 0) {
-      photoUrls = await Promise.all(
-        data.photoFiles.map(file => uploadReviewPhoto(file, productId, currentUserId)),
-      );
-    }
+    try {
+      // Upload photos to Firebase Storage → resulting https URLs are sent to the server.
+      let photoUrls = data.photos;
+      if (data.photoFiles && data.photoFiles.length > 0) {
+        photoUrls = await Promise.all(
+          data.photoFiles.map((file) => uploadReviewPhoto(file, productId, currentUserId)),
+        );
+      }
 
-    const settings = await getSiteSettings();
-    const requireApproval = settings.requireReviewApproval ?? false;
-    await addReview(
-      {
+      // The server requires each category rating to be 1-5; omit the block entirely
+      // when the buyer left categories unrated (form defaults them to 0).
+      const cr = data.categoryRatings;
+      const hasCategoryRatings = !!cr && cr.quality >= 1 && cr.shipping >= 1 && cr.description >= 1;
+
+      // verified/status are intentionally NOT sent — the server sets them (D-01).
+      await submitReview({
         productId,
-        sellerId,
-        userId: currentUserId,
-        userName: currentUserName,
         rating: data.rating,
         comment: data.comment,
-        createdAt: new Date().toISOString(),
-        verified: false,
+        userName: currentUserName,
         photos: photoUrls,
-        categoryRatings: data.categoryRatings,
-        helpfulCount: 0,
-        helpfulVoters: [],
-      },
-      requireApproval,
-    );
-    setReviewSubmitted(true);
-    setHasReviewed(true);
-    setShowReviewForm(false);
+        categoryRatings: hasCategoryRatings ? cr : undefined,
+      });
+      setReviewSubmitted(true);
+      setHasReviewed(true);
+      setShowReviewForm(false);
+    } catch (err) {
+      setSubmitError((err as Error).message || 'Yorum gönderilemedi.');
+    }
   }
 
   async function handleDeleteReview(reviewId: string) {
@@ -122,13 +121,13 @@ export function ReviewSection({
   }
 
   const filtered = reviews
-    .filter(r => {
+    .filter((r) => {
       if (filter === 'photos') return (r.photos?.length ?? 0) > 0;
       if (filter === 'verified') return r.verified;
       return true;
     })
-    .filter(r => starFilter === null || r.rating === starFilter)
-    .filter(r => {
+    .filter((r) => starFilter === null || r.rating === starFilter)
+    .filter((r) => {
       if (!search.trim()) return true;
       return r.comment.toLowerCase().includes(search.toLowerCase());
     })
@@ -158,7 +157,10 @@ export function ReviewSection({
         rating={productRating}
         stats={stats}
         activeStarFilter={starFilter}
-        onStarFilter={star => { setStarFilter(star); setPage(1); }}
+        onStarFilter={(star) => {
+          setStarFilter(star);
+          setPage(1);
+        }}
         reviews={reviews}
         onScrollToReviews={handleScrollToReviews}
       />
@@ -175,7 +177,11 @@ export function ReviewSection({
         )}
         {!isLoggedIn ? (
           <p className="text-xs font-bold text-brand-primary/40 px-4 py-3 bg-brand-secondary/50 dark:bg-zinc-900 rounded-xl">
-            Yorum yazmak için <Link to="/auth" className="text-accent underline">giriş yapın</Link>.
+            Yorum yazmak için{' '}
+            <Link to="/auth" className="text-accent underline">
+              giriş yapın
+            </Link>
+            .
           </p>
         ) : hasReviewed ? (
           <div className="flex items-center gap-2 px-4 py-3 bg-accent/5 border border-accent/20 rounded-xl w-fit">
@@ -192,10 +198,14 @@ export function ReviewSection({
             Yorum Yaz
           </button>
         ) : (
-          <ReviewForm
-            onSubmit={handleSubmitReview}
-            onCancel={() => setShowReviewForm(false)}
-          />
+          <>
+            {submitError && (
+              <div className="mb-3 px-5 py-3 bg-red-50 border border-red-200 rounded-2xl">
+                <p className="text-xs font-bold text-red-600">{submitError}</p>
+              </div>
+            )}
+            <ReviewForm onSubmit={handleSubmitReview} onCancel={() => setShowReviewForm(false)} />
+          </>
         )}
       </div>
 
@@ -205,13 +215,25 @@ export function ReviewSection({
           sort={sort}
           filter={filter}
           starFilter={starFilter}
-          onSort={s => { setSort(s); setPage(1); }}
-          onFilter={f => { setFilter(f); setPage(1); }}
-          onStarFilter={s => { setStarFilter(s); setPage(1); }}
+          onSort={(s) => {
+            setSort(s);
+            setPage(1);
+          }}
+          onFilter={(f) => {
+            setFilter(f);
+            setPage(1);
+          }}
+          onStarFilter={(s) => {
+            setStarFilter(s);
+            setPage(1);
+          }}
           total={reviews.length}
           filtered={filtered.length}
           search={search}
-          onSearch={s => { setSearch(s); setPage(1); }}
+          onSearch={(s) => {
+            setSearch(s);
+            setPage(1);
+          }}
         />
       )}
 
@@ -222,7 +244,7 @@ export function ReviewSection({
             Bu filtreye uygun yorum bulunamadı.
           </p>
         ) : (
-          paginated.map(review => (
+          paginated.map((review) => (
             <ReviewCard
               key={review.id}
               review={review}
@@ -239,7 +261,7 @@ export function ReviewSection({
       {/* Daha fazla */}
       {paginated.length < filtered.length && (
         <button
-          onClick={() => setPage(p => p + 1)}
+          onClick={() => setPage((p) => p + 1)}
           className="w-full py-4 border border-brand-primary/10 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors text-brand-primary dark:text-white"
         >
           Daha Fazla Göster ({filtered.length - paginated.length} yorum)
