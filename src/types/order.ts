@@ -69,6 +69,14 @@ export interface SubOrder {
   version: number;
   createdAt: string;
   updatedAt: string;
+  /** Back-reference to parent OrderSet; required by carrier poll cron */
+  orderSetId: string;
+  /** Polling result cache for current carrier tracking status */
+  currentTrackingStatus?: string;
+  /** ISO string from ShipmentResponse — carrier estimated delivery */
+  estimatedDelivery?: string;
+  /** Label billing cost */
+  labelCost?: number;
 }
 
 export interface OrderSet {

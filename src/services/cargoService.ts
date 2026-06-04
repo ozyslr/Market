@@ -8,7 +8,16 @@
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type CargoProviderName = 'PTT' | 'Yurtici' | 'Aras' | 'MNG' | 'Surat' | 'UPS' | 'DHL';
+export type CargoProviderName =
+  | 'PTT'
+  | 'Yurtici'
+  | 'Aras'
+  | 'MNG'
+  | 'Surat'
+  | 'UPS'
+  | 'DHL'
+  | 'Entegi'
+  | 'EasyPost';
 
 export interface ShipmentRequest {
   orderId: string;
@@ -26,6 +35,12 @@ export interface ShipmentRequest {
   declaredValue?: number;
   /** Special instructions */
   notes?: string;
+  /** Receiver country code for region-based carrier routing (e.g. 'TR', 'DE') */
+  receiverCountry: string;
+  /** Flags return label creation */
+  isReturn?: boolean;
+  /** Carrier label cost for billing */
+  labelCost?: number;
 }
 
 export interface ShipmentResponse {
@@ -35,6 +50,8 @@ export interface ShipmentResponse {
   barcode?: string;
   estimatedDelivery?: string;
   shippingCost?: number;
+  /** Carrier charge for the label */
+  labelCost?: number;
   provider: CargoProviderName;
   error?: string;
 }
@@ -81,16 +98,43 @@ export interface CargoProvider {
 
 const STATUS_CHAINS: Record<string, TrackingEvent[]> = {
   standard: [
-    { timestamp: '', status: 'Kabul Edildi', location: '', description: 'Kargo şubeye teslim edildi.' },
-    { timestamp: '', status: 'Yolda', location: '', description: 'Kargo transfer merkezine ulaştı.' },
-    { timestamp: '', status: 'Dağıtımda', location: '', description: 'Kargo dağıtım şubesine ulaştı, teslimata çıktı.' },
+    {
+      timestamp: '',
+      status: 'Kabul Edildi',
+      location: '',
+      description: 'Kargo şubeye teslim edildi.',
+    },
+    {
+      timestamp: '',
+      status: 'Yolda',
+      location: '',
+      description: 'Kargo transfer merkezine ulaştı.',
+    },
+    {
+      timestamp: '',
+      status: 'Dağıtımda',
+      location: '',
+      description: 'Kargo dağıtım şubesine ulaştı, teslimata çıktı.',
+    },
     { timestamp: '', status: 'Teslim Edildi', location: '', description: 'Alıcıya teslim edildi.' },
   ],
 };
 
 function generateMockTracking(provider: string): string {
-  const prefix = provider === 'PTT' ? 'PT' : provider === 'Yurtici' ? 'YT' : provider === 'Aras' ? 'AR' :
-    provider === 'MNG' ? 'MN' : provider === 'Surat' ? 'SR' : provider === 'UPS' ? 'UP' : 'DH';
+  const prefix =
+    provider === 'PTT'
+      ? 'PT'
+      : provider === 'Yurtici'
+        ? 'YT'
+        : provider === 'Aras'
+          ? 'AR'
+          : provider === 'MNG'
+            ? 'MN'
+            : provider === 'Surat'
+              ? 'SR'
+              : provider === 'UPS'
+                ? 'UP'
+                : 'DH';
   const num = Math.random().toString(36).substring(2, 12).toUpperCase();
   return `${prefix}${num}`;
 }
@@ -99,20 +143,39 @@ function generateEvents(baseEvents: TrackingEvent[], hoursAgo: number): Tracking
   const now = Date.now();
   const deliveredRandom = Math.random() > 0.6; // 40% chance already delivered
 
-  return baseEvents.map((event, idx) => {
-    const progress = (idx + 1) / baseEvents.length;
-    const hoursOffset = hoursAgo * (1 - progress) + Math.random() * 4;
-    const timestamp = new Date(now - hoursOffset * 3600000).toISOString();
+  return baseEvents
+    .map((event, idx) => {
+      const progress = (idx + 1) / baseEvents.length;
+      const hoursOffset = hoursAgo * (1 - progress) + Math.random() * 4;
+      const timestamp = new Date(now - hoursOffset * 3600000).toISOString();
 
-    if (idx === baseEvents.length - 1 && !deliveredRandom) {
-      return { ...event, timestamp: '', status: event.status, location: event.location, description: event.description };
-    }
+      if (idx === baseEvents.length - 1 && !deliveredRandom) {
+        return {
+          ...event,
+          timestamp: '',
+          status: event.status,
+          location: event.location,
+          description: event.description,
+        };
+      }
 
-    return { ...event, timestamp };
-  }).filter(e => e.timestamp !== '');
+      return { ...event, timestamp };
+    })
+    .filter((e) => e.timestamp !== '');
 }
 
-const TURKISH_CITIES = ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Adana', 'Konya', 'Gaziantep', 'Kayseri', 'Samsun'];
+const TURKISH_CITIES = [
+  'İstanbul',
+  'Ankara',
+  'İzmir',
+  'Bursa',
+  'Antalya',
+  'Adana',
+  'Konya',
+  'Gaziantep',
+  'Kayseri',
+  'Samsun',
+];
 
 // ─── Mock Providers ─────────────────────────────────────────────────────────
 
@@ -125,10 +188,12 @@ class MockPttProvider implements CargoProvider {
     const days = 2 + Math.floor(Math.random() * 3);
     const eta = new Date(Date.now() + days * 86400000).toISOString();
     return {
-      success: true, trackingNumber: tracking, provider: 'PTT',
+      success: true,
+      trackingNumber: tracking,
+      provider: 'PTT',
       barcode: `99${tracking}`,
       estimatedDelivery: eta,
-      shippingCost: 29.90 + Math.random() * 20,
+      shippingCost: 29.9 + Math.random() * 20,
       labelUrl: `/api/cargo/label/${tracking}`,
     };
   }
@@ -139,9 +204,14 @@ class MockPttProvider implements CargoProvider {
     const events = generateEvents(STATUS_CHAINS.standard, daysSinceShip * 24);
     const delivered = events[events.length - 1]?.status === 'Teslim Edildi';
     return {
-      success: true, trackingNumber, provider: 'PTT',
+      success: true,
+      trackingNumber,
+      provider: 'PTT',
       currentStatus: events[events.length - 1]?.status || 'Bilinmiyor',
-      events: events.map(e => ({ ...e, location: TURKISH_CITIES[Math.floor(Math.random() * TURKISH_CITIES.length)] })),
+      events: events.map((e) => ({
+        ...e,
+        location: TURKISH_CITIES[Math.floor(Math.random() * TURKISH_CITIES.length)],
+      })),
       delivered,
       estimatedDelivery: new Date(Date.now() + (delivered ? 0 : 86400000)).toISOString(),
       labelUrl: `https://mock-cargo.ptt.gov.tr/label/${trackingNumber}.pdf`,
@@ -159,10 +229,15 @@ class MockPttProvider implements CargoProvider {
   }
 
   async getRates(origin: string, dest: string, weight: number): Promise<ShippingRate[]> {
-    return [{
-      provider: 'PTT', serviceLevel: 'Standart', cost: 25 + weight * 2,
-      estimatedDays: 2 + Math.ceil(Math.random() * 3), pickupAvailable: true,
-    }];
+    return [
+      {
+        provider: 'PTT',
+        serviceLevel: 'Standart',
+        cost: 25 + weight * 2,
+        estimatedDays: 2 + Math.ceil(Math.random() * 3),
+        pickupAvailable: true,
+      },
+    ];
   }
 }
 
@@ -174,9 +249,11 @@ class MockYurticiProvider implements CargoProvider {
     const tracking = generateMockTracking('Yurtici');
     const days = 1 + Math.floor(Math.random() * 3);
     return {
-      success: true, trackingNumber: tracking, provider: 'Yurtici',
+      success: true,
+      trackingNumber: tracking,
+      provider: 'Yurtici',
       estimatedDelivery: new Date(Date.now() + days * 86400000).toISOString(),
-      shippingCost: 34.90 + Math.random() * 25,
+      shippingCost: 34.9 + Math.random() * 25,
     };
   }
 
@@ -186,9 +263,14 @@ class MockYurticiProvider implements CargoProvider {
     const events = generateEvents(STATUS_CHAINS.standard, daysSinceShip * 24);
     const delivered = events[events.length - 1]?.status === 'Teslim Edildi';
     return {
-      success: true, trackingNumber, provider: 'Yurtici',
+      success: true,
+      trackingNumber,
+      provider: 'Yurtici',
       currentStatus: events[events.length - 1]?.status || 'Bilinmiyor',
-      events: events.map(e => ({ ...e, location: TURKISH_CITIES[Math.floor(Math.random() * TURKISH_CITIES.length)] })),
+      events: events.map((e) => ({
+        ...e,
+        location: TURKISH_CITIES[Math.floor(Math.random() * TURKISH_CITIES.length)],
+      })),
       delivered,
       labelUrl: `https://mock-cargo.yurticikargo.com/label/${trackingNumber}.pdf`,
     };
@@ -205,10 +287,15 @@ class MockYurticiProvider implements CargoProvider {
   }
 
   async getRates(origin: string, dest: string, weight: number): Promise<ShippingRate[]> {
-    return [{
-      provider: 'Yurtici', serviceLevel: 'Ekspres', cost: 30 + weight * 2.5,
-      estimatedDays: 1 + Math.ceil(Math.random() * 2), pickupAvailable: true,
-    }];
+    return [
+      {
+        provider: 'Yurtici',
+        serviceLevel: 'Ekspres',
+        cost: 30 + weight * 2.5,
+        estimatedDays: 1 + Math.ceil(Math.random() * 2),
+        pickupAvailable: true,
+      },
+    ];
   }
 }
 
@@ -220,9 +307,11 @@ class MockArasProvider implements CargoProvider {
     const tracking = generateMockTracking('Aras');
     const days = 1 + Math.floor(Math.random() * 4);
     return {
-      success: true, trackingNumber: tracking, provider: 'Aras',
+      success: true,
+      trackingNumber: tracking,
+      provider: 'Aras',
       estimatedDelivery: new Date(Date.now() + days * 86400000).toISOString(),
-      shippingCost: 27.50 + Math.random() * 22,
+      shippingCost: 27.5 + Math.random() * 22,
     };
   }
 
@@ -232,9 +321,14 @@ class MockArasProvider implements CargoProvider {
     const events = generateEvents(STATUS_CHAINS.standard, daysSinceShip * 24);
     const delivered = events[events.length - 1]?.status === 'Teslim Edildi';
     return {
-      success: true, trackingNumber, provider: 'Aras',
+      success: true,
+      trackingNumber,
+      provider: 'Aras',
       currentStatus: events[events.length - 1]?.status || 'Bilinmiyor',
-      events: events.map(e => ({ ...e, location: TURKISH_CITIES[Math.floor(Math.random() * TURKISH_CITIES.length)] })),
+      events: events.map((e) => ({
+        ...e,
+        location: TURKISH_CITIES[Math.floor(Math.random() * TURKISH_CITIES.length)],
+      })),
       delivered,
       labelUrl: `https://mock-cargo.araskargo.com/label/${trackingNumber}.pdf`,
     };
@@ -251,10 +345,127 @@ class MockArasProvider implements CargoProvider {
   }
 
   async getRates(origin: string, dest: string, weight: number): Promise<ShippingRate[]> {
-    return [{
-      provider: 'Aras', serviceLevel: 'Standart', cost: 22 + weight * 1.8,
-      estimatedDays: 2 + Math.ceil(Math.random() * 3), pickupAvailable: true,
-    }];
+    return [
+      {
+        provider: 'Aras',
+        serviceLevel: 'Standart',
+        cost: 22 + weight * 1.8,
+        estimatedDays: 2 + Math.ceil(Math.random() * 3),
+        pickupAvailable: true,
+      },
+    ];
+  }
+}
+
+class MockEntegiProvider implements CargoProvider {
+  name: CargoProviderName = 'Entegi';
+
+  async createShipment(req: ShipmentRequest): Promise<ShipmentResponse> {
+    await delay(350);
+    const tracking = `EN${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    const days = 1 + Math.floor(Math.random() * 3);
+    return {
+      success: true,
+      trackingNumber: tracking,
+      provider: 'Entegi',
+      labelUrl: `/api/cargo/label/${tracking}`,
+      estimatedDelivery: new Date(Date.now() + days * 86400000).toISOString(),
+      shippingCost: 30 + Math.random() * 20,
+    };
+  }
+
+  async getTracking(trackingNumber: string): Promise<TrackingResponse> {
+    await delay(250);
+    const statuses = ['Kabul Edildi', 'Yolda', 'Dağıtımda', 'Teslim Edildi'];
+    const idx = Math.min(Math.floor(Math.random() * statuses.length), statuses.length - 1);
+    return {
+      success: true,
+      trackingNumber,
+      provider: 'Entegi',
+      currentStatus: statuses[idx],
+      delivered: statuses[idx] === 'Teslim Edildi',
+      estimatedDelivery: new Date(Date.now() + 86400000).toISOString(),
+      events: [],
+    };
+  }
+
+  async generateLabel(trackingNumber: string): Promise<string> {
+    return `/api/cargo/label/${trackingNumber}`;
+  }
+
+  async cancelShipment(_t: string): Promise<boolean> {
+    return true;
+  }
+
+  async getRates(_o: string, _d: string, weight: number): Promise<ShippingRate[]> {
+    return [
+      {
+        provider: 'Entegi',
+        serviceLevel: 'Standart',
+        cost: 29 + weight * 2,
+        estimatedDays: 2 + Math.ceil(Math.random() * 2),
+        pickupAvailable: true,
+      },
+    ];
+  }
+}
+
+class MockEasyPostProvider implements CargoProvider {
+  name: CargoProviderName = 'EasyPost';
+
+  async createShipment(req: ShipmentRequest): Promise<ShipmentResponse> {
+    await delay(400);
+    const tracking = `EZ${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
+    const days = 2 + Math.floor(Math.random() * 5);
+    return {
+      success: true,
+      trackingNumber: tracking,
+      provider: 'EasyPost',
+      labelUrl: `/api/cargo/label/${tracking}`,
+      estimatedDelivery: new Date(Date.now() + days * 86400000).toISOString(),
+      shippingCost: 9 + Math.random() * 16,
+    };
+  }
+
+  async getTracking(trackingNumber: string): Promise<TrackingResponse> {
+    await delay(300);
+    const statuses: Array<'pre_transit' | 'in_transit' | 'out_for_delivery' | 'delivered'> = [
+      'pre_transit',
+      'in_transit',
+      'out_for_delivery',
+      'delivered',
+    ];
+    const idx = Math.min(Math.floor(Math.random() * statuses.length), statuses.length - 1);
+    const currentStatus = statuses[idx];
+    return {
+      success: true,
+      trackingNumber,
+      provider: 'EasyPost',
+      currentStatus,
+      delivered: currentStatus === 'delivered',
+      estimatedDelivery: new Date(Date.now() + 86400000 * 3).toISOString(),
+      events: [],
+    };
+  }
+
+  async generateLabel(trackingNumber: string): Promise<string> {
+    return `/api/cargo/label/${trackingNumber}`;
+  }
+
+  async cancelShipment(_t: string): Promise<boolean> {
+    return true;
+  }
+
+  async getRates(_o: string, _d: string, weight: number): Promise<ShippingRate[]> {
+    return [
+      {
+        provider: 'EasyPost',
+        serviceLevel: 'Priority',
+        cost: 8 + weight * 1.5,
+        estimatedDays: 3 + Math.ceil(Math.random() * 4),
+        pickupAvailable: false,
+      },
+    ];
   }
 }
 
@@ -268,9 +479,16 @@ function getProviders(): Map<CargoProviderName, CargoProvider> {
     providerRegistry.set('PTT', new MockPttProvider());
     providerRegistry.set('Yurtici', new MockYurticiProvider());
     providerRegistry.set('Aras', new MockArasProvider());
+    providerRegistry.set('Entegi', new MockEntegiProvider());
+    providerRegistry.set('EasyPost', new MockEasyPostProvider());
     // Others fall back to PTT's provider
   }
   return providerRegistry;
+}
+
+/** Route to the appropriate carrier based on receiver's country code */
+export function routeCarrierByRegion(country: string): CargoProviderName {
+  return country === 'TR' ? 'Entegi' : 'EasyPost';
 }
 
 function getProvider(name: CargoProviderName): CargoProvider {
@@ -280,7 +498,7 @@ function getProvider(name: CargoProviderName): CargoProvider {
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /** Create a shipment and get tracking number */
@@ -327,7 +545,9 @@ export async function getAllShippingRates(
     try {
       const providerRates = await provider.getRates(originCity, destCity, weight);
       rates.push(...providerRates);
-    } catch { /* skip failed providers */ }
+    } catch {
+      /* skip failed providers */
+    }
   }
   return rates.sort((a, b) => a.cost - b.cost);
 }

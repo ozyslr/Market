@@ -201,6 +201,7 @@ export function SellerOrdersPage() {
         receiverPhone: shipTarget.shippingAddress?.phone || '',
         packageCount: shipTarget.items.length,
         declaredValue: shipTarget.total,
+        receiverCountry: shipTarget.shippingAddress?.country || 'TR',
       };
 
       const result = await createCargoShipment(carrier as CargoProviderName, shipmentReq);
