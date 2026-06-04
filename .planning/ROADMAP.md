@@ -205,8 +205,8 @@ Plans:
 
 **Wave 1**
 
-- [ ] 07-01-PLAN.md -- REV-01 verified-purchase: POST /api/reviews (Delivered-SubOrder gated, server-set verified), reviewService client-write removal, Dogrulanmis Alici badge, reviews Firestore rule
-- [ ] 07-03-PLAN.md -- REV-03 seller rating summary: getSellerStarSummary aggregation, RatingSummary seller variant, SellerCard + product-page display, SEO aggregateRating
+- [x] 07-01-PLAN.md -- REV-01 verified-purchase: POST /api/reviews (Delivered-SubOrder gated, server-set verified), reviewService client-write removal, Dogrulanmis Alici badge, reviews Firestore rule
+- [x] 07-03-PLAN.md -- REV-03 seller rating summary: getSellerStarSummary aggregation, RatingSummary seller variant, SellerCard + product-page display, SEO aggregateRating
 
 **Wave 2** _(blocked on 07-01)_
 
@@ -250,5 +250,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 | 4. Search & Discovery           | Firestore-only | Complete\*  | 2026-06-04 |
 | 5. Shipping & Fulfillment       | 6/6            | Complete    | 2026-06-04 |
 | 6. Multi-Currency               | 0/--           | Not started | -          |
-| 7. Reviews & Trust              | 0/4            | Planned     | -          |
+| 7. Reviews & Trust              | 2/4            | In Progress |            |
 | 8. Cross-Border Compliance (v2) | 0/--           | Not started | -          |
