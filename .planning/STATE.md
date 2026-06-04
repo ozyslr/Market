@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 4 UI-SPEC approved
-last_updated: '2026-06-04T01:17:02.355Z'
-last_activity: 2026-06-04 -- Phase 04 planning complete
+last_updated: '2026-06-04T08:17:35.218Z'
+last_activity: 2026-06-04 -- Phase 04 execution started
 progress:
   total_phases: 8
   completed_phases: 3
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-02)
 
 **Core value:** Saticilarin KYC onayiyla magaza acabildigi ve musterilerin guvenli alisveris yapabildigi eksiksiz pazar yeri deneyimi
-**Current focus:** Phase 03 — seller-onboarding-kyc
+**Current focus:** Phase 04 — search-discovery
 
 ## Current Position
 
-Phase: 03 (seller-onboarding-kyc) — EXECUTING
-Plan: 4 of 4 — COMPLETE
-Status: Ready to execute
-Last activity: 2026-06-04 -- Phase 04 planning complete
+Phase: 04 (search-discovery) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 04
+Last activity: 2026-06-04 -- Completed quick task 260604-e5f: Firestore-only search improvement (Typesense deferred)
 
 Progress: [██████████] 100%
 
@@ -78,7 +78,13 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- Phase 04 (search-discovery) plans 04-01..04-04 are **Typesense-based and on hold**. User chose (2026-06-04) to defer Typesense/Algolia and stay Firestore-only for now to avoid the ~$36/mo SaaS cost. Revisit a real search engine when the catalog grows large enough that client-side filtering no longer scales.
+
+### Quick Tasks Completed
+
+| #          | Description                                                                                                                     | Date       | Commit  | Directory                                                                                                           |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| 260604-e5f | Firestore-only search improvement: best-selling sort, sort options, faceted filtering, client-side search polish (no Typesense) | 2026-06-04 | 60d9b63 | [260604-e5f-firestore-only-search-improvement-best-s](./quick/260604-e5f-firestore-only-search-improvement-best-s/) |
 
 ## Deferred Items
 
