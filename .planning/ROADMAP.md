@@ -198,17 +198,20 @@ Plans:
 2. Reviews can include up to 5 photos; photos are displayed in a gallery on the product page
 3. Seller rating summary (average, count, distribution) is displayed on store page and product detail page
 4. Buyers can post questions on product pages; seller receives notification and can reply publicly
-   **Plans**: 6 plans
+   **Plans**: 4 plans
    **UI hint**: yes
 
 Plans:
 
-- [x] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
-- [x] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
-- [x] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
-- [x] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
-- [x] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
-- [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
+**Wave 1**
+
+- [ ] 07-01-PLAN.md -- REV-01 verified-purchase: POST /api/reviews (Delivered-SubOrder gated, server-set verified), reviewService client-write removal, Dogrulanmis Alici badge, reviews Firestore rule
+- [ ] 07-03-PLAN.md -- REV-03 seller rating summary: getSellerStarSummary aggregation, RatingSummary seller variant, SellerCard + product-page display, SEO aggregateRating
+
+**Wave 2** _(blocked on 07-01)_
+
+- [ ] 07-02-PLAN.md -- REV-02 photo reviews: max-5 upload in ReviewForm, gallery + lightbox in ReviewCard
+- [ ] 07-04-PLAN.md -- REV-04 Q&A: askQuestion in-app + email seller notification, seller-only answer rule, answer display
 
 ### Phase 8: Cross-Border Compliance (v2)
 
@@ -247,5 +250,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 | 4. Search & Discovery           | Firestore-only | Complete\*  | 2026-06-04 |
 | 5. Shipping & Fulfillment       | 6/6            | Complete    | 2026-06-04 |
 | 6. Multi-Currency               | 0/--           | Not started | -          |
-| 7. Reviews & Trust              | 0/--           | Not started | -          |
+| 7. Reviews & Trust              | 0/4            | Planned     | -          |
 | 8. Cross-Border Compliance (v2) | 0/--           | Not started | -          |
