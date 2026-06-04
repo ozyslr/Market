@@ -59,11 +59,11 @@
 
 ### Kargo ve Lojistik (SHP)
 
-- [ ] **SHP-01**: Entegi API entegrasyonu — TR kargo firmaları tek endpoint'ten
-- [ ] **SHP-02**: EasyPost API entegrasyonu — EU kargo firmaları tek endpoint'ten
-- [ ] **SHP-03**: Kargo takip numarası ve canlı durum görüntüleme
-- [ ] **SHP-04**: Teslimat onayı ve gecikme bildirimi
-- [ ] **SHP-05**: İade talebi oluşturma ve takip akışı
+- [x] **SHP-01**: Entegi API entegrasyonu — TR kargo firmaları tek endpoint'ten
+- [x] **SHP-02**: EasyPost API entegrasyonu — EU kargo firmaları tek endpoint'ten
+- [x] **SHP-03**: Kargo takip numarası ve canlı durum görüntüleme
+- [x] **SHP-04**: Teslimat onayı ve gecikme bildirimi
+- [x] **SHP-05**: İade talebi oluşturma ve takip akışı
 
 ### Çoklu Para Birimi (CUR)
 
@@ -145,11 +145,11 @@
 | SRC-03      | Phase 4 | Pending  |
 | SRC-04      | Phase 4 | Pending  |
 | SRC-05      | Phase 4 | Pending  |
-| SHP-01      | Phase 5 | Pending  |
-| SHP-02      | Phase 5 | Pending  |
-| SHP-03      | Phase 5 | Pending  |
-| SHP-04      | Phase 5 | Pending  |
-| SHP-05      | Phase 5 | Pending  |
+| SHP-01      | Phase 5 | Complete |
+| SHP-02      | Phase 5 | Complete |
+| SHP-03      | Phase 5 | Complete |
+| SHP-04      | Phase 5 | Complete |
+| SHP-05      | Phase 5 | Complete |
 | CUR-01      | Phase 6 | Pending  |
 | CUR-02      | Phase 6 | Pending  |
 | CUR-03      | Phase 6 | Pending  |
