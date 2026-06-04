@@ -20,7 +20,7 @@ Benim Olan is a live Technical MVP transitioning to a full-scale multi-vendor ma
 - [x] **Phase 3: Seller Onboarding & KYC** â€” KYC document upload, admin review/approval, seller store management, CSV import/export, enhanced REST API (completed 2026-06-03)
 - [x] **Phase 4: Search & Discovery** â€” Firestore-only search: faceted filters, sort options (incl. best-selling), live-fresh results. Typesense descoped (SRC-01 typo tolerance deferred) â€” see quick task 260604-e5f.
 - [x] **Phase 5: Shipping & Fulfillment** â€” Entegi (TR) + EasyPost (EU) carrier integration, live tracking, delivery confirmation, returns workflow (completed 2026-06-04)
-- [ ] **Phase 6: Multi-Currency** â€” Exchange rate service, TRY-based pricing with EUR display, rate locking at checkout, TRY-only settlement
+- [ ] **Phase 6: Multi-Currency (deferred to v2)** â€” EUR display, FX rate-locking, TRY/EUR toggle. Descoped 2026-06-04: ship TRY-only domestic Turkey sales for now; revisit per-country currency + localized routing (/en, Trendyol-style) in v2. CUR-01..04 deferred.
 - [ ] **Phase 7: Reviews & Trust** â€” Verified purchase badge, photo reviews, seller rating, Q&A
 - [ ] **Phase 8: Cross-Border Compliance (v2)** â€” HS codes, customs docs, total landed cost (deferred to v2)
 
@@ -160,7 +160,9 @@ Plans:
 - [x] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
 - [x] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
 
-### Phase 6: Multi-Currency
+### Phase 6: Multi-Currency (DEFERRED to v2)
+
+> **Descoped 2026-06-04** (discuss-phase): Founder decision to ship **TRY-only domestic Turkey sales** for now. The app already stores/displays prices in TRY, so no build work is needed today. EUR display, FX rate-locking, and the TRY/EUR toggle are deferred. **Revisit in v2** as a Trendyol-style model: per-country currency, localized sub-paths (`/en`), and locale/seller routing. CUR-01..04 → Deferred. Existing `useExchangeRate` hook (client-side mock) stays as-is until then.
 
 **Goal**: Prices display in local currency; settlement is always in TRY.
 **Mode**: mvp

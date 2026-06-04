@@ -67,10 +67,10 @@
 
 ### Çoklu Para Birimi (CUR)
 
-- [ ] **CUR-01**: Ürün fiyatları TRY bazlı saklanır, görüntüleme anında çevrilir
-- [ ] **CUR-02**: Checkout anında kur kilitlenir (gezinme anında değil)
-- [ ] **CUR-03**: TRY ve EUR cinsinden fiyat gösterimi
-- [ ] **CUR-04**: Satıcıya her zaman TRY cinsinden ödeme yapılır
+- [ ] **CUR-01** _(deferred to v2 — 2026-06-04, TRY-only for now)_: Ürün fiyatları TRY bazlı saklanır, görüntüleme anında çevrilir
+- [ ] **CUR-02** _(deferred to v2)_: Checkout anında kur kilitlenir (gezinme anında değil)
+- [ ] **CUR-03** _(deferred to v2)_: TRY ve EUR cinsinden fiyat gösterimi
+- [ ] **CUR-04** _(deferred to v2)_: Satıcıya her zaman TRY cinsinden ödeme yapılır
 
 ### Değerlendirme ve Güven (REV)
 
@@ -109,58 +109,58 @@
 
 ## Traceability
 
-| Requirement | Phase   | Status   |
-| ----------- | ------- | -------- |
-| PAY-01      | Phase 2 | Pending  |
-| PAY-02      | Phase 2 | Pending  |
-| PAY-03      | Phase 2 | Pending  |
-| PAY-04      | Phase 2 | Complete |
-| PAY-05      | Phase 2 | Complete |
-| PAY-06      | Phase 2 | Complete |
-| ORD-01      | Phase 1 | Pending  |
-| ORD-02      | Phase 1 | Pending  |
-| ORD-03      | Phase 2 | Complete |
-| ORD-04      | Phase 2 | Complete |
-| ORD-05      | Phase 2 | Complete |
-| ORD-06      | Phase 1 | Pending  |
-| SEL-01      | Phase 3 | Pending  |
-| SEL-02      | Phase 3 | Pending  |
-| SEL-03      | Phase 3 | Pending  |
-| SEL-04      | Phase 3 | Pending  |
-| SEL-05      | Phase 3 | Pending  |
-| SEL-06      | Phase 3 | Pending  |
-| COM-01      | Phase 1 | Pending  |
-| COM-02      | Phase 1 | Pending  |
-| COM-03      | Phase 1 | Pending  |
-| COM-04      | Phase 2 | Complete |
-| COM-05      | Phase 2 | Complete |
-| CMP-01      | Phase 1 | Pending  |
-| CMP-02      | Phase 1 | Pending  |
-| CMP-03      | Phase 1 | Pending  |
-| CMP-04      | Phase 1 | Pending  |
-| CMP-05      | Phase 1 | Pending  |
-| CMP-06      | Phase 1 | Pending  |
-| SRC-01      | Phase 4 | Pending  |
-| SRC-02      | Phase 4 | Pending  |
-| SRC-03      | Phase 4 | Pending  |
-| SRC-04      | Phase 4 | Pending  |
-| SRC-05      | Phase 4 | Pending  |
-| SHP-01      | Phase 5 | Complete |
-| SHP-02      | Phase 5 | Complete |
-| SHP-03      | Phase 5 | Complete |
-| SHP-04      | Phase 5 | Complete |
-| SHP-05      | Phase 5 | Complete |
-| CUR-01      | Phase 6 | Pending  |
-| CUR-02      | Phase 6 | Pending  |
-| CUR-03      | Phase 6 | Pending  |
-| CUR-04      | Phase 6 | Pending  |
-| REV-01      | Phase 7 | Pending  |
-| REV-02      | Phase 7 | Pending  |
-| REV-03      | Phase 7 | Pending  |
-| REV-04      | Phase 7 | Pending  |
-| NOT-01      | Phase 2 | Complete |
-| NOT-02      | Phase 2 | Complete |
-| NOT-03      | Phase 2 | Complete |
+| Requirement | Phase   | Status        |
+| ----------- | ------- | ------------- |
+| PAY-01      | Phase 2 | Pending       |
+| PAY-02      | Phase 2 | Pending       |
+| PAY-03      | Phase 2 | Pending       |
+| PAY-04      | Phase 2 | Complete      |
+| PAY-05      | Phase 2 | Complete      |
+| PAY-06      | Phase 2 | Complete      |
+| ORD-01      | Phase 1 | Pending       |
+| ORD-02      | Phase 1 | Pending       |
+| ORD-03      | Phase 2 | Complete      |
+| ORD-04      | Phase 2 | Complete      |
+| ORD-05      | Phase 2 | Complete      |
+| ORD-06      | Phase 1 | Pending       |
+| SEL-01      | Phase 3 | Pending       |
+| SEL-02      | Phase 3 | Pending       |
+| SEL-03      | Phase 3 | Pending       |
+| SEL-04      | Phase 3 | Pending       |
+| SEL-05      | Phase 3 | Pending       |
+| SEL-06      | Phase 3 | Pending       |
+| COM-01      | Phase 1 | Pending       |
+| COM-02      | Phase 1 | Pending       |
+| COM-03      | Phase 1 | Pending       |
+| COM-04      | Phase 2 | Complete      |
+| COM-05      | Phase 2 | Complete      |
+| CMP-01      | Phase 1 | Pending       |
+| CMP-02      | Phase 1 | Pending       |
+| CMP-03      | Phase 1 | Pending       |
+| CMP-04      | Phase 1 | Pending       |
+| CMP-05      | Phase 1 | Pending       |
+| CMP-06      | Phase 1 | Pending       |
+| SRC-01      | Phase 4 | Pending       |
+| SRC-02      | Phase 4 | Pending       |
+| SRC-03      | Phase 4 | Pending       |
+| SRC-04      | Phase 4 | Pending       |
+| SRC-05      | Phase 4 | Pending       |
+| SHP-01      | Phase 5 | Complete      |
+| SHP-02      | Phase 5 | Complete      |
+| SHP-03      | Phase 5 | Complete      |
+| SHP-04      | Phase 5 | Complete      |
+| SHP-05      | Phase 5 | Complete      |
+| CUR-01      | Phase 6 | Deferred (v2) |
+| CUR-02      | Phase 6 | Deferred (v2) |
+| CUR-03      | Phase 6 | Deferred (v2) |
+| CUR-04      | Phase 6 | Deferred (v2) |
+| REV-01      | Phase 7 | Pending       |
+| REV-02      | Phase 7 | Pending       |
+| REV-03      | Phase 7 | Pending       |
+| REV-04      | Phase 7 | Pending       |
+| NOT-01      | Phase 2 | Complete      |
+| NOT-02      | Phase 2 | Complete      |
+| NOT-03      | Phase 2 | Complete      |
 
 **Coverage:**
 
