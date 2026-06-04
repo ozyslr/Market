@@ -153,7 +153,7 @@ Plans:
 
 Plans:
 
-- [ ] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
+- [x] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
 - [ ] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
 - [ ] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
 - [ ] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
@@ -243,7 +243,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 | 2. Payment & Order Lifecycle    | 5/5            | Complete    | 2026-06-03 |
 | 3. Seller Onboarding & KYC      | 2/4            | In progress | 03-02 done |
 | 4. Search & Discovery           | Firestore-only | Complete\*  | 2026-06-04 |
-| 5. Shipping & Fulfillment       | 0/--           | Not started | -          |
+| 5. Shipping & Fulfillment       | 1/6            | In Progress |            |
 | 6. Multi-Currency               | 0/--           | Not started | -          |
 | 7. Reviews & Trust              | 0/--           | Not started | -          |
 | 8. Cross-Border Compliance (v2) | 0/--           | Not started | -          |
