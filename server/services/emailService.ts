@@ -202,6 +202,67 @@ export async function sendNewSellerOrderEmail(
   }
 }
 
+export async function sendDelayNotificationEmail(
+  orderSetId: string,
+  customerEmail: string,
+  customerName: string,
+  estimatedDelivery: string,
+  carrier: string,
+): Promise<void> {
+  try {
+    const formattedDate = new Date(estimatedDelivery).toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const orderUrl = `${APP_URL}/orders/${orderSetId}`;
+    const shortId = orderSetId.slice(0, 8).toUpperCase();
+    const html = `
+<!DOCTYPE html>
+<html lang="tr">
+<head><meta charset="UTF-8"><title>Sipariş Gecikmesi</title></head>
+<body style="font-family:Arial,sans-serif;background:#f4f4f4;padding:20px;">
+  <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:8px;padding:32px;">
+    <h2 style="color:#6418E5;">Siparişiniz Hakkında Bilgi</h2>
+    <p>Sayın ${customerName},</p>
+    <p>
+      <strong>#${shortId}</strong> numaralı siparişiniz tahmini teslimat tarihini geçmiş olup
+      kargonuz hâlâ yoldadır. Olası gecikmeden dolayı özür dileriz.
+    </p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+      <tr>
+        <td style="padding:8px;color:#555;">Kargo Firması:</td>
+        <td style="padding:8px;font-weight:bold;">${carrier}</td>
+      </tr>
+      <tr style="background:#f9f9f9;">
+        <td style="padding:8px;color:#555;">Tahmini Teslimat:</td>
+        <td style="padding:8px;font-weight:bold;">${formattedDate}</td>
+      </tr>
+    </table>
+    <p>
+      <a href="${orderUrl}" style="display:inline-block;padding:12px 24px;background:#6418E5;color:#fff;border-radius:6px;text-decoration:none;">
+        Siparişimi Takip Et
+      </a>
+    </p>
+    <p style="color:#888;font-size:13px;">
+      Herhangi bir sorunuz varsa müşteri hizmetlerimizle iletişime geçebilirsiniz.
+    </p>
+  </div>
+</body>
+</html>`;
+    await sendEmail({
+      to: customerEmail,
+      subject: `Siparişiniz Gecikmeli — #${shortId}`,
+      html,
+    });
+  } catch (err: any) {
+    logger.error('email', 'sendDelayNotificationEmail failed (non-blocking)', {
+      orderSetId,
+      error: err.message,
+    });
+  }
+}
+
 export async function sendAbandonedCartEmail(
   customerEmail: string,
   customerName: string,
