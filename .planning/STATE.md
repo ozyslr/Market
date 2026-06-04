@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 UI-SPEC approved
-last_updated: '2026-06-04T08:17:35.218Z'
-last_activity: 2026-06-04 -- Phase 04 execution started
+stopped_at: Phase 4 complete (descoped to Firestore-only)
+last_updated: '2026-06-04T12:00:00.000Z'
+last_activity: 2026-06-04 -- Phase 04 marked complete (descoped, Firestore-only); Typesense/SRC-01 deferred
 progress:
   total_phases: 8
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 17
   completed_plans: 13
-  percent: 38
+  percent: 50
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-02)
 
 **Core value:** Saticilarin KYC onayiyla magaza acabildigi ve musterilerin guvenli alisveris yapabildigi eksiksiz pazar yeri deneyimi
-**Current focus:** Phase 04 — search-discovery
+**Current focus:** Phase 05 — shipping-fulfillment (next)
 
 ## Current Position
 
-Phase: 04 (search-discovery) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 04
-Last activity: 2026-06-04 -- Completed quick task 260604-gxl: Firebase Anonymous Auth + firestore.rules hardening (awaiting Console enable + rules deploy)
+Phase: 04 (search-discovery) — COMPLETE (descoped: Firestore-only; Typesense + SRC-01 typo tolerance deferred)
+Plans: Typesense plans 04-01..04-03 deferred; search delivered via quick task 260604-e5f; events permission fixed via 260604-gxl
+Status: Phase 04 complete — next: Phase 05 Shipping & Fulfillment
+Last activity: 2026-06-04 -- Phase 04 marked complete (descoped, Firestore-only)
 
 Progress: [██████████] 100%
 

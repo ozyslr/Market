@@ -18,7 +18,7 @@ Benim Olan is a live Technical MVP transitioning to a full-scale multi-vendor ma
 - [x] **Phase 1: Foundation & Compliance** â€” Order data model, commission engine, immutable ledger, KVKK/GDPR compliance, Firestore security rules (completed 2026-06-02)
 - [x] **Phase 2: Payment & Order Lifecycle** â€” Dual-provider payments (Iyzico TRY + Stripe EUR), escrow flow, order lifecycle, seller payouts, transactional emails (completed 2026-06-03)
 - [x] **Phase 3: Seller Onboarding & KYC** â€” KYC document upload, admin review/approval, seller store management, CSV import/export, enhanced REST API (completed 2026-06-03)
-- [ ] **Phase 4: Search & Discovery** â€” Typesense full-text search, faceted filters, sort options, event-driven index updates
+- [x] **Phase 4: Search & Discovery** â€” Firestore-only search: faceted filters, sort options (incl. best-selling), live-fresh results. Typesense descoped (SRC-01 typo tolerance deferred) â€” see quick task 260604-e5f.
 - [ ] **Phase 5: Shipping & Fulfillment** â€” Entegi (TR) + EasyPost (EU) carrier integration, live tracking, delivery confirmation, returns workflow
 - [ ] **Phase 6: Multi-Currency** â€” Exchange rate service, TRY-based pricing with EUR display, rate locking at checkout, TRY-only settlement
 - [ ] **Phase 7: Reviews & Trust** â€” Verified purchase badge, photo reviews, seller rating, Q&A
@@ -111,27 +111,29 @@ Plans:
 **Requirements**: SRC-01, SRC-02, SRC-03, SRC-04, SRC-05
 **Success Criteria** (what must be TRUE):
 
-1. Full-text search returns relevant results with typo tolerance (e.g., "telefon" matches "telefon") using Typesense
+1. Full-text search returns relevant results with typo tolerance (e.g., "telefon" matches "telefon") using Typesense — ⚠️ DEFERRED (SRC-01): Typesense not built; current Firestore search does substring match with TR-char normalization, no true typo tolerance. Revisit when catalog scale demands it.
 2. Buyers filter results by price range, category, brand, minimum rating, and shipping option; active filters are clearly displayed and removable
 3. Buyers sort by newest, best-selling, price ascending/descending, and rating
 4. Search result cards show product image, title, price (with currency), rating stars, and seller name
-5. Search index updates automatically within seconds when products are added, updated, or deleted
-   **Plans**: 4 plans
+5. Search index updates automatically within seconds when products are added, updated, or deleted — ✅ met by different means: Firestore-only search reads live data directly, so results are always fresh (no separate index to sync). Typesense sync pipeline (SRC-05) descoped.
+   **Plans**: 4 plans planned (Typesense) — all DESCOPED; delivered via Firestore-only quick task 260604-e5f instead
+
+\* Complete (descoped): success criteria 2/3/4 met; #5 met via live reads; #1 (typo tolerance / Typesense) deferred. See quick tasks 260604-e5f (search) + 260604-gxl (anon-auth events fix).
 
 Plans:
 
 **Wave 1**
 
-- [ ] 04-01-PLAN.md -- Typesense Cloud cluster provisioning + env vars (blocking human setup)
-- [ ] 04-02-PLAN.md -- Server infra: typesense install, admin client, schema helper, sync + reindex routes
+- [~] 04-01-PLAN.md -- DEFERRED (Typesense Cloud provisioning) — not executed; Typesense descoped
+- [~] 04-02-PLAN.md -- DEFERRED (Typesense server infra: sync + reindex routes) — not executed
 
 **Wave 2** _(blocked on Wave 1 completion)_
 
-- [ ] 04-03-PLAN.md -- Browser client, searchService Typesense primary path, productService sync hooks
+- [~] 04-03-PLAN.md -- DEFERRED (Typesense browser client + sync hooks) — superseded by Firestore-only 260604-e5f
 
 **Wave 3** _(blocked on Wave 2 completion)_
 
-- [ ] 04-04-PLAN.md -- FilterPanel best-selling sort, SearchResults normalizeTR removal, e2e verification
+- [x] 04-04-PLAN.md -- FilterPanel best-selling sort + sort wiring DELIVERED via Firestore-only quick task 260604-e5f (normalizeTR kept, not removed — no Typesense)
       **UI hint**: yes
 
 ### Phase 5: Shipping & Fulfillment
@@ -203,7 +205,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 | 1. Foundation & Compliance      | 4/4            | Complete    | 2026-06-02 |
 | 2. Payment & Order Lifecycle    | 5/5            | Complete    | 2026-06-03 |
 | 3. Seller Onboarding & KYC      | 2/4            | In progress | 03-02 done |
-| 4. Search & Discovery           | 0/--           | Not started | -          |
+| 4. Search & Discovery           | Firestore-only | Complete\*  | 2026-06-04 |
 | 5. Shipping & Fulfillment       | 0/--           | Not started | -          |
 | 6. Multi-Currency               | 0/--           | Not started | -          |
 | 7. Reviews & Trust              | 0/--           | Not started | -          |
