@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-stopped_at: Phase 05 complete (6/6) — ready to discuss Phase 6
-last_updated: 2026-06-04T19:52:30.211Z
+status: planning
+stopped_at: 'Phase 6 (Multi-Currency) deferred to v2 — TRY-only; next: discuss Phase 7 (Reviews & Trust)'
+last_updated: '2026-06-04T21:10:02.338Z'
 last_activity: 2026-06-04
 progress:
   total_phases: 8
@@ -100,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-04T17:02:55.744Z
-Stopped at: Phase 05 Plan 03 complete — ready for Plan 04
-Resume file: None
+Last session: 2026-06-04T21:10:02.317Z
+Stopped at: Phase 6 (Multi-Currency) deferred to v2 — TRY-only; next: discuss Phase 7 (Reviews & Trust)
+Resume file: .planning/ROADMAP.md
