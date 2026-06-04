@@ -21,7 +21,7 @@ Benim Olan is a live Technical MVP transitioning to a full-scale multi-vendor ma
 - [x] **Phase 4: Search & Discovery** â€” Firestore-only search: faceted filters, sort options (incl. best-selling), live-fresh results. Typesense descoped (SRC-01 typo tolerance deferred) â€” see quick task 260604-e5f.
 - [x] **Phase 5: Shipping & Fulfillment** â€” Entegi (TR) + EasyPost (EU) carrier integration, live tracking, delivery confirmation, returns workflow (completed 2026-06-04)
 - [ ] **Phase 6: Multi-Currency (deferred to v2)** â€” EUR display, FX rate-locking, TRY/EUR toggle. Descoped 2026-06-04: ship TRY-only domestic Turkey sales for now; revisit per-country currency + localized routing (/en, Trendyol-style) in v2. CUR-01..04 deferred.
-- [ ] **Phase 7: Reviews & Trust** â€” Verified purchase badge, photo reviews, seller rating, Q&A
+- [x] **Phase 7: Reviews & Trust** â€” Verified purchase badge, photo reviews, seller rating, Q&A (completed 2026-06-04)
 - [ ] **Phase 8: Cross-Border Compliance (v2)** â€” HS codes, customs docs, total landed cost (deferred to v2)
 
 ## Phase Details
@@ -210,8 +210,8 @@ Plans:
 
 **Wave 2** _(blocked on 07-01)_
 
-- [ ] 07-02-PLAN.md -- REV-02 photo reviews: max-5 upload in ReviewForm, gallery + lightbox in ReviewCard
-- [ ] 07-04-PLAN.md -- REV-04 Q&A: askQuestion in-app + email seller notification, seller-only answer rule, answer display
+- [x] 07-02-PLAN.md -- REV-02 photo reviews: max-5 upload in ReviewForm, gallery + lightbox in ReviewCard
+- [x] 07-04-PLAN.md -- REV-04 Q&A: askQuestion in-app + email seller notification, seller-only answer rule, answer display
 
 ### Phase 8: Cross-Border Compliance (v2)
 
@@ -250,5 +250,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 | 4. Search & Discovery           | Firestore-only | Complete\*  | 2026-06-04 |
 | 5. Shipping & Fulfillment       | 6/6            | Complete    | 2026-06-04 |
 | 6. Multi-Currency               | 0/--           | Not started | -          |
-| 7. Reviews & Trust              | 2/4            | In Progress |            |
+| 7. Reviews & Trust              | 4/4            | Complete    | 2026-06-04 |
 | 8. Cross-Border Compliance (v2) | 0/--           | Not started | -          |
