@@ -547,6 +547,99 @@ export function OrderTracking() {
                   {subOrder.subtotal.toFixed(2)}
                 </span>
               </div>
+
+              {/* Shipping tracking section — shown when shipped or delivered */}
+              {(subOrder.status === 'shipped' || subOrder.status === 'delivered') && (
+                <div className="mt-4 pt-4 border-t border-[#F8F8FA] dark:border-zinc-800 space-y-3">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 dark:text-zinc-400 flex items-center gap-2">
+                    <Truck size={13} className="text-accent" /> Kargo Takibi
+                  </h4>
+
+                  {/* Carrier + tracking number */}
+                  {(subOrder.carrier || subOrder.trackingNumber) && (
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {subOrder.carrier && (
+                        <span className="text-xs font-bold text-[#1A1033] dark:text-white">
+                          {subOrder.carrier}
+                        </span>
+                      )}
+                      {subOrder.trackingNumber && (
+                        <code className="text-[11px] font-mono bg-[#F8F8FA] dark:bg-zinc-800 text-[#1A1033]/60 dark:text-zinc-400 px-2 py-0.5 rounded-lg">
+                          {subOrder.trackingNumber}
+                        </code>
+                      )}
+                    </div>
+                  )}
+
+                  {/* currentTrackingStatus badge */}
+                  {(() => {
+                    const STATUS_LABELS: Record<string, string> = {
+                      pre_transit: 'Gönderime Hazırlanıyor',
+                      in_transit: 'Yolda',
+                      out_for_delivery: 'Dağıtımda',
+                      delivered: 'Teslim Edildi',
+                      'Kabul Edildi': 'Kabul Edildi',
+                      Yolda: 'Yolda',
+                      Dağıtımda: 'Dağıtımda',
+                      'Teslim Edildi': 'Teslim Edildi',
+                    };
+                    const raw = subOrder.currentTrackingStatus;
+                    const label = raw ? (STATUS_LABELS[raw] ?? raw) : 'Durum Bekleniyor';
+                    const isDeliveredStatus = raw === 'delivered' || raw === 'Teslim Edildi';
+                    return (
+                      <span
+                        className={cn(
+                          'inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest',
+                          isDeliveredStatus
+                            ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400'
+                            : raw === 'out_for_delivery' || raw === 'Dağıtımda'
+                              ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400'
+                              : 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400',
+                        )}
+                      >
+                        {label}
+                      </span>
+                    );
+                  })()}
+
+                  {/* estimatedDelivery */}
+                  {subOrder.estimatedDelivery && (
+                    <p className="text-xs text-[#1A1033]/50 dark:text-zinc-400 flex items-center gap-1.5">
+                      <Clock size={12} className="text-accent shrink-0" />
+                      Tahmini Teslimat:{' '}
+                      <span className="font-bold text-[#1A1033] dark:text-white">
+                        {new Date(subOrder.estimatedDelivery).toLocaleDateString('tr-TR', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    </p>
+                  )}
+
+                  {/* Return request eligibility (delivered within 14 days) */}
+                  {subOrder.status === 'delivered' &&
+                    subOrder.deliveredAt &&
+                    (() => {
+                      const daysElapsed =
+                        (Date.now() - new Date(subOrder.deliveredAt).getTime()) / 86400000;
+                      return daysElapsed <= 14 ? (
+                        <button
+                          onClick={() => {
+                            /* Plan 06 will wire return form submission */
+                          }}
+                          className="mt-1 px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
+                        >
+                          İade Talebi Oluştur
+                        </button>
+                      ) : (
+                        <p className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 font-bold">
+                          İade süresi doldu (14 gün)
+                        </p>
+                      );
+                    })()}
+                </div>
+              )}
             </div>
           ))}
         </div>
