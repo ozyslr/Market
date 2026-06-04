@@ -19,7 +19,6 @@ interface CarrierWebhookDeps {
 /**
  * Validates EasyPost HMAC-SHA256 signature.
  * Returns false if lengths differ (guard against timing oracle) or digest mismatch.
- * Skip check when EASYPOST_WEBHOOK_SECRET is empty (mock/dev mode). (T-05-03-01)
  */
 function validateEasyPostHmac(secret: string, signature: string, body: Buffer): boolean {
   if (!secret || !signature) return false;
@@ -41,9 +40,12 @@ export function registerCarrierWebhook(app: Express, deps: CarrierWebhookDeps): 
       try {
         // ── HMAC verification (T-05-03-01) ────────────────────────────────
         const secret = process.env.EASYPOST_WEBHOOK_SECRET ?? '';
+        if (!secret) {
+          logger.error('carrier', 'EASYPOST_WEBHOOK_SECRET not configured — webhook rejected');
+          return res.status(500).json({ error: 'webhook not configured' });
+        }
         const signature = (req.headers['x-hmac-signature'] as string) || '';
-
-        if (secret && !validateEasyPostHmac(secret, signature, req.body as Buffer)) {
+        if (!validateEasyPostHmac(secret, signature, req.body as Buffer)) {
           logger.warn('carrier', 'EasyPost webhook: invalid HMAC signature');
           return res.status(403).json({ error: 'invalid signature' });
         }
