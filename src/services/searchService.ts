@@ -26,6 +26,7 @@ export interface SearchParams {
   pageSize?: number;
   tags?: string[];
   inStock?: boolean;
+  minRating?: number;
 }
 
 export interface SearchResult {
@@ -42,7 +43,7 @@ export interface SearchResult {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function normalizeTR(s: string): string {
+export function normalizeTR(s: string): string {
   return s
     .toLowerCase()
     .replace(/ş/g, 's')
@@ -80,46 +81,44 @@ function isOfflineError(error: unknown): boolean {
 // ─── Client-side filtering (fallback) ────────────────────────────────────────
 
 function applySearchFilters(products: Product[], params: SearchParams): Product[] {
-  let list = products.filter(
-    p => p.status === undefined || p.status === 'approved',
-  );
+  let list = products.filter((p) => p.status === undefined || p.status === 'approved');
 
   if (params.query) {
     const nq = normalizeTR(params.query);
-    list = list.filter(p =>
-      [p.title, p.description, p.brand, ...(p.tags ?? [])].some(field =>
+    list = list.filter((p) =>
+      [p.title, p.description, p.brand, ...(p.tags ?? [])].some((field) =>
         normalizeTR(field ?? '').includes(nq),
       ),
     );
   }
 
   if (params.categoryId) {
-    list = list.filter(p => p.categoryId === params.categoryId);
+    list = list.filter((p) => p.categoryId === params.categoryId);
   }
 
   if (params.brand) {
     const nb = normalizeTR(params.brand);
-    list = list.filter(p => normalizeTR(p.brand ?? '').includes(nb));
+    list = list.filter((p) => normalizeTR(p.brand ?? '').includes(nb));
   }
 
   if (params.minPrice != null) {
-    list = list.filter(p => p.price >= params.minPrice!);
+    list = list.filter((p) => p.price >= params.minPrice!);
   }
 
   if (params.maxPrice != null) {
-    list = list.filter(p => p.price <= params.maxPrice!);
+    list = list.filter((p) => p.price <= params.maxPrice!);
   }
 
   if (params.inStock) {
-    list = list.filter(p => p.stock > 0);
+    list = list.filter((p) => p.stock > 0);
+  }
+
+  if (params.minRating != null) {
+    list = list.filter((p) => p.rating >= params.minRating!);
   }
 
   if (params.tags && params.tags.length > 0) {
-    list = list.filter(
-      p =>
-        p.tags &&
-        params.tags!.some(t => p.tags!.includes(t)),
-    );
+    list = list.filter((p) => p.tags && params.tags!.some((t) => p.tags!.includes(t)));
   }
 
   // Sorting
@@ -145,10 +144,7 @@ function applySearchFilters(products: Product[], params: SearchParams): Product[
   return list;
 }
 
-function computeFacets(
-  products: Product[],
-  categoryId?: string,
-): SearchResult['facets'] {
+function computeFacets(products: Product[], categoryId?: string): SearchResult['facets'] {
   const categoryMap = new Map<string, { id: string; name: string; count: number }>();
   const brandMap = new Map<string, number>();
   let priceMin = Infinity;
@@ -157,7 +153,7 @@ function computeFacets(
   for (const p of products) {
     // category facets
     if (!categoryMap.has(p.categoryId)) {
-      const cat = CATEGORIES.find(c => c.id === p.categoryId);
+      const cat = CATEGORIES.find((c) => c.id === p.categoryId);
       categoryMap.set(p.categoryId, {
         id: p.categoryId,
         name: cat?.name ?? p.categoryId,
@@ -177,9 +173,7 @@ function computeFacets(
   }
 
   return {
-    categories: Array.from(categoryMap.values()).sort(
-      (a, b) => b.count - a.count,
-    ),
+    categories: Array.from(categoryMap.values()).sort((a, b) => b.count - a.count),
     brands: Array.from(brandMap.entries())
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count),
@@ -192,9 +186,7 @@ function computeFacets(
 
 // ─── Primary: Firestore search ───────────────────────────────────────────────
 
-async function searchFirestore(
-  params: SearchParams,
-): Promise<SearchResult | null> {
+async function searchFirestore(params: SearchParams): Promise<SearchResult | null> {
   try {
     const productsRef = collection(db, 'products');
     const constraints: any[] = [];
@@ -224,6 +216,11 @@ async function searchFirestore(
     // In-stock filter
     if (params.inStock) {
       constraints.push(where('stock', '>', 0));
+    }
+
+    // Rating filter
+    if (params.minRating != null) {
+      constraints.push(where('rating', '>=', params.minRating));
     }
 
     // Keyword prefix search on title (Firestore's best approximation of "starts with")
@@ -264,7 +261,7 @@ async function searchFirestore(
     const q = query(productsRef, ...constraints);
     const snapshot = await getDocs(q);
 
-    let products = snapshot.docs.map(d => ({
+    let products = snapshot.docs.map((d) => ({
       id: d.id,
       ...d.data(),
     })) as Product[];
@@ -287,9 +284,7 @@ async function searchFirestore(
     // Apply tags filter client-side (Firestore doesn't support array-contains-any
     // combined with other inequality filters easily)
     if (params.tags && params.tags.length > 0) {
-      products = products.filter(
-        p => p.tags && params.tags!.some(t => p.tags!.includes(t)),
-      );
+      products = products.filter((p) => p.tags && params.tags!.some((t) => p.tags!.includes(t)));
     }
 
     // Build facets from the full Firestore collection (lightweight count query)
@@ -303,17 +298,11 @@ async function searchFirestore(
     };
   } catch (error) {
     if (isOfflineError(error)) {
-      console.warn(
-        '[searchService] Firestore unavailable, falling back to MOCK_PRODUCTS',
-        error,
-      );
+      console.warn('[searchService] Firestore unavailable, falling back to MOCK_PRODUCTS', error);
       return null; // signal fallback
     }
     // For permission errors and other non-offline failures, still fall back
-    console.warn(
-      '[searchService] Firestore query failed, falling back to MOCK_PRODUCTS',
-      error,
-    );
+    console.warn('[searchService] Firestore query failed, falling back to MOCK_PRODUCTS', error);
     return null;
   }
 }
@@ -345,9 +334,7 @@ function searchMockProducts(params: SearchParams): SearchResult {
  * - Composite queries require composite indexes for certain filter+sort combinations.
  * - Falls back gracefully when Firestore is offline.
  */
-export async function searchProducts(
-  params: SearchParams,
-): Promise<SearchResult> {
+export async function searchProducts(params: SearchParams): Promise<SearchResult> {
   // Try Firestore first
   const firestoreResult = await searchFirestore(params);
   let result: SearchResult;
@@ -361,7 +348,7 @@ export async function searchProducts(
 
   // Inject sponsored products into search results
   try {
-    const existingIds = result.products.map(p => p.id);
+    const existingIds = result.products.map((p) => p.id);
     const sponsoredSlots = await injectSponsoredProducts(existingIds);
 
     if (sponsoredSlots.length > 0) {
@@ -369,10 +356,10 @@ export async function searchProducts(
 
       // Resolve sponsored products and insert them at their positions
       const { getProducts } = await import('./productService');
-      const sponsoredProductIds = sponsoredSlots.map(s => s.productId);
+      const sponsoredProductIds = sponsoredSlots.map((s) => s.productId);
       const sponsoredProducts = await getProducts({ limit: sponsoredProductIds.length });
       const sponsoredMap = new Map(
-        sponsoredProducts.filter(p => sponsoredProductIds.includes(p.id)).map(p => [p.id, p]),
+        sponsoredProducts.filter((p) => sponsoredProductIds.includes(p.id)).map((p) => [p.id, p]),
       );
 
       // Insert sponsored products at specified positions (sorted descending to avoid index shift)
@@ -397,10 +384,7 @@ export async function searchProducts(
  * Quick suggestions for the search bar dropdown (limit 6).
  * Uses Firestore prefix match with a small limit; falls back to MOCK_PRODUCTS.
  */
-export async function searchSuggestions(
-  searchQuery: string,
-  maxResults = 6,
-): Promise<Product[]> {
+export async function searchSuggestions(searchQuery: string, maxResults = 6): Promise<Product[]> {
   if (!searchQuery.trim() || searchQuery.trim().length < 2) return [];
 
   try {
@@ -414,7 +398,7 @@ export async function searchSuggestions(
     const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
-      return snapshot.docs.map(d => ({ id: d.id, ...(d.data() as object) })) as Product[];
+      return snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as object) })) as Product[];
     }
   } catch (error) {
     console.warn(
@@ -426,11 +410,9 @@ export async function searchSuggestions(
   // Fallback: client-side filter on MOCK_PRODUCTS
   const nq = normalizeTR(searchQuery);
   return MOCK_PRODUCTS.filter(
-    p =>
+    (p) =>
       (p.status === undefined || p.status === 'approved') &&
-      [p.title, p.brand, ...(p.tags ?? [])].some(field =>
-        normalizeTR(field ?? '').includes(nq),
-      ),
+      [p.title, p.brand, ...(p.tags ?? [])].some((field) => normalizeTR(field ?? '').includes(nq)),
   ).slice(0, maxResults);
 }
 
@@ -438,9 +420,7 @@ export async function searchSuggestions(
  * Get available faceted filters (categories, brands, price range) for a given
  * category or the entire catalog. Used to populate sidebar filters.
  */
-export async function getFacetedFilters(
-  categoryId?: string,
-): Promise<SearchResult['facets']> {
+export async function getFacetedFilters(categoryId?: string): Promise<SearchResult['facets']> {
   try {
     const productsRef = collection(db, 'products');
     const constraints: any[] = [];
@@ -456,16 +436,11 @@ export async function getFacetedFilters(
     const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
-      const products = snapshot.docs.map(d =>
-        d.data(),
-      ) as Product[];
+      const products = snapshot.docs.map((d) => d.data()) as Product[];
       return computeFacets(products, categoryId);
     }
   } catch (error) {
-    console.warn(
-      '[searchService] Firestore facets failed, falling back to MOCK_PRODUCTS',
-      error,
-    );
+    console.warn('[searchService] Firestore facets failed, falling back to MOCK_PRODUCTS', error);
   }
 
   return getFacetedFiltersFallback(categoryId);
@@ -480,9 +455,9 @@ export function searchProductsLegacy(query: string, limitCount = 6): Product[] {
   if (!query.trim() || query.trim().length < 2) return [];
   const nq = normalizeTR(query);
   return MOCK_PRODUCTS.filter(
-    p =>
+    (p) =>
       (p.status === undefined || p.status === 'approved') &&
-      [p.title, p.description, p.brand, ...(p.tags ?? [])].some(field =>
+      [p.title, p.description, p.brand, ...(p.tags ?? [])].some((field) =>
         normalizeTR(field ?? '').includes(nq),
       ),
   ).slice(0, limitCount);
@@ -490,11 +465,9 @@ export function searchProductsLegacy(query: string, limitCount = 6): Product[] {
 
 // ─── Internal fallbacks ──────────────────────────────────────────────────────
 
-function getFacetedFiltersFallback(
-  categoryId?: string,
-): SearchResult['facets'] {
+function getFacetedFiltersFallback(categoryId?: string): SearchResult['facets'] {
   const pool = categoryId
-    ? MOCK_PRODUCTS.filter(p => p.categoryId === categoryId)
+    ? MOCK_PRODUCTS.filter((p) => p.categoryId === categoryId)
     : MOCK_PRODUCTS;
   return computeFacets(pool, categoryId);
 }
