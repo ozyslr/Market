@@ -120,9 +120,17 @@ Plans:
 
 Plans:
 
+**Wave 1**
+
 - [ ] 04-01-PLAN.md -- Typesense Cloud cluster provisioning + env vars (blocking human setup)
 - [ ] 04-02-PLAN.md -- Server infra: typesense install, admin client, schema helper, sync + reindex routes
+
+**Wave 2** _(blocked on Wave 1 completion)_
+
 - [ ] 04-03-PLAN.md -- Browser client, searchService Typesense primary path, productService sync hooks
+
+**Wave 3** _(blocked on Wave 2 completion)_
+
 - [ ] 04-04-PLAN.md -- FilterPanel best-selling sort, SearchResults normalizeTR removal, e2e verification
       **UI hint**: yes
 

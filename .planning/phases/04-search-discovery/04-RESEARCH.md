@@ -567,22 +567,25 @@ sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'rating' | 'popular' | 'best-se
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **salesCount source**
    - What we know: Phase 2 tracks order line items in Firestore. `Product` type has no `salesCount` field.
    - What's unclear: Does Phase 2 write a `salesCount` counter back to the product document, or is it derivable from order history only?
    - Recommendation: Use `reviewsCount` as proxy for MVP; add `salesCount` increment to order completion path (separate task).
+   - **RESOLVED:** Use `reviewsCount` as the best-selling sort proxy for the MVP (planner decision, plan 04-03/04-04). A dedicated `salesCount` increment is deferred to a follow-up.
 
 2. **sellerName denormalization strategy**
    - What we know: `Product.sellerId` exists; `Seller.storeName` is in a separate collection.
    - What's unclear: During reindex, fetching `sellers/{sellerId}` per product = N reads. For 1000+ products this may be slow.
    - Recommendation: Build a seller name map (single pass over `sellers` collection) before the product loop in `/admin/reindex`.
+   - **RESOLVED:** Build a single-pass seller-name map before the product reindex loop (plan 04-02, reindex task).
 
 3. **Typesense Cloud account / cluster setup**
    - What we know: D-01 chooses Typesense Cloud. Account requires sign-up at cloud.typesense.org.
    - What's unclear: Whether a cluster already exists or needs to be provisioned.
    - Recommendation: Add a Wave 0 task: "Provision Typesense Cloud cluster, note host, create admin key and search-only key, add to .env".
+   - **RESOLVED:** Handled as the Wave 0 [BLOCKING] prerequisite in plan 04-01 (cluster provisioning + 4 env vars, autonomous: false).
 
 ---
 
