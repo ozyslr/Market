@@ -157,7 +157,7 @@ Plans:
 - [x] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
 - [x] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
 - [x] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
-- [ ] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
+- [x] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
 - [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
 
 ### Phase 6: Multi-Currency
@@ -180,7 +180,7 @@ Plans:
 - [x] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
 - [x] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
 - [x] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
-- [ ] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
+- [x] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
 - [ ] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
 - [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
 
@@ -203,7 +203,7 @@ Plans:
 
 - [x] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
 - [x] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
-- [ ] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
+- [x] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
 - [ ] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
 - [ ] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
 - [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
@@ -226,7 +226,7 @@ Plans:
 Plans:
 
 - [x] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
-- [ ] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
+- [x] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
 - [ ] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
 - [ ] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
 - [ ] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
@@ -243,7 +243,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 | 2. Payment & Order Lifecycle    | 5/5            | Complete    | 2026-06-03 |
 | 3. Seller Onboarding & KYC      | 2/4            | In progress | 03-02 done |
 | 4. Search & Discovery           | Firestore-only | Complete\*  | 2026-06-04 |
-| 5. Shipping & Fulfillment       | 4/6            | In Progress |            |
+| 5. Shipping & Fulfillment       | 5/6            | In Progress |            |
 | 6. Multi-Currency               | 0/--           | Not started | -          |
 | 7. Reviews & Trust              | 0/--           | Not started | -          |
 | 8. Cross-Border Compliance (v2) | 0/--           | Not started | -          |
