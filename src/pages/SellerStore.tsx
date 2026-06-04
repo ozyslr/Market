@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Star,
@@ -33,6 +33,8 @@ import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
+import { SellerRatingSummary } from '@/components/product/RatingSummary';
+import { getSellerStarSummary, type SellerStarSummary } from '@/services/sellerRatingService';
 import { useAuth } from '@/context/AuthContext';
 import { useFollows } from '@/context/FollowsContext';
 
@@ -58,6 +60,20 @@ export function SellerStorePage() {
 
   // Store URL (shareable, public)
   const storeSlug = sellerData.slug || sellerData.id;
+
+  // REV-03: live seller rating summary aggregated from approved reviews.
+  const [starSummary, setStarSummary] = useState<SellerStarSummary | null>(null);
+  useEffect(() => {
+    let active = true;
+    getSellerStarSummary(sellerData.id)
+      .then((s) => {
+        if (active) setStarSummary(s);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [sellerData.id]);
   const storeUrl =
     typeof window !== 'undefined'
       ? `${window.location.origin}/store/${storeSlug}`
@@ -707,6 +723,14 @@ export function SellerStorePage() {
                 animate={{ opacity: 1 }}
                 className="space-y-8"
               >
+                {starSummary && starSummary.total > 0 && (
+                  <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-brand-primary/5">
+                    <p className="text-xs font-black uppercase tracking-widest text-brand-primary/40 mb-6">
+                      Onaylı Değerlendirmeler
+                    </p>
+                    <SellerRatingSummary summary={starSummary} />
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div className="col-span-1 bg-white rounded-[2.5rem] p-10 flex flex-col items-center justify-center text-center shadow-sm border border-brand-primary/5">
                     <p className="text-6xl font-display font-black text-brand-primary">

@@ -9,7 +9,8 @@ export function organizationSchema() {
     name: 'Benim Olan',
     url: 'https://benimolan.com',
     logo: 'https://benimolan.com/logo.png',
-    description: "Benim Olan'da binlerce ürünü keşfedin. Moda, elektronik, ev & yaşam ve daha fazlası. Güvenli alışveriş, hızlı teslimat.",
+    description:
+      "Benim Olan'da binlerce ürünü keşfedin. Moda, elektronik, ev & yaşam ve daha fazlası. Güvenli alışveriş, hızlı teslimat.",
     sameAs: [
       'https://facebook.com/benimolan',
       'https://instagram.com/benimolan',
@@ -37,7 +38,8 @@ export function websiteSchema(searchActionUrl?: string) {
     '@type': 'WebSite',
     name: 'Benim Olan',
     url: 'https://benimolan.com',
-    description: "Benim Olan'da binlerce ürünü keşfedin. Moda, elektronik, ev & yaşam ve daha fazlası. Güvenli alışveriş, hızlı teslimat.",
+    description:
+      "Benim Olan'da binlerce ürünü keşfedin. Moda, elektronik, ev & yaşam ve daha fazlası. Güvenli alışveriş, hızlı teslimat.",
     inLanguage: ['tr', 'en', 'de', 'ar'],
   };
 
@@ -161,6 +163,35 @@ export function reviewSchema(review: {
     },
     datePublished: review.datePublished,
   };
+}
+
+/**
+ * Schema.org Store şeması — satıcı mağaza sayfası (REV-03)
+ * https://schema.org/Store
+ * aggregateRating yalnızca onaylı değerlendirme sayısı > 0 olduğunda eklenir.
+ */
+export function sellerStoreSchema(seller: {
+  name: string;
+  url: string;
+  ratingValue: number;
+  reviewCount: number;
+}) {
+  const schema: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Store',
+    name: seller.name,
+    url: seller.url.startsWith('http') ? seller.url : `https://benimolan.com${seller.url}`,
+  };
+
+  if (seller.reviewCount > 0) {
+    schema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: seller.ratingValue,
+      reviewCount: seller.reviewCount,
+    };
+  }
+
+  return JSON.parse(JSON.stringify(schema));
 }
 
 /**

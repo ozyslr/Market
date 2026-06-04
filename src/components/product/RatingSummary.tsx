@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Star, X, CheckCircle2 } from 'lucide-react';
 import { ReviewStats } from '@/services/reviewService';
+import type { SellerStarSummary } from '@/services/sellerRatingService';
 import { Review } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -19,11 +20,21 @@ const CATEGORY_LABELS: Record<string, string> = {
   description: 'Açıklamaya Uygunluk',
 };
 
-export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, reviews, onScrollToReviews }: Props) {
-  const hasCategories = Object.values(stats.avgCategoryRatings).some(v => v > 0);
-  const [selectedPhotoReview, setSelectedPhotoReview] = useState<{ review: Review; photo: string } | null>(null);
+export function RatingSummary({
+  rating,
+  stats,
+  activeStarFilter,
+  onStarFilter,
+  reviews,
+  onScrollToReviews,
+}: Props) {
+  const hasCategories = Object.values(stats.avgCategoryRatings).some((v) => v > 0);
+  const [selectedPhotoReview, setSelectedPhotoReview] = useState<{
+    review: Review;
+    photo: string;
+  } | null>(null);
 
-  const reviewsWithPhotos = reviews.filter(r => r.photos && r.photos.length > 0);
+  const reviewsWithPhotos = reviews.filter((r) => r.photos && r.photos.length > 0);
   const totalPhotosCount = reviewsWithPhotos.reduce((acc, r) => acc + (r.photos?.length || 0), 0);
 
   return (
@@ -45,7 +56,10 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
             return (
               <div key={i} className="relative w-5 h-5">
                 <Star size={20} className="absolute text-yellow-200 dark:text-yellow-700" />
-                <div className="absolute overflow-hidden h-5" style={{ width: `${fillAmount * 100}%` }}>
+                <div
+                  className="absolute overflow-hidden h-5"
+                  style={{ width: `${fillAmount * 100}%` }}
+                >
                   <Star size={20} fill="#FBBF24" className="text-yellow-400" />
                 </div>
               </div>
@@ -83,7 +97,7 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
 
       {/* Sağ: Yıldız dağılımı */}
       <div className="md:col-span-2 space-y-2 self-center w-full">
-        {[5, 4, 3, 2, 1].map(star => {
+        {[5, 4, 3, 2, 1].map((star) => {
           const count = stats.distribution[star] || 0;
           const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0;
           const isActive = activeStarFilter === star;
@@ -96,7 +110,9 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
                 isActive ? 'bg-accent/10' : 'hover:bg-brand-secondary/50 dark:hover:bg-zinc-800/50',
               )}
             >
-              <span className="text-[10px] font-black text-brand-primary/60 dark:text-zinc-400">{star}</span>
+              <span className="text-[10px] font-black text-brand-primary/60 dark:text-zinc-400">
+                {star}
+              </span>
               <span className="text-[10px] text-yellow-400 shrink-0">{'★'.repeat(star)}</span>
               <div className="flex-1 h-2.5 bg-brand-secondary dark:bg-zinc-800 rounded-full overflow-hidden border border-brand-primary/5 dark:border-white/5">
                 <div
@@ -104,7 +120,9 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className="text-[10px] font-bold w-8 text-brand-primary/40 dark:text-zinc-500 text-end">{count}</span>
+              <span className="text-[10px] font-bold w-8 text-brand-primary/40 dark:text-zinc-500 text-end">
+                {count}
+              </span>
             </button>
           );
         })}
@@ -117,7 +135,7 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
             Müşteri Fotoğrafları ({totalPhotosCount})
           </p>
           <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-            {reviewsWithPhotos.map(r =>
+            {reviewsWithPhotos.map((r) =>
               r.photos?.map((photo, index) => (
                 <button
                   key={`${r.id}-${index}`}
@@ -126,7 +144,7 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
                 >
                   <img src={photo} className="w-full h-full object-cover" alt="Review media" />
                 </button>
-              ))
+              )),
             )}
           </div>
         </div>
@@ -140,7 +158,7 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
         >
           <div
             className="bg-white dark:bg-zinc-900 rounded-[2rem] overflow-hidden max-w-4xl w-full flex flex-col md:flex-row shadow-2xl relative border border-brand-primary/5 dark:border-white/5"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <button
               className="absolute top-4 end-4 z-10 w-10 h-10 bg-black/10 hover:bg-black/20 text-brand-primary dark:text-white rounded-full flex items-center justify-center transition-colors"
@@ -150,7 +168,11 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
             </button>
             {/* Sol Taraf: Görsel */}
             <div className="md:w-1/2 bg-black flex items-center justify-center min-h-[300px] max-h-[60vh]">
-              <img src={selectedPhotoReview.photo} className="max-w-full max-h-full object-contain" alt="" />
+              <img
+                src={selectedPhotoReview.photo}
+                className="max-w-full max-h-full object-contain"
+                alt=""
+              />
             </div>
             {/* Sağ Taraf: Detaylar */}
             <div className="md:w-1/2 p-6 md:p-8 flex flex-col justify-between max-h-[60vh] overflow-y-auto">
@@ -160,14 +182,20 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
                     {selectedPhotoReview.review.userName.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-xs font-black text-brand-primary dark:text-white">{selectedPhotoReview.review.userName}</p>
+                    <p className="text-xs font-black text-brand-primary dark:text-white">
+                      {selectedPhotoReview.review.userName}
+                    </p>
                     <div className="flex items-center gap-1 mt-0.5">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <Star
                           key={i}
                           size={10}
                           fill={i < selectedPhotoReview.review.rating ? '#FF5200' : 'none'}
-                          className={i < selectedPhotoReview.review.rating ? 'text-accent' : 'text-brand-primary/10 dark:text-white/10'}
+                          className={
+                            i < selectedPhotoReview.review.rating
+                              ? 'text-accent'
+                              : 'text-brand-primary/10 dark:text-white/10'
+                          }
                         />
                       ))}
                       <span className="text-[10px] text-brand-primary/30 dark:text-zinc-500 ms-2">
@@ -183,11 +211,83 @@ export function RatingSummary({ rating, stats, activeStarFilter, onStarFilter, r
               {selectedPhotoReview.review.verified && (
                 <div className="mt-4 flex items-center gap-1.5 px-2.5 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-full border border-green-200 dark:border-green-800/30 w-fit">
                   <CheckCircle2 size={11} />
-                  <span className="text-[9px] font-black uppercase tracking-widest">Onaylı Alıcı</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest">
+                    Onaylı Alıcı
+                  </span>
                 </div>
               )}
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface SellerRatingSummaryProps {
+  summary: SellerStarSummary;
+  className?: string;
+}
+
+/**
+ * Seller-scope variant of the rating summary (REV-03). Read-only — reuses the
+ * same star-distribution bars as the product review summary, scoped to a seller's
+ * aggregated approved reviews (average, total, distribution). No star filtering.
+ */
+export function SellerRatingSummary({ summary, className }: SellerRatingSummaryProps) {
+  const { average, total, distribution } = summary;
+  return (
+    <div className={cn('flex flex-col gap-3', className)}>
+      <div className="flex items-center gap-3">
+        <span className="text-3xl font-display font-black text-brand-primary italic leading-none dark:text-white">
+          {average.toFixed(1)}
+        </span>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-0.5">
+            {Array.from({ length: 5 }).map((_, i) => {
+              const fillAmount = Math.max(0, Math.min(1, average - i));
+              return (
+                <div key={i} className="relative w-4 h-4">
+                  <Star size={16} className="absolute text-yellow-200 dark:text-yellow-700" />
+                  <div
+                    className="absolute overflow-hidden h-4"
+                    style={{ width: `${fillAmount * 100}%` }}
+                  >
+                    <Star size={16} fill="#FBBF24" className="text-yellow-400" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/40 dark:text-zinc-500">
+            {total} değerlendirme
+          </span>
+        </div>
+      </div>
+
+      {total > 0 && (
+        <div className="space-y-1.5 w-full">
+          {[5, 4, 3, 2, 1].map((star) => {
+            const count = distribution[star] || 0;
+            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+            return (
+              <div key={star} className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-brand-primary/60 dark:text-zinc-400 w-3">
+                  {star}
+                </span>
+                <span className="text-[10px] text-yellow-400 shrink-0">★</span>
+                <div className="flex-1 h-2 bg-brand-secondary dark:bg-zinc-800 rounded-full overflow-hidden border border-brand-primary/5 dark:border-white/5">
+                  <div
+                    className="h-full bg-yellow-400 transition-all duration-500"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-[10px] font-bold w-6 text-brand-primary/40 dark:text-zinc-500 text-end">
+                  {count}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

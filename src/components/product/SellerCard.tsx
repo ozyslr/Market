@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ChevronRight, UserPlus, Award, Zap, Truck, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getSellerStarSummary, type SellerStarSummary } from '@/services/sellerRatingService';
+import { SellerRatingSummary } from './RatingSummary';
 
 interface SellerCardProps {
   sellerId: string;
@@ -28,6 +30,21 @@ export function SellerCard({
   responseRate,
   onTimeShipping,
 }: SellerCardProps) {
+  // REV-03: aggregate the seller's approved reviews across all their products.
+  const [starSummary, setStarSummary] = useState<SellerStarSummary | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getSellerStarSummary(sellerId)
+      .then((s) => {
+        if (active) setStarSummary(s);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [sellerId]);
+
   return (
     <div className="py-4 space-y-3">
       <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40">
@@ -86,6 +103,13 @@ export function SellerCard({
               Zamanında Kargo
             </div>
           )}
+        </div>
+      )}
+
+      {/* Seller rating summary — aggregated approved reviews (REV-03) */}
+      {starSummary && starSummary.total > 0 && (
+        <div className="pt-1">
+          <SellerRatingSummary summary={starSummary} />
         </div>
       )}
 
