@@ -28,13 +28,8 @@ import {
   batchUpdateOrders,
 } from '@/services/orderService';
 import { createNotification } from '@/services/notificationService';
-import {
-  createCargoShipment,
-  getTrackingStatus,
-  getAvailableCarriers,
-  CargoProviderName,
-} from '@/services/cargoService';
-import type { ShipmentRequest, TrackingResponse } from '@/services/cargoService';
+import { getTrackingStatus, CargoProviderName } from '@/services/cargoService';
+import type { TrackingResponse } from '@/services/cargoService';
 import { autoGenerateInvoice } from '@/services/invoiceService';
 import { Order } from '@/types/order';
 import { TableRowSkeleton } from '@/components/ui/Skeleton';
@@ -58,6 +53,12 @@ export function SellerOrdersPage() {
   const [prevOrderIds, setPrevOrderIds] = useState<Set<string>>(new Set());
   const [newOrderCount, setNewOrderCount] = useState(0);
   const [realtimeActive, setRealtimeActive] = useState(false);
+  const [shipResult, setShipResult] = useState<{
+    trackingNumber: string;
+    labelUrl: string;
+    estimatedDelivery: string;
+  } | null>(null);
+  const [shipError, setShipError] = useState<string | null>(null);
 
   const [showReturns, setShowReturns] = useState(false);
 
@@ -188,63 +189,67 @@ export function SellerOrdersPage() {
   const handleShip = async () => {
     if (!shipTarget || !firebaseUser) return;
     setShipping(true);
+    setShipError(null);
+    setShipResult(null);
     try {
-      const shipmentReq: ShipmentRequest = {
-        orderId: shipTarget.id,
-        senderName: firebaseUser.email || 'Satıcı',
-        senderAddress: 'Mağaza Adresi',
-        senderCity: 'İstanbul',
-        senderPhone: '',
-        receiverName: shipTarget.shippingAddress?.fullName || '',
-        receiverAddress: shipTarget.shippingAddress?.line1 || '',
-        receiverCity: shipTarget.shippingAddress?.city || '',
-        receiverPhone: shipTarget.shippingAddress?.phone || '',
-        packageCount: shipTarget.items.length,
-        declaredValue: shipTarget.total,
-        receiverCountry: shipTarget.shippingAddress?.country || 'TR',
-      };
+      const token = await firebaseUser.getIdToken();
+      // shipTarget is an Order (old model); orderSetId may live on the doc or equal the id
+      const orderSetId = (shipTarget as any).orderSetId ?? shipTarget.id;
+      const subOrderId = shipTarget.id;
 
-      const result = await createCargoShipment(carrier as CargoProviderName, shipmentReq);
+      const res = await fetch(`/api/orders/${orderSetId}/subOrders/${subOrderId}/ship`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ weight: 1, desi: 1 }),
+      });
 
-      if (result.success) {
-        await updateOrderStatus(shipTarget.id, 'shipped', {
-          trackingNumber: result.trackingNumber,
-          carrier,
-          shippedAt: new Date().toISOString(),
-          notes: orderNote.trim() || undefined,
-        });
-        setShipTarget(null);
-        setTrackingNumber('');
-        setOrderNote('');
+      const data = await res.json();
 
-        // Auto-generate e-invoice
-        autoGenerateInvoice(
-          shipTarget.id,
-          firebaseUser.uid,
-          shipTarget.createdAt,
-          shipTarget.items.map((i) => ({
-            name: i.name,
-            quantity: i.quantity,
-            price: i.price,
-            subtotal: i.subtotal,
-          })),
-          shipTarget.shippingAddress?.fullName || shipTarget.userEmail,
-          shipTarget.shippingAddress
-            ? `${shipTarget.shippingAddress.line1}, ${shipTarget.shippingAddress.city}`
-            : '',
-          shipTarget.total,
-          shipTarget.currency || 'TRY',
-        );
-
-        createNotification(
-          firebaseUser.uid,
-          'order_status',
-          'Kargo Oluşturuldu',
-          `${carrier} — ${result.trackingNumber} — Tahmini teslimat: ${result.estimatedDelivery ? new Date(result.estimatedDelivery).toLocaleDateString('tr-TR') : '—'}`,
-        );
+      if (!res.ok) {
+        setShipError(data?.error ?? `Hata: ${res.status}`);
+        return;
       }
+
+      const result = {
+        trackingNumber: data.trackingNumber,
+        labelUrl: data.labelUrl,
+        estimatedDelivery: data.estimatedDelivery,
+      };
+      setShipResult(result);
+      setTrackingNumber('');
+      setOrderNote('');
+
+      // Auto-generate e-invoice (non-blocking)
+      autoGenerateInvoice(
+        shipTarget.id,
+        firebaseUser.uid,
+        shipTarget.createdAt,
+        shipTarget.items.map((i) => ({
+          name: i.name,
+          quantity: i.quantity,
+          price: i.price,
+          subtotal: i.subtotal,
+        })),
+        shipTarget.shippingAddress?.fullName || shipTarget.userEmail,
+        shipTarget.shippingAddress
+          ? `${shipTarget.shippingAddress.line1}, ${shipTarget.shippingAddress.city}`
+          : '',
+        shipTarget.total,
+        shipTarget.currency || 'TRY',
+      );
+
+      createNotification(
+        firebaseUser.uid,
+        'order_status',
+        'Kargo Oluşturuldu',
+        `${data.trackingNumber} — Tahmini teslimat: ${data.estimatedDelivery ? new Date(data.estimatedDelivery).toLocaleDateString('tr-TR') : '—'}`,
+      );
     } catch (err) {
       console.error('Cargo shipment failed:', err);
+      setShipError('Kargo oluşturulurken bir hata oluştu.');
     } finally {
       setShipping(false);
     }
@@ -544,10 +549,12 @@ export function SellerOrdersPage() {
                                   setCarrier('PTT');
                                   setTrackingNumber('');
                                   setOrderNote('');
+                                  setShipResult(null);
+                                  setShipError(null);
                                 }}
                                 className="px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
                               >
-                                Kargoya Ver
+                                Kargola + Etiket Al
                               </button>
                             )}
                             {order.status === 'shipped' && order.trackingNumber && (
@@ -797,65 +804,108 @@ export function SellerOrdersPage() {
               Sipariş #{shipTarget.id.slice(-6).toUpperCase()}
             </p>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
-                Kargo Firması
-              </label>
-              <select
-                value={carrier}
-                onChange={(e) => setCarrier(e.target.value)}
-                className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10"
-              >
-                {CARRIERS.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            </div>
+            {/* Success result */}
+            {shipResult && (
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-4 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-green-700">
+                  Kargo Oluşturuldu
+                </p>
+                <p className="text-sm font-bold text-green-800">
+                  Takip No: <span className="font-mono">{shipResult.trackingNumber}</span>
+                </p>
+                {shipResult.estimatedDelivery && (
+                  <p className="text-xs text-green-700">
+                    Tahmini Teslimat:{' '}
+                    {new Date(shipResult.estimatedDelivery).toLocaleDateString('tr-TR')}
+                  </p>
+                )}
+                <a
+                  href={shipResult.labelUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-1 px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
+                >
+                  <ExternalLink size={12} /> Etiketi Görüntüle
+                </a>
+              </div>
+            )}
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
-                Takip Numarası (opsiyonel)
-              </label>
-              <input
-                value={trackingNumber}
-                onChange={(e) => setTrackingNumber(e.target.value)}
-                placeholder="örn. TR1234567890"
-                className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10 placeholder:text-brand-primary/20"
-              />
-            </div>
+            {/* Error display */}
+            {shipError && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-3">
+                <p className="text-xs font-bold text-red-600">{shipError}</p>
+              </div>
+            )}
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
-                Not (opsiyonel)
-              </label>
-              <input
-                value={orderNote}
-                onChange={(e) => setOrderNote(e.target.value)}
-                placeholder="Sipariş ile ilgili not..."
-                className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10 placeholder:text-brand-primary/20"
-              />
-            </div>
+            {!shipResult && (
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
+                    Kargo Firması
+                  </label>
+                  <select
+                    value={carrier}
+                    onChange={(e) => setCarrier(e.target.value)}
+                    className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10"
+                  >
+                    {CARRIERS.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
+                    Takip Numarası (opsiyonel)
+                  </label>
+                  <input
+                    value={trackingNumber}
+                    onChange={(e) => setTrackingNumber(e.target.value)}
+                    placeholder="örn. TR1234567890"
+                    className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10 placeholder:text-brand-primary/20"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
+                    Not (opsiyonel)
+                  </label>
+                  <input
+                    value={orderNote}
+                    onChange={(e) => setOrderNote(e.target.value)}
+                    placeholder="Sipariş ile ilgili not..."
+                    className="w-full bg-brand-secondary/30 text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10 placeholder:text-brand-primary/20"
+                  />
+                </div>
+              </>
+            )}
 
             <div className="flex gap-3 pt-2">
               <button
-                onClick={() => setShipTarget(null)}
+                onClick={() => {
+                  setShipTarget(null);
+                  setShipResult(null);
+                  setShipError(null);
+                }}
                 className="flex-1 py-3 bg-brand-secondary text-brand-primary rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-secondary/70 transition-all"
               >
-                İptal
+                {shipResult ? 'Kapat' : 'İptal'}
               </button>
-              <button
-                onClick={handleShip}
-                disabled={shipping}
-                className="flex-1 py-3 bg-accent text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-accent/20 hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {shipping ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" /> Kaydediliyor…
-                  </>
-                ) : (
-                  'Kargoya Ver'
-                )}
-              </button>
+              {!shipResult && (
+                <button
+                  onClick={handleShip}
+                  disabled={shipping}
+                  className="flex-1 py-3 bg-accent text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-accent/20 hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {shipping ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Kaydediliyor…
+                    </>
+                  ) : (
+                    'Kargola + Etiket Al'
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
