@@ -1,11 +1,11 @@
-# Roadmap: Benim Olan (Mercora) — Global Artisan Marketplace
+﻿# Roadmap: Benim Olan (Mercora) â€” Global Artisan Marketplace
 
 ## Overview
 
 Benim Olan is a live Technical MVP transitioning to a full-scale multi-vendor marketplace. This roadmap builds the missing P0 infrastructure (compliance, payments, order lifecycle, KYC) first, then adds search, shipping, multi-currency, and trust features in dependency order. Phase 8 (cross-border compliance) is deferred to v2 as it depends on multi-currency settlement and is not required for TR+EU launch.
 
 **Granularity:** Fine (8 phases)
-**Mode:** MVP — each phase delivers an end-to-end user capability as vertical slices.
+**Mode:** MVP â€” each phase delivers an end-to-end user capability as vertical slices.
 
 ## Phases
 
@@ -15,14 +15,14 @@ Benim Olan is a live Technical MVP transitioning to a full-scale multi-vendor ma
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED).
 - v2 phases are annotated and deferred.
 
-- [x] **Phase 1: Foundation & Compliance** — Order data model, commission engine, immutable ledger, KVKK/GDPR compliance, Firestore security rules (completed 2026-06-02)
-- [x] **Phase 2: Payment & Order Lifecycle** — Dual-provider payments (Iyzico TRY + Stripe EUR), escrow flow, order lifecycle, seller payouts, transactional emails (completed 2026-06-03)
-- [x] **Phase 3: Seller Onboarding & KYC** — KYC document upload, admin review/approval, seller store management, CSV import/export, enhanced REST API (completed 2026-06-03)
-- [ ] **Phase 4: Search & Discovery** — Typesense full-text search, faceted filters, sort options, event-driven index updates
-- [ ] **Phase 5: Shipping & Fulfillment** — Entegi (TR) + EasyPost (EU) carrier integration, live tracking, delivery confirmation, returns workflow
-- [ ] **Phase 6: Multi-Currency** — Exchange rate service, TRY-based pricing with EUR display, rate locking at checkout, TRY-only settlement
-- [ ] **Phase 7: Reviews & Trust** — Verified purchase badge, photo reviews, seller rating, Q&A
-- [ ] **Phase 8: Cross-Border Compliance (v2)** — HS codes, customs docs, total landed cost (deferred to v2)
+- [x] **Phase 1: Foundation & Compliance** â€” Order data model, commission engine, immutable ledger, KVKK/GDPR compliance, Firestore security rules (completed 2026-06-02)
+- [x] **Phase 2: Payment & Order Lifecycle** â€” Dual-provider payments (Iyzico TRY + Stripe EUR), escrow flow, order lifecycle, seller payouts, transactional emails (completed 2026-06-03)
+- [x] **Phase 3: Seller Onboarding & KYC** â€” KYC document upload, admin review/approval, seller store management, CSV import/export, enhanced REST API (completed 2026-06-03)
+- [ ] **Phase 4: Search & Discovery** â€” Typesense full-text search, faceted filters, sort options, event-driven index updates
+- [ ] **Phase 5: Shipping & Fulfillment** â€” Entegi (TR) + EasyPost (EU) carrier integration, live tracking, delivery confirmation, returns workflow
+- [ ] **Phase 6: Multi-Currency** â€” Exchange rate service, TRY-based pricing with EUR display, rate locking at checkout, TRY-only settlement
+- [ ] **Phase 7: Reviews & Trust** â€” Verified purchase badge, photo reviews, seller rating, Q&A
+- [ ] **Phase 8: Cross-Border Compliance (v2)** â€” HS codes, customs docs, total landed cost (deferred to v2)
 
 ## Phase Details
 
@@ -116,8 +116,15 @@ Plans:
 3. Buyers sort by newest, best-selling, price ascending/descending, and rating
 4. Search result cards show product image, title, price (with currency), rating stars, and seller name
 5. Search index updates automatically within seconds when products are added, updated, or deleted
-   **Plans**: TBD
-   **UI hint**: yes
+   **Plans**: 4 plans
+
+Plans:
+
+- [ ] 04-01-PLAN.md -- Typesense Cloud cluster provisioning + env vars (blocking human setup)
+- [ ] 04-02-PLAN.md -- Server infra: typesense install, admin client, schema helper, sync + reindex routes
+- [ ] 04-03-PLAN.md -- Browser client, searchService Typesense primary path, productService sync hooks
+- [ ] 04-04-PLAN.md -- FilterPanel best-selling sort, SearchResults normalizeTR removal, e2e verification
+      **UI hint**: yes
 
 ### Phase 5: Shipping & Fulfillment
 
