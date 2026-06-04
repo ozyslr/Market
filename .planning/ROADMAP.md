@@ -148,8 +148,17 @@ Plans:
 2. Tracking number and live carrier status are visible on the order detail page; status refreshes automatically
 3. Customer receives email notification on delivery confirmation; delay notification triggers if estimated delivery date passes
 4. Customer creates return request from order detail page; return status is trackable through the same lifecycle
-   **Plans**: TBD
+   **Plans**: 6 plans
    **UI hint**: yes
+
+Plans:
+
+- [ ] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
+- [ ] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
+- [ ] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
+- [ ] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
+- [ ] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
+- [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
 
 ### Phase 6: Multi-Currency
 
@@ -163,8 +172,17 @@ Plans:
 2. Exchange rate is locked at checkout confirmation -- browsing rate fluctuations do not change the final amount
 3. Product pages show both TRY and EUR prices; user can toggle display currency
 4. Seller always receives payout in TRY regardless of buyer's payment currency
-   **Plans**: TBD
+   **Plans**: 6 plans
    **UI hint**: yes
+
+Plans:
+
+- [ ] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
+- [ ] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
+- [ ] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
+- [ ] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
+- [ ] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
+- [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
 
 ### Phase 7: Reviews & Trust
 
@@ -178,8 +196,17 @@ Plans:
 2. Reviews can include up to 5 photos; photos are displayed in a gallery on the product page
 3. Seller rating summary (average, count, distribution) is displayed on store page and product detail page
 4. Buyers can post questions on product pages; seller receives notification and can reply publicly
-   **Plans**: TBD
+   **Plans**: 6 plans
    **UI hint**: yes
+
+Plans:
+
+- [ ] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
+- [ ] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
+- [ ] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
+- [ ] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
+- [ ] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
+- [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
 
 ### Phase 8: Cross-Border Compliance (v2)
 
@@ -193,7 +220,17 @@ Plans:
 2. Customs documentation auto-generated for cross-border shipments
 3. Total landed cost (product + shipping + duties) displayed to buyer
 4. EU GPSR labeling requirements met for all products sold to EU
-   **Plans**: TBD
+   **Plans**: 6 plans
+   **UI hint**: yes
+
+Plans:
+
+- [ ] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
+- [ ] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
+- [ ] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
+- [ ] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
+- [ ] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
+- [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
 
 ## Progress
 
