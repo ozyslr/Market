@@ -1,314 +1,249 @@
 import React, { useState, useEffect } from 'react';
-import { RotateCcw, ThumbsUp, ThumbsDown, MoreVertical, Loader2, X } from 'lucide-react';
+import { RotateCcw, Loader2 } from 'lucide-react';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
-import { getReturnRequests, updateReturnStatus, ReturnRequest } from '@/services/returnService';
+import type { ReturnRequest, ReturnReason, ReturnStatus } from '@/types/returns';
 
-interface ReturnManagementSectionProps {
-  uid: string;
-  show: boolean;
+// ─── Label maps ──────────────────────────────────────────────────────────
+
+const REASON_LABELS: Record<ReturnReason, string> = {
+  wrong_item: 'Yanlış Ürün',
+  damaged: 'Hasarlı Ürün',
+  not_as_described: 'Açıklamaya Uymuyor',
+  changed_mind: 'Fikir Değişikliği',
+  other: 'Diğer',
+};
+
+const STATUS_LABELS: Record<ReturnStatus, string> = {
+  pending: 'Bekliyor',
+  approved: 'Onaylandı',
+  rejected: 'Reddedildi',
+  label_sent: 'Etiket Gönderildi',
+  received: 'Teslim Alındı',
+  refunded: 'İade Edildi',
+};
+
+interface Props {
+  sellerId?: string;
+  /** Legacy prop used by SellerOrders to toggle visibility */
+  uid?: string;
+  show?: boolean;
 }
 
-export function ReturnManagementSection({ uid, show }: ReturnManagementSectionProps) {
+export function ReturnManagementSection({ sellerId, uid, show }: Props) {
+  const { firebaseUser } = useAuth();
+  const effectiveSellerId = sellerId ?? uid ?? firebaseUser?.uid ?? '';
+
   const [returns, setReturns] = useState<ReturnRequest[]>([]);
-  const [loadingReturns, setLoadingReturns] = useState(false);
-  const [selectedReturn, setSelectedReturn] = useState<ReturnRequest | null>(null);
-  const [processingReturn, setProcessingReturn] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
+  const [actionSuccess, setActionSuccess] = useState<Record<string, string>>({});
+  const [actionError, setActionError] = useState<Record<string, string>>({});
+  const [rejectionInputs, setRejectionInputs] = useState<Record<string, string>>({});
+
+  // Respect legacy `show` prop
+  const isVisible = show === undefined ? true : show;
 
   useEffect(() => {
-    if (!uid || !show) return;
-    setLoadingReturns(true);
-    getReturnRequests(uid).then(data => {
-      setReturns(data);
-      setLoadingReturns(false);
-    });
-  }, [uid, show]);
+    if (!effectiveSellerId || !isVisible) return;
+    setLoading(true);
+    setError(null);
 
-  if (!show) return null;
+    const q = query(
+      collection(db, 'returns'),
+      where('sellerId', '==', effectiveSellerId),
+      where('status', '==', 'pending'),
+      orderBy('createdAt', 'desc'),
+    );
+
+    getDocs(q)
+      .then((snap) => {
+        setReturns(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as ReturnRequest));
+      })
+      .catch((err) => {
+        console.error('ReturnManagementSection fetch error:', err);
+        setError('İade talepleri yüklenemedi.');
+      })
+      .finally(() => setLoading(false));
+  }, [effectiveSellerId, isVisible]);
+
+  if (!isVisible) return null;
+
+  const handleApprove = async (returnId: string) => {
+    if (!firebaseUser) return;
+    setActionLoading((prev) => ({ ...prev, [returnId]: true }));
+    setActionError((prev) => ({ ...prev, [returnId]: '' }));
+    try {
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch(`/api/returns/${returnId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReturns((prev) => prev.filter((r) => r.id !== returnId));
+        setActionSuccess((prev) => ({
+          ...prev,
+          [returnId]: data.returnTrackingNumber
+            ? `Onaylandı — Takip: ${data.returnTrackingNumber}`
+            : 'Onaylandı',
+        }));
+      } else {
+        setActionError((prev) => ({ ...prev, [returnId]: data?.error ?? `Hata: ${res.status}` }));
+      }
+    } catch {
+      setActionError((prev) => ({ ...prev, [returnId]: 'Ağ hatası. Lütfen tekrar deneyin.' }));
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [returnId]: false }));
+    }
+  };
+
+  const handleReject = async (returnId: string) => {
+    if (!firebaseUser) return;
+    const rejectionReason = rejectionInputs[returnId]?.trim();
+    if (!rejectionReason) {
+      setActionError((prev) => ({ ...prev, [returnId]: 'Red sebebi giriniz.' }));
+      return;
+    }
+    setActionLoading((prev) => ({ ...prev, [returnId]: true }));
+    setActionError((prev) => ({ ...prev, [returnId]: '' }));
+    try {
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch(`/api/returns/${returnId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ rejectionReason }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReturns((prev) => prev.filter((r) => r.id !== returnId));
+        setActionSuccess((prev) => ({ ...prev, [returnId]: 'Reddedildi' }));
+      } else {
+        setActionError((prev) => ({ ...prev, [returnId]: data?.error ?? `Hata: ${res.status}` }));
+      }
+    } catch {
+      setActionError((prev) => ({ ...prev, [returnId]: 'Ağ hatası. Lütfen tekrar deneyin.' }));
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [returnId]: false }));
+    }
+  };
 
   return (
-    <>
-      {/* ── RETURNS TABLE ── */}
-      <div className="bg-white rounded-[3.5rem] shadow-sm border border-amber-200 overflow-hidden mt-8">
-        <div className="p-8 border-b border-amber-100 flex items-center justify-between">
-          <h2 className="font-black text-brand-primary uppercase italic flex items-center gap-2">
-            <RotateCcw size={18} className="text-amber-500" /> İade Yönetimi
-          </h2>
-          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">
-            {returns.filter(r => r.status === 'requested').length} bekleyen
-          </span>
-        </div>
-
-        {loadingReturns ? (
-          <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-amber-500" /></div>
-        ) : returns.length === 0 ? (
-          <div className="text-center py-16">
-            <RotateCcw size={36} className="mx-auto text-brand-primary/10 mb-3" />
-            <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30">İade talebi yok</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-start">
-              <thead>
-                <tr className="bg-brand-secondary/20 text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/40">
-                  <th className="px-8 py-5">İade Kodu</th>
-                  <th className="px-8 py-5">Ürün</th>
-                  <th className="px-8 py-5">Sebep</th>
-                  <th className="px-8 py-5">Tarih</th>
-                  <th className="px-8 py-5">Durum</th>
-                  <th className="px-8 py-5"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brand-primary/5">
-                {returns.map(r => (
-                  <tr key={r.id} className={cn("transition-colors group", r.autoApproved ? "bg-green-50/30 hover:bg-green-50/50" : "hover:bg-brand-secondary/20")}>
-                    <td className="px-8 py-5">
-                      <div>
-                        <span className="font-mono font-black text-accent text-sm">{r.returnCode || '—'}</span>
-                        <p className="text-[10px] font-bold text-brand-primary/30">#{r.orderId.slice(-6).toUpperCase()}</p>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <p className="font-bold text-brand-primary text-sm">{r.items.map(i => i.name).join(', ')}</p>
-                      <p className="text-[10px] font-bold text-brand-primary/40">{r.items.reduce((s, i) => s + i.quantity, 0)} adet</p>
-                    </td>
-                    <td className="px-8 py-5">
-                      <p className="text-sm font-medium text-brand-primary max-w-[200px] truncate">{r.reason}</p>
-                    </td>
-                    <td className="px-8 py-5 text-sm text-brand-primary/60">
-                      {new Date(r.createdAt).toLocaleDateString('tr-TR')}
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-2">
-                        <span className={cn(
-                          'px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest',
-                          r.status === 'requested' ? 'bg-amber-50 text-amber-600' :
-                          r.status === 'approved' ? 'bg-green-50 text-green-600' :
-                          r.status === 'rejected' ? 'bg-red-50 text-red-600' :
-                          r.status === 'received' ? 'bg-blue-50 text-blue-600' :
-                          r.status === 'refunded' ? 'bg-purple-50 text-purple-600' :
-                          'bg-gray-50 text-gray-500'
-                        )}>
-                          {r.status === 'requested' ? 'Bekliyor' :
-                           r.status === 'approved' ? 'Onaylandı' :
-                           r.status === 'rejected' ? 'Reddedildi' :
-                           r.status === 'received' ? 'Teslim Alındı' :
-                           r.status === 'refunded' ? 'İade Edildi' :
-                           r.status === 'pickup_scheduled' ? 'Kargo Planlandı' :
-                           r.status === 'closed' ? 'Kapandı' : r.status}
-                        </span>
-                        {r.autoApproved && (
-                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[9px] font-black uppercase rounded-full" title={r.autoApprovalReason}>
-                            Oto
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {r.status === 'requested' && (
-                          <>
-                            <button
-                              onClick={async () => {
-                                setProcessingReturn(true);
-                                await updateReturnStatus(r.id, 'approved', 'İade onaylandı. Kargonuzu bekliyoruz.');
-                                setReturns(prev => prev.map(rr => rr.id === r.id ? { ...rr, status: 'approved' as const } : rr));
-                                setProcessingReturn(false);
-                              }}
-                              disabled={processingReturn}
-                              className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all disabled:opacity-50"
-                              title="Onayla"
-                            >
-                              <ThumbsUp size={14} />
-                            </button>
-                            <button
-                              onClick={async () => {
-                                setProcessingReturn(true);
-                                await updateReturnStatus(r.id, 'rejected', 'İade talebi reddedildi.');
-                                setReturns(prev => prev.map(rr => rr.id === r.id ? { ...rr, status: 'rejected' as const } : rr));
-                                setProcessingReturn(false);
-                              }}
-                              disabled={processingReturn}
-                              className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-all disabled:opacity-50"
-                              title="Reddet"
-                            >
-                              <ThumbsDown size={14} />
-                            </button>
-                            <button
-                              onClick={() => setSelectedReturn(r)}
-                              className="p-2 bg-brand-secondary/50 text-brand-primary/60 rounded-lg hover:bg-brand-secondary transition-all"
-                              title="Detay"
-                            >
-                              <MoreVertical size={14} />
-                            </button>
-                          </>
-                        )}
-                        {r.status !== 'requested' && (
-                          <button
-                            onClick={() => setSelectedReturn(r)}
-                            className="text-[10px] font-black uppercase tracking-widest text-accent hover:underline"
-                          >
-                            Detay
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+    <div className="bg-white rounded-[3.5rem] shadow-sm border border-amber-200 overflow-hidden mt-8">
+      {/* Header */}
+      <div className="p-8 border-b border-amber-100 flex items-center justify-between">
+        <h2 className="font-black text-brand-primary uppercase italic flex items-center gap-2">
+          <RotateCcw size={18} className="text-amber-500" /> İade Talepleri
+        </h2>
+        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">
+          {returns.length} bekleyen
+        </span>
       </div>
 
-      {/* ── RETURN DETAIL MODAL ── */}
-      {selectedReturn && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedReturn(null)} />
-          <div className="relative bg-white rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl space-y-5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-display font-black text-brand-primary uppercase italic">İade Detayı</h3>
-              <span className={cn(
-                'px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest',
-                selectedReturn.status === 'requested' ? 'bg-amber-50 text-amber-600' :
-                selectedReturn.status === 'approved' ? 'bg-green-50 text-green-600' :
-                selectedReturn.status === 'rejected' ? 'bg-red-50 text-red-600' :
-                selectedReturn.status === 'refunded' ? 'bg-purple-50 text-purple-600' :
-                selectedReturn.status === 'received' ? 'bg-blue-50 text-blue-600' :
-                'bg-gray-50 text-gray-500'
-              )}>
-                {selectedReturn.status === 'requested' ? 'Bekliyor' :
-                 selectedReturn.status === 'approved' ? 'Onaylandı' :
-                 selectedReturn.status === 'rejected' ? 'Reddedildi' :
-                 selectedReturn.status === 'received' ? 'Teslim Alındı' :
-                 selectedReturn.status === 'refunded' ? 'İade Edildi' :
-                 selectedReturn.status === 'pickup_scheduled' ? 'Kargo Planlandı' :
-                 selectedReturn.status === 'closed' ? 'Kapandı' : selectedReturn.status}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {selectedReturn.returnCode && (
-                <div className="flex items-center gap-3 bg-accent/5 border border-accent/20 rounded-2xl p-4">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-accent/60">İade Kodu</span>
-                  <span className="text-xl font-display font-black text-accent tracking-widest">{selectedReturn.returnCode}</span>
-                  {selectedReturn.autoApproved && (
-                    <span className="ms-auto px-3 py-1 bg-green-500 text-white text-[9px] font-black uppercase rounded-full">Otomatik Onay</span>
+      {/* Body */}
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+        </div>
+      ) : error ? (
+        <div className="text-center py-12">
+          <p className="text-xs font-bold text-red-500">{error}</p>
+        </div>
+      ) : returns.length === 0 ? (
+        <div className="text-center py-16">
+          <RotateCcw size={36} className="mx-auto text-brand-primary/10 mb-3" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
+            Bekleyen iade talebi yok
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y divide-brand-primary/5">
+          {returns.map((r) => (
+            <div key={r.id} className="p-6 space-y-3">
+              {/* Return info */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-black text-brand-primary">
+                    {REASON_LABELS[r.reason] ?? r.reason}
+                  </p>
+                  {r.notes && <p className="text-[11px] text-brand-primary/60">{r.notes}</p>}
+                  <p className="text-[10px] text-brand-primary/40">
+                    Talep: {new Date(r.createdAt).toLocaleDateString('tr-TR')}
+                  </p>
+                  {r.windowExpiresAt && (
+                    <p className="text-[10px] text-brand-primary/40">
+                      Son tarih: {new Date(r.windowExpiresAt).toLocaleDateString('tr-TR')}
+                    </p>
                   )}
+                  <p className="text-[10px] font-mono text-brand-primary/30">
+                    Sipariş: {r.subOrderId.slice(-8).toUpperCase()}
+                  </p>
                 </div>
-              )}
-              <div className="flex justify-between text-sm">
-                <span className="text-brand-primary/50 font-bold">Sipariş</span>
-                <span className="font-black font-mono">#{selectedReturn.orderId.slice(-8).toUpperCase()}</span>
+                <span className="shrink-0 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-600">
+                  {STATUS_LABELS[r.status] ?? r.status}
+                </span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-brand-primary/50 font-bold">Talep Tarihi</span>
-                <span className="font-black">{new Date(selectedReturn.createdAt).toLocaleDateString('tr-TR')}</span>
-              </div>
-              {selectedReturn.returnWindowExpiry && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-brand-primary/50 font-bold">İade Süresi</span>
-                  <span className={cn("font-bold", new Date(selectedReturn.returnWindowExpiry) > new Date() ? "text-green-600" : "text-red-500")}>
-                    {new Date(selectedReturn.returnWindowExpiry).toLocaleDateString('tr-TR')}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm">
-                <span className="text-brand-primary/50 font-bold">Müşteri</span>
-                <span className="font-black">{selectedReturn.userEmail}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-brand-primary/50 font-bold">İade Tutarı</span>
-                <span className="font-black text-accent">{(selectedReturn.refundAmount ?? 0).toFixed(2)} ₺</span>
-              </div>
-              <div className="pt-3 border-t border-brand-primary/5">
-                <p className="text-xs font-bold text-brand-primary/50 mb-1 uppercase tracking-widest">İade Sebebi</p>
-                <p className="text-sm font-bold">{selectedReturn.reason}</p>
-              </div>
-              {selectedReturn.autoApprovalReason && (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-3">
-                  <p className="text-[10px] font-bold text-green-700">{selectedReturn.autoApprovalReason}</p>
-                </div>
-              )}
-              {selectedReturn.details && (
-                <div className="pt-2">
-                  <p className="text-xs font-bold text-brand-primary/50 mb-1 uppercase tracking-widest">Açıklama</p>
-                  <p className="text-sm">{selectedReturn.details}</p>
-                </div>
-              )}
-              {selectedReturn.timeline && selectedReturn.timeline.length > 0 && (
-                <div className="pt-3 border-t border-brand-primary/5">
-                  <p className="text-xs font-bold text-brand-primary/50 mb-3 uppercase tracking-widest">Süreç</p>
-                  <div className="space-y-2">
-                    {selectedReturn.timeline.map((entry, idx) => (
-                      <div key={idx} className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className={cn(
-                            "w-2 h-2 rounded-full mt-1.5",
-                            idx === 0 ? "bg-accent" : "bg-brand-primary/20"
-                          )} />
-                          {idx < (selectedReturn.timeline?.length ?? 0) - 1 && (
-                            <div className="w-px flex-1 bg-brand-primary/10 mt-1" />
-                          )}
-                        </div>
-                        <div className="flex-1 pb-2">
-                          <p className="text-[11px] font-black text-brand-primary">
-                            {entry.status === 'requested' ? 'Talep Oluşturuldu' :
-                             entry.status === 'approved' ? 'Onaylandı' :
-                             entry.status === 'rejected' ? 'Reddedildi' :
-                             entry.status === 'received' ? 'Teslim Alındı' :
-                             entry.status === 'refunded' ? 'İade Tamamlandı' :
-                             entry.status === 'pickup_scheduled' ? 'Kargo Planlandı' :
-                             entry.status === 'closed' ? 'Kapatıldı' : entry.status}
-                          </p>
-                          {entry.note && <p className="text-[10px] text-brand-primary/50">{entry.note}</p>}
-                          <p className="text-[9px] text-brand-primary/30">{new Date(entry.timestamp).toLocaleString('tr-TR')}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
 
-            <div className="flex gap-3 pt-2">
-              <button onClick={() => setSelectedReturn(null)}
-                className="flex-1 py-3 border border-brand-primary/10 text-brand-primary font-black text-xs rounded-xl hover:bg-brand-secondary/30 transition-all uppercase tracking-widest">
-                Kapat
-              </button>
-              {selectedReturn.status === 'requested' && (
-                <>
+              {/* Success message */}
+              {actionSuccess[r.id] && (
+                <p className="text-[10px] font-bold text-green-600 bg-green-50 px-3 py-2 rounded-xl">
+                  {actionSuccess[r.id]}
+                </p>
+              )}
+
+              {/* Error message */}
+              {actionError[r.id] && (
+                <p className="text-[10px] font-bold text-red-600 bg-red-50 px-3 py-2 rounded-xl">
+                  {actionError[r.id]}
+                </p>
+              )}
+
+              {/* Actions */}
+              <div className="space-y-2">
+                {/* Rejection reason input */}
+                <input
+                  type="text"
+                  placeholder="Red sebebi (reddetmek için gerekli)"
+                  value={rejectionInputs[r.id] ?? ''}
+                  onChange={(e) =>
+                    setRejectionInputs((prev) => ({ ...prev, [r.id]: e.target.value }))
+                  }
+                  disabled={actionLoading[r.id]}
+                  className="w-full text-xs bg-white border border-brand-primary/10 rounded-xl px-3 py-2 text-brand-primary placeholder-brand-primary/30 focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
+                />
+                <div className="flex gap-2">
                   <button
-                    onClick={async () => {
-                      setProcessingReturn(true);
-                      await updateReturnStatus(selectedReturn.id, 'approved', 'İade onaylandı.');
-                      setReturns(prev => prev.map(r => r.id === selectedReturn.id ? { ...r, status: 'approved' } : r));
-                      setSelectedReturn(prev => prev ? { ...prev, status: 'approved' } : null);
-                      setProcessingReturn(false);
-                    }}
-                    disabled={processingReturn}
-                    className="flex-1 py-3 bg-green-500 text-white font-black text-xs rounded-xl hover:bg-green-600 transition-all disabled:opacity-50 uppercase tracking-widest"
+                    onClick={() => handleApprove(r.id)}
+                    disabled={actionLoading[r.id]}
+                    className="flex-1 py-2.5 bg-green-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-green-600 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
                   >
-                    İadeyi Onayla
+                    {actionLoading[r.id] ? <Loader2 size={12} className="animate-spin" /> : null}
+                    Onayla
                   </button>
                   <button
-                    onClick={async () => {
-                      setProcessingReturn(true);
-                      await updateReturnStatus(selectedReturn.id, 'rejected', 'İade reddedildi.');
-                      setReturns(prev => prev.map(r => r.id === selectedReturn.id ? { ...r, status: 'rejected' } : r));
-                      setSelectedReturn(prev => prev ? { ...prev, status: 'rejected' } : null);
-                      setProcessingReturn(false);
-                    }}
-                    disabled={processingReturn}
-                    className="flex-1 py-3 bg-red-500 text-white font-black text-xs rounded-xl hover:bg-red-600 transition-all disabled:opacity-50 uppercase tracking-widest"
+                    onClick={() => handleReject(r.id)}
+                    disabled={actionLoading[r.id]}
+                    className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
                   >
+                    {actionLoading[r.id] ? <Loader2 size={12} className="animate-spin" /> : null}
                     Reddet
                   </button>
-                </>
-              )}
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
-    </>
+    </div>
   );
 }
