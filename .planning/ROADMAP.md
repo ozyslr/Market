@@ -19,7 +19,7 @@ Benim Olan is a live Technical MVP transitioning to a full-scale multi-vendor ma
 - [x] **Phase 2: Payment & Order Lifecycle** â€” Dual-provider payments (Iyzico TRY + Stripe EUR), escrow flow, order lifecycle, seller payouts, transactional emails (completed 2026-06-03)
 - [x] **Phase 3: Seller Onboarding & KYC** â€” KYC document upload, admin review/approval, seller store management, CSV import/export, enhanced REST API (completed 2026-06-03)
 - [x] **Phase 4: Search & Discovery** â€” Firestore-only search: faceted filters, sort options (incl. best-selling), live-fresh results. Typesense descoped (SRC-01 typo tolerance deferred) â€” see quick task 260604-e5f.
-- [ ] **Phase 5: Shipping & Fulfillment** â€” Entegi (TR) + EasyPost (EU) carrier integration, live tracking, delivery confirmation, returns workflow
+- [x] **Phase 5: Shipping & Fulfillment** â€” Entegi (TR) + EasyPost (EU) carrier integration, live tracking, delivery confirmation, returns workflow (completed 2026-06-04)
 - [ ] **Phase 6: Multi-Currency** â€” Exchange rate service, TRY-based pricing with EUR display, rate locking at checkout, TRY-only settlement
 - [ ] **Phase 7: Reviews & Trust** â€” Verified purchase badge, photo reviews, seller rating, Q&A
 - [ ] **Phase 8: Cross-Border Compliance (v2)** â€” HS codes, customs docs, total landed cost (deferred to v2)
@@ -158,7 +158,7 @@ Plans:
 - [x] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
 - [x] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
 - [x] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
-- [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
+- [x] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
 
 ### Phase 6: Multi-Currency
 
@@ -181,7 +181,7 @@ Plans:
 - [x] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
 - [x] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
 - [x] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
-- [ ] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
+- [x] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
 - [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
 
 ### Phase 7: Reviews & Trust
@@ -204,7 +204,7 @@ Plans:
 - [x] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
 - [x] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
 - [x] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
-- [ ] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
+- [x] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
 - [ ] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
 - [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
 
@@ -227,7 +227,7 @@ Plans:
 
 - [x] 05-01-PLAN.md -- Type contracts: Entegi/EasyPost mock providers, region routing, SubOrder gaps, ReturnRequest type
 - [x] 05-02-PLAN.md -- TDD test scaffold: RED tests for shipping providers, routing, return window
-- [ ] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
+- [x] 05-03-PLAN.md -- Backend: POST /ship, EasyPost webhook (HMAC+dedup), Entegi cron poll, delay-check, sendDelayNotificationEmail
 - [ ] 05-04-PLAN.md -- Returns backend: return-request, approve (processRefund), reject endpoints
 - [ ] 05-05-PLAN.md -- Seller Kargola+Etiket UI + buyer tracking display
 - [ ] 05-06-PLAN.md -- Returns UI: buyer return form + seller approve/reject section
@@ -243,7 +243,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 (v2)
 | 2. Payment & Order Lifecycle    | 5/5            | Complete    | 2026-06-03 |
 | 3. Seller Onboarding & KYC      | 2/4            | In progress | 03-02 done |
 | 4. Search & Discovery           | Firestore-only | Complete\*  | 2026-06-04 |
-| 5. Shipping & Fulfillment       | 5/6            | In Progress |            |
+| 5. Shipping & Fulfillment       | 6/6            | Complete    | 2026-06-04 |
 | 6. Multi-Currency               | 0/--           | Not started | -          |
 | 7. Reviews & Trust              | 0/--           | Not started | -          |
 | 8. Cross-Border Compliance (v2) | 0/--           | Not started | -          |
