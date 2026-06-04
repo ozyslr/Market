@@ -21,7 +21,7 @@ const SORT_OPTIONS = [
   { value: 'price-asc', label: 'Fiyat: D\u00fc\u015f\u00fckten Y\u00fckse\u011fe' },
   { value: 'price-desc', label: 'Fiyat: Y\u00fcksekten D\u00fc\u015f\u00fc\u011fe' },
   { value: 'rating', label: 'En \u00c7ok Puanlanan' },
-  { value: 'popular', label: 'En Pop\u00fcler' },
+  { value: 'best-selling', label: 'En \u00c7ok Satan' },
 ];
 
 interface FilterPanelProps {
@@ -35,13 +35,21 @@ interface FilterPanelProps {
 }
 
 const PRICE_PRESETS = [
-  { label: '0 \u2013 500 TL',    min: 0,    max: 500  },
-  { label: '500 \u2013 1000 TL', min: 500,  max: 1000 },
-  { label: '1000 \u2013 2500 TL',min: 1000, max: 2500 },
-  { label: '2500 TL +',          min: 2500, max: undefined },
+  { label: '0 \u2013 500 TL', min: 0, max: 500 },
+  { label: '500 \u2013 1000 TL', min: 500, max: 1000 },
+  { label: '1000 \u2013 2500 TL', min: 1000, max: 2500 },
+  { label: '2500 TL +', min: 2500, max: undefined },
 ];
 
-export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortBy = '', onSortChange, className }: FilterPanelProps) {
+export function FilterPanel({
+  filters,
+  onChange,
+  brands = [],
+  facetCounts,
+  sortBy = '',
+  onSortChange,
+  className,
+}: FilterPanelProps) {
   const [showAllBrands, setShowAllBrands] = useState(false);
   const [priceMinInput, setPriceMinInput] = useState(filters.priceMin?.toString() ?? '');
   const [priceMaxInput, setPriceMaxInput] = useState(filters.priceMax?.toString() ?? '');
@@ -50,7 +58,7 @@ export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortB
     if (facetCounts?.brands && facetCounts.brands.length > 0) {
       return facetCounts.brands;
     }
-    return brands.map(name => ({ name, count: 0 }));
+    return brands.map((name) => ({ name, count: 0 }));
   }, [facetCounts?.brands, brands]);
 
   const visibleBrands = showAllBrands ? displayBrands : displayBrands.slice(0, 8);
@@ -79,19 +87,27 @@ export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortB
 
   const toggleBrand = (brand: string) => {
     const current = filters.brands ?? [];
-    const next = current.includes(brand)
-      ? current.filter(b => b !== brand)
-      : [...current, brand];
+    const next = current.includes(brand) ? current.filter((b) => b !== brand) : [...current, brand];
     update({ brands: next.length > 0 ? next : undefined });
   };
 
   return (
-    <aside className={cn('bg-white dark:bg-zinc-900 rounded-2xl border border-brand-primary/5 dark:border-white/5 p-5 space-y-6', className)}>
+    <aside
+      className={cn(
+        'bg-white dark:bg-zinc-900 rounded-2xl border border-brand-primary/5 dark:border-white/5 p-5 space-y-6',
+        className,
+      )}
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-black uppercase tracking-widest text-brand-primary dark:text-white">Filtreler</span>
+        <span className="text-xs font-black uppercase tracking-widest text-brand-primary dark:text-white">
+          Filtreler
+        </span>
         {hasActive && (
-          <button onClick={clearAll} className="flex items-center gap-1 text-[10px] font-bold text-accent hover:underline">
+          <button
+            onClick={clearAll}
+            className="flex items-center gap-1 text-[10px] font-bold text-accent hover:underline"
+          >
             <X size={11} /> Temizle
           </button>
         )}
@@ -100,27 +116,36 @@ export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortB
       {/* Sort Dropdown */}
       {onSortChange && (
         <section>
-          <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mb-3">Sırala</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mb-3">
+            Sırala
+          </p>
           <div className="relative">
             <select
               value={sortBy}
-              onChange={e => onSortChange(e.target.value)}
+              onChange={(e) => onSortChange(e.target.value)}
               className="w-full appearance-none px-3 py-2 rounded-xl border border-brand-primary/10 dark:border-white/10 bg-transparent text-xs font-bold text-brand-primary dark:text-white outline-none focus:border-accent transition-colors cursor-pointer"
             >
-              {SORT_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
-            <ArrowUpDown size={12} className="absolute end-3 top-1/2 -translate-y-1/2 text-brand-primary/30 dark:text-white/30 pointer-events-none" />
+            <ArrowUpDown
+              size={12}
+              className="absolute end-3 top-1/2 -translate-y-1/2 text-brand-primary/30 dark:text-white/30 pointer-events-none"
+            />
           </div>
         </section>
       )}
 
       {/* Price Range */}
       <section>
-        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mb-3">Fiyat Aralığı</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mb-3">
+          Fiyat Aralığı
+        </p>
         <div className="flex flex-wrap gap-1.5 mb-3">
-          {PRICE_PRESETS.map(preset => {
+          {PRICE_PRESETS.map((preset) => {
             const active =
               filters.priceMin === preset.min &&
               (preset.max == null ? filters.priceMax == null : filters.priceMax === preset.max);
@@ -136,7 +161,7 @@ export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortB
                   'px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all',
                   active
                     ? 'bg-accent text-white border-accent'
-                    : 'border-brand-primary/10 dark:border-white/10 text-brand-primary/60 dark:text-white/60 hover:border-accent hover:text-accent'
+                    : 'border-brand-primary/10 dark:border-white/10 text-brand-primary/60 dark:text-white/60 hover:border-accent hover:text-accent',
                 )}
               >
                 {preset.label}
@@ -149,16 +174,16 @@ export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortB
             type="number"
             placeholder="Min"
             value={priceMinInput}
-            onChange={e => setPriceMinInput(e.target.value)}
+            onChange={(e) => setPriceMinInput(e.target.value)}
             onBlur={applyPrice}
             className="w-full px-3 py-2 rounded-xl border border-brand-primary/10 dark:border-white/10 bg-transparent text-xs font-bold text-brand-primary dark:text-white outline-none focus:border-accent transition-colors"
           />
-          <span className="text-brand-primary/30 dark:text-white/30 text-xs">{"\u2013"}</span>
+          <span className="text-brand-primary/30 dark:text-white/30 text-xs">{'\u2013'}</span>
           <input
             type="number"
             placeholder="Max"
             value={priceMaxInput}
-            onChange={e => setPriceMaxInput(e.target.value)}
+            onChange={(e) => setPriceMaxInput(e.target.value)}
             onBlur={applyPrice}
             className="w-full px-3 py-2 rounded-xl border border-brand-primary/10 dark:border-white/10 bg-transparent text-xs font-bold text-brand-primary dark:text-white outline-none focus:border-accent transition-colors"
           />
@@ -167,9 +192,11 @@ export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortB
 
       {/* Rating */}
       <section>
-        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mb-3">Minimum Puan</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mb-3">
+          Minimum Puan
+        </p>
         <div className="flex gap-1.5 flex-wrap">
-          {[4, 3, 2, 1].map(r => (
+          {[4, 3, 2, 1].map((r) => (
             <button
               key={r}
               onClick={() => update({ rating: filters.rating === r ? undefined : r })}
@@ -177,7 +204,7 @@ export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortB
                 'flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-bold transition-all',
                 filters.rating === r
                   ? 'bg-amber-400 text-white border-amber-400'
-                  : 'border-brand-primary/10 dark:border-white/10 text-brand-primary/60 dark:text-white/60 hover:border-amber-400 hover:text-amber-500'
+                  : 'border-brand-primary/10 dark:border-white/10 text-brand-primary/60 dark:text-white/60 hover:border-amber-400 hover:text-amber-500',
               )}
             >
               <Star size={10} fill="currentColor" /> {r}+
@@ -189,9 +216,11 @@ export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortB
       {/* Brands */}
       {displayBrands.length > 0 && (
         <section>
-          <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mb-3">Marka</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40 mb-3">
+            Marka
+          </p>
           <div className="space-y-1.5">
-            {visibleBrands.map(item => (
+            {visibleBrands.map((item) => (
               <label key={item.name} className="flex items-center gap-2.5 cursor-pointer group">
                 <input
                   type="checkbox"
@@ -212,10 +241,18 @@ export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortB
           </div>
           {displayBrands.length > 8 && (
             <button
-              onClick={() => setShowAllBrands(v => !v)}
+              onClick={() => setShowAllBrands((v) => !v)}
               className="mt-2 flex items-center gap-1 text-[10px] font-bold text-accent hover:underline"
             >
-              {showAllBrands ? <><ChevronUp size={11} /> Daha Az</> : <><ChevronDown size={11} /> +{displayBrands.length - 8} Marka</>}
+              {showAllBrands ? (
+                <>
+                  <ChevronUp size={11} /> Daha Az
+                </>
+              ) : (
+                <>
+                  <ChevronDown size={11} /> +{displayBrands.length - 8} Marka
+                </>
+              )}
             </button>
           )}
         </section>
@@ -227,7 +264,7 @@ export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortB
           <input
             type="checkbox"
             checked={!!filters.inStock}
-            onChange={e => update({ inStock: e.target.checked || undefined })}
+            onChange={(e) => update({ inStock: e.target.checked || undefined })}
             className="w-3.5 h-3.5 accent-accent rounded"
           />
           <span className="text-xs text-brand-primary/70 dark:text-white/70 group-hover:text-brand-primary dark:group-hover:text-white transition-colors">
@@ -238,7 +275,7 @@ export function FilterPanel({ filters, onChange, brands = [], facetCounts, sortB
           <input
             type="checkbox"
             checked={!!filters.freeShipping}
-            onChange={e => update({ freeShipping: e.target.checked || undefined })}
+            onChange={(e) => update({ freeShipping: e.target.checked || undefined })}
             className="w-3.5 h-3.5 accent-accent rounded"
           />
           <span className="text-xs text-brand-primary/70 dark:text-white/70 group-hover:text-brand-primary dark:group-hover:text-white transition-colors">
