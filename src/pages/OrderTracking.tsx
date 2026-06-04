@@ -19,16 +19,39 @@ import {
   Gift,
   HelpCircle,
   Store,
+  RotateCcw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { getOrderById, updateOrderStatus, getOrderSetDetail } from '@/services/orderService';
 import { getTrackingStatus } from '@/services/cargoService';
 import { ReorderButton } from '@/components/commerce/ReorderButton';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
 import { SellerOrderActions } from '@/components/orders/SellerOrderActions';
+import { useAuth } from '@/context/AuthContext';
 import type { Order, OrderSet, SubOrder } from '@/types/order';
 import type { TrackingResponse, CargoProviderName } from '@/services/cargoService';
+import type { ReturnRequest, ReturnReason, ReturnStatus } from '@/types/returns';
 import { cn } from '@/lib/utils';
+
+// ─── Return reason labels (TR) ────────────────────────────────────────────
+const RETURN_REASON_LABELS: Record<ReturnReason, string> = {
+  wrong_item: 'Yanlış Ürün',
+  damaged: 'Hasarlı Ürün',
+  not_as_described: 'Açıklamaya Uymuyor',
+  changed_mind: 'Fikir Değişikliği',
+  other: 'Diğer',
+};
+
+const RETURN_STATUS_LABELS: Record<ReturnStatus, string> = {
+  pending: 'İade Talebi Alındı',
+  approved: 'Onaylandı',
+  rejected: 'Reddedildi',
+  label_sent: 'İade Etiketi Gönderildi',
+  received: 'Ürün Alındı',
+  refunded: 'İade Edildi',
+};
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
@@ -379,6 +402,217 @@ function CarrierTrackingCard({
 
 // ─── Main Component ──────────────────────────────────────────────────────
 
+// ─── Return status badge ─────────────────────────────────────────────────
+
+function ReturnStatusBadge({ activeReturn }: { activeReturn: ReturnRequest }) {
+  const label = RETURN_STATUS_LABELS[activeReturn.status] ?? activeReturn.status;
+  const colorClass =
+    activeReturn.status === 'pending'
+      ? 'bg-amber-50 text-amber-700'
+      : activeReturn.status === 'approved' || activeReturn.status === 'label_sent'
+        ? 'bg-green-50 text-green-700'
+        : activeReturn.status === 'rejected'
+          ? 'bg-red-50 text-red-700'
+          : activeReturn.status === 'refunded'
+            ? 'bg-purple-50 text-purple-700'
+            : 'bg-blue-50 text-blue-700';
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div
+        className={cn(
+          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest',
+          colorClass,
+        )}
+      >
+        <RotateCcw size={12} />
+        {label}
+      </div>
+      {activeReturn.returnLabelUrl && (
+        <a
+          href={activeReturn.returnLabelUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-[10px] font-bold text-accent underline hover:opacity-80"
+        >
+          İade Etiketini İndir
+        </a>
+      )}
+      {activeReturn.rejectionReason && (
+        <p className="text-[10px] text-red-600 font-bold">
+          Red sebebi: {activeReturn.rejectionReason}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Per-SubOrder return section ──────────────────────────────────────────
+
+function SubOrderReturnSection({
+  orderSetId,
+  subOrderId,
+}: {
+  orderSetId: string;
+  subOrderId: string;
+}) {
+  const { firebaseUser } = useAuth();
+  const [returnFormState, setReturnFormState] = useState<
+    'idle' | 'form' | 'submitting' | 'submitted'
+  >('idle');
+  const [returnReason, setReturnReason] = useState<ReturnReason>('wrong_item');
+  const [returnNotes, setReturnNotes] = useState('');
+  const [returnError, setReturnError] = useState<string | null>(null);
+  const [activeReturn, setActiveReturn] = useState<ReturnRequest | null>(null);
+  const [fetchingReturn, setFetchingReturn] = useState(true);
+
+  // Fetch existing return for this subOrder
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchActiveReturn() {
+      setFetchingReturn(true);
+      try {
+        const q = query(
+          collection(db, 'returns'),
+          where('subOrderId', '==', subOrderId),
+          orderBy('createdAt', 'desc'),
+          limit(1),
+        );
+        const snap = await getDocs(q);
+        if (!cancelled && !snap.empty) {
+          const doc = snap.docs[0];
+          setActiveReturn({ id: doc.id, ...doc.data() } as ReturnRequest);
+        }
+      } catch {
+        // non-blocking — no return found or permission denied
+      } finally {
+        if (!cancelled) setFetchingReturn(false);
+      }
+    }
+    fetchActiveReturn();
+    return () => {
+      cancelled = true;
+    };
+  }, [subOrderId, returnFormState === 'submitted']);
+
+  const handleSubmit = async () => {
+    if (!firebaseUser) return;
+    setReturnFormState('submitting');
+    setReturnError(null);
+    try {
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch(`/api/orders/${orderSetId}/subOrders/${subOrderId}/return-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          reason: returnReason,
+          ...(returnNotes.trim() ? { notes: returnNotes.trim() } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (res.status === 201) {
+        setReturnFormState('submitted');
+      } else if (res.status === 409 && data?.error === 'return_window_expired') {
+        setReturnError('İade süresi doldu');
+        setReturnFormState('form');
+      } else if (res.status === 409) {
+        setReturnError('Bu sipariş için zaten bir iade talebi mevcut');
+        setReturnFormState('form');
+      } else {
+        setReturnError(data?.error ?? `Hata: ${res.status}`);
+        setReturnFormState('form');
+      }
+    } catch {
+      setReturnError('Ağ hatası. Lütfen tekrar deneyin.');
+      setReturnFormState('form');
+    }
+  };
+
+  if (fetchingReturn) return null;
+
+  // Already has an active return
+  if (activeReturn || returnFormState === 'submitted') {
+    return activeReturn ? (
+      <ReturnStatusBadge activeReturn={activeReturn} />
+    ) : (
+      <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-700">
+        <RotateCcw size={12} /> İade Talebi Alındı
+      </div>
+    );
+  }
+
+  // Form state
+  if (returnFormState === 'form' || returnFormState === 'submitting') {
+    return (
+      <div className="mt-3 space-y-3 p-4 bg-[#F8F8FA] dark:bg-zinc-800/50 rounded-2xl border border-[#1A1033]/5 dark:border-zinc-700">
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400">
+          İade Sebebi
+        </p>
+        <select
+          value={returnReason}
+          onChange={(e) => setReturnReason(e.target.value as ReturnReason)}
+          disabled={returnFormState === 'submitting'}
+          className="w-full text-xs font-bold bg-white dark:bg-zinc-900 border border-[#1A1033]/10 dark:border-zinc-700 rounded-xl px-3 py-2 text-[#1A1033] dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
+        >
+          {(Object.entries(RETURN_REASON_LABELS) as [ReturnReason, string][]).map(
+            ([val, label]) => (
+              <option key={val} value={val}>
+                {label}
+              </option>
+            ),
+          )}
+        </select>
+        <textarea
+          value={returnNotes}
+          onChange={(e) => setReturnNotes(e.target.value)}
+          maxLength={500}
+          placeholder="Ek açıklama (isteğe bağlı)"
+          disabled={returnFormState === 'submitting'}
+          rows={3}
+          className="w-full text-xs bg-white dark:bg-zinc-900 border border-[#1A1033]/10 dark:border-zinc-700 rounded-xl px-3 py-2 text-[#1A1033] dark:text-white placeholder-[#1A1033]/30 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none disabled:opacity-50"
+        />
+        {returnError && <p className="text-[10px] font-bold text-red-600">{returnError}</p>}
+        <div className="flex gap-2">
+          <button
+            onClick={handleSubmit}
+            disabled={returnFormState === 'submitting'}
+            className="px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {returnFormState === 'submitting' ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : null}
+            Gönder
+          </button>
+          <button
+            onClick={() => {
+              setReturnFormState('idle');
+              setReturnError(null);
+            }}
+            disabled={returnFormState === 'submitting'}
+            className="px-4 py-2 border border-[#1A1033]/10 dark:border-zinc-700 text-[#1A1033]/60 dark:text-zinc-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#F8F8FA] dark:hover:bg-zinc-800 transition-all disabled:opacity-50"
+          >
+            İptal
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Idle — show button
+  return (
+    <button
+      onClick={() => setReturnFormState('form')}
+      data-return-request
+      className="mt-1 px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
+    >
+      İade Talebi Oluştur
+    </button>
+  );
+}
+
 export function OrderTracking() {
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<Order | null>(null);
@@ -617,21 +851,14 @@ export function OrderTracking() {
                     </p>
                   )}
 
-                  {/* Return request eligibility (delivered within 14 days) */}
+                  {/* Return request section (delivered within 14 days) */}
                   {subOrder.status === 'delivered' &&
                     subOrder.deliveredAt &&
                     (() => {
                       const daysElapsed =
                         (Date.now() - new Date(subOrder.deliveredAt).getTime()) / 86400000;
                       return daysElapsed <= 14 ? (
-                        <button
-                          onClick={() => {
-                            /* Plan 06 will wire return form submission */
-                          }}
-                          className="mt-1 px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
-                        >
-                          İade Talebi Oluştur
-                        </button>
+                        <SubOrderReturnSection orderSetId={orderSet.id} subOrderId={subOrder.id} />
                       ) : (
                         <p className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 font-bold">
                           İade süresi doldu (14 gün)

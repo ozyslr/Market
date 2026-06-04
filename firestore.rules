@@ -194,5 +194,16 @@ service cloud.firestore {
       allow create: if isFullUser();
       allow delete: if isFullUser();
     }
+
+    // --- RETURNS (Plan 06) -----------------------------------------------
+    // approve/reject happen via Admin SDK server-side only; client never writes status.
+    match /returns/{returnId} {
+      allow read: if isFullUser() && (
+        request.auth.uid == resource.data.buyerId ||
+        request.auth.uid == resource.data.sellerId
+      );
+      allow create: if isFullUser() && request.auth.uid == request.resource.data.buyerId;
+      allow update, delete: if false;
+    }
   }
 }
