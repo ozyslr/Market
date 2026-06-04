@@ -91,4 +91,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-02 after initialization_
+_Last updated: 2026-06-04 — Phase 5 (Shipping & Fulfillment) complete: carrier integration (Entegi/EasyPost mocks), live tracking, returns workflow._
