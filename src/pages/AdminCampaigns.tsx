@@ -39,6 +39,7 @@ function campaignStatus(c: Campaign): { label: string; cls: string } {
 }
 
 export function AdminCampaigns() {
+  const { user } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -84,9 +85,27 @@ export function AdminCampaigns() {
     try {
       if (editing) {
         await updateCampaign(editing.id, form);
+        audit(
+          user?.uid ?? '',
+          user?.email ?? '',
+          user?.role ?? 'admin',
+          'campaign.update',
+          'campaign',
+          editing.id,
+          editing.name,
+        );
         setCampaigns((prev) => prev.map((c) => (c.id === editing.id ? { ...c, ...form } : c)));
       } else {
         const created = await createCampaign(form);
+        audit(
+          user?.uid ?? '',
+          user?.email ?? '',
+          user?.role ?? 'admin',
+          'campaign.create',
+          'campaign',
+          created.id,
+          form.name,
+        );
         setCampaigns((prev) => [created, ...prev]);
       }
       setShowForm(false);
@@ -98,11 +117,29 @@ export function AdminCampaigns() {
   const handleDelete = async (id: string) => {
     if (!confirm('Bu kampanyayı silmek istediğinizden emin misiniz?')) return;
     await deleteCampaign(id);
+    audit(
+      user?.uid ?? '',
+      user?.email ?? '',
+      user?.role ?? 'admin',
+      'campaign.delete',
+      'campaign',
+      id,
+    );
     setCampaigns((prev) => prev.filter((c) => c.id !== id));
   };
 
   const handleToggle = async (c: Campaign) => {
     await updateCampaign(c.id, { isActive: !c.isActive });
+    audit(
+      user?.uid ?? '',
+      user?.email ?? '',
+      user?.role ?? 'admin',
+      'campaign.update',
+      'campaign',
+      c.id,
+      c.name,
+      `isActive: ${!c.isActive}`,
+    );
     setCampaigns((prev) => prev.map((x) => (x.id === c.id ? { ...x, isActive: !x.isActive } : x)));
   };
 
