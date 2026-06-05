@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilize & Sharpen
 status: in-progress
-stopped_at: Phase 10 Plan 04 complete — seller funnel instrumentation (SLR-04)
-last_updated: "2026-06-05T18:30:00.000Z"
-last_activity: "2026-06-05 -- Phase 10 Plan 04 complete (SLR-04: funnel instrumentation + time-to-first-listing)"
+stopped_at: Phase 10 Plan 02 complete — mobile optimization (SLR-02)
+last_updated: '2026-06-05T19:30:00.000Z'
+last_activity: '2026-06-05 -- Phase 10 Plan 02 complete (SLR-02: mobile-responsive form + sticky save bar + bottom-sheet category picker)'
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 12
-  completed_plans: 10
-  percent: 55
+  completed_plans: 11
+  percent: 65
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-02)
 ## Current Position
 
 Milestone: v1.1 — Stabilize & Sharpen (4 phases, 8–11; 17 requirements)
-Phase: 10 (Seller Add-Flow UX) — Plan 01 COMPLETE, Plan 04 COMPLETE
-Status: SLR-01 (quick-add mode toggle) and SLR-04 (funnel instrumentation) complete. SLR-02 and SLR-03 remain.
+Phase: 10 (Seller Add-Flow UX) — Plans 01, 02, 04 COMPLETE
+Status: SLR-01 (quick-add mode toggle), SLR-02 (mobile optimization), and SLR-04 (funnel instrumentation) complete. SLR-03 remains.
 Scope: Phase 8 Admin Access Control (ADM) · Phase 9 Performance (PERF) · Phase 10 Seller Add-Flow UX (SLR) · Phase 11 Purchase Funnel & Guest Checkout (BUY).
 Carried from v1.0: live UAT debt is folded into BUY-05 (Phase 11). v2 deferrals: multi-currency, Typesense, cross-border.
-Last activity: 2026-06-05 -- Phase 10 Plan 04 complete (SLR-04: funnel instrumentation + time-to-first-listing)
+Last activity: 2026-06-05 -- Phase 10 Plan 02 complete (SLR-02: mobile optimization)
 
 Progress: [████████░░] 75%
 
@@ -38,7 +38,7 @@ Progress: [████████░░] 75%
 
 **Velocity:**
 
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: N/A
 - Total execution time: N/A
 
@@ -56,13 +56,15 @@ Progress: [████████░░] 75%
 | 05                           | 6     | -     | -        |
 | 08-admin-access-control      | 2     | 22min | 11min    |
 | 09-performance               | 3     | 328s  | 164s     |
+| 10-seller-add-flow-ux        | 3     | —     | —        |
 
 **Recent Trend:**
 
-- Last 5 plans: 09-03 (328s), 09-04, 08-02 (10min), 08-01 (12min)
-- Trend: stable
+- Last 5 plans: 10-02, 10-04, 10-01, 09-04, 09-03
+- Trend: active
 
 _Updated after each plan completion_
+| Phase 10-seller-add-flow-ux P02 | ~3min | 2 tasks | 2 files |
 | Phase 09-performance P09-01 | 35s | 2 tasks | 2 files |
 | Phase 09-performance P09-03 | 328s | 3 tasks | 4 files |
 | Phase 09-performance P09-04 | — | 2 tasks | 2 files |
@@ -93,6 +95,8 @@ Recent decisions affecting current work:
 - D-PERF-04: OptimizedImage srcSet with 3 breakpoints; WebP audit script; Firebase Image Processing extension documented (forward-compatible until enabled)
 - [Phase ?]: D-SLR-01: Quick-add toggle reduces 25+ field form to 6 essential fields (title, categoryId, price, stock, images, description); hidden fields inherit EMPTY_FORM defaults
 - [Phase 10]: D-SLR-04: Seller funnel events stored in existing events collection with fire-and-forget pattern; idempotent (check existence before write); KYC milestones fall back to sellerApplications collection for pre-instrumentation sellers
+- [Phase 10]: D-SLR-02: ProductForm sticky save bar uses fixed positioning (fixed bottom-0) visible only on mobile via max-sm:block hidden; desktop footer hidden on mobile via max-sm:hidden
+- [Phase 10]: D-SLR-02: CategorySelect bottom sheet uses motion.div spring animation (damping: 30, stiffness: 300) with two-level L1→L2 navigation and 48px minimum touch targets
 
 ### Pending Todos
 
@@ -118,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-05T18:30:00.000Z
-Stopped at: Phase 10 Plan 04 complete — seller funnel instrumentation (SLR-04)
+Last session: 2026-06-05T19:30:00.000Z
+Stopped at: Phase 10 Plan 02 complete — mobile optimization (SLR-02)
 Resume file: None
