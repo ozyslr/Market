@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilize & Sharpen
-status: in-progress
-stopped_at: Phase 9 Plan 03 complete — OptimizedImage srcSet + image optimization script + Firebase docs
-last_updated: "2026-06-05T16:12:56.881Z"
-last_activity: 2026-06-05 -- Phase 9 Plan 03 complete (PERF-03: responsive images)
+status: completed
+stopped_at: Phase 9 Plan 01 complete — manualChunks vendor splitting + CI bundle budget check (PERF-01)
+last_updated: '2026-06-05T16:17:50.195Z'
+last_activity: '2026-06-05 -- Phase 9 Plan 01 complete (PERF-01: bundle splitting + budget CI)'
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
-  percent: 57
+  completed_plans: 6
+  percent: 25
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-06-02)
 ## Current Position
 
 Milestone: v1.1 — Stabilize & Sharpen (4 phases, 8–11; 17 requirements)
-Phase: 9 (Performance) — Plan 03 COMPLETE, Plan 04 COMPLETE
-Status: PERF-03 (responsive images + srcSet) and PERF-04 (Firestore indexes + server-side filtering) complete. PERF-01 (bundle splitting) and PERF-02 (Lighthouse thresholds) remain.
+Phase: 9 (Performance) — Plan 01 COMPLETE, Plan 03 COMPLETE, Plan 04 COMPLETE
+Status: PERF-01 (bundle splitting + budget CI), PERF-03 (responsive images + srcSet), and PERF-04 (Firestore indexes + server-side filtering) complete. PERF-02 (Lighthouse thresholds) remains.
 Scope: Phase 8 Admin Access Control (ADM) · Phase 9 Performance (PERF) · Phase 10 Seller Add-Flow UX (SLR) · Phase 11 Purchase Funnel & Guest Checkout (BUY).
 Carried from v1.0: live UAT debt is folded into BUY-05 (Phase 11). v2 deferrals: multi-currency, Typesense, cross-border.
-Last activity: 2026-06-05 -- Phase 9 Plan 03 complete (PERF-03: responsive images)
+Last activity: 2026-06-05 -- Phase 9 Plan 01 complete (PERF-01: bundle splitting + budget CI)
 
-Progress: [██████░░░░] 57%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -55,7 +55,7 @@ Progress: [██████░░░░] 57%
 | 7. Reviews & Trust           | 0     | N/A   | N/A      |
 | 05                           | 6     | -     | -        |
 | 08-admin-access-control      | 2     | 22min | 11min    |
-| 09-performance               | 2     | 328s  | 164s     |
+| 09-performance               | 3     | 328s  | 164s     |
 
 **Recent Trend:**
 
@@ -63,8 +63,9 @@ Progress: [██████░░░░] 57%
 - Trend: stable
 
 _Updated after each plan completion_
+| Phase 09-performance P09-01 | 35s | 2 tasks | 2 files |
 | Phase 09-performance P09-03 | 328s | 3 tasks | 4 files |
-| Phase 09-performance P09-04 | —    | 2 tasks | 2 files |
+| Phase 09-performance P09-04 | — | 2 tasks | 2 files |
 | Phase 08-admin-access-control P08-02 | 10min | 3 tasks | 4 files |
 | Phase 08-admin-access-control P08-01 | 12min | 2 tasks | 5 files |
 | Phase 05-shipping-fulfillment P05-01 | 30m | 2 tasks | 3 files |
@@ -113,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-05T16:06:55.000Z
-Stopped at: Phase 9 Plan 03 complete — OptimizedImage srcSet + optimize-images.mjs + docs/image-optimization.md
+Last session: 2026-06-05T16:17:50.180Z
+Stopped at: Phase 9 Plan 01 complete — manualChunks vendor splitting + CI bundle budget check (PERF-01)
 Resume file: None
