@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   X,
   Plus,
@@ -10,6 +10,8 @@ import {
   AlertCircle,
   Zap,
   ChevronDown,
+  GripVertical,
+  RotateCw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CategorySelect } from './CategorySelect';
@@ -226,7 +228,10 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
         </div>
 
         {/* Scrollable body */}
-        <div data-product-form-body className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+        <div
+          data-product-form-body
+          className="flex-1 overflow-y-auto px-6 max-sm:px-4 py-6 max-sm:pb-24 space-y-8"
+        >
           {/* Server validation error banner */}
           {serverError && (
             <div className="bg-red-50 border-s-4 border-red-600 rounded-lg px-4 py-3 flex items-start gap-2">
@@ -260,7 +265,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3">
                       <div>
                         <label className="block text-xs text-zinc-400 mb-1">Marka</label>
                         <input
@@ -413,7 +418,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             </div>
             <div
               className={cn(
-                'grid grid-cols-3 gap-3 mb-3 rounded-lg',
+                'grid grid-cols-3 max-sm:grid-cols-3 gap-3 mb-3 rounded-lg',
                 errors.images ? 'border border-red-300 p-2' : '',
               )}
             >
@@ -444,7 +449,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="aspect-square rounded-lg border-2 border-dashed border-zinc-600 hover:border-emerald-500 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-emerald-400 transition-colors disabled:opacity-50"
+                className="aspect-square max-sm:min-h-[120px] rounded-lg border-2 border-dashed border-zinc-600 hover:border-emerald-500 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-emerald-400 transition-colors disabled:opacity-50"
               >
                 <Upload size={20} />
                 <span className="text-xs">{uploading ? 'Yükleniyor...' : 'Görsel Ekle'}</span>
@@ -455,6 +460,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
               type="file"
               multiple
               accept="image/*"
+              capture="environment"
               className="hidden"
               onChange={handleImageUpload}
             />
@@ -468,7 +474,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
               Fiyat & Stok
             </h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1">Satış Fiyatı *</label>
                 <input
@@ -505,7 +511,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3 mt-3">
                     <div>
                       <label className="block text-xs text-zinc-400 mb-1">
                         Eski Fiyat (indirim için)
@@ -767,7 +773,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                 <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
                   Kargo & Teslimat
                 </h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3">
                   <div>
                     <label className="block text-xs text-zinc-400 mb-1">Ağırlık (kg)</label>
                     <input
@@ -893,8 +899,8 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
           </div>
         )}
 
-        {/* Footer */}
-        <div className="border-t border-zinc-700 px-6 py-4 flex gap-3 flex-shrink-0">
+        {/* Footer (desktop only — hidden on mobile, sticky bar replaces it) */}
+        <div className="max-sm:hidden border-t border-zinc-700 px-6 py-4 flex gap-3 flex-shrink-0">
           <button
             onClick={() => handleSubmit('draft')}
             disabled={saving}
@@ -908,6 +914,24 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg disabled:opacity-50"
           >
             {saving ? 'Kaydediliyor...' : quickAdd ? 'Hızlıca Yayınla' : 'Kaydet'}
+          </button>
+        </div>
+
+        {/* Mobile sticky save bar — fixed at viewport bottom */}
+        <div className="fixed bottom-0 left-0 right-0 z-[60] bg-zinc-900 border-t border-zinc-700 px-4 py-3 flex gap-3 max-sm:block hidden shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+          <button
+            onClick={() => handleSubmit('draft')}
+            disabled={saving}
+            className="flex-1 py-3 bg-zinc-700 hover:bg-zinc-600 active:bg-zinc-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
+          >
+            {quickAdd ? 'Taslak Kaydet' : 'Taslak'}
+          </button>
+          <button
+            onClick={() => handleSubmit('publish')}
+            disabled={saving || !form.title || !form.price || !form.categoryId}
+            className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-400 text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-colors"
+          >
+            {saving ? 'Kaydediliyor...' : quickAdd ? 'Hızlıca Yayınla' : 'Yayınla'}
           </button>
         </div>
       </div>
