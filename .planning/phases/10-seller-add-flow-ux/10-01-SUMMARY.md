@@ -14,13 +14,13 @@ tech-stack:
 key-files:
   modified: [src/components/seller/ProductForm.tsx]
 decisions:
-  - 'Quick-add defaults to 6 essential fields (title, categoryId, price, stock, images, description)'
-  - 'Hidden fields inherit EMPTY_FORM defaults (visibility: public, currency: TRY, 14-day return)'
-  - 'Toggle state persists in component memory (session-scoped, resets on unmount)'
-  - 'AI features kept visible in detailed mode only'
+  - "Quick-add defaults to 6 essential fields (title, categoryId, price, stock, images, description)"
+  - "Hidden fields inherit EMPTY_FORM defaults (visibility: public, currency: TRY, 14-day return)"
+  - "Toggle state persists in component memory (session-scoped, resets on unmount)"
+  - "AI features kept visible in detailed mode only"
 metrics:
-  duration: '<5min'
-  completed_date: '2026-06-05'
+  duration: "<5min"
+  completed_date: "2026-06-05"
   task_count: 1
   file_count: 1
 ---
@@ -35,9 +35,9 @@ Quick-add two-pill toggle with AnimatePresence field gating -- sellers publish a
 
 ## Tasks Completed
 
-| Task | Name                                 | Commit  | Files           |
-| ---- | ------------------------------------ | ------- | --------------- |
-| 1    | Quick-add mode toggle + field gating | 5c848b0 | ProductForm.tsx |
+| Task | Name                                    | Commit  | Files                      |
+| ---- | --------------------------------------- | ------- | -------------------------- |
+| 1    | Quick-add mode toggle + field gating    | 5c848b0 | ProductForm.tsx             |
 
 ## Changes Made
 

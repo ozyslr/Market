@@ -8,6 +8,11 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { getSellerAnalytics, SellerAnalytics } from '@/services/sellerAnalyticsService';
+import {
+  getSellerFunnelMetrics,
+  type FunnelMetrics,
+  type FunnelEvent,
+} from '@/services/sellerOnboardingService';
 import { cn } from '@/lib/utils';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -145,6 +150,72 @@ function ChartTooltip({ active, payload, label }: any) {
   );
 }
 
+// ── Funnel / Seller Journey Helpers ─────────────────────────────────────────────
+
+const MILESTONE_META: { event: FunnelEvent; label: string; icon: string }[] = [
+  { event: 'seller_first_login', label: 'Ilk Giris', icon: '🚀' },
+  { event: 'kyc_submitted', label: 'KYC Basvurusu', icon: '📋' },
+  { event: 'kyc_approved', label: 'KYC Onayi', icon: '✅' },
+  { event: 'first_product_created', label: 'Ilk Urun', icon: '📦' },
+  { event: 'first_product_published', label: 'Ilk Yayin', icon: '🎉' },
+];
+
+function formatDuration(hours: number | null): string {
+  if (hours === null) return '—';
+  if (hours < 1) {
+    const mins = Math.round(hours * 60);
+    return `${mins} dk`;
+  }
+  if (hours < 24) {
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return m > 0 ? `${h}sa ${m}dk` : `${h}sa`;
+  }
+  const days = Math.floor(hours / 24);
+  const h = Math.round(hours % 24);
+  return h > 0 ? `${days}g ${h}sa` : `${days} gun`;
+}
+
+function formatTimestamp(iso: string | null): string {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('tr-TR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function getElapsedLabel(
+  currentEvent: FunnelEvent,
+  funnel: FunnelMetrics,
+): string | null {
+  const prev =
+    currentEvent === 'kyc_submitted'
+      ? 'seller_first_login'
+      : currentEvent === 'kyc_approved'
+        ? 'kyc_submitted'
+        : currentEvent === 'first_product_created'
+          ? 'kyc_approved'
+          : currentEvent === 'first_product_published'
+            ? 'first_product_created'
+            : null;
+  if (!prev) return null;
+  const a = funnel.timestamps[prev];
+  const b = funnel.timestamps[currentEvent];
+  if (!a || !b) return null;
+  const ms = new Date(b).getTime() - new Date(a).getTime();
+  if (Number.isNaN(ms)) return null;
+  const hours = ms / (1000 * 60 * 60);
+  return formatDuration(hours);
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════════
 // PAGE COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -158,12 +229,21 @@ export default function SellerAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Funnel metrics (seller journey)
+  const [funnel, setFunnel] = useState<FunnelMetrics | null>(null);
+
   useEffect(() => {
     if (!user?.id) return;
     setLoading(true);
     setError(null);
-    getSellerAnalytics(user.id, period)
-      .then(setData)
+    Promise.all([
+      getSellerAnalytics(user.id, period),
+      getSellerFunnelMetrics(user.id),
+    ])
+      .then(([analytics, funnelData]) => {
+        setData(analytics);
+        setFunnel(funnelData);
+      })
       .catch(err => setError(err instanceof Error ? err.message : 'Bir hata olustu'))
       .finally(() => setLoading(false));
   }, [user?.id, period]);
@@ -337,6 +417,106 @@ export default function SellerAnalyticsPage() {
                 bg="bg-amber-100"
               />
             </motion.div>
+
+            {/* ── Seller Journey / Funnel Timeline ────────────────────────────── */}
+            {funnel &&
+              (Object.values(funnel.timestamps).every((v) => v === null) ? (
+                /* Empty state — no events recorded yet */
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.08 }}
+                  className="bg-white rounded-2xl border border-[#1A1033]/5 p-8 text-center"
+                >
+                  <div className="text-3xl mb-3">🚀</div>
+                  <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60 mb-2">
+                    Satici Yolculugu
+                  </h2>
+                  <p className="text-sm text-[#1A1033]/40 leading-relaxed">
+                    Henuz veri yok. Ilk urununu eklediginde burada yolculugunu gorebilirsin.
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.08 }}
+                  className="bg-white rounded-2xl border border-[#1A1033]/5 p-6"
+                >
+                  <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60">
+                      Satici Yolculugu
+                    </h2>
+                    {/* Time-to-first-listing summary */}
+                    {funnel.timestamps.seller_first_login &&
+                      funnel.timestamps.first_product_published &&
+                      (() => {
+                        const ms =
+                          new Date(funnel.timestamps.first_product_published).getTime() -
+                          new Date(funnel.timestamps.seller_first_login).getTime();
+                        const h = ms / (1000 * 60 * 60);
+                        return (
+                          <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                            Ilk Ilana Kadar: {formatDuration(h)}
+                          </span>
+                        );
+                      })()}
+                  </div>
+
+                  {/* Vertical timeline */}
+                  <div className="space-y-0">
+                    {MILESTONE_META.map((m, idx) => {
+                      const ts = funnel.timestamps[m.event];
+                      const elapsed = getElapsedLabel(m.event, funnel);
+                      const isLast = idx === MILESTONE_META.length - 1;
+                      return (
+                        <div key={m.event} className="flex gap-3">
+                          {/* Timeline line + dot */}
+                          <div className="flex flex-col items-center w-6 shrink-0">
+                            <div
+                              className={cn(
+                                'w-6 h-6 rounded-full flex items-center justify-center text-xs',
+                                ts
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-zinc-100 text-zinc-400',
+                              )}
+                            >
+                              {m.icon}
+                            </div>
+                            {!isLast && (
+                              <div
+                                className={cn(
+                                  'w-0.5 flex-1 min-h-[20px]',
+                                  ts ? 'bg-emerald-200' : 'bg-zinc-200',
+                                )}
+                              />
+                            )}
+                          </div>
+                          {/* Content */}
+                          <div className={cn('pb-4', isLast ? '' : '')}>
+                            <p
+                              className={cn(
+                                'text-xs font-bold',
+                                ts ? 'text-[#1A1033]' : 'text-zinc-400',
+                              )}
+                            >
+                              {m.label}
+                            </p>
+                            <p className="text-[10px] text-[#1A1033]/40 font-mono mt-0.5">
+                              {formatTimestamp(ts)}
+                            </p>
+                            {elapsed && (
+                              <span className="inline-block mt-1 text-[10px] font-black text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">
+                                +{elapsed}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              ))}
 
             {/* ── Revenue Chart + Status Breakdown ────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

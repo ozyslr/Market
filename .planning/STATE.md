@@ -4,8 +4,8 @@ milestone: v1.1
 milestone_name: Stabilize & Sharpen
 status: completed
 stopped_at: Phase 9 Plan 01 complete — manualChunks vendor splitting + CI bundle budget check (PERF-01)
-last_updated: '2026-06-05T18:22:28.232Z'
-last_activity: '2026-06-05 -- Phase 9 Plan 01 complete (PERF-01: bundle splitting + budget CI)'
+last_updated: "2026-06-05T18:22:28.232Z"
+last_activity: "2026-06-05 -- Phase 9 Plan 01 complete (PERF-01: bundle splitting + budget CI)"
 progress:
   total_phases: 4
   completed_phases: 2
