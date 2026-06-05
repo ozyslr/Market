@@ -22,7 +22,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { createOrder, getOrderById } from '@/services/orderService';
 import { decreaseProductStock, validateCartStock } from '@/services/productService';
-import { addAddress } from '@/services/userService';
+import { addAddress, MAX_ADDRESSES } from '@/services/userService';
 import { sendOrderConfirmationEmail } from '@/services/emailService';
 import { InvoiceModal } from '@/components/commerce/InvoiceModal';
 import { PaymentMethodSelector } from '@/components/checkout/PaymentMethodSelector';
@@ -117,6 +117,12 @@ export function CheckoutPage() {
     if (iyzicoStatus) {
       const orderId = searchParams.get('orderId') || '';
       if (iyzicoStatus === 'success' && orderId) {
+        // Funnel event: payment_completed (iyzico)
+        trackFunnelEvent('payment_completed', {
+          paymentMethod: 'iyzico',
+          orderId,
+          userId: firebaseUser?.uid ?? null,
+        }).catch(() => {});
         // Fetch order and show confirmation
         getOrderById(orderId).then((order) => {
           if (order) {
@@ -127,6 +133,10 @@ export function CheckoutPage() {
           }
         });
       } else if (iyzicoStatus === 'success') {
+        trackFunnelEvent('payment_completed', {
+          paymentMethod: 'iyzico',
+          userId: firebaseUser?.uid ?? null,
+        }).catch(() => {});
         setStep(3);
         clearCart();
       } else {
@@ -417,18 +427,31 @@ export function CheckoutPage() {
       );
 
       if (appliedCoupon) await incrementCouponUsage(appliedCoupon.id);
-      if (saveAddress && !selectedAddressId) {
-        await addAddress(firebaseUser.uid, {
-          label: address.city || 'Ev',
-          fullName: address.fullName,
-          line1: address.line1,
-          line2: address.line2,
-          city: address.city,
-          state: address.state,
-          postalCode: address.postalCode,
-          country: address.country,
-          phone: address.phone,
-        });
+      if (saveAddress && !selectedAddressId && firebaseUser && !firebaseUser.isAnonymous) {
+        const addressLabel =
+          addressType === 'home'
+            ? 'Ev Adresim'
+            : addressType === 'work'
+              ? 'İş Adresim'
+              : 'Diğer Adres';
+        // Enforce MAX_ADDRESSES client-side; skip silently when at limit
+        const currentCount = ((user as any)?.addresses?.length ?? 0) as number;
+        if (currentCount >= MAX_ADDRESSES) {
+          console.warn(`[Checkout] MAX_ADDRESSES (${MAX_ADDRESSES}) reached — address not saved.`);
+        } else {
+          await addAddress(firebaseUser.uid, {
+            label: addressLabel,
+            type: addressType,
+            fullName: address.fullName,
+            line1: address.line1,
+            line2: address.line2,
+            city: address.city,
+            state: address.state,
+            postalCode: address.postalCode,
+            country: address.country,
+            phone: address.phone,
+          });
+        }
       }
       sendOrderConfirmationEmail(order);
 
@@ -529,6 +552,19 @@ export function CheckoutPage() {
       });
     }
   }, [step, firebaseUser]);
+
+  // Funnel event: order_confirmed (when step transitions to 3)
+  useEffect(() => {
+    if (step !== 3 || !confirmedOrderId) return;
+    trackFunnelEvent('order_confirmed', {
+      orderId: confirmedOrderId,
+      total: totals.total,
+      itemCount: items.length,
+      currency,
+      userId: firebaseUser?.uid ?? null,
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, confirmedOrderId]);
 
   // Funnel event: payment_method_selected (debounced, skip initial render)
   useEffect(() => {
@@ -844,6 +880,11 @@ export function CheckoutPage() {
                       total={totals.total}
                       currency={currency}
                       onConfirm={async () => {
+                        // Funnel event: payment_completed (manual/EFT)
+                        trackFunnelEvent('payment_completed', {
+                          paymentMethod: 'manual',
+                          userId: firebaseUser?.uid ?? null,
+                        }).catch(() => {});
                         const order = await processOrder('pending', '');
                         if (order) {
                           setConfirmedOrderId(order.id);
