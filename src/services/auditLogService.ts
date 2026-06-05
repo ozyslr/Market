@@ -5,25 +5,64 @@
  * Firestore collection: auditLogs
  */
 
-import { collection, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp, Timestamp } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  serverTimestamp,
+  Timestamp,
+} from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export type AuditAction =
-  | 'product.approve' | 'product.reject' | 'product.delete'
-  | 'seller.approve' | 'seller.reject' | 'seller.suspend' | 'seller.ban' | 'seller.activate'
-  | 'order.status_change' | 'order.cancel'
-  | 'user.suspend' | 'user.ban' | 'user.activate'
-  | 'campaign.create' | 'campaign.update' | 'campaign.delete'
-  | 'coupon.create' | 'coupon.update' | 'coupon.delete'
-  | 'review.approve' | 'review.delete'
-  | 'return.approve' | 'return.reject' | 'return.refund'
+  | 'product.approve'
+  | 'product.reject'
+  | 'product.delete'
+  | 'seller.approve'
+  | 'seller.reject'
+  | 'seller.suspend'
+  | 'seller.ban'
+  | 'seller.activate'
+  | 'order.status_change'
+  | 'order.cancel'
+  | 'user.suspend'
+  | 'user.ban'
+  | 'user.activate'
+  | 'campaign.create'
+  | 'campaign.update'
+  | 'campaign.delete'
+  | 'coupon.create'
+  | 'coupon.update'
+  | 'coupon.delete'
+  | 'review.approve'
+  | 'review.delete'
+  | 'return.approve'
+  | 'return.reject'
+  | 'return.refund'
   | 'settings.update'
   | 'tier.update'
   | 'cms.update'
-  | 'webhook.create' | 'webhook.update' | 'webhook.delete'
-  | 'seed.data';
+  | 'webhook.create'
+  | 'webhook.update'
+  | 'webhook.delete'
+  | 'seed.data'
+  | 'payout.process'
+  | 'payout.complete'
+  | 'admin.role_change'
+  | 'user.data_deletion'
+  | 'category.create'
+  | 'category.update'
+  | 'category.delete'
+  | 'refund.process'
+  | 'deal.create'
+  | 'deal.update'
+  | 'deal.delete';
 
 export interface AuditLogEntry {
   id?: string;
@@ -64,14 +103,28 @@ export async function logAudit(entry: Omit<AuditLogEntry, 'createdAt'>): Promise
 
 /** Shorthand: log with minimal fields */
 export function audit(
-  actorId: string, actorEmail: string, actorRole: string,
-  action: AuditAction, entityType: string, entityId: string,
-  entityLabel?: string, details?: string, before?: any, after?: any,
+  actorId: string,
+  actorEmail: string,
+  actorRole: string,
+  action: AuditAction,
+  entityType: string,
+  entityId: string,
+  entityLabel?: string,
+  details?: string,
+  before?: any,
+  after?: any,
 ): void {
   logAudit({
-    actorId, actorEmail, actorRole,
-    action, entityType, entityId, entityLabel: entityLabel || entityId,
-    details, before, after,
+    actorId,
+    actorEmail,
+    actorRole,
+    action,
+    entityType,
+    entityId,
+    entityLabel: entityLabel || entityId,
+    details,
+    before,
+    after,
   }).catch(() => {});
 }
 
@@ -93,7 +146,7 @@ export async function getAuditLogs(filter?: AuditFilter): Promise<AuditLogEntry[
 
     const q = query(collection(db, COL), ...constraints);
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as AuditLogEntry));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as AuditLogEntry);
   } catch {
     return [];
   }
@@ -133,6 +186,17 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   'webhook.update': 'Webhook Güncellendi',
   'webhook.delete': 'Webhook Silindi',
   'seed.data': 'Demo Veri Yüklendi',
+  'payout.process': 'Ödeme İşlendi',
+  'payout.complete': 'Ödeme Tamamlandı',
+  'admin.role_change': 'Yetki Değişikliği',
+  'user.data_deletion': 'Veri Silme Talebi',
+  'category.create': 'Kategori Oluşturuldu',
+  'category.update': 'Kategori Güncellendi',
+  'category.delete': 'Kategori Silindi',
+  'refund.process': 'Geri Ödeme İşlendi',
+  'deal.create': 'Fırsat Oluşturuldu',
+  'deal.update': 'Fırsat Güncellendi',
+  'deal.delete': 'Fırsat Silindi',
 };
 
 export const AUDIT_ENTITY_LABELS: Record<string, string> = {
@@ -148,4 +212,10 @@ export const AUDIT_ENTITY_LABELS: Record<string, string> = {
   tier: 'Kademe',
   cms: 'CMS',
   webhook: 'Webhook',
+  payout: 'Ödeme',
+  admin: 'Admin',
+  category: 'Kategori',
+  refund: 'İade/İptal',
+  data: 'Veri',
+  deal: 'Fırsat',
 };
