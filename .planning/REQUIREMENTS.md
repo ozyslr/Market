@@ -10,7 +10,7 @@
 
 - [x] **ADM-01**: Client route-level admin guard — admin olmayan kullanıcı `/admin/*` rotalarına erişemez (yönlendirme/403)
 - [x] **ADM-02**: Granular admin rolleri (super-admin / support / finance) — bölüm bazlı erişim
-- [ ] **ADM-03**: Audit log tüm hassas admin aksiyonlarını kaydeder (KYC onay/red, iade, rol değişimi, CMS düzenleme) — aktör + zaman damgası
+- [x] **ADM-03**: Audit log tüm hassas admin aksiyonlarını kaydeder (KYC onay/red, iade, rol değişimi, CMS düzenleme) — aktör + zaman damgası
 - [ ] **ADM-04**: Sunucu tarafı yetki paritesi — her admin API endpoint'i rolü doğrular (defense-in-depth)
 
 ### Performans (PERF)
@@ -55,7 +55,7 @@
 | ----------- | -------- | -------- |
 | ADM-01      | Phase 8  | Complete |
 | ADM-02      | Phase 8  | Complete |
-| ADM-03      | Phase 8  | Pending  |
+| ADM-03      | Phase 8  | Complete |
 | ADM-04      | Phase 8  | Pending  |
 | PERF-01     | Phase 9  | Pending  |
 | PERF-02     | Phase 9  | Pending  |
