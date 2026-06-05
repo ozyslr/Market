@@ -1,4 +1,5 @@
 ﻿import {
+  AlertCircle,
   ArrowRight,
   Sparkles,
   Zap,
@@ -36,7 +37,7 @@ import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { CATEGORIES } from '@/data/mockCategories';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/context/LanguageContext';
 import { Product, Category, HomepageSection, FeaturedDeal } from '@/types';
 import { SEO } from '@/components/common/SEO';
@@ -365,6 +366,9 @@ export function Home() {
     ShoppingBasket: <ShoppingBasket size={18} />,
   };
 
+  const location = useLocation();
+  const accessNotice = (location.state as { notice?: string } | null)?.notice;
+
   return (
     <div className="min-h-screen bg-brand-secondary dark:bg-brand-secondary transition-colors duration-300">
       <SEO
@@ -372,6 +376,16 @@ export function Home() {
         description="Benim Olan - The next-generation global commerce ecosystem connecting artisans to the world."
         lang={lang}
       />
+
+      {/* Access denied notice (from AdminRoute redirect) */}
+      {accessNotice && (
+        <div className="bg-red-50 dark:bg-red-950 border-b border-red-200 dark:border-red-800">
+          <div className="max-w-[1700px] mx-auto px-4 md:px-6 py-3 flex items-center gap-3">
+            <AlertCircle size={18} className="text-red-500 shrink-0" />
+            <p className="text-sm font-bold text-red-700 dark:text-red-300">{accessNotice}</p>
+          </div>
+        </div>
+      )}
 
       {/* Trendyol Style Quick Categories (Stories) */}
       <div className="bg-white dark:bg-zinc-900 shadow-sm border-b border-brand-primary/5 pb-2 md:pb-4 pt-4 md:pt-6 mb-4 md:mb-8">

@@ -5,6 +5,7 @@ import { Sentry } from './lib/sentry';
 import { initAnalytics, getConsent, trackEvent } from './lib/analytics';
 import { AnalyticsTracker } from './components/common/AnalyticsTracker';
 import { Navbar } from './components/layout/Navbar';
+import { AdminRoute } from './components/auth/AdminRoute';
 import { OfflineBanner } from './services/offlineService';
 import { SkipToContent } from './components/common/SkipToContent';
 import { CookieConsent } from './components/common/CookieConsent';
@@ -103,8 +104,6 @@ const AdminDataDeletion = named(() => import('./pages/AdminDataDeletion'), 'Admi
 
 // Other
 const SellOnBenimOlan = named(() => import('./pages/SellOnBenimOlan'), 'SellOnBenimOlan');
-
-// ─── Eager-loaded (always needed) ──────────────────────────────────────────
 
 import { ShoppingAssistant } from './components/ai/ShoppingAssistant';
 import { LiveChatWidget } from './components/chat/LiveChatWidget';
@@ -213,15 +212,37 @@ export default function App() {
                                 <Route path="/category/:id" element={<CategoryPage />} />
                                 <Route path="/collection/:type" element={<CollectionPage />} />
                                 <Route path="/profile" element={<UserProfilePage />} />
-                                <Route path="/admin" element={<AdminDashboard />} />
-                                <Route path="/admin/categories" element={<AdminCategories />} />
+                                <Route
+                                  path="/admin"
+                                  element={
+                                    <AdminRoute>
+                                      <AdminDashboard />
+                                    </AdminRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/admin/categories"
+                                  element={
+                                    <AdminRoute requiredRole="super-admin">
+                                      <AdminCategories />
+                                    </AdminRoute>
+                                  }
+                                />
                                 <Route
                                   path="/admin/seller/:sellerId"
-                                  element={<AdminSellerView />}
+                                  element={
+                                    <AdminRoute requiredRole="support">
+                                      <AdminSellerView />
+                                    </AdminRoute>
+                                  }
                                 />
                                 <Route
                                   path="/admin/compliance/deletion-requests"
-                                  element={<AdminDataDeletion />}
+                                  element={
+                                    <AdminRoute requiredRole="support">
+                                      <AdminDataDeletion />
+                                    </AdminRoute>
+                                  }
                                 />
                                 <Route path="/sell" element={<SellOnBenimOlan />} />
                                 <Route path="/sell/apply" element={<SellerApplication />} />
