@@ -299,10 +299,12 @@ export function AdminDashboard() {
     'audit',
   ]);
   const isSectionVisible = (sectionId: string): boolean => {
-    if (adminRole === 'super-admin') return true;
-    if (adminRole === 'finance')
+    // Effective role: null adminRole + admin user → super-admin (backward compat)
+    const effectiveRole = adminRole ?? (user?.role === 'admin' ? 'super-admin' : null);
+    if (effectiveRole === 'super-admin') return true;
+    if (effectiveRole === 'finance')
       return sectionId === 'dashboard' || FINANCE_SECTIONS.has(sectionId);
-    if (adminRole === 'support')
+    if (effectiveRole === 'support')
       return sectionId === 'dashboard' || SUPPORT_SECTIONS.has(sectionId);
     return sectionId === 'dashboard'; // fallback: only dashboard
   };

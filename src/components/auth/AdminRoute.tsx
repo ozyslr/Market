@@ -31,8 +31,11 @@ export function AdminRoute({ children, requiredRole }: AdminRouteProps) {
     return <Navigate to="/" replace state={{ notice: 'Bu sayfaya erişim yetkiniz yok.' }} />;
   }
 
+  // Effective role: null adminRole + admin user → super-admin (backward compat)
+  const effectiveRole = adminRole ?? 'super-admin';
+
   // Sub-role gate (super-admin sees all)
-  if (requiredRole && adminRole !== 'super-admin' && adminRole !== requiredRole) {
+  if (requiredRole && effectiveRole !== 'super-admin' && effectiveRole !== requiredRole) {
     return <Navigate to="/" replace state={{ notice: 'Bu sayfaya erişim yetkiniz yok.' }} />;
   }
 
