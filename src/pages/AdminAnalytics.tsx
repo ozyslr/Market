@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, Timestamp, where } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
-import { Loader2, TrendingUp, Eye, ShoppingCart, Heart, MousePointerClick, Zap, Calendar } from 'lucide-react';
+import {
+  Loader2,
+  TrendingUp,
+  Eye,
+  ShoppingCart,
+  Heart,
+  MousePointerClick,
+  Zap,
+  Calendar,
+  Filter,
+  AlertCircle,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AnalyticsEvent {
@@ -17,6 +28,10 @@ export function AdminAnalytics() {
   const [events, setEvents] = useState<AnalyticsEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'24h' | '7d' | '30d'>('7d');
+  const [funnelPeriod, setFunnelPeriod] = useState<'7d' | '30d' | '90d'>('30d');
+  const [funnelData, setFunnelData] = useState<Record<string, number>>({});
+  const [funnelLoading, setFunnelLoading] = useState(true);
+  const [funnelError, setFunnelError] = useState(false);
 
   useEffect(() => {
     loadEvents();
@@ -25,19 +40,87 @@ export function AdminAnalytics() {
   async function loadEvents() {
     setLoading(true);
     try {
-      const q = query(
-        collection(db, 'events'),
-        orderBy('ts', 'desc'),
-        limit(200),
-      );
+      const q = query(collection(db, 'events'), orderBy('ts', 'desc'), limit(200));
       const snap = await getDocs(q);
-      setEvents(snap.docs.map(d => ({ id: d.id, ...d.data() }) as AnalyticsEvent));
+      setEvents(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as AnalyticsEvent));
     } catch (e) {
       handleFirestoreError(e, OperationType.LIST, 'events');
     } finally {
       setLoading(false);
     }
   }
+
+  // ─── Funnel data query ──────────────────────────────────────────────────────
+  const FUNNEL_TYPES = [
+    'checkout_started',
+    'delivery_filled',
+    'payment_method_selected',
+    'payment_completed',
+    'order_confirmed',
+  ] as const;
+
+  const FUNNEL_LABELS: Record<string, string> = {
+    checkout_started: 'Sepet → Ödeme',
+    delivery_filled: 'Teslimat Bilgisi',
+    payment_method_selected: 'Ödeme Yöntemi',
+    payment_completed: 'Ödeme Tamamlandı',
+    order_confirmed: 'Sipariş Onaylandı',
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    setFunnelLoading(true);
+    setFunnelError(false);
+
+    const days = funnelPeriod === '7d' ? 7 : funnelPeriod === '30d' ? 30 : 90;
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    (async () => {
+      try {
+        const q = query(
+          collection(db, 'events'),
+          where('type', 'in', FUNNEL_TYPES as unknown as string[]),
+          where('ts', '>=', since),
+        );
+        const snap = await getDocs(q);
+        if (cancelled) return;
+
+        const counts: Record<string, number> = {};
+        snap.docs.forEach((d) => {
+          const t: string = d.data().type;
+          counts[t] = (counts[t] || 0) + 1;
+        });
+        setFunnelData(counts);
+      } catch (e) {
+        if (!cancelled) {
+          handleFirestoreError(e, OperationType.LIST, 'events');
+          setFunnelError(true);
+        }
+      } finally {
+        if (!cancelled) setFunnelLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [funnelPeriod]);
+
+  // ─── Funnel step order with counts ──────────────────────────────────────────
+  const funnelSteps = FUNNEL_TYPES.map((type) => ({
+    type,
+    label: FUNNEL_LABELS[type] || type,
+    count: funnelData[type] || 0,
+  }));
+
+  const funnelFirstCount = funnelSteps[0]?.count || 0;
+  const overallConversion =
+    funnelFirstCount > 0
+      ? Math.round(
+          ((funnelSteps[funnelSteps.length - 1]?.count || 0) / funnelFirstCount) * 100,
+        ).toString()
+      : '0';
 
   // Breakdown by type
   const typeCounts = events.reduce<Record<string, number>>((acc, e) => {
@@ -55,8 +138,8 @@ export function AdminAnalytics() {
     .slice(0, 10);
 
   const totalEvents = events.length;
-  const uniqueSessions = new Set(events.filter(e => e.sessionId).map(e => e.sessionId)).size;
-  const uniqueUsers = new Set(events.filter(e => e.userId).map(e => e.userId)).size;
+  const uniqueSessions = new Set(events.filter((e) => e.sessionId).map((e) => e.sessionId)).size;
+  const uniqueUsers = new Set(events.filter((e) => e.userId).map((e) => e.userId)).size;
 
   const TYPE_ICONS: Record<string, React.ReactNode> = {
     view: <Eye size={14} />,
@@ -88,14 +171,17 @@ export function AdminAnalytics() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-black uppercase italic tracking-tight text-brand-primary dark:text-white">
-            Analitik <span className="text-[#F9423A] underline underline-offset-4 decoration-2">Verileri</span>
+            Analitik{' '}
+            <span className="text-[#F9423A] underline underline-offset-4 decoration-2">
+              Verileri
+            </span>
           </h2>
           <p className="text-xs text-brand-primary/40 dark:text-white/40 font-bold mt-1">
             Firestore olay verileri — gerçek zamanlı kullanıcı etkileşimleri
           </p>
         </div>
         <div className="flex gap-1 bg-white dark:bg-zinc-800 rounded-xl p-1 border border-brand-primary/5">
-          {(['24h', '7d', '30d'] as const).map(p => (
+          {(['24h', '7d', '30d'] as const).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
@@ -103,7 +189,7 @@ export function AdminAnalytics() {
                 'px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all',
                 period === p
                   ? 'bg-[#F9423A] text-white shadow-sm'
-                  : 'text-brand-primary/40 hover:text-brand-primary dark:text-white/40 dark:hover:text-white'
+                  : 'text-brand-primary/40 hover:text-brand-primary dark:text-white/40 dark:hover:text-white',
               )}
             >
               {p}
@@ -152,13 +238,22 @@ export function AdminAnalytics() {
               const pct = totalEvents > 0 ? ((count / totalEvents) * 100).toFixed(1) : '0';
               return (
                 <div key={type} className="flex items-center gap-3">
-                  <span className={cn('p-1.5 rounded-lg border', TYPE_COLORS[type] || 'bg-zinc-100 text-zinc-600')}>
+                  <span
+                    className={cn(
+                      'p-1.5 rounded-lg border',
+                      TYPE_COLORS[type] || 'bg-zinc-100 text-zinc-600',
+                    )}
+                  >
                     {TYPE_ICONS[type] || <Activity size={14} />}
                   </span>
                   <div className="flex-1">
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="font-bold text-brand-primary dark:text-white capitalize">{type}</span>
-                      <span className="font-bold text-brand-primary/50">{String(count)} ({pct}%)</span>
+                      <span className="font-bold text-brand-primary dark:text-white capitalize">
+                        {type}
+                      </span>
+                      <span className="font-bold text-brand-primary/50">
+                        {String(count)} ({pct}%)
+                      </span>
                     </div>
                     <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                       <div
@@ -187,16 +282,22 @@ export function AdminAnalytics() {
                 key={id}
                 className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
               >
-                <span className={cn(
-                  'w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black',
-                  i < 3 ? 'bg-[#F9423A] text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-brand-primary/40'
-                )}>
+                <span
+                  className={cn(
+                    'w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black',
+                    i < 3
+                      ? 'bg-[#F9423A] text-white'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-brand-primary/40',
+                  )}
+                >
                   {i + 1}
                 </span>
                 <span className="flex-1 text-xs font-bold text-brand-primary dark:text-white truncate">
                   {id}
                 </span>
-                <span className="text-[10px] font-bold text-brand-primary/40">{count} etkileşim</span>
+                <span className="text-[10px] font-bold text-brand-primary/40">
+                  {count} etkileşim
+                </span>
               </div>
             ))}
             {trending.length === 0 && (
@@ -204,6 +305,107 @@ export function AdminAnalytics() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Satın Alma Hunisi (Funnel) */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-brand-primary/5 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary dark:text-white">
+            Satın Alma Hunisi{' '}
+            <span className="text-brand-primary/40">
+              (Son {funnelPeriod === '7d' ? '7' : funnelPeriod === '30d' ? '30' : '90'} Gün)
+            </span>
+          </h3>
+          <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
+            {(['7d', '30d', '90d'] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setFunnelPeriod(p)}
+                className={cn(
+                  'px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all',
+                  funnelPeriod === p
+                    ? 'bg-[#6418E5] text-white shadow-sm'
+                    : 'text-brand-primary/40 hover:text-brand-primary dark:text-white/40 dark:hover:text-white',
+                )}
+              >
+                Son {p === '7d' ? '7' : p === '30d' ? '30' : '90'} Gün
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {funnelLoading ? (
+          <div className="space-y-4 py-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center gap-4">
+                <div className="w-32 h-4 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
+                <div className="flex-1 h-6 bg-zinc-100 dark:bg-zinc-800 rounded-xl animate-pulse" />
+                <div className="w-12 h-4 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : funnelError ? (
+          <div className="flex items-center gap-3 py-6 px-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+            <AlertCircle size={20} className="text-amber-600 shrink-0" />
+            <p className="text-xs font-bold text-amber-700 dark:text-amber-300">Veri yüklenemedi</p>
+          </div>
+        ) : funnelSteps.every((s) => s.count === 0) ? (
+          <div className="flex flex-col items-center py-10 text-center">
+            <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mb-4">
+              <Filter size={28} className="text-brand-primary/30" />
+            </div>
+            <p className="text-xs font-bold text-brand-primary/40">
+              Henüz huni verisi yok. İlk checkout tamamlandığında burada görünecek.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {funnelSteps.map((step, i) => {
+              const prevCount = i > 0 ? funnelSteps[i - 1]?.count || 0 : step.count;
+              const pct =
+                funnelFirstCount > 0 ? Math.round((step.count / funnelFirstCount) * 100) : 0;
+              const relativePct = prevCount > 0 ? Math.round((step.count / prevCount) * 100) : 0;
+
+              return (
+                <div key={step.type} className="flex items-center gap-3">
+                  <span className="w-32 text-[10px] font-bold text-brand-primary dark:text-white shrink-0">
+                    {step.label}
+                  </span>
+                  <div className="flex-1 h-7 bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden relative">
+                    <div
+                      className="h-full rounded-xl transition-all duration-700 ease-out"
+                      style={{
+                        width: `${Math.max(pct, 1)}%`,
+                        background: 'linear-gradient(90deg, #6418E5, #8B5CF6)',
+                        opacity: 1 - i * 0.12,
+                      }}
+                    />
+                  </div>
+                  <div className="w-28 text-end shrink-0">
+                    <span className="text-sm font-black text-brand-primary dark:text-white">
+                      {step.count.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] font-bold text-brand-primary/40 ml-1">
+                      ({pct}%)
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Overall conversion badge */}
+            <div className="mt-6 pt-4 border-t border-brand-primary/5">
+              <div className="flex items-center gap-2">
+                <div className="px-3 py-1.5 bg-[#6418E5]/10 rounded-xl">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#6418E5]">
+                    {funnelSteps[funnelSteps.length - 1]?.count || 0} sipariş /{' '}
+                    {funnelFirstCount || 0} başlangıç = %{overallConversion} dönüşüm
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Son Olaylar */}
@@ -223,18 +425,30 @@ export function AdminAnalytics() {
               </tr>
             </thead>
             <tbody>
-              {events.slice(0, 20).map(ev => (
-                <tr key={ev.id} className="border-b border-brand-primary/5 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+              {events.slice(0, 20).map((ev) => (
+                <tr
+                  key={ev.id}
+                  className="border-b border-brand-primary/5 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                >
                   <td className="py-2 pe-4">
-                    <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-bold capitalize',
-                      TYPE_COLORS[ev.type] || 'bg-zinc-100 text-zinc-600'
-                    )}>
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-bold capitalize',
+                        TYPE_COLORS[ev.type] || 'bg-zinc-100 text-zinc-600',
+                      )}
+                    >
                       {TYPE_ICONS[ev.type]} {ev.type}
                     </span>
                   </td>
-                  <td className="py-2 pe-4 font-mono text-brand-primary dark:text-white">{ev.productId?.slice(0, 16)}</td>
-                  <td className="py-2 pe-4 text-brand-primary/50">{ev.userId ? ev.userId.slice(0, 12) : '—'}</td>
-                  <td className="py-2 pe-4 text-brand-primary/50">{ev.sessionId?.slice(0, 10) || '—'}</td>
+                  <td className="py-2 pe-4 font-mono text-brand-primary dark:text-white">
+                    {ev.productId?.slice(0, 16)}
+                  </td>
+                  <td className="py-2 pe-4 text-brand-primary/50">
+                    {ev.userId ? ev.userId.slice(0, 12) : '—'}
+                  </td>
+                  <td className="py-2 pe-4 text-brand-primary/50">
+                    {ev.sessionId?.slice(0, 10) || '—'}
+                  </td>
                   <td className="py-2 text-end text-brand-primary/40">
                     {ev.ts?.toDate?.().toLocaleString('tr-TR') || '—'}
                   </td>
@@ -248,19 +462,37 @@ export function AdminAnalytics() {
   );
 }
 
-function MetricCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
+function MetricCard({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  color: string;
+}) {
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-brand-primary/5 p-5">
       <div className="flex items-center gap-3 mb-3">
         <span className={cn('p-2 rounded-xl', color)}>{icon}</span>
       </div>
       <p className="text-2xl font-black text-brand-primary dark:text-white">{value}</p>
-      <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest mt-1">{label}</p>
+      <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest mt-1">
+        {label}
+      </p>
     </div>
   );
 }
 
 // Missing imports
-function Activity({ size }: { size?: number }) { return <TrendingUp size={size} />; }
-function Globe({ size }: { size?: number }) { return <Calendar size={size} />; }
-function Users({ size }: { size?: number }) { return <TrendingUp size={size} />; }
+function Activity({ size }: { size?: number }) {
+  return <TrendingUp size={size} />;
+}
+function Globe({ size }: { size?: number }) {
+  return <Calendar size={size} />;
+}
+function Users({ size }: { size?: number }) {
+  return <TrendingUp size={size} />;
+}
