@@ -7,6 +7,7 @@ import {
   updateCategory,
   deleteCategory,
 } from '@/services/productService';
+import { audit } from '@/services/auditLogService';
 import { Category } from '@/types';
 import {
   Plus,
@@ -116,9 +117,27 @@ export function AdminCategories() {
     try {
       if (editingCat) {
         await updateCategory(editingCat.id, data);
+        audit(
+          user.uid,
+          user.email ?? '',
+          user.role ?? 'admin',
+          'category.update',
+          'category',
+          editingCat.id,
+          editingCat.name,
+        );
         setCategories((prev) => prev.map((c) => (c.id === editingCat.id ? { ...c, ...data } : c)));
       } else {
         const newId = await createCategory(data);
+        audit(
+          user.uid,
+          user.email ?? '',
+          user.role ?? 'admin',
+          'category.create',
+          'category',
+          newId,
+          form.name.trim(),
+        );
         setCategories((prev) => [...prev, { id: newId, ...data } as Category]);
       }
       setIsFormOpen(false);
@@ -130,6 +149,15 @@ export function AdminCategories() {
   const handleDelete = async (cat: Category) => {
     if (!confirm(`"${cat.name}" kategorisini silmek istiyor musunuz?`)) return;
     await deleteCategory(cat.id);
+    audit(
+      user.uid,
+      user.email ?? '',
+      user.role ?? 'admin',
+      'category.delete',
+      'category',
+      cat.id,
+      cat.name,
+    );
     setCategories((prev) => prev.filter((c) => c.id !== cat.id));
   };
 
