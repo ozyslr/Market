@@ -5,6 +5,7 @@
 
 import type { Express } from 'express';
 import type { Firestore } from 'firebase-admin/firestore';
+import type { AdminRole } from '../../src/types.js';
 import { getEligiblePayouts, processPayout } from '../services/payoutService.js';
 import { getEntriesBySeller } from '../services/ledgerService.js';
 import { logger } from '../logger.js';
@@ -16,10 +17,11 @@ export interface PayoutRouteDeps {
   verifyAdmin: Middleware;
   verifyCronSecret: Middleware;
   verifyFirebaseToken: Middleware;
+  requireAdminRole: (...allowed: AdminRole[]) => Middleware;
 }
 
 export function registerPayoutRoutes(app: Express, deps: PayoutRouteDeps) {
-  const { adminDb, verifyAdmin, verifyCronSecret, verifyFirebaseToken } = deps;
+  const { adminDb, verifyAdmin, verifyCronSecret, verifyFirebaseToken, requireAdminRole } = deps;
 
   /**
    * POST /api/process-scheduled-payouts
@@ -67,33 +69,38 @@ export function registerPayoutRoutes(app: Express, deps: PayoutRouteDeps) {
    * Auth: verifyAdmin (T-02-015)
    * Body: { sellerId: string, amount: number, entryIds: string[] }
    */
-  app.post('/api/admin/manual-payout', verifyAdmin, async (req: any, res) => {
-    try {
-      if (!adminDb) return res.status(503).json({ error: 'Firebase Admin not initialized' });
+  app.post(
+    '/api/admin/manual-payout',
+    verifyAdmin,
+    requireAdminRole('finance'),
+    async (req: any, res) => {
+      try {
+        if (!adminDb) return res.status(503).json({ error: 'Firebase Admin not initialized' });
 
-      const { sellerId, amount, entryIds } = req.body;
-      if (!sellerId || typeof sellerId !== 'string') {
-        return res.status(400).json({ error: 'sellerId is required' });
-      }
-      if (!amount || typeof amount !== 'number' || amount <= 0) {
-        return res.status(400).json({ error: 'amount must be a positive number' });
-      }
-      if (!Array.isArray(entryIds) || entryIds.length === 0) {
-        return res.status(400).json({ error: 'entryIds array is required' });
-      }
+        const { sellerId, amount, entryIds } = req.body;
+        if (!sellerId || typeof sellerId !== 'string') {
+          return res.status(400).json({ error: 'sellerId is required' });
+        }
+        if (!amount || typeof amount !== 'number' || amount <= 0) {
+          return res.status(400).json({ error: 'amount must be a positive number' });
+        }
+        if (!Array.isArray(entryIds) || entryIds.length === 0) {
+          return res.status(400).json({ error: 'entryIds array is required' });
+        }
 
-      const payoutEntry = await processPayout(adminDb, sellerId, amount, entryIds);
-      logger.info('payout', 'Admin manual payout executed', {
-        sellerId,
-        amount,
-        adminUid: req.uid,
-      });
-      return res.json({ success: true, payout: payoutEntry });
-    } catch (err: any) {
-      logger.error('payout', 'Admin manual payout failed', { error: err.message });
-      return res.status(500).json({ error: err.message });
-    }
-  });
+        const payoutEntry = await processPayout(adminDb, sellerId, amount, entryIds);
+        logger.info('payout', 'Admin manual payout executed', {
+          sellerId,
+          amount,
+          adminUid: req.uid,
+        });
+        return res.json({ success: true, payout: payoutEntry });
+      } catch (err: any) {
+        logger.error('payout', 'Admin manual payout failed', { error: err.message });
+        return res.status(500).json({ error: err.message });
+      }
+    },
+  );
 
   /**
    * GET /api/finance/payout-history/:sellerId

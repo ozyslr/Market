@@ -184,8 +184,14 @@ async function startServer() {
 
   // â”€â”€â”€ Auth Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // verifyFirebaseToken / verifyAdmin / verifyCronSecret â†' src/lib/authMiddleware.ts
-  const { verifyFirebaseToken, verifyAdmin, verifySeller, verifyBuyer, verifyCronSecret } =
-    createAuthMiddlewares(adminAuth);
+  const {
+    verifyFirebaseToken,
+    verifyAdmin,
+    verifySeller,
+    verifyBuyer,
+    verifyCronSecret,
+    requireAdminRole,
+  } = createAuthMiddlewares(adminAuth);
 
   // â”€â”€â”€ Lightweight Input Validators â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // isFiniteNumber / isNonEmptyString / itemsSignature â†' src/lib/serverValidators.ts
@@ -342,11 +348,27 @@ async function startServer() {
       if (!claims || !claims.role || !['admin', 'seller', 'buyer'].includes(claims.role)) {
         return res.status(400).json({ error: 'claims.role must be admin, seller, or buyer' });
       }
+      // Validate adminRole if provided (only relevant when role is admin)
+      const validAdminRoles = ['super-admin', 'support', 'finance'];
+      if (claims.adminRole !== undefined) {
+        if (!validAdminRoles.includes(claims.adminRole)) {
+          return res.status(400).json({
+            error: `Invalid adminRole. Must be one of: ${validAdminRoles.join(', ')}`,
+          });
+        }
+        if (claims.role !== 'admin') {
+          return res.status(400).json({ error: 'adminRole can only be set when role is admin' });
+        }
+      }
       if (!adminAuth) {
         return res.status(503).json({ error: 'Auth not configured' });
       }
       await adminAuth.setCustomUserClaims(uid, claims);
-      logger.info('admin', 'Custom claims set', { uid, role: claims.role });
+      logger.info('admin', 'Custom claims set', {
+        uid,
+        role: claims.role,
+        adminRole: claims.adminRole,
+      });
       res.json({ success: true });
     } catch (err: any) {
       logger.error('admin', 'Failed to set custom claims', { error: (err as Error).message });
@@ -415,14 +437,20 @@ async function startServer() {
   });
 
   // â”€â”€â”€ Payout + Finance Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  registerPayoutRoutes(app, { adminDb, verifyAdmin, verifyCronSecret, verifyFirebaseToken });
+  registerPayoutRoutes(app, {
+    adminDb,
+    verifyAdmin,
+    verifyCronSecret,
+    verifyFirebaseToken,
+    requireAdminRole,
+  });
   registerFinanceRoutes(app, { adminDb, verifyFirebaseToken });
 
   // ─── Email Trigger Config (/api/email/*) ─────────────────────────────────
   registerEmailRoutes(app, { adminDb, verifyAdmin });
 
   // ─── Admin Refund + Cancel Order Routes ──────────────────────────────────
-  registerRefundRoutes(app, { adminDb, getIyzico, verifyAdmin });
+  registerRefundRoutes(app, { adminDb, getIyzico, verifyAdmin, requireAdminRole });
 
   // ─── CSV Bulk Import / Export Routes (SEL-05) ────────────────────────────
   registerCsvImportRoutes(app, { adminDb, verifyFirebaseToken });

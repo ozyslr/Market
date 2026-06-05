@@ -4,6 +4,7 @@
 
 import type { Express, RequestHandler } from 'express';
 import type { Firestore } from 'firebase-admin/firestore';
+import type { AdminRole } from '../../src/types.js';
 import { z } from 'zod';
 import { processRefund, cancelOrder } from '../services/refundService.js';
 import { adminRefundSchema, cancelOrderSchema } from '../lib/schemas.js';
@@ -14,15 +15,16 @@ interface RefundRouteDeps {
   adminDb: Firestore | null;
   getIyzico: () => Promise<any>;
   verifyAdmin: RequestHandler;
+  requireAdminRole: (...allowed: AdminRole[]) => RequestHandler;
 }
 
 // ─── Route Registration ───────────────────────────────────────────────────────
 
 export function registerRefundRoutes(app: Express, deps: RefundRouteDeps): void {
-  const { adminDb, getIyzico, verifyAdmin } = deps;
+  const { adminDb, getIyzico, verifyAdmin, requireAdminRole } = deps;
 
   // ── POST /api/admin/refund ───────────────────────────────────────────────
-  app.post('/api/admin/refund', verifyAdmin, async (req, res) => {
+  app.post('/api/admin/refund', verifyAdmin, requireAdminRole('finance'), async (req, res) => {
     try {
       if (!adminDb) return res.status(503).json({ error: 'Firebase Admin not configured' });
       const db = adminDb;
@@ -85,26 +87,33 @@ export function registerRefundRoutes(app: Express, deps: RefundRouteDeps): void 
   });
 
   // ── POST /api/admin/cancel-order ─────────────────────────────────────────
-  app.post('/api/admin/cancel-order', verifyAdmin, async (req, res) => {
-    try {
-      if (!adminDb) return res.status(503).json({ error: 'Firebase Admin not configured' });
-      const db = adminDb;
-      const parsed = cancelOrderSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
-      }
+  app.post(
+    '/api/admin/cancel-order',
+    verifyAdmin,
+    requireAdminRole('finance'),
+    async (req, res) => {
+      try {
+        if (!adminDb) return res.status(503).json({ error: 'Firebase Admin not configured' });
+        const db = adminDb;
+        const parsed = cancelOrderSchema.safeParse(req.body);
+        if (!parsed.success) {
+          return res
+            .status(400)
+            .json({ error: 'Invalid request', details: parsed.error.flatten() });
+        }
 
-      const result = await cancelOrder(db, getIyzico, parsed.data);
+        const result = await cancelOrder(db, getIyzico, parsed.data);
 
-      return res.status(200).json(result);
-    } catch (err: any) {
-      if (err?.message?.includes('iyzico')) {
-        return res.status(502).json({
-          error: 'iyzico cancel failed',
-          providerError: err.message,
-        });
+        return res.status(200).json(result);
+      } catch (err: any) {
+        if (err?.message?.includes('iyzico')) {
+          return res.status(502).json({
+            error: 'iyzico cancel failed',
+            providerError: err.message,
+          });
+        }
+        return res.status(500).json({ error: err.message ?? 'Order cancellation failed' });
       }
-      return res.status(500).json({ error: err.message ?? 'Order cancellation failed' });
-    }
-  });
+    },
+  );
 }
