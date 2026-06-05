@@ -8,6 +8,7 @@ import type { AdminRole } from '../../src/types.js';
 import { z } from 'zod';
 import { processRefund, cancelOrder } from '../services/refundService.js';
 import { adminRefundSchema, cancelOrderSchema } from '../lib/schemas.js';
+import { audit } from '../lib/auditLog.js';
 
 // ─── Dependencies ─────────────────────────────────────────────────────────────
 
@@ -69,6 +70,17 @@ export function registerRefundRoutes(app: Express, deps: RefundRouteDeps): void 
         // emailService non-blocking — ignore failures
       }
 
+      audit(
+        (req as any).uid,
+        (req as any).userEmail ?? '',
+        (req as any).decodedToken?.role || 'admin',
+        'refund.process',
+        'order',
+        orderSetId,
+        `Refund ${result.refundedAmount} ${result.currency}`,
+        `subOrder: ${subOrderId}`,
+      );
+
       return res.status(200).json({
         status: result.status,
         refundId: result.refundId,
@@ -103,6 +115,17 @@ export function registerRefundRoutes(app: Express, deps: RefundRouteDeps): void 
         }
 
         const result = await cancelOrder(db, getIyzico, parsed.data);
+
+        audit(
+          (req as any).uid,
+          (req as any).userEmail ?? '',
+          (req as any).decodedToken?.role || 'admin',
+          'order.cancel',
+          'order',
+          parsed.data.orderSetId,
+          undefined,
+          parsed.data.reason ?? 'Admin cancellation',
+        );
 
         return res.status(200).json(result);
       } catch (err: any) {

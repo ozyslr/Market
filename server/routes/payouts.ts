@@ -9,6 +9,7 @@ import type { AdminRole } from '../../src/types.js';
 import { getEligiblePayouts, processPayout } from '../services/payoutService.js';
 import { getEntriesBySeller } from '../services/ledgerService.js';
 import { logger } from '../logger.js';
+import { audit } from '../lib/auditLog.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
@@ -46,6 +47,16 @@ export function registerPayoutRoutes(app: Express, deps: PayoutRouteDeps) {
       for (const batch of eligible) {
         try {
           await processPayout(adminDb, batch.sellerId, batch.totalAmount, batch.entryIds);
+          audit(
+            'system',
+            'system@mercora',
+            'admin',
+            'payout.process',
+            'payout',
+            batch.sellerId,
+            `Payout to ${batch.sellerId}`,
+            `${batch.totalAmount} TRY (T+7 cron)`,
+          );
           processed++;
           totalAmount += batch.totalAmount;
         } catch (err) {
@@ -89,6 +100,16 @@ export function registerPayoutRoutes(app: Express, deps: PayoutRouteDeps) {
         }
 
         const payoutEntry = await processPayout(adminDb, sellerId, amount, entryIds);
+        audit(
+          req.uid,
+          req.userEmail ?? '',
+          req.decodedToken?.role || 'admin',
+          'payout.complete',
+          'payout',
+          sellerId,
+          `Manual payout to ${sellerId}`,
+          `${amount} TRY`,
+        );
         logger.info('payout', 'Admin manual payout executed', {
           sellerId,
           amount,

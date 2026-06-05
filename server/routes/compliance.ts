@@ -10,6 +10,7 @@ import {
   rejectDeletion,
 } from '../services/complianceService.js';
 import { adminDb } from '../../src/lib/firebase-admin.js';
+import { audit } from '../lib/auditLog.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
@@ -60,6 +61,16 @@ export function registerComplianceRoutes(
         if (!adminDb) return res.status(503).json({ error: 'Firebase Admin not initialized' });
         const { requestId } = req.params;
         await approveDeletion(adminDb, requestId, req.uid);
+        audit(
+          req.uid,
+          req.userEmail ?? '',
+          req.decodedToken?.role || 'admin',
+          'user.data_deletion',
+          'user',
+          requestId,
+          undefined,
+          'GDPR data deletion approved',
+        );
         return res.status(200).json({ approved: true, requestId });
       } catch (err: any) {
         return res.status(500).json({ error: err.message });
@@ -78,6 +89,16 @@ export function registerComplianceRoutes(
         const { requestId } = req.params;
         const { reason } = req.body;
         await rejectDeletion(adminDb, requestId, reason, req.uid);
+        audit(
+          req.uid,
+          req.userEmail ?? '',
+          req.decodedToken?.role || 'admin',
+          'user.data_deletion',
+          'user',
+          requestId,
+          undefined,
+          `GDPR data deletion rejected: ${reason}`,
+        );
         return res.status(200).json({ rejected: true, requestId });
       } catch (err: any) {
         return res.status(500).json({ error: err.message });

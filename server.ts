@@ -31,6 +31,7 @@ import { registerCarrierPollRoutes } from './server/routes/carrierPoll.js';
 import { registerReturnsRoutes } from './server/routes/returns.js';
 import { sendAbandonedCartEmail } from './server/services/emailService.js';
 import { logger, httpLogger } from './server/logger.js';
+import { audit } from './server/lib/auditLog.js';
 
 dotenv.config();
 
@@ -364,6 +365,16 @@ async function startServer() {
         return res.status(503).json({ error: 'Auth not configured' });
       }
       await adminAuth.setCustomUserClaims(uid, claims);
+      audit(
+        req.uid,
+        req.userEmail ?? '',
+        req.decodedToken?.role || 'admin',
+        'admin.role_change',
+        'user',
+        uid,
+        `Role change for ${uid}`,
+        `role=${claims.role}, adminRole=${claims.adminRole || 'none'}`,
+      );
       logger.info('admin', 'Custom claims set', {
         uid,
         role: claims.role,
