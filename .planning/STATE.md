@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilize & Sharpen
 status: completed
-stopped_at: Phase 10 Plan 03 complete — bulk image upload + drag-reorder (SLR-03)
+stopped_at: Phase 11 Plan 04 complete — purchase funnel analytics (BUY-04)
 last_updated: '2026-06-05T19:37:33.329Z'
-last_activity: '2026-06-05 -- Phase 10 Plan 03 complete (SLR-03: bulk image upload + drag-reorder)'
+last_activity: '2026-06-05 -- Phase 11 Plan 04 complete (BUY-04: purchase funnel analytics)'
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 16
-  completed_plans: 15
-  percent: 75
+  completed_plans: 16
+  percent: 81
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-02)
 ## Current Position
 
 Milestone: v1.1 — Stabilize & Sharpen (4 phases, 8–11; 17 requirements)
-Phase: 10 (Seller Add-Flow UX) — Plans 01, 02, 03, 04 ALL COMPLETE — Phase 10 DONE
-Status: SLR-01 (quick-add mode toggle), SLR-02 (mobile optimization), SLR-03 (bulk image upload + drag-reorder), and SLR-04 (funnel instrumentation) all complete. Phase 10 fully delivered.
+Phase: 11 (Purchase Funnel & Guest Checkout) — Plans 01, 04, 05 COMPLETE; 02, 03 remaining
+Status: BUY-01 (guest checkout + localStorage cart), BUY-04 (funnel analytics), BUY-05 (UAT closure) all complete. BUY-02 (address type persistence) and BUY-03 (PaymentRequestButton) in progress.
 Scope: Phase 8 Admin Access Control (ADM) · Phase 9 Performance (PERF) · Phase 10 Seller Add-Flow UX (SLR) · Phase 11 Purchase Funnel & Guest Checkout (BUY).
 Carried from v1.0: live UAT debt is folded into BUY-05 (Phase 11). v2 deferrals: multi-currency, Typesense, cross-border.
-Last activity: 2026-06-05 -- Phase 10 Plan 03 complete (SLR-03: bulk image upload + drag-reorder)
+Last activity: 2026-06-05 -- Phase 11 Plan 04 complete (BUY-04: purchase funnel analytics)
 
 Progress: [█████████░] 88%
 
