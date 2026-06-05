@@ -39,7 +39,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAnonymous = firebaseUser?.isAnonymous ?? false;
 
   useEffect(() => {
+    let lastUid: string | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (fUser) => {
+      // Skip full profile fetch on token-refresh re-fire for the same user
+      if (fUser && fUser.uid === lastUid && !fUser.isAnonymous) {
+        // Token refreshed — update firebaseUser ref but skip Firestore read
+        setFirebaseUser(fUser);
+        try {
+          const idTokenResult = await fUser.getIdTokenResult();
+          setAdminRole((idTokenResult.claims.adminRole as AdminRole) || null);
+        } catch (claimErr) {
+          console.error('Error reading token claims:', claimErr);
+        }
+        return;
+      }
+      lastUid = fUser?.uid ?? null;
+
       setFirebaseUser(fUser);
       if (fUser) {
         if (fUser.isAnonymous) {
@@ -111,7 +127,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUser(null);
         setAdminRole(null);
-        signInAnonymously(auth).catch(() => setLoading(false));
+        setLoading(false);
+        // Sign in anonymously so guests can browse; fire-and-forget
+        signInAnonymously(auth).catch((err) => {
+          console.warn('[auth] Anonymous sign-in failed:', err.message);
+        });
         return;
       }
       setLoading(false);
