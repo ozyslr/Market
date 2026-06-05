@@ -19,6 +19,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "analyze": "ANALYZE=true npm run build",
+    "optimize:images": "node scripts/optimize-images.mjs",
     "lhci": "lhci autorun",
     "prepare": "husky"
   },
