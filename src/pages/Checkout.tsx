@@ -57,7 +57,7 @@ const stripePromise = stripeKey && !stripeKey.includes('YOUR') ? loadStripe(stri
 
 // ─── Outer checkout page ────────────────────────────────────────────────────
 export function CheckoutPage() {
-  const { user, firebaseUser } = useAuth();
+  const { user, firebaseUser, isAnonymous, upgradeAnonymousAccount } = useAuth();
   const { items, clearCart } = useCart();
   const navigate = useNavigate();
 
@@ -76,6 +76,11 @@ export function CheckoutPage() {
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [saveAddress, setSaveAddress] = useState(false);
+  const [guestEmail, setGuestEmail] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
+  const [creatingAccount, setCreatingAccount] = useState(false);
+  const [accountCreated, setAccountCreated] = useState(false);
+  const [accountError, setAccountError] = useState('');
 
   // Saved cards for checkout
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
@@ -366,7 +371,7 @@ export function CheckoutPage() {
     try {
       const order = await createOrder({
         userId: firebaseUser.uid,
-        userEmail: firebaseUser.email ?? '',
+        userEmail: firebaseUser.email || guestEmail || '',
         items: orderItems,
         sellerIds: [...new Set(orderItems.map((i) => i.sellerId))],
         subtotal: totals.subtotal,
@@ -556,9 +561,34 @@ export function CheckoutPage() {
                     className="space-y-6"
                     onSubmit={(e) => {
                       e.preventDefault();
+                      // Validate guest email if anonymous
+                      if (
+                        isAnonymous &&
+                        (!guestEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail))
+                      ) {
+                        return;
+                      }
                       proceedToPayment();
                     }}
                   >
+                    {/* Guest email field — shown only for anonymous users */}
+                    {isAnonymous && (
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-2">
+                          E-posta Adresi <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          autoComplete="email"
+                          required
+                          value={guestEmail}
+                          onChange={(e) => setGuestEmail(e.target.value)}
+                          placeholder="ornek@email.com"
+                          className="w-full px-5 py-4 bg-[#F8F8FA] rounded-2xl text-sm font-bold text-[#1A1033] placeholder:text-[#1A1033]/25 outline-none focus:ring-2 focus:ring-accent/20 transition-all"
+                        />
+                      </div>
+                    )}
+
                     <AddressSelector
                       address={address}
                       onAddressChange={(updates) => setAddress((a) => ({ ...a, ...updates }))}
@@ -883,7 +913,8 @@ export function CheckoutPage() {
                     <div className="bg-blue-50 rounded-xl px-4 py-3 flex items-center gap-3 border border-blue-100">
                       <span className="text-base shrink-0">📧</span>
                       <p className="text-[10px] font-bold text-blue-700">
-                        <strong>{user?.email}</strong> adresinize onay emaili gönderildi.
+                        <strong>{user?.email || guestEmail}</strong> adresinize onay emaili
+                        gönderildi.
                       </p>
                     </div>
 
@@ -904,6 +935,111 @@ export function CheckoutPage() {
                         Siparişlerimi Gör
                       </button>
                     </div>
+
+                    {/* Create Account prompt — shown only for anonymous guest checkout */}
+                    {isAnonymous && !accountCreated && (
+                      <div className="border-t border-[#1A1033]/5 pt-6 mt-4">
+                        <div className="bg-accent/5 rounded-2xl p-6 border border-accent/10">
+                          <h3 className="text-lg font-display font-black text-[#1A1033] mb-1">
+                            Siparişini takip etmek ister misin?
+                          </h3>
+                          <p className="text-[11px] font-medium text-[#1A1033]/50 mb-5 leading-relaxed">
+                            Hesap oluştur, siparişlerini gör, daha hızlı alışveriş yap.
+                          </p>
+
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1.5">
+                                Şifre
+                              </label>
+                              <input
+                                type="password"
+                                autoComplete="new-password"
+                                minLength={6}
+                                value={accountPassword}
+                                onChange={(e) => {
+                                  setAccountPassword(e.target.value);
+                                  setAccountError('');
+                                }}
+                                placeholder="En az 6 karakter"
+                                className="w-full px-4 py-3 bg-white rounded-xl text-sm font-bold text-[#1A1033] placeholder:text-[#1A1033]/25 outline-none focus:ring-2 focus:ring-accent/20 transition-all"
+                              />
+                            </div>
+
+                            {accountError && (
+                              <p className="text-[10px] font-bold text-red-500 bg-red-50 px-3 py-2 rounded-lg">
+                                {accountError}
+                              </p>
+                            )}
+
+                            <button
+                              type="button"
+                              disabled={creatingAccount || accountPassword.length < 6}
+                              onClick={async () => {
+                                if (accountPassword.length < 6) {
+                                  setAccountError('Şifre en az 6 karakter olmalıdır.');
+                                  return;
+                                }
+                                setCreatingAccount(true);
+                                setAccountError('');
+                                try {
+                                  await upgradeAnonymousAccount(guestEmail, accountPassword);
+                                  setAccountCreated(true);
+                                } catch (err: any) {
+                                  setAccountError(
+                                    err.message || 'Hesap oluşturulurken bir hata oluştu.',
+                                  );
+                                } finally {
+                                  setCreatingAccount(false);
+                                }
+                              }}
+                              className="w-full py-3.5 bg-accent text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                              {creatingAccount ? (
+                                <>
+                                  <Loader2 size={14} className="animate-spin" /> Hesap
+                                  Oluşturuluyor...
+                                </>
+                              ) : (
+                                'Hesap Oluştur'
+                              )}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => navigate('/')}
+                              className="w-full text-[10px] font-medium text-[#1A1033]/30 hover:text-[#1A1033]/50 transition-colors py-1"
+                            >
+                              Şimdi değil
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Account created success message */}
+                    {isAnonymous && accountCreated && (
+                      <div className="border-t border-[#1A1033]/5 pt-6 mt-4">
+                        <div className="bg-green-50 rounded-2xl p-6 border border-green-200">
+                          <div className="flex items-center gap-3 mb-3">
+                            <CheckCircle2 size={20} className="text-green-600" />
+                            <h3 className="text-sm font-black text-green-800">
+                              Hesabın oluşturuldu! Giriş yaptın.
+                            </h3>
+                          </div>
+                          <p className="text-[11px] font-medium text-green-700 mb-4">
+                            Siparişlerini hesabından takip edebilir, daha hızlı alışveriş
+                            yapabilirsin.
+                          </p>
+                          <button
+                            onClick={() => navigate('/profile')}
+                            className="w-full py-3 bg-green-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-green-700 transition-colors"
+                          >
+                            Siparişlerimi Gör
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
