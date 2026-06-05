@@ -19,6 +19,7 @@ import {
   hasAllRequiredDocs,
   type KycDocument,
 } from '@/services/sellerApplicationService';
+import { recordEvent } from '@/services/sellerOnboardingService';
 
 const MAX_DOC_BYTES = 5 * 1024 * 1024; // 5 MB
 const ACCEPTED_DOC_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
@@ -401,6 +402,8 @@ export function SellerApplication() {
         kycDocuments,
         identityVerificationStatus: identityStatus === 'verified' ? 'verified' : 'pending',
       });
+      // Record KYC submission for funnel instrumentation (fire-and-forget)
+      recordEvent(user.id, 'kyc_submitted').catch(() => {});
       setSubmitted(true);
     } catch {
       // handled by service

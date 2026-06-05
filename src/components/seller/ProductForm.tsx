@@ -1,5 +1,17 @@
 import React, { useState, useRef } from 'react';
-import { X, Plus, Trash2, Upload, Sparkles, ImageIcon, Loader2, AlertCircle } from 'lucide-react';
+import {
+  X,
+  Plus,
+  Trash2,
+  Upload,
+  Sparkles,
+  ImageIcon,
+  Loader2,
+  AlertCircle,
+  Zap,
+  ChevronDown,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { CategorySelect } from './CategorySelect';
 import { cn } from '../../lib/utils';
 import { uploadImage } from '../../lib/storage';
@@ -60,6 +72,17 @@ const EMPTY_FORM: ProductFormData = {
   metaDescription: '',
 };
 
+type ProductFormField = keyof ProductFormData;
+
+const QUICK_ADD_FIELDS = new Set<ProductFormField>([
+  'title',
+  'categoryId',
+  'price',
+  'stock',
+  'images',
+  'description',
+]);
+
 interface ProductFormProps {
   initial?: Partial<ProductFormData>;
   onSubmit: (data: ProductFormData, action: 'draft' | 'publish') => Promise<void>;
@@ -77,6 +100,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
   const [aiLoading, setAiLoading] = useState<'desc' | 'meta' | 'image' | 'tags' | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string | null>(null);
+  const [quickAdd, setQuickAdd] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function update<K extends keyof ProductFormData>(key: K, val: ProductFormData[K]) {
@@ -166,6 +190,41 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
           </button>
         </div>
 
+        {/* Quick-Add Toggle */}
+        <div className="flex-shrink-0 px-6 py-3 bg-zinc-800/80 border-b border-zinc-700/50">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setQuickAdd(true)}
+              className={cn(
+                'flex-1 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1.5',
+                quickAdd
+                  ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-sm shadow-amber-500/10'
+                  : 'bg-zinc-700/50 text-zinc-500 hover:text-zinc-300 border border-transparent',
+              )}
+            >
+              <Zap size={14} />
+              Hızlı Ekle
+            </button>
+            <button
+              onClick={() => setQuickAdd(false)}
+              className={cn(
+                'flex-1 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1.5',
+                !quickAdd
+                  ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30 shadow-sm shadow-purple-500/10'
+                  : 'bg-zinc-700/50 text-zinc-500 hover:text-zinc-300 border border-transparent',
+              )}
+            >
+              <ChevronDown size={14} />
+              Detaylı
+            </button>
+          </div>
+          <p className="text-center text-xs text-zinc-500 mt-2 transition-colors">
+            {quickAdd
+              ? 'Sadece temel bilgilerle hızlıca ürün ekle'
+              : 'Tüm alanları doldurarak detaylı ürün oluştur'}
+          </p>
+        </div>
+
         {/* Scrollable body */}
         <div data-product-form-body className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
           {/* Server validation error banner */}
@@ -191,26 +250,39 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                   placeholder="Ürün adını girin"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1">Marka</label>
-                  <input
-                    value={form.brand}
-                    onChange={(e) => update('brand', e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                    placeholder="Marka adı"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1">SKU</label>
-                  <input
-                    value={form.sku}
-                    onChange={(e) => update('sku', e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                    placeholder="Stok kodu"
-                  />
-                </div>
-              </div>
+              <AnimatePresence>
+                {!quickAdd && (
+                  <motion.div
+                    key="brand-sku"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-zinc-400 mb-1">Marka</label>
+                        <input
+                          value={form.brand}
+                          onChange={(e) => update('brand', e.target.value)}
+                          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                          placeholder="Marka adı"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-zinc-400 mb-1">SKU</label>
+                        <input
+                          value={form.sku}
+                          onChange={(e) => update('sku', e.target.value)}
+                          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                          placeholder="Stok kodu"
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </section>
 
@@ -305,26 +377,39 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
               <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
                 Görseller
               </h3>
-              <button
-                onClick={async () => {
-                  setAiLoading('image');
-                  const imagePrompt = `${form.title}, ${form.brand}, ${form.tags.slice(0, 3).join(', ')}, ürün görseli, profesyonel fotoğraf, beyaz arka plan, yüksek kalite`;
-                  const dataUrl = await generateProductImage(imagePrompt);
-                  if (dataUrl) {
-                    update('images', [...form.images, dataUrl]);
-                  }
-                  setAiLoading(null);
-                }}
-                disabled={aiLoading === 'image' || !form.title}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-all"
-              >
-                {aiLoading === 'image' ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <ImageIcon size={14} />
+              <AnimatePresence>
+                {!quickAdd && (
+                  <motion.div
+                    key="ai-image-btn"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <button
+                      onClick={async () => {
+                        setAiLoading('image');
+                        const imagePrompt = `${form.title}, ${form.brand}, ${form.tags.slice(0, 3).join(', ')}, ürün görseli, profesyonel fotoğraf, beyaz arka plan, yüksek kalite`;
+                        const dataUrl = await generateProductImage(imagePrompt);
+                        if (dataUrl) {
+                          update('images', [...form.images, dataUrl]);
+                        }
+                        setAiLoading(null);
+                      }}
+                      disabled={aiLoading === 'image' || !form.title}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-all"
+                    >
+                      {aiLoading === 'image' ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <ImageIcon size={14} />
+                      )}
+                      AI Görsel Oluştur
+                    </button>
+                  </motion.div>
                 )}
-                AI Görsel Oluştur
-              </button>
+              </AnimatePresence>
             </div>
             <div
               className={cn(
@@ -397,21 +482,6 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                 {errors.price && <p className="text-sm text-red-600 mt-1">Enter a valid price</p>}
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1">
-                  Eski Fiyat (indirim için)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={form.oldPrice ?? ''}
-                  onChange={(e) =>
-                    update('oldPrice', e.target.value ? parseFloat(e.target.value) : undefined)
-                  }
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                />
-              </div>
-              <div>
                 <label className="block text-xs text-zinc-400 mb-1">Stok Adedi *</label>
                 <input
                   type="number"
@@ -424,20 +494,53 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                   <p className="text-sm text-red-600 mt-1">Stock cannot be negative</p>
                 )}
               </div>
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1">Para Birimi</label>
-                <select
-                  value={form.currency}
-                  onChange={(e) => update('currency', e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                >
-                  <option value="TRY">TRY — Türk Lirası</option>
-                  <option value="USD">USD — Dolar</option>
-                  <option value="EUR">EUR — Euro</option>
-                  <option value="GBP">GBP — Sterlin</option>
-                </select>
-              </div>
             </div>
+            <AnimatePresence>
+              {!quickAdd && (
+                <motion.div
+                  key="advanced-pricing"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">
+                        Eski Fiyat (indirim için)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={form.oldPrice ?? ''}
+                        onChange={(e) =>
+                          update(
+                            'oldPrice',
+                            e.target.value ? parseFloat(e.target.value) : undefined,
+                          )
+                        }
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">Para Birimi</label>
+                      <select
+                        value={form.currency}
+                        onChange={(e) => update('currency', e.target.value)}
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                      >
+                        <option value="TRY">TRY — Türk Lirası</option>
+                        <option value="USD">USD — Dolar</option>
+                        <option value="EUR">EUR — Euro</option>
+                        <option value="GBP">GBP — Sterlin</option>
+                      </select>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </section>
 
           {/* 5 — Açıklamalar */}
@@ -446,26 +549,40 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
               <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
                 Açıklamalar
               </h3>
-              <button
-                onClick={async () => {
-                  setAiLoading('desc');
-                  const result = await generateProductDescription(form);
-                  if (result) {
-                    if (!form.description) update('description', result.description);
-                    if (!form.longDescription) update('longDescription', result.longDescription);
-                  }
-                  setAiLoading(null);
-                }}
-                disabled={aiLoading === 'desc' || !form.title}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-all"
-              >
-                {aiLoading === 'desc' ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Sparkles size={14} />
+              <AnimatePresence>
+                {!quickAdd && (
+                  <motion.div
+                    key="ai-desc-btn"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <button
+                      onClick={async () => {
+                        setAiLoading('desc');
+                        const result = await generateProductDescription(form);
+                        if (result) {
+                          if (!form.description) update('description', result.description);
+                          if (!form.longDescription)
+                            update('longDescription', result.longDescription);
+                        }
+                        setAiLoading(null);
+                      }}
+                      disabled={aiLoading === 'desc' || !form.title}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-all"
+                    >
+                      {aiLoading === 'desc' ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={14} />
+                      )}
+                      AI ile Oluştur
+                    </button>
+                  </motion.div>
                 )}
-                AI ile Oluştur
-              </button>
+              </AnimatePresence>
             </div>
             <div className="space-y-3">
               <div>
@@ -478,222 +595,303 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                   placeholder="Ürün özeti (AI ile oluşturmak için 'AI ile Oluştur' butonunu kullanın)"
                 />
               </div>
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1">Detaylı Açıklama</label>
-                <textarea
-                  rows={5}
-                  value={form.longDescription}
-                  onChange={(e) => update('longDescription', e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
-                  placeholder="Tam ürün açıklaması, özellikler, kullanım talimatları..."
-                />
-              </div>
+              <AnimatePresence>
+                {!quickAdd && (
+                  <motion.div
+                    key="long-desc"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">Detaylı Açıklama</label>
+                      <textarea
+                        rows={5}
+                        value={form.longDescription}
+                        onChange={(e) => update('longDescription', e.target.value)}
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
+                        placeholder="Tam ürün açıklaması, özellikler, kullanım talimatları..."
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </section>
 
           {/* 6 — Teknik Özellikler */}
-          <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
-              Teknik Özellikler
-            </h3>
-            <div className="flex gap-2 mb-2">
-              <input
-                value={specKey}
-                onChange={(e) => setSpecKey(e.target.value)}
-                placeholder="Özellik (ör. Renk)"
-                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-              />
-              <input
-                value={specVal}
-                onChange={(e) => setSpecVal(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSpec())}
-                placeholder="Değer (ör. Siyah)"
-                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-              />
-              <button
-                onClick={addSpec}
-                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg"
+          <AnimatePresence>
+            {!quickAdd && (
+              <motion.section
+                key="specs-section"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
               >
-                <Plus size={14} className="text-white" />
-              </button>
-            </div>
-            {Object.entries(form.specifications).map(([k, v]) => (
-              <div
-                key={k}
-                className="flex items-center justify-between bg-zinc-800 px-3 py-2 rounded-lg mb-1 text-sm"
-              >
-                <span className="text-zinc-300">
-                  <span className="text-zinc-500">{k}:</span> {v as string}
-                </span>
-                <button
-                  onClick={() => {
-                    const s = { ...form.specifications };
-                    delete s[k];
-                    update('specifications', s);
-                  }}
-                >
-                  <Trash2 size={12} className="text-red-400" />
-                </button>
-              </div>
-            ))}
-          </section>
+                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
+                  Teknik Özellikler
+                </h3>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    value={specKey}
+                    onChange={(e) => setSpecKey(e.target.value)}
+                    placeholder="Özellik (ör. Renk)"
+                    className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                  />
+                  <input
+                    value={specVal}
+                    onChange={(e) => setSpecVal(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSpec())}
+                    placeholder="Değer (ör. Siyah)"
+                    className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                  />
+                  <button
+                    onClick={addSpec}
+                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg"
+                  >
+                    <Plus size={14} className="text-white" />
+                  </button>
+                </div>
+                {Object.entries(form.specifications).map(([k, v]) => (
+                  <div
+                    key={k}
+                    className="flex items-center justify-between bg-zinc-800 px-3 py-2 rounded-lg mb-1 text-sm"
+                  >
+                    <span className="text-zinc-300">
+                      <span className="text-zinc-500">{k}:</span> {v as string}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const s = { ...form.specifications };
+                        delete s[k];
+                        update('specifications', s);
+                      }}
+                    >
+                      <Trash2 size={12} className="text-red-400" />
+                    </button>
+                  </div>
+                ))}
+              </motion.section>
+            )}
+          </AnimatePresence>
 
           {/* 7 — SEO */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">SEO</h3>
-              <button
-                onClick={async () => {
-                  setAiLoading('meta');
-                  const meta = await generateMetaDescription(form);
-                  if (meta) update('metaDescription', meta);
-                  setAiLoading(null);
-                }}
-                disabled={aiLoading === 'meta' || !form.title}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-all"
+          <AnimatePresence>
+            {!quickAdd && (
+              <motion.section
+                key="seo-section"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
               >
-                {aiLoading === 'meta' ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Sparkles size={14} />
-                )}
-                AI Meta Oluştur
-              </button>
-            </div>
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1">
-                Meta Açıklama
-                <span
-                  className={`ms-2 ${form.metaDescription.length > 160 ? 'text-red-400' : 'text-zinc-600'}`}
-                >
-                  {form.metaDescription.length}/160
-                </span>
-              </label>
-              <textarea
-                rows={2}
-                value={form.metaDescription}
-                onChange={(e) => update('metaDescription', e.target.value)}
-                maxLength={170}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
-                placeholder="Arama sonuçlarında görünen özet"
-              />
-              <p className="text-xs text-zinc-600 mt-1">
-                Boş bırakılırsa kısa açıklama kullanılır.
-              </p>
-            </div>
-            <div className="mt-3 p-3 bg-zinc-800 rounded-lg space-y-0.5">
-              <p className="text-xs text-blue-400 font-medium truncate">
-                {form.title || 'Ürün Adı'}
-              </p>
-              <p className="text-xs text-green-500 truncate">
-                benimolan.com/product/
-                {(form.title || 'urun')
-                  .toLowerCase()
-                  .replace(/\s+/g, '-')
-                  .replace(/[^a-z0-9-]/g, '')
-                  .slice(0, 50)}
-              </p>
-              <p className="text-xs text-zinc-400 line-clamp-2">
-                {form.metaDescription || form.description || 'Meta açıklama önizlemesi...'}
-              </p>
-            </div>
-          </section>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
+                    SEO
+                  </h3>
+                  <button
+                    onClick={async () => {
+                      setAiLoading('meta');
+                      const meta = await generateMetaDescription(form);
+                      if (meta) update('metaDescription', meta);
+                      setAiLoading(null);
+                    }}
+                    disabled={aiLoading === 'meta' || !form.title}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-all"
+                  >
+                    {aiLoading === 'meta' ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={14} />
+                    )}
+                    AI Meta Oluştur
+                  </button>
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1">
+                    Meta Açıklama
+                    <span
+                      className={`ms-2 ${form.metaDescription.length > 160 ? 'text-red-400' : 'text-zinc-600'}`}
+                    >
+                      {form.metaDescription.length}/160
+                    </span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={form.metaDescription}
+                    onChange={(e) => update('metaDescription', e.target.value)}
+                    maxLength={170}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
+                    placeholder="Arama sonuçlarında görünen özet"
+                  />
+                  <p className="text-xs text-zinc-600 mt-1">
+                    Boş bırakılırsa kısa açıklama kullanılır.
+                  </p>
+                </div>
+                <div className="mt-3 p-3 bg-zinc-800 rounded-lg space-y-0.5">
+                  <p className="text-xs text-blue-400 font-medium truncate">
+                    {form.title || 'Ürün Adı'}
+                  </p>
+                  <p className="text-xs text-green-500 truncate">
+                    benimolan.com/product/
+                    {(form.title || 'urun')
+                      .toLowerCase()
+                      .replace(/\s+/g, '-')
+                      .replace(/[^a-z0-9-]/g, '')
+                      .slice(0, 50)}
+                  </p>
+                  <p className="text-xs text-zinc-400 line-clamp-2">
+                    {form.metaDescription || form.description || 'Meta açıklama önizlemesi...'}
+                  </p>
+                </div>
+              </motion.section>
+            )}
+          </AnimatePresence>
 
           {/* 8 — Kargo & Teslimat */}
-          <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
-              Kargo & Teslimat
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1">Ağırlık (kg)</label>
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={form.weight}
-                  onChange={(e) => update('weight', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1">Tahmini Teslimat (gün)</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={60}
-                  value={form.estimatedDeliveryDays}
-                  onChange={(e) => update('estimatedDeliveryDays', parseInt(e.target.value) || 3)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1">Menşei Ülke</label>
-                <input
-                  value={form.originCountry}
-                  onChange={(e) => update('originCountry', e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1">HS Kodu</label>
-                <input
-                  value={form.hsCode}
-                  onChange={(e) => update('hsCode', e.target.value)}
-                  placeholder="Gümrük tarifesi kodu"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                />
-              </div>
-            </div>
-            <div className="space-y-3 mt-3">
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1">Teslimat Koşulları</label>
-                <input
-                  value={form.deliveryTerms}
-                  onChange={(e) => update('deliveryTerms', e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1">İade Politikası</label>
-                <input
-                  value={form.returnPolicy}
-                  onChange={(e) => update('returnPolicy', e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-                />
-              </div>
-              <label className="flex items-center gap-3 cursor-pointer bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5">
-                <input
-                  type="checkbox"
-                  checked={form.freeShipping}
-                  onChange={(e) => update('freeShipping', e.target.checked)}
-                  className="w-4 h-4 accent-green-500"
-                />
-                <span className="text-sm text-white">
-                  Ücretsiz kargo (bu üründe kargo ücreti alınmaz)
-                </span>
-              </label>
-            </div>
-          </section>
+          <AnimatePresence>
+            {!quickAdd && (
+              <motion.section
+                key="shipping-section"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
+                  Kargo & Teslimat
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">Ağırlık (kg)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={form.weight}
+                      onChange={(e) => update('weight', parseFloat(e.target.value) || 0)}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">
+                      Tahmini Teslimat (gün)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={form.estimatedDeliveryDays}
+                      onChange={(e) =>
+                        update('estimatedDeliveryDays', parseInt(e.target.value) || 3)
+                      }
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">Menşei Ülke</label>
+                    <input
+                      value={form.originCountry}
+                      onChange={(e) => update('originCountry', e.target.value)}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">HS Kodu</label>
+                    <input
+                      value={form.hsCode}
+                      onChange={(e) => update('hsCode', e.target.value)}
+                      placeholder="Gümrük tarifesi kodu"
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3 mt-3">
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">Teslimat Koşulları</label>
+                    <input
+                      value={form.deliveryTerms}
+                      onChange={(e) => update('deliveryTerms', e.target.value)}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">İade Politikası</label>
+                    <input
+                      value={form.returnPolicy}
+                      onChange={(e) => update('returnPolicy', e.target.value)}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                    />
+                  </div>
+                  <label className="flex items-center gap-3 cursor-pointer bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5">
+                    <input
+                      type="checkbox"
+                      checked={form.freeShipping}
+                      onChange={(e) => update('freeShipping', e.target.checked)}
+                      className="w-4 h-4 accent-green-500"
+                    />
+                    <span className="text-sm text-white">
+                      Ücretsiz kargo (bu üründe kargo ücreti alınmaz)
+                    </span>
+                  </label>
+                </div>
+              </motion.section>
+            )}
+          </AnimatePresence>
 
           {/* 9 — Yayın Ayarları */}
-          <section>
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
-              Yayın Ayarları
-            </h3>
-            <select
-              value={form.visibility}
-              onChange={(e) =>
-                update('visibility', e.target.value as ProductFormData['visibility'])
-              }
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
-            >
-              <option value="public">Herkese Açık</option>
-              <option value="hidden">Gizli (Linki olanlar görür)</option>
-              <option value="draft">Taslak (Yalnızca ben)</option>
-            </select>
-          </section>
+          <AnimatePresence>
+            {!quickAdd && (
+              <motion.section
+                key="publish-section"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
+                  Yayın Ayarları
+                </h3>
+                <select
+                  value={form.visibility}
+                  onChange={(e) =>
+                    update('visibility', e.target.value as ProductFormData['visibility'])
+                  }
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                >
+                  <option value="public">Herkese Açık</option>
+                  <option value="hidden">Gizli (Linki olanlar görür)</option>
+                  <option value="draft">Taslak (Yalnızca ben)</option>
+                </select>
+              </motion.section>
+            )}
+          </AnimatePresence>
         </div>
+
+        {/* Quick-add info bar */}
+        {quickAdd && (
+          <div className="flex-shrink-0 px-6 py-2.5 bg-amber-500/10 border-t border-amber-500/20">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-amber-400/80">
+                Gelişmiş alanlar gizlendi — marka, SKU, etiketler, teknik özellikler, SEO, kargo ve
+                yayın ayarları varsayılan değerlerle kaydedilecek.
+              </p>
+              <button
+                onClick={() => setQuickAdd(false)}
+                className="text-xs text-amber-400 hover:text-amber-300 font-medium flex-shrink-0 ms-3 underline underline-offset-2"
+              >
+                Detaylı moda geç
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="border-t border-zinc-700 px-6 py-4 flex gap-3 flex-shrink-0">
@@ -702,14 +900,14 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             disabled={saving}
             className="flex-1 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white text-sm rounded-lg disabled:opacity-50"
           >
-            Taslak Kaydet
+            {quickAdd ? 'Taslak Kaydet' : 'Taslak'}
           </button>
           <button
             onClick={() => handleSubmit('publish')}
             disabled={saving || !form.title || !form.price || !form.categoryId}
             className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg disabled:opacity-50"
           >
-            {saving ? 'Kaydediliyor...' : 'Onaya Gönder'}
+            {saving ? 'Kaydediliyor...' : quickAdd ? 'Hızlıca Yayınla' : 'Kaydet'}
           </button>
         </div>
       </div>

@@ -14,6 +14,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { UserProfile, UserRole, AdminRole } from '../types';
 import { notifyAdmins } from '../services/notificationService';
+import { recordEvent } from '../services/sellerOnboardingService';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -105,6 +106,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               `${newUser.name} (${newUser.email}) sisteme kaydoldu.`,
               '/admin',
             ).catch(() => {});
+          }
+          // Record seller_first_login for funnel instrumentation (fire-and-forget)
+          if (resolvedUser && resolvedUser.role === 'seller') {
+            recordEvent(resolvedUser.id, 'seller_first_login').catch(() => {});
           }
           // Read adminRole from Firebase custom claims
           try {

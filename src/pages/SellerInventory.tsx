@@ -40,6 +40,7 @@ import { ProductFormModal } from '../components/seller/ProductFormModal';
 import type { ProductFormData } from '../components/seller/ProductForm';
 import { CSVImportPanel } from '../components/seller/CSVImportPanel';
 import { BulkEditBar } from '../components/seller/BulkEditBar';
+import { recordEvent } from '@/services/sellerOnboardingService';
 
 export function SellerInventoryPage() {
   const { user } = useAuth();
@@ -214,6 +215,8 @@ export function SellerInventoryPage() {
       status: (action === 'publish' ? 'pending' : 'draft') as any,
     } as Omit<Product, 'id'>;
 
+    const isFirstProduct = products.length === 0;
+
     if (editingProduct) {
       await updateProduct(editingProduct.id, payload);
       setProducts((prev) =>
@@ -223,6 +226,16 @@ export function SellerInventoryPage() {
       const id = await createProduct(payload);
       setProducts((prev) => [{ id, ...payload } as Product, ...prev]);
     }
+
+    // Funnel instrumentation (fire-and-forget — idempotent)
+    const sellerId = user!.id;
+    if (!editingProduct && isFirstProduct) {
+      recordEvent(sellerId, 'first_product_created').catch(() => {});
+    }
+    if (action === 'publish') {
+      recordEvent(sellerId, 'first_product_published').catch(() => {});
+    }
+
     setIsFormOpen(false);
     setEditingProduct(null);
   };

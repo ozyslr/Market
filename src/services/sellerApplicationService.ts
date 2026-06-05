@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   setDoc,
   updateDoc,
@@ -10,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
 import { notifyAdmins } from './notificationService';
+import { recordEvent } from './sellerOnboardingService';
 
 // ─── KYC Document type (D-06) ─────────────────────────────────────────────────
 // storagePath is stored in Firestore — never a signed URL or public URL (T-03-01).
@@ -122,12 +124,26 @@ export async function reviewApplication(
   reviewedBy: string,
 ): Promise<void> {
   try {
+    // Fetch application to get sellerId for funnel instrumentation
+    let sellerId: string | undefined;
+    if (status === 'approved') {
+      const appSnap = await getDoc(doc(db, COL, id));
+      if (appSnap.exists()) {
+        sellerId = (appSnap.data() as SellerApplication).userId;
+      }
+    }
+
     await updateDoc(doc(db, COL, id), {
       status,
       adminNote,
       reviewedBy,
       reviewedAt: new Date().toISOString(),
     });
+
+    // Record KYC approval event (fire-and-forget)
+    if (status === 'approved' && sellerId) {
+      recordEvent(sellerId, 'kyc_approved').catch(() => {});
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, `${COL}/${id}`);
     throw error;
