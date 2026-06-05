@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilize & Sharpen
-status: completed
-stopped_at: Phase 9 Plan 01 complete — manualChunks vendor splitting + CI bundle budget check (PERF-01)
-last_updated: "2026-06-05T18:22:28.232Z"
-last_activity: "2026-06-05 -- Phase 9 Plan 01 complete (PERF-01: bundle splitting + budget CI)"
+status: in-progress
+stopped_at: Phase 10 Plan 04 complete — seller funnel instrumentation (SLR-04)
+last_updated: "2026-06-05T18:30:00.000Z"
+last_activity: "2026-06-05 -- Phase 10 Plan 04 complete (SLR-04: funnel instrumentation + time-to-first-listing)"
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 11
-  completed_plans: 8
-  percent: 50
+  total_plans: 12
+  completed_plans: 10
+  percent: 55
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-06-02)
 ## Current Position
 
 Milestone: v1.1 — Stabilize & Sharpen (4 phases, 8–11; 17 requirements)
-Phase: 9 (Performance) — Plan 01 COMPLETE, Plan 03 COMPLETE, Plan 04 COMPLETE
-Status: PERF-01 (bundle splitting + budget CI), PERF-03 (responsive images + srcSet), and PERF-04 (Firestore indexes + server-side filtering) complete. PERF-02 (Lighthouse thresholds) remains.
+Phase: 10 (Seller Add-Flow UX) — Plan 01 COMPLETE, Plan 04 COMPLETE
+Status: SLR-01 (quick-add mode toggle) and SLR-04 (funnel instrumentation) complete. SLR-02 and SLR-03 remain.
 Scope: Phase 8 Admin Access Control (ADM) · Phase 9 Performance (PERF) · Phase 10 Seller Add-Flow UX (SLR) · Phase 11 Purchase Funnel & Guest Checkout (BUY).
 Carried from v1.0: live UAT debt is folded into BUY-05 (Phase 11). v2 deferrals: multi-currency, Typesense, cross-border.
-Last activity: 2026-06-05 -- Phase 9 Plan 01 complete (PERF-01: bundle splitting + budget CI)
+Last activity: 2026-06-05 -- Phase 10 Plan 04 complete (SLR-04: funnel instrumentation + time-to-first-listing)
 
-Progress: [███████░░░] 73%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -72,6 +72,7 @@ _Updated after each plan completion_
 | Phase 05-shipping-fulfillment P05-05 | 20min | 2 tasks | 2 files |
 | Phase 05-shipping-fulfillment P06 | 35 | 2 tasks | 3 files |
 | Phase 10-seller-add-flow-ux P01 | 120s | 1 tasks | 1 files |
+| Phase 10-seller-add-flow-ux P04 | ~15min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,7 @@ Recent decisions affecting current work:
 - D-03: TR sellers → Iyzico subMerchantCreate idempotently on admin approval
 - D-PERF-04: OptimizedImage srcSet with 3 breakpoints; WebP audit script; Firebase Image Processing extension documented (forward-compatible until enabled)
 - [Phase ?]: D-SLR-01: Quick-add toggle reduces 25+ field form to 6 essential fields (title, categoryId, price, stock, images, description); hidden fields inherit EMPTY_FORM defaults
+- [Phase 10]: D-SLR-04: Seller funnel events stored in existing events collection with fire-and-forget pattern; idempotent (check existence before write); KYC milestones fall back to sellerApplications collection for pre-instrumentation sellers
 
 ### Pending Todos
 
@@ -116,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-05T18:22:28.217Z
-Stopped at: Phase 9 Plan 01 complete — manualChunks vendor splitting + CI bundle budget check (PERF-01)
+Last session: 2026-06-05T18:30:00.000Z
+Stopped at: Phase 10 Plan 04 complete — seller funnel instrumentation (SLR-04)
 Resume file: None
