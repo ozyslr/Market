@@ -18,6 +18,9 @@ vi.mock('firebase/auth', () => ({
   signInWithEmailAndPassword: vi.fn(),
   sendPasswordResetEmail: vi.fn(),
   updateProfile: vi.fn(),
+  // AuthContext calls signInAnonymously on the no-user path; the rejection
+  // exercises its `.catch(() => setLoading(false))` so the "No user" state renders.
+  signInAnonymously: vi.fn(() => Promise.reject(new Error('test: anonymous auth disabled'))),
 }));
 
 vi.mock('firebase/app', () => ({
@@ -46,7 +49,7 @@ describe('AuthProvider', () => {
     render(
       <AuthProvider>
         <div data-testid="child">Hello</div>
-      </AuthProvider>
+      </AuthProvider>,
     );
     expect(screen.getByTestId('child')).toBeDefined();
   });
@@ -55,7 +58,7 @@ describe('AuthProvider', () => {
     render(
       <AuthProvider>
         <TestConsumer />
-      </AuthProvider>
+      </AuthProvider>,
     );
     // After auth state resolves with null user
     const el = await screen.findByText('No user');
