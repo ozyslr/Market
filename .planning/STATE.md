@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 7 context gathered
-last_updated: '2026-06-04T22:11:38.224Z'
-last_activity: 2026-06-04 -- Phase 07 execution started
+status: milestone-complete
+stopped_at: v1.0 shipped (tech debt — live UAT pending)
+last_updated: '2026-06-05T00:00:00.000Z'
+last_activity: 2026-06-05 -- v1.0 milestone archived + tagged
 progress:
   total_phases: 8
   completed_phases: 4

@@ -8,6 +8,21 @@ Benim Olan, satıcıların kendi mağazalarını açıp ürünlerini sattığı,
 
 Satıcıların kendi mağazalarını KYC onayıyla açabildiği ve müşterilerin hızlı, güvenli alışveriş yapabildiği eksiksiz bir pazar yeri deneyimi. En kritik şey: güvenilir ödeme altyapısı ve satıcı güveni.
 
+## Current State
+
+**v1.0 — Marketplace Core — shipped 2026-06-05.** Phases 1–7 delivered (Foundation/compliance, dual-provider payments, seller KYC onboarding, Firestore search, shipping & returns, reviews & trust). 44/50 v1 requirements complete; 263 unit tests green; firestore.rules deployed.
+
+- **Carried tech debt:** live UAT sign-off (payments/3DS, shipping, reviews photo + Q&A UI) and a deeper E2E pass — see `.planning/v1.0-MILESTONE-AUDIT.md`.
+- Archive: `.planning/milestones/v1.0-ROADMAP.md` · `.planning/milestones/v1.0-REQUIREMENTS.md`.
+
+## Next Milestone Goals (v2 candidates)
+
+- **Multi-Currency** (CUR-01..04): EUR display, FX rate-locking at checkout, TRY/EUR toggle; Trendyol-style per-country currency + localized routing (`/en`).
+- **Typesense search** (SRC-01 typo-tolerant full-text, SRC-05 event-driven index) when catalog scale demands it.
+- **Cross-Border Compliance** (CROSS-01..04): HS codes, customs docs, total landed cost, EU GPSR labels.
+
+Start with `/gsd-new-milestone` to define fresh requirements + roadmap.
+
 ## Requirements
 
 ### Validated
