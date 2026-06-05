@@ -13,7 +13,7 @@
 - [x] **Phase 8: Admin Access Control** — route-level admin guard, granular admin roles, audit-log coverage, server authz parity (ADM-01..04) (completed 2026-06-05)
 - [x] **Phase 9: Performance** — vendor manualChunks + bundle budget, Lighthouse CI thresholds, image/CDN optimization, Firestore hot-path review (PERF-01..04) (completed 2026-06-05)
 - [x] **Phase 10: Seller Add-Flow UX** — quick-add/guided mode, mobile form, bulk image upload + reorder, time-to-first-listing instrumentation (SLR-01..04) ✅ (completed 2026-06-05)
-- [ ] **Phase 11: Purchase Funnel & Guest Checkout** — guest checkout E2E, address book/autofill, express wallets (Apple/Google Pay), funnel analytics, v1.0 payment UAT closure (BUY-01..05) 📋 (planned 2026-06-05, 5 plans ready)
+- [x] **Phase 11: Purchase Funnel & Guest Checkout** — guest checkout E2E, address book/autofill, express wallets (Apple/Google Pay), funnel analytics, v1.0 payment UAT closure (BUY-01..05) 📋 (planned 2026-06-05, 5 plans ready) (completed 2026-06-05)
 
 ### Phase Details
 
@@ -58,13 +58,13 @@
 **Goal:** A certified, low-friction purchase path including guests, plus closing v1.0 payment UAT.
 **Depends on:** v1.0 checkout (Stripe/Iyzico, saved cards, anonymous auth).
 **Requirements:** BUY-01, BUY-02, BUY-03, BUY-04, BUY-05
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 
 - [x] 11-01-PLAN.md — Guest checkout E2E (localStorage cart, cart merge, guest email, account upgrade)
 - [x] 11-02-PLAN.md — Address book & autofill (type enum, autocomplete attributes, saved address cards)
-- [ ] 11-03-PLAN.md — Express wallets (Apple Pay / Google Pay via PaymentRequestButtonElement)
+- [x] 11-03-PLAN.md — Express wallets (Apple Pay / Google Pay via PaymentRequestButtonElement)
 - [x] 11-04-PLAN.md — Purchase funnel analytics (Firestore event tracking + admin dashboard card)
 - [x] 11-05-PLAN.md — v1.0 UAT closure (checklist + Playwright E2E tests)
 

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilize & Sharpen
-status: completed
-stopped_at: Phase 11 Plan 04 complete — purchase funnel analytics (BUY-04)
-last_updated: '2026-06-05T19:37:33.329Z'
+status: executing
+stopped_at: Phase 10 Plan 03 complete — bulk image upload + drag-reorder (SLR-03)
+last_updated: '2026-06-05T19:40:18.937Z'
 last_activity: '2026-06-05 -- Phase 11 Plan 04 complete (BUY-04: purchase funnel analytics)'
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 16
   completed_plans: 16
-  percent: 81
+  percent: 100
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-06-02)
 ## Current Position
 
 Milestone: v1.1 — Stabilize & Sharpen (4 phases, 8–11; 17 requirements)
-Phase: 11 (Purchase Funnel & Guest Checkout) — Plans 01, 04, 05 COMPLETE; 02, 03 remaining
-Status: BUY-01 (guest checkout + localStorage cart), BUY-04 (funnel analytics), BUY-05 (UAT closure) all complete. BUY-02 (address type persistence) and BUY-03 (PaymentRequestButton) in progress.
+Phase: 11 (Purchase Funnel & Guest Checkout) — Plans 01, 03, 04, 05 COMPLETE; 02 remaining
+Status: BUY-01 (guest checkout + localStorage cart), BUY-03 (Apple Pay / Google Pay), BUY-04 (funnel analytics), BUY-05 (UAT closure) all complete. BUY-02 (address type persistence) in progress.
 Scope: Phase 8 Admin Access Control (ADM) · Phase 9 Performance (PERF) · Phase 10 Seller Add-Flow UX (SLR) · Phase 11 Purchase Funnel & Guest Checkout (BUY).
 Carried from v1.0: live UAT debt is folded into BUY-05 (Phase 11). v2 deferrals: multi-currency, Typesense, cross-border.
 Last activity: 2026-06-05 -- Phase 11 Plan 04 complete (BUY-04: purchase funnel analytics)
 
-Progress: [█████████░] 88%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -126,6 +126,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-05T19:37:15.429Z
+Last session: 2026-06-05T19:40:18.921Z
 Stopped at: Phase 10 Plan 03 complete — bulk image upload + drag-reorder (SLR-03)
 Resume file: None
