@@ -216,50 +216,70 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     }
 
     try {
-      // If a saved card is selected, charge off-session with the stored PM
+      // ── Saved card (authenticated) vs Express wallet (guest) ──
       if (paymentMethodId) {
         const authHeader = req.headers.authorization as string | undefined;
-        if (!authHeader?.startsWith('Bearer ')) {
-          return res.status(401).json({ error: 'Authentication required' });
-        }
-        if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
-        const token = authHeader.slice(7);
-        let uid: string;
-        try {
-          const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
-          uid = decoded.user_id || decoded.sub;
-          if (!uid) throw new Error('No uid in token');
-          (req as any).uid = uid;
-        } catch {
-          return res.status(401).json({ error: 'Invalid token' });
+
+        // ── Saved card: authenticated user, off-session charge ──
+        if (authHeader?.startsWith('Bearer ')) {
+          if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+          const token = authHeader.slice(7);
+          let uid: string;
+          try {
+            const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+            uid = decoded.user_id || decoded.sub;
+            if (!uid) throw new Error('No uid in token');
+            (req as any).uid = uid;
+          } catch {
+            return res.status(401).json({ error: 'Invalid token' });
+          }
+
+          const userDoc = await adminDb.collection('users').doc(uid).get();
+          const customerId: string = userDoc.data()?.stripeCustomerId || '';
+          if (!customerId) {
+            return res.status(400).json({ error: 'No Stripe customer found' });
+          }
+
+          const pi = await stripe.paymentIntents.create(
+            {
+              amount: Math.round(amount * 100),
+              currency,
+              customer: customerId,
+              payment_method: paymentMethodId,
+              confirm: true,
+              off_session: true,
+              metadata: { orderId: orderId || '' },
+            },
+            orderId ? { idempotencyKey: `pi_${orderId}` } : undefined,
+          );
+
+          if (pi.status === 'requires_action') {
+            return res.json({ clientSecret: pi.client_secret, requiresAction: true });
+          }
+          if (pi.status !== 'succeeded') {
+            return res.status(400).json({ error: 'Payment did not succeed', status: pi.status });
+          }
+          return res.json({ clientSecret: pi.client_secret, status: 'succeeded' });
         }
 
-        const userDoc = await adminDb.collection('users').doc(uid).get();
-        const customerId: string = userDoc.data()?.stripeCustomerId || '';
-        if (!customerId) {
-          return res.status(400).json({ error: 'No Stripe customer found' });
-        }
-
+        // ── Express wallet (Apple Pay / Google Pay): no auth required ──
+        // Payment method was already tokenized by the native browser sheet.
         const pi = await stripe.paymentIntents.create(
           {
             amount: Math.round(amount * 100),
             currency,
-            customer: customerId,
             payment_method: paymentMethodId,
+            automatic_payment_methods: { enabled: true },
             confirm: true,
-            off_session: true,
             metadata: { orderId: orderId || '' },
           },
           orderId ? { idempotencyKey: `pi_${orderId}` } : undefined,
         );
 
-        if (pi.status === 'requires_action') {
-          return res.json({ clientSecret: pi.client_secret, requiresAction: true });
+        if (pi.status === 'succeeded') {
+          return res.json({ clientSecret: pi.client_secret, status: 'succeeded' });
         }
-        if (pi.status !== 'succeeded') {
-          return res.status(400).json({ error: 'Payment did not succeed', status: pi.status });
-        }
-        return res.json({ clientSecret: pi.client_secret, status: 'succeeded' });
+        return res.status(400).json({ error: 'Payment did not succeed', status: pi.status });
       }
 
       const paymentIntent = await stripe.paymentIntents.create(

@@ -28,6 +28,7 @@ export const createPaymentIntentSchema = z.object({
   amount: z.number().finite().positive(),
   currency: z.string().length(3).optional(),
   orderId: z.string().min(1).optional(),
+  paymentMethodId: z.string().min(1).optional(),
 });
 
 export const setupPaymentMethodSchema = z.object({
