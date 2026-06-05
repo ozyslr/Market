@@ -30,7 +30,7 @@ Phase: 8 (Admin Access Control) — Plan 02 COMPLETE
 Status: Client-side admin access control complete — AdminRoute guard, adminRole in AuthContext from custom claims, sidebar sub-role gating, route-level wrapping in App.tsx. Phase 8 complete.
 Scope: Phase 8 Admin Access Control (ADM) · Phase 9 Performance (PERF) · Phase 10 Seller Add-Flow UX (SLR) · Phase 11 Purchase Funnel & Guest Checkout (BUY).
 Carried from v1.0: live UAT debt is folded into BUY-05 (Phase 11). v2 deferrals: multi-currency, Typesense, cross-border.
-Last activity: 2026-06-05 -- Phase 8 Plan 01 complete
+Last activity: 2026-06-05 -- Phase 8 Plan 02 complete
 
 Progress: [█░░░░░░░░░] 6% (1/17 requirements addressed)
 
