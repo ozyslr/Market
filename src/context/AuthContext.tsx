@@ -9,8 +9,10 @@ import {
   GoogleAuthProvider,
   signOut,
   signInAnonymously,
+  linkWithCredential,
+  EmailAuthProvider,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { UserProfile, UserRole, AdminRole } from '../types';
 import { notifyAdmins } from '../services/notificationService';
@@ -27,6 +29,7 @@ interface AuthContextType {
   registerWithEmail: (email: string, name: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  upgradeAnonymousAccount: (email: string, password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -202,6 +205,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  /**
+   * Upgrade an anonymous Firebase Auth account to a permanent email/password account.
+   * Uses linkWithCredential to preserve the anonymous user's UID and all associated data.
+   */
+  const upgradeAnonymousAccount = async (email: string, password: string): Promise<void> => {
+    const fbUser = auth.currentUser;
+    if (!fbUser) {
+      throw new Error('Oturum bulunamadı. Lütfen sayfayı yenileyip tekrar deneyin.');
+    }
+    if (!fbUser.isAnonymous) {
+      throw new Error('Bu hesap zaten kalıcı bir hesap. Yükseltme gerekmiyor.');
+    }
+
+    const credential = EmailAuthProvider.credential(email, password);
+
+    try {
+      const result = await linkWithCredential(fbUser, credential);
+      // Update Firestore profile with the email
+      try {
+        await updateDoc(doc(db, 'users', result.user.uid), { email });
+      } catch (profileErr) {
+        // Firestore update is best-effort; the auth upgrade already succeeded
+        console.warn('[auth] Firestore email update after upgrade failed:', profileErr);
+      }
+      // Refresh the now-authenticated user
+      await refreshUser();
+    } catch (err: any) {
+      if (err.code === 'auth/email-already-in-use') {
+        throw new Error('Bu e-posta zaten kullanılıyor. Giriş yapmayı dene.', { cause: err });
+      }
+      if (err.code === 'auth/credential-already-in-use') {
+        throw new Error('Bu hesap zaten başka bir kullanıcıya bağlı. Giriş yapmayı dene.', {
+          cause: err,
+        });
+      }
+      if (err.code === 'auth/weak-password') {
+        throw new Error('Şifre en az 6 karakter olmalıdır.', { cause: err });
+      }
+      if (err.code === 'auth/invalid-email') {
+        throw new Error('Geçerli bir e-posta adresi girin.', { cause: err });
+      }
+      // If the anonymous account was deleted (rare race condition), fall back to
+      // creating a new account so the user still has their order email on record.
+      if (
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/user-token-expired' ||
+        err.code === 'auth/user-disabled'
+      ) {
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+          // Firestore profile will be created by onAuthStateChanged
+          await refreshUser();
+          return;
+        } catch (fallbackErr: any) {
+          throw new Error('Oturum süren doldu. Lütfen kaydol.', { cause: fallbackErr });
+        }
+      }
+      throw new Error('Hesap oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.', {
+        cause: err,
+      });
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -215,6 +281,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         registerWithEmail,
         logout,
         refreshUser,
+        upgradeAnonymousAccount,
       }}
     >
       {children}
