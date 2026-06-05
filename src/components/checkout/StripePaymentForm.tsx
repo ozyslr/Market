@@ -1,6 +1,11 @@
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useState, useEffect, useRef } from 'react';
 import { Loader2, CreditCard } from 'lucide-react';
-import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import {
+  PaymentElement,
+  PaymentRequestButtonElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
 import type { ShippingAddress } from '@/types/order';
 import { createSetupIntent, setupPaymentMethod } from '@/services/oneClickCheckoutService';
 import { useAuth } from '@/context/AuthContext';
@@ -28,6 +33,95 @@ export function StripePaymentForm({
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveCard, setSaveCard] = useState(false);
+
+  // ─── Payment Request (Apple Pay / Google Pay) ────────────────────────────
+
+  const [paymentRequest, setPaymentRequest] = useState<any>(null);
+  const [canMakePayment, setCanMakePayment] = useState(false);
+  const prInitialised = useRef(false);
+
+  // Stable refs for closure safety inside event listener
+  const totalRef = useRef(total);
+  totalRef.current = total;
+  const currencyRef = useRef(currency);
+  currencyRef.current = currency;
+  const onSuccessRef = useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
+
+  useEffect(() => {
+    if (!stripe || isMock || prInitialised.current) return;
+    prInitialised.current = true;
+
+    const pr = stripe.paymentRequest({
+      country: 'TR',
+      currency: currency.toLowerCase(),
+      total: {
+        label: 'Sipariş Toplamı',
+        amount: Math.round(total * 100),
+      },
+      requestPayerName: true,
+      requestPayerEmail: true,
+      requestPayerPhone: true,
+      requestShipping: false,
+    });
+
+    pr.canMakePayment()
+      .then((result: any) => {
+        if (result && (result.applePay || result.googlePay)) {
+          setCanMakePayment(true);
+          setPaymentRequest(pr);
+        } else {
+          (pr as any).destroy();
+        }
+      })
+      .catch(() => {
+        (pr as any).destroy();
+      });
+
+    return () => {
+      (pr as any).destroy();
+    };
+    // Run once when stripe becomes available
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stripe]);
+
+  // ─── Handle Payment Request paymentmethod event ──────────────────────────
+  useEffect(() => {
+    if (!paymentRequest) return;
+
+    const handlePaymentMethod = async (ev: any) => {
+      try {
+        const res = await fetch('/api/create-payment-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: totalRef.current,
+            currency: currencyRef.current.toLowerCase(),
+            paymentMethodId: ev.paymentMethod.id,
+          }),
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          ev.complete('fail');
+          setError(data.error || 'Ödeme başarısız oldu');
+          return;
+        }
+
+        // Extract PaymentIntent ID from clientSecret (format: pi_xxx_secret_yyy)
+        const piId = (data.clientSecret as string).split('_secret_')[0];
+        ev.complete('success');
+        onSuccessRef.current(piId);
+      } catch (err: unknown) {
+        ev.complete('fail');
+        setError((err as Error)?.message || 'Ödeme başarısız oldu');
+      }
+    };
+
+    paymentRequest.on('paymentmethod', handlePaymentMethod);
+
+    // No explicit off — destroy() in the creation useEffect handles cleanup
+  }, [paymentRequest]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -75,6 +169,30 @@ export function StripePaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {!isMock && canMakePayment && paymentRequest && (
+        <div className="mb-6">
+          <PaymentRequestButtonElement
+            options={{
+              paymentRequest,
+              style: {
+                paymentRequestButton: {
+                  type: 'buy',
+                  theme: 'dark',
+                  height: '48px',
+                },
+              },
+            }}
+          />
+          <div className="flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-[#1A1033]/10" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              veya kart ile
+            </span>
+            <div className="flex-1 h-px bg-[#1A1033]/10" />
+          </div>
+        </div>
+      )}
+
       {isMock ? (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800 font-medium">
           <strong className="block mb-1 uppercase text-xs tracking-widest">Demo Mode</strong>
