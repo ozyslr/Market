@@ -3,6 +3,7 @@
 // Custom claims ({ role, sellerId? }) are set via Admin SDK and verified
 // from decoded ID tokens — zero Firestore reads for role checks (Pitfall 1).
 import type { Auth } from 'firebase-admin/auth';
+import type { AdminRole } from '../types.js';
 
 type Req = any;
 type Res = any;
@@ -24,11 +25,15 @@ export interface AuthMiddlewares {
   verifyBuyer: (req: Req, res: Res, next: Next) => Promise<void>;
   /** Constant-time-ish compare against process.env.CRON_SECRET. */
   verifyCronSecret: (req: Req, res: Res, next: Next) => void;
+  /**
+   * Returns middleware that verifies the token, requires `role === 'admin'`,
+   * and enforces that `decoded.adminRole` is either `'super-admin'` or one of
+   * the allowed sub-roles. Super-admin passes every gate.
+   */
+  requireAdminRole: (...allowed: AdminRole[]) => (req: Req, res: Res, next: Next) => Promise<void>;
 }
 
-export function createAuthMiddlewares(
-  adminAuth: Auth | null,
-): AuthMiddlewares {
+export function createAuthMiddlewares(adminAuth: Auth | null): AuthMiddlewares {
   async function verifyFirebaseToken(req: Req, res: Res, next: Next) {
     const token = bearerToken(req);
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
@@ -110,5 +115,36 @@ export function createAuthMiddlewares(
     next();
   }
 
-  return { verifyFirebaseToken, verifyAdmin, verifySeller, verifyBuyer, verifyCronSecret };
+  function requireAdminRole(...allowed: AdminRole[]) {
+    return async (req: Req, res: Res, next: Next) => {
+      const token = bearerToken(req);
+      if (!token) return res.status(401).json({ error: 'Unauthorized' });
+      if (!adminAuth) return res.status(503).json({ error: 'Auth not configured' });
+      try {
+        const decoded = await adminAuth.verifyIdToken(token);
+        if (decoded.role !== 'admin') {
+          return res.status(403).json({ error: 'Forbidden — admin access required' });
+        }
+        const adminRole = decoded.adminRole as AdminRole | undefined;
+        if (adminRole !== 'super-admin' && !allowed.includes(adminRole as AdminRole)) {
+          return res.status(403).json({ error: 'Forbidden — insufficient admin role' });
+        }
+        req.uid = decoded.uid;
+        req.userEmail = decoded.email;
+        req.decodedToken = decoded;
+        next();
+      } catch {
+        res.status(401).json({ error: 'Invalid token' });
+      }
+    };
+  }
+
+  return {
+    verifyFirebaseToken,
+    verifyAdmin,
+    verifySeller,
+    verifyBuyer,
+    verifyCronSecret,
+    requireAdminRole,
+  };
 }

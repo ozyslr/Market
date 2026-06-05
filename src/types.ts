@@ -18,6 +18,8 @@
 
 export type UserRole = 'buyer' | 'seller' | 'admin' | 'moderator';
 
+export type AdminRole = 'super-admin' | 'support' | 'finance';
+
 export interface Address {
   id: string;
   label: string;
