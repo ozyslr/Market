@@ -16,7 +16,7 @@
 ### Performans (PERF)
 
 - [x] **PERF-01**: Vendor code-splitting (`manualChunks`) + bundle bütçesi; CI'da analiz raporu
-- [ ] **PERF-02**: Lighthouse CI bütçesi — kilit sayfalarda zorunlu eşikler (LCP / CLS / TBT)
+- [x] **PERF-02**: Lighthouse CI bütçesi — kilit sayfalarda zorunlu eşikler (LCP / CLS / TBT)
 - [x] **PERF-03**: Görsel optimizasyonu + CDN / responsive images (ürün medyası)
 - [x] **PERF-04**: Sıcak-yol Firestore sorgu/index gözden geçirmesi (liste + arama)
 
@@ -58,7 +58,7 @@
 | ADM-03      | Phase 8  | Complete |
 | ADM-04      | Phase 8  | Pending  |
 | PERF-01     | Phase 9  | Complete |
-| PERF-02     | Phase 9  | Pending  |
+| PERF-02     | Phase 9  | Complete |
 | PERF-03     | Phase 9  | Complete |
 | PERF-04     | Phase 9  | Complete |
 | SLR-01      | Phase 10 | Pending  |

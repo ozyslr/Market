@@ -11,7 +11,7 @@
 **Granularity:** 4 phases (8–11). Phase numbering continues from v1.0; v2 features will be numbered when v2 is planned.
 
 - [x] **Phase 8: Admin Access Control** — route-level admin guard, granular admin roles, audit-log coverage, server authz parity (ADM-01..04) (completed 2026-06-05)
-- [ ] **Phase 9: Performance** — vendor manualChunks + bundle budget, Lighthouse CI thresholds, image/CDN optimization, Firestore hot-path review (PERF-01..04)
+- [x] **Phase 9: Performance** — vendor manualChunks + bundle budget, Lighthouse CI thresholds, image/CDN optimization, Firestore hot-path review (PERF-01..04) (completed 2026-06-05)
 - [ ] **Phase 10: Seller Add-Flow UX** — quick-add/guided mode, mobile form, bulk image upload + reorder, time-to-first-listing instrumentation (SLR-01..04)
 - [ ] **Phase 11: Purchase Funnel & Guest Checkout** — guest checkout E2E, address book/autofill, express wallets (Apple/Google Pay), funnel analytics, v1.0 payment UAT closure (BUY-01..05)
 
