@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilize & Sharpen
-status: executing
-stopped_at: Phase 8 Plan 01 complete — AdminRole + requireAdminRole + verifyAdmin audit done
-last_updated: '2026-06-05T12:00:00.000Z'
-last_activity: 2026-06-05 -- Phase 8 Plan 01 executed (3 commits, 5 tests, 0 deviations)
+status: completed
+stopped_at: Phase 8 Plan 02 complete — AdminRoute + AuthContext adminRole + sidebar sub-role gating
+last_updated: '2026-06-05T12:30:00.000Z'
+last_activity: 2026-06-05 -- Phase 8 Plan 02 complete
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 1
-  completed_plans: 1
-  percent: 6
+  total_plans: 3
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-06-02)
 ## Current Position
 
 Milestone: v1.1 — Stabilize & Sharpen (4 phases, 8–11; 17 requirements)
-Phase: 8 (Admin Access Control) — Plan 01 COMPLETE
-Status: AdminRole type, requireAdminRole middleware, set-claims adminRole persistence, and admin endpoint authz audit all done. Next: Phase 8 Plan 02 (ADM-01 client guard + ADM-03 audit log).
+Phase: 8 (Admin Access Control) — Plan 02 COMPLETE
+Status: Client-side admin access control complete — AdminRoute guard, adminRole in AuthContext from custom claims, sidebar sub-role gating, route-level wrapping in App.tsx. Phase 8 complete.
 Scope: Phase 8 Admin Access Control (ADM) · Phase 9 Performance (PERF) · Phase 10 Seller Add-Flow UX (SLR) · Phase 11 Purchase Funnel & Guest Checkout (BUY).
 Carried from v1.0: live UAT debt is folded into BUY-05 (Phase 11). v2 deferrals: multi-currency, Typesense, cross-border.
 Last activity: 2026-06-05 -- Phase 8 Plan 01 complete
@@ -38,7 +38,7 @@ Progress: [█░░░░░░░░░] 6% (1/17 requirements addressed)
 
 **Velocity:**
 
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: N/A
 - Total execution time: N/A
 
@@ -54,7 +54,7 @@ Progress: [█░░░░░░░░░] 6% (1/17 requirements addressed)
 | 6. Multi-Currency            | 0     | N/A   | N/A      |
 | 7. Reviews & Trust           | 0     | N/A   | N/A      |
 | 05                           | 6     | -     | -        |
-| 08-admin-access-control      | 1     | 12min | 12min    |
+| 08-admin-access-control      | 2     | 22min | 11min    |
 
 **Recent Trend:**
 
@@ -62,6 +62,7 @@ Progress: [█░░░░░░░░░] 6% (1/17 requirements addressed)
 - Trend: N/A
 
 _Updated after each plan completion_
+| Phase 08-admin-access-control P08-02 | 10min | 3 tasks | 4 files |
 | Phase 08-admin-access-control P08-01 | 12min | 2 tasks | 5 files |
 | Phase 05-shipping-fulfillment P05-01 | 30m | 2 tasks | 3 files |
 | Phase 05-shipping-fulfillment P05-05 | 20min | 2 tasks | 2 files |
@@ -108,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-05T12:00:00.000Z
-Stopped at: Phase 8 Plan 01 complete — AdminRole + requireAdminRole + verifyAdmin audit done
-Resume file: .planning/phases/08-admin-access-control/08-01-SUMMARY.md
+Last session: 2026-06-05T12:30:00.000Z
+Stopped at: Phase 8 Plan 02 complete — AdminRoute + AuthContext adminRole + sidebar sub-role gating
+Resume file: .planning/phases/08-admin-access-control/08-02-SUMMARY.md
