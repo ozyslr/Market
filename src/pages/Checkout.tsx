@@ -1,4 +1,4 @@
-﻿import React, { FormEvent, useState, useEffect } from 'react';
+﻿import React, { FormEvent, useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import {
   ShieldCheck,
@@ -33,6 +33,7 @@ import { StripePaymentForm } from '@/components/checkout/StripePaymentForm';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { SavedCardSelector } from '@/components/checkout/SavedCardSelector';
 import { listPaymentMethods } from '@/services/oneClickCheckoutService';
+import { trackFunnelEvent } from '@/services/analyticsService';
 import type { Order, PaymentMethod, ShippingAddress } from '@/types/order';
 import type { SavedCard } from '@/types';
 import { validateCoupon, incrementCouponUsage, calcDiscount } from '@/services/couponService';
@@ -43,7 +44,7 @@ import {
   getCartCampaignGifts,
 } from '@/services/campaignService';
 import type { CartCampaign } from '@/types';
-import type { Address, Coupon } from '@/types';
+import type { Address, AddressType, Coupon } from '@/types';
 import { cn } from '@/lib/utils';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { getAllShippingRates } from '@/services/cargoService';
@@ -76,6 +77,7 @@ export function CheckoutPage() {
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [saveAddress, setSaveAddress] = useState(false);
+  const [addressType, setAddressType] = useState<AddressType>('home');
   const [guestEmail, setGuestEmail] = useState('');
   const [accountPassword, setAccountPassword] = useState('');
   const [creatingAccount, setCreatingAccount] = useState(false);
@@ -105,6 +107,8 @@ export function CheckoutPage() {
   const cartGifts = getCartCampaignGifts(cartCampaigns);
   const [stockError, setStockError] = useState<string | null>(null);
   const [stockValidating, setStockValidating] = useState(false);
+  const paymentMethodInitRef = useRef(false);
+  const paymentMethodDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ─── iyzico callback handler (redirected back from iyzico payment page) ─────
   const [searchParams] = useSearchParams();
@@ -136,6 +140,19 @@ export function CheckoutPage() {
       window.history.replaceState({}, '', url.toString());
     }
   }, [clearCart, searchParams]);
+
+  // ─── Funnel event: checkout_started (once per session) ───────────────────
+  useEffect(() => {
+    if (sessionStorage.getItem('mcr_funnel_checkout_started')) return;
+    sessionStorage.setItem('mcr_funnel_checkout_started', '1');
+    trackFunnelEvent('checkout_started', {
+      cartItemCount: items.length,
+      subtotal,
+      userId: firebaseUser?.uid ?? null,
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [postcodeLookupLoading, setPostcodeLookupLoading] = useState(false);
@@ -315,6 +332,13 @@ export function CheckoutPage() {
   };
 
   const proceedToPayment = async () => {
+    // Funnel event: delivery_filled (step 1 → 2)
+    trackFunnelEvent('delivery_filled', {
+      hasGuestEmail: !!guestEmail,
+      country: address.country,
+      userId: firebaseUser?.uid ?? null,
+    }).catch(() => {});
+
     setIsFetchingIntent(true);
     try {
       const res = await fetch('/api/create-payment-intent', {
@@ -477,6 +501,15 @@ export function CheckoutPage() {
   };
 
   const handlePaymentSuccess = async (paymentIntentId: string) => {
+    // Funnel event: payment_completed
+    trackFunnelEvent('payment_completed', {
+      paymentMethod,
+      paymentIntentId,
+      subtotal: totals.subtotal,
+      currency,
+      userId: firebaseUser?.uid ?? null,
+    }).catch(() => {});
+
     const order = await processOrder('paid', paymentIntentId);
     if (order) {
       setConfirmedOrderId(order.id);
@@ -496,6 +529,28 @@ export function CheckoutPage() {
       });
     }
   }, [step, firebaseUser]);
+
+  // Funnel event: payment_method_selected (debounced, skip initial render)
+  useEffect(() => {
+    if (!paymentMethodInitRef.current) {
+      paymentMethodInitRef.current = true;
+      return;
+    }
+    if (!paymentMethod) return;
+
+    if (paymentMethodDebounceRef.current) clearTimeout(paymentMethodDebounceRef.current);
+    paymentMethodDebounceRef.current = setTimeout(() => {
+      trackFunnelEvent('payment_method_selected', {
+        paymentMethod,
+        hasSavedAddress: !!selectedAddressId,
+        userId: firebaseUser?.uid ?? null,
+      }).catch(() => {});
+    }, 600);
+    return () => {
+      if (paymentMethodDebounceRef.current) clearTimeout(paymentMethodDebounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentMethod]);
 
   const elementsOptions =
     clientSecret && !isMock
@@ -607,7 +662,9 @@ export function CheckoutPage() {
                       onToggleSaveAddress={() => setSaveAddress((s) => !s)}
                       savedAddresses={(user as any)?.addresses ?? []}
                       defaultAddressId={(user as any)?.defaultAddressId ?? ''}
-                      user={user}
+                      showSaveCheckbox={!!firebaseUser && !isAnonymous}
+                      addressType={addressType}
+                      onAddressTypeChange={setAddressType}
                     />
 
                     <button

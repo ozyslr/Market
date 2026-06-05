@@ -1,8 +1,8 @@
 import React from 'react';
-import type { Address } from '@/types';
+import type { Address, AddressType } from '@/types';
 import type { ShippingAddress } from '@/types/order';
 import { cn } from '@/lib/utils';
-import { MapPin, Search, Loader2, Plus, Check } from 'lucide-react';
+import { MapPin, Search, Loader2, Plus, Check, Home, Briefcase } from 'lucide-react';
 
 export interface AddressSelectorProps {
   address: ShippingAddress;
@@ -19,7 +19,9 @@ export interface AddressSelectorProps {
   onToggleSaveAddress: () => void;
   savedAddresses: Address[];
   defaultAddressId: string;
-  user: unknown;
+  showSaveCheckbox: boolean;
+  addressType?: AddressType;
+  onAddressTypeChange?: (type: AddressType) => void;
 }
 
 export function AddressSelector({
@@ -37,8 +39,17 @@ export function AddressSelector({
   onToggleSaveAddress,
   savedAddresses,
   defaultAddressId,
-  user,
+  showSaveCheckbox,
+  addressType = 'home',
+  onAddressTypeChange,
 }: AddressSelectorProps) {
+  const TYPE_CONFIG: Record<AddressType, { icon: typeof Home; label: string }> = {
+    home: { icon: Home, label: 'Ev' },
+    work: { icon: Briefcase, label: 'İş' },
+    other: { icon: MapPin, label: 'Diğer' },
+  };
+  const resolvedType = (addressType || 'home') as AddressType;
+
   return (
     <>
       {/* Saved Addresses */}
@@ -57,7 +68,7 @@ export function AddressSelector({
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {savedAddresses.map(addr => (
+            {savedAddresses.map((addr) => (
               <button
                 key={addr.id}
                 type="button"
@@ -77,6 +88,18 @@ export function AddressSelector({
                 <div className="flex items-center gap-1.5 mb-1">
                   <MapPin size={10} className="text-accent shrink-0" />
                   <span className="font-black text-[#1A1033] text-[11px]">{addr.label}</span>
+                  {/* Address type badge */}
+                  {(() => {
+                    const t = (addr.type || 'home') as AddressType;
+                    const cfg = TYPE_CONFIG[t];
+                    const Icon = cfg.icon;
+                    return (
+                      <span className="text-[9px] bg-[#1A1033]/5 px-1.5 py-0.5 rounded-full flex items-center gap-0.5 font-medium text-[#1A1033]/50">
+                        <Icon size={9} />
+                        {cfg.label}
+                      </span>
+                    );
+                  })()}
                   {addr.id === defaultAddressId && (
                     <span className="ms-1 text-[8px] font-black uppercase tracking-widest bg-accent/10 text-accent px-1.5 py-0.5 rounded-full">
                       Varsayılan
@@ -102,6 +125,31 @@ export function AddressSelector({
             </p>
           )}
 
+          {/* Address type selector chips */}
+          <div className="flex gap-2">
+            {(['home', 'work', 'other'] as AddressType[]).map((t) => {
+              const cfg = TYPE_CONFIG[t];
+              const Icon = cfg.icon;
+              const active = resolvedType === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => onAddressTypeChange?.(t)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors',
+                    active
+                      ? 'bg-accent text-white'
+                      : 'bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/5',
+                  )}
+                >
+                  <Icon size={12} />
+                  {cfg.label}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-bold text-[#1A1033] uppercase tracking-widest mb-2">
@@ -110,8 +158,9 @@ export function AddressSelector({
               <input
                 required
                 type="text"
+                autoComplete="name"
                 value={address.fullName}
-                onChange={e => onAddressChange({ fullName: e.target.value })}
+                onChange={(e) => onAddressChange({ fullName: e.target.value })}
                 className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none"
               />
             </div>
@@ -122,8 +171,9 @@ export function AddressSelector({
               <input
                 required
                 type="tel"
+                autoComplete="tel"
                 value={address.phone}
-                onChange={e => onAddressChange({ phone: e.target.value })}
+                onChange={(e) => onAddressChange({ phone: e.target.value })}
                 className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none"
               />
             </div>
@@ -136,8 +186,9 @@ export function AddressSelector({
             <input
               required
               type="text"
+              autoComplete="address-line1"
               value={address.line1}
-              onChange={e => onAddressChange({ line1: e.target.value })}
+              onChange={(e) => onAddressChange({ line1: e.target.value })}
               placeholder="123 Node Ave"
               className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none"
             />
@@ -152,8 +203,9 @@ export function AddressSelector({
               <input
                 required
                 type="text"
+                autoComplete="postal-code"
                 value={address.postalCode}
-                onChange={e => {
+                onChange={(e) => {
                   onAddressChange({ postalCode: e.target.value });
                   onPostcodeErrorClear();
                 }}
@@ -191,8 +243,9 @@ export function AddressSelector({
               <input
                 required
                 type="text"
+                autoComplete="address-level2"
                 value={address.city}
-                onChange={e => onAddressChange({ city: e.target.value })}
+                onChange={(e) => onAddressChange({ city: e.target.value })}
                 className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none"
               />
             </div>
@@ -202,15 +255,16 @@ export function AddressSelector({
               </label>
               <input
                 type="text"
+                autoComplete="address-level1"
                 value={address.state}
-                onChange={e => onAddressChange({ state: e.target.value })}
+                onChange={(e) => onAddressChange({ state: e.target.value })}
                 className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none"
               />
             </div>
           </div>
 
           {/* Save address checkbox */}
-          {!!user && (
+          {showSaveCheckbox && (
             <label className="flex items-center gap-3 cursor-pointer group">
               <div
                 onClick={onToggleSaveAddress}

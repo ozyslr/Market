@@ -20,6 +20,9 @@ export type UserRole = 'buyer' | 'seller' | 'admin' | 'moderator';
 
 export type AdminRole = 'super-admin' | 'support' | 'finance';
 
+/** Address type label for home/work/other classification. */
+export type AddressType = 'home' | 'work' | 'other';
+
 export interface Address {
   id: string;
   label: string;
@@ -31,6 +34,8 @@ export interface Address {
   postalCode: string;
   country: string;
   phone: string;
+  /** Address classification — defaults to 'home' when absent. */
+  type?: AddressType;
 }
 
 export interface User {
