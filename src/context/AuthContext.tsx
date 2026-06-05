@@ -12,7 +12,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { UserProfile, UserRole } from '../types';
+import { UserProfile, UserRole, AdminRole } from '../types';
 import { notifyAdmins } from '../services/notificationService';
 
 interface AuthContextType {
@@ -20,6 +20,7 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   isAnonymous: boolean;
   loading: boolean;
+  adminRole: AdminRole | null;
   login: () => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmail: (email: string, name: string, password: string) => Promise<void>;
@@ -33,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
 
   const isAnonymous = firebaseUser?.isAnonymous ?? false;
 
@@ -42,9 +44,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (fUser) {
         if (fUser.isAnonymous) {
           setUser(null);
+          setAdminRole(null);
           setLoading(false);
           return;
         }
+        let resolvedUser: UserProfile | null = null;
         try {
           const userDoc = await getDoc(doc(db, 'users', fUser.uid));
           if (userDoc.exists()) {
@@ -53,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (fUser.photoURL && !userData.photoURL) {
               userData.photoURL = fUser.photoURL;
             }
+            resolvedUser = userData;
             setUser(userData);
           } else {
             // Initialize new user profile
@@ -76,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               },
             };
             await setDoc(doc(db, 'users', fUser.uid), newUser);
+            resolvedUser = newUser;
             setUser(newUser);
             notifyAdmins(
               'admin_alert',
@@ -84,12 +90,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               '/admin',
             ).catch(() => {});
           }
+          // Read adminRole from Firebase custom claims
+          try {
+            const idTokenResult = await fUser.getIdTokenResult();
+            const claims = idTokenResult.claims;
+            // Role claim takes precedence over profile-derived role (avoid regressions)
+            if (claims.role && resolvedUser && claims.role !== resolvedUser.role) {
+              resolvedUser.role = claims.role as UserRole;
+              setUser({ ...resolvedUser });
+            }
+            setAdminRole((claims.adminRole as AdminRole) || null);
+          } catch (claimErr) {
+            console.error('Error reading token claims:', claimErr);
+            setAdminRole(null);
+          }
         } catch (error) {
           console.error('Error fetching user profile:', error);
           handleFirestoreError(error, OperationType.WRITE, `users/${fUser?.uid}`);
         }
       } else {
         setUser(null);
+        setAdminRole(null);
         signInAnonymously(auth).catch(() => setLoading(false));
         return;
       }
@@ -147,6 +168,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (snap.exists()) {
       setUser({ id: snap.id, ...snap.data() } as UserProfile);
     }
+    // Refresh adminRole from claims as well
+    try {
+      const idTokenResult = await auth.currentUser.getIdTokenResult();
+      setAdminRole((idTokenResult.claims.adminRole as AdminRole) || null);
+    } catch (claimErr) {
+      console.error('Error refreshing token claims:', claimErr);
+    }
   };
 
   return (
@@ -156,6 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         firebaseUser,
         isAnonymous,
         loading,
+        adminRole,
         login,
         loginWithEmail,
         registerWithEmail,
