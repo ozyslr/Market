@@ -2,14 +2,16 @@
  * Bootstrap Admin Claims — one-time script
  *
  * Sets role=admin + adminRole=super-admin custom claims for the owner.
- * Run: node scripts/bootstrap-admin-claims.mjs <UID>
+ * Run: npx tsx scripts/bootstrap-admin-claims.mjs <UID>
+ *
+ * Requires FIREBASE_SERVICE_ACCOUNT_B64 env var in .env file.
  *
  * This is needed because Firestore rules isAdmin() reads from
  * custom claims (request.auth.token.role), not the Firestore profile.
  * Without custom claims, all admin Firestore operations are denied.
  */
 
-import { adminAuth } from '../src/lib/firebase-admin.js';
+import { adminAuth } from '../src/lib/firebase-admin.ts';
 
 async function main() {
   const uid = process.argv[2];
