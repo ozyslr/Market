@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilize & Sharpen
-status: planning
-stopped_at: v1.1 milestone defined — ready to plan Phase 8
-last_updated: '2026-06-05T00:00:00.000Z'
-last_activity: 2026-06-05 -- v1.1 milestone created (requirements + roadmap)
+status: executing
+stopped_at: Phase 8 Plan 01 complete — AdminRole + requireAdminRole + verifyAdmin audit done
+last_updated: '2026-06-05T12:00:00.000Z'
+last_activity: 2026-06-05 -- Phase 8 Plan 01 executed (3 commits, 5 tests, 0 deviations)
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 1
+  completed_plans: 1
+  percent: 6
 ---
 
 # Project State
@@ -26,19 +26,19 @@ See: .planning/PROJECT.md (updated 2026-06-02)
 ## Current Position
 
 Milestone: v1.1 — Stabilize & Sharpen (4 phases, 8–11; 17 requirements)
-Phase: 8 (Admin Access Control) — NOT STARTED
-Status: Milestone defined (REQUIREMENTS.md + ROADMAP.md written). Next: `/gsd-plan-phase 8`.
+Phase: 8 (Admin Access Control) — Plan 01 COMPLETE
+Status: AdminRole type, requireAdminRole middleware, set-claims adminRole persistence, and admin endpoint authz audit all done. Next: Phase 8 Plan 02 (ADM-01 client guard + ADM-03 audit log).
 Scope: Phase 8 Admin Access Control (ADM) · Phase 9 Performance (PERF) · Phase 10 Seller Add-Flow UX (SLR) · Phase 11 Purchase Funnel & Guest Checkout (BUY).
 Carried from v1.0: live UAT debt is folded into BUY-05 (Phase 11). v2 deferrals: multi-currency, Typesense, cross-border.
-Last activity: 2026-06-05 -- v1.1 milestone created
+Last activity: 2026-06-05 -- Phase 8 Plan 01 complete
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 6% (1/17 requirements addressed)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: N/A
 - Total execution time: N/A
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 | 6. Multi-Currency            | 0     | N/A   | N/A      |
 | 7. Reviews & Trust           | 0     | N/A   | N/A      |
 | 05                           | 6     | -     | -        |
+| 08-admin-access-control      | 1     | 12min | 12min    |
 
 **Recent Trend:**
 
@@ -61,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: N/A
 
 _Updated after each plan completion_
+| Phase 08-admin-access-control P08-01 | 12min | 2 tasks | 5 files |
 | Phase 05-shipping-fulfillment P05-01 | 30m | 2 tasks | 3 files |
 | Phase 05-shipping-fulfillment P05-05 | 20min | 2 tasks | 2 files |
 | Phase 05-shipping-fulfillment P06 | 35 | 2 tasks | 3 files |
@@ -72,6 +74,10 @@ _Updated after each plan completion_
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- D-ADM-01: AdminRole enum (super-admin | support | finance) stored in Firebase custom claims
+- D-ADM-02: Non-admin hitting /admin/\* redirected to home with toast notice
+- D-ADM-03: Audit-log entries required for KYC, refunds/payouts, role changes, bans, data-deletion, content edits
+- D-ADM-04: Every admin API endpoint must pass through verifyAdmin (confirmed audited — no gaps found)
 - D-04: KYC documents stored as storagePath in Firestore, never public URLs; 5-min signed URLs for admin viewing
 - D-05: Stripe Identity auto-verification (doc + selfie) for all sellers; result via webhook
 - D-06: 3-doc gate — Submit disabled until identity/tax_certificate/bank_iban all uploaded
@@ -102,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-04T21:32:32.084Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-reviews-trust/07-CONTEXT.md
+Last session: 2026-06-05T12:00:00.000Z
+Stopped at: Phase 8 Plan 01 complete — AdminRole + requireAdminRole + verifyAdmin audit done
+Resume file: .planning/phases/08-admin-access-control/08-01-SUMMARY.md
