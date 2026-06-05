@@ -14,6 +14,9 @@ import {
   RotateCw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { CategorySelect } from './CategorySelect';
 import { cn } from '../../lib/utils';
 import { uploadImage } from '../../lib/storage';
@@ -92,9 +95,81 @@ interface ProductFormProps {
   isOpen: boolean;
 }
 
+interface UploadFileState {
+  id: string;
+  name: string;
+  preview: string;
+  progress: number;
+  error: string | null;
+}
+
+// ── SortableImage sub-component ──────────────────────────────────────────────
+
+function SortableImage({
+  id,
+  url,
+  index,
+  onRemove,
+}: {
+  id: string;
+  url: string;
+  index: number;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : 'auto',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative aspect-square rounded-lg overflow-hidden bg-zinc-800 group"
+    >
+      {/* Drag handle — visible on hover (desktop only) */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute top-1 left-1 z-10 cursor-grab active:cursor-grabbing p-1 rounded bg-black/50 text-zinc-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity touch-none"
+        title="Sürükleyerek sırala"
+      >
+        <GripVertical size={14} />
+      </div>
+      <img
+        src={url}
+        alt={`Ürün görseli ${index + 1}`}
+        className="w-full h-full object-cover"
+        loading="lazy"
+      />
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="absolute top-1 end-1 bg-red-600/80 hover:bg-red-600 rounded-full p-1 z-10"
+        title="Görseli kaldır"
+      >
+        <Trash2 size={10} className="text-white" />
+      </button>
+      {/* Order badge */}
+      <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded z-10">
+        {index + 1}
+      </span>
+    </div>
+  );
+}
+
+// ── Main ProductForm component ───────────────────────────────────────────────
+
 export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormProps) {
   const [form, setForm] = useState<ProductFormData>({ ...EMPTY_FORM, ...initial });
-  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [specKey, setSpecKey] = useState('');
@@ -103,23 +178,176 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [quickAdd, setQuickAdd] = useState(true);
+  const [uploadFiles, setUploadFiles] = useState<UploadFileState[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const fileMapRef = useRef<Map<string, File>>(new Map());
+
+  // dnd-kit sensors: PointerSensor with distance constraint for touch safety
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  const isUploading = uploadFiles.length > 0;
+
+  // Revoke blob URLs on unmount / when uploadFiles change
+  useEffect(() => {
+    const currentPreviews = uploadFiles.map((f) => f.preview);
+    return () => {
+      currentPreviews.forEach((url) => {
+        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+      });
+    };
+  }, [uploadFiles]);
 
   function update<K extends keyof ProductFormData>(key: K, val: ProductFormData[K]) {
     setForm((prev) => ({ ...prev, [key]: val }));
   }
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []) as File[];
-    if (!files.length) return;
-    setUploading(true);
-    try {
-      const urls = await Promise.all(files.map((f) => uploadImage(f, 'products')));
-      update('images', [...form.images, ...urls]);
-    } finally {
-      setUploading(false);
+  // ── Multi-file upload with per-file progress ──────────────────────────────
+
+  const handleImageUpload = useCallback(
+    async (filesInput: FileList | File[]) => {
+      const fileArray = Array.from(filesInput) as File[];
+      if (!fileArray.length) return;
+
+      // Reset the file input value so re-selecting the same files works
+      if (fileRef.current) fileRef.current.value = '';
+
+      // Create upload entries with blob preview URLs
+      const entries: UploadFileState[] = fileArray.map((file, i) => {
+        const id = `upload-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`;
+        fileMapRef.current.set(id, file);
+        return {
+          id,
+          name: file.name,
+          preview: URL.createObjectURL(file),
+          progress: 0,
+          error: null,
+        };
+      });
+
+      setUploadFiles((prev) => [...prev, ...entries]);
+
+      // Track which entries were completed successfully
+      const completedUrls: string[] = [];
+
+      // Upload in parallel, tracking per-file progress
+      await Promise.allSettled(
+        entries.map(async (entry) => {
+          const file = fileMapRef.current.get(entry.id);
+          if (!file) return;
+
+          // Simulated progress: incremental updates to 90%, then jump to 100% on completion
+          const progressInterval = setInterval(() => {
+            setUploadFiles((prev) =>
+              prev.map((f) =>
+                f.id === entry.id && f.progress < 85
+                  ? { ...f, progress: f.progress + Math.random() * 12 + 3 }
+                  : f,
+              ),
+            );
+          }, 250);
+
+          try {
+            const url = await uploadImage(file, 'products');
+            clearInterval(progressInterval);
+            setUploadFiles((prev) =>
+              prev.map((f) => (f.id === entry.id ? { ...f, progress: 100 } : f)),
+            );
+            completedUrls.push(url);
+            fileMapRef.current.delete(entry.id);
+            // Revoke the blob preview since we have the real URL
+            URL.revokeObjectURL(entry.preview);
+          } catch (err: any) {
+            clearInterval(progressInterval);
+            setUploadFiles((prev) =>
+              prev.map((f) =>
+                f.id === entry.id
+                  ? { ...f, progress: 0, error: err?.message || 'Yükleme hatası' }
+                  : f,
+              ),
+            );
+          }
+        }),
+      );
+
+      // Push completed URLs to form.images
+      if (completedUrls.length > 0) {
+        setForm((prev) => ({ ...prev, images: [...prev.images, ...completedUrls] }));
+      }
+
+      // Remove successfully uploaded entries from the queue (keep failed ones)
+      setUploadFiles((prev) => prev.filter((f) => f.error !== null));
+    },
+    [], // no deps: uses functional state setters
+  );
+
+  // ── Retry a failed upload ─────────────────────────────────────────────────
+
+  function retryUpload(entryId: string) {
+    const file = fileMapRef.current.get(entryId);
+    if (!file) {
+      // File no longer available — remove the entry
+      setUploadFiles((prev) => prev.filter((f) => f.id !== entryId));
+      return;
+    }
+    handleImageUpload([file]);
+    // Remove the old failed entry
+    setUploadFiles((prev) => {
+      const entry = prev.find((f) => f.id === entryId);
+      if (entry?.preview) URL.revokeObjectURL(entry.preview);
+      return prev.filter((f) => f.id !== entryId);
+    });
+  }
+
+  // ── Handle file input change ──────────────────────────────────────────────
+
+  function onFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files.length > 0) {
+      handleImageUpload(e.target.files);
     }
   }
+
+  // ── dnd-kit drag end handler ──────────────────────────────────────────────
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    // Extract indices from sortable IDs ("img-0", "img-1", …)
+    const oldIndex = parseInt(String(active.id).replace('img-', ''), 10);
+    const newIndex = parseInt(String(over.id).replace('img-', ''), 10);
+    if (isNaN(oldIndex) || isNaN(newIndex)) return;
+
+    setForm((prev) => ({
+      ...prev,
+      images: arrayMove(prev.images, oldIndex, newIndex),
+    }));
+  }
+
+  // ── Drop zone handlers ────────────────────────────────────────────────────
+
+  function onDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }
+
+  function onDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleImageUpload(e.dataTransfer.files);
+    }
+  }
+
+  // ── Existing helpers ──────────────────────────────────────────────────────
 
   function addTag() {
     const t = tagInput.trim();
@@ -376,7 +604,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             </div>
           </section>
 
-          {/* 3 — Görseller */}
+          {/* 3 — Görseller (with dnd-kit sortable + drop zone) */}
           <section>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
@@ -416,45 +644,152 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Drop zone wrapper */}
             <div
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onDrop={onDrop}
+              onClick={() => fileRef.current?.click()}
               className={cn(
-                'grid grid-cols-3 max-sm:grid-cols-3 gap-3 mb-3 rounded-lg',
-                errors.images ? 'border border-red-300 p-2' : '',
+                'rounded-lg border-2 border-dashed transition-all cursor-pointer',
+                isDragOver
+                  ? 'border-blue-400 bg-blue-500/10 shadow-[0_0_12px_rgba(59,130,246,0.3)]'
+                  : 'border-zinc-600 hover:border-emerald-500',
+                errors.images ? 'border-red-300' : '',
               )}
             >
-              {form.images.map((url, i) => (
-                <div
-                  key={i}
-                  className="relative aspect-square rounded-lg overflow-hidden bg-zinc-800"
-                >
-                  <img
-                    src={url}
-                    alt="Ürün görseli"
-                    className="w-full h-full object-cover"
-                    loading="lazy"
+              {/* Empty state: show upload prompt when no images and no uploads in progress */}
+              {form.images.length === 0 && uploadFiles.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                  <Upload
+                    size={32}
+                    className={cn(
+                      'mb-3 transition-colors',
+                      isDragOver ? 'text-blue-400' : 'text-zinc-500',
+                    )}
                   />
-                  <button
-                    onClick={() =>
-                      update(
-                        'images',
-                        form.images.filter((_, j) => j !== i),
-                      )
-                    }
-                    className="absolute top-1 end-1 bg-red-600/80 hover:bg-red-600 rounded-full p-1"
-                  >
-                    <Trash2 size={10} className="text-white" />
-                  </button>
+                  <p className="text-sm text-zinc-400 mb-1">
+                    Resimleri sürükleyip bırakın veya seçmek için tıklayın
+                  </p>
+                  <p className="text-xs text-zinc-600">PNG, JPG, WEBP — en az 1 görsel gerekli</p>
                 </div>
-              ))}
-              <button
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-                className="aspect-square max-sm:min-h-[120px] rounded-lg border-2 border-dashed border-zinc-600 hover:border-emerald-500 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-emerald-400 transition-colors disabled:opacity-50"
-              >
-                <Upload size={20} />
-                <span className="text-xs">{uploading ? 'Yükleniyor...' : 'Görsel Ekle'}</span>
-              </button>
+              ) : (
+                /* Image grid with dnd-kit sortable */
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={undefined}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={form.images.map((_, i) => `img-${i}`)}
+                    strategy={rectSortingStrategy}
+                  >
+                    <div
+                      className="grid grid-cols-3 max-sm:grid-cols-3 gap-3 p-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Completed images — sortable */}
+                      {form.images.map((url, i) => (
+                        <SortableImage
+                          key={`img-${i}`}
+                          id={`img-${i}`}
+                          url={url}
+                          index={i}
+                          onRemove={() =>
+                            update(
+                              'images',
+                              form.images.filter((_, j) => j !== i),
+                            )
+                          }
+                        />
+                      ))}
+
+                      {/* Uploading / failed entries — not sortable, show progress */}
+                      {uploadFiles.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className={cn(
+                            'relative aspect-square rounded-lg overflow-hidden bg-zinc-800',
+                            entry.error && 'ring-2 ring-red-500',
+                          )}
+                        >
+                          <img
+                            src={entry.preview}
+                            alt={entry.name}
+                            className="w-full h-full object-cover"
+                          />
+                          {/* Progress bar overlay (uploading) */}
+                          {!entry.error && entry.progress < 100 && (
+                            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-2">
+                              <Loader2 size={20} className="animate-spin text-blue-400" />
+                              <span className="text-xs text-white">
+                                {Math.round(entry.progress)}%
+                              </span>
+                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-zinc-700">
+                                <div
+                                  className="h-full bg-blue-500 transition-all duration-300 ease-out"
+                                  style={{ width: `${entry.progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                          {/* Error state */}
+                          {entry.error && (
+                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-1.5 p-2">
+                              <AlertCircle size={16} className="text-red-400" />
+                              <span className="text-[10px] text-red-400 text-center leading-tight">
+                                {entry.error}
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  retryUpload(entry.id);
+                                }}
+                                className="flex items-center gap-1 px-2 py-1 bg-red-600/80 hover:bg-red-600 rounded text-[10px] text-white"
+                              >
+                                <RotateCw size={10} />
+                                Tekrar Dene
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Add more button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          fileRef.current?.click();
+                        }}
+                        disabled={isUploading}
+                        className="aspect-square max-sm:min-h-[120px] rounded-lg border-2 border-dashed border-zinc-600 hover:border-emerald-500 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-emerald-400 transition-colors disabled:opacity-50 bg-zinc-800/50"
+                      >
+                        <Upload size={20} />
+                        <span className="text-xs">
+                          {isUploading ? 'Yükleniyor...' : 'Görsel Ekle'}
+                        </span>
+                      </button>
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
+
+              {/* Drop zone hint bar (shown when images exist but not actively dragging) */}
+              {form.images.length > 0 && !isDragOver && (
+                <div className="border-t border-zinc-700/50 px-3 py-2 flex items-center gap-2 text-xs text-zinc-500">
+                  <Upload size={12} />
+                  <span>Resimleri sürükleyip bırakın veya sıralamak için tutup sürükleyin</span>
+                </div>
+              )}
+              {isDragOver && form.images.length > 0 && (
+                <div className="border-t border-blue-400/50 px-3 py-2 flex items-center gap-2 text-xs text-blue-400 bg-blue-500/5">
+                  <Upload size={12} />
+                  <span>Resimleri buraya bırakın</span>
+                </div>
+              )}
             </div>
+
             <input
               ref={fileRef}
               type="file"
@@ -462,7 +797,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
               accept="image/*"
               capture="environment"
               className="hidden"
-              onChange={handleImageUpload}
+              onChange={onFileInputChange}
             />
             {errors.images && (
               <p className="text-sm text-red-600 mt-1">At least 1 product photo is required</p>
@@ -914,24 +1249,6 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg disabled:opacity-50"
           >
             {saving ? 'Kaydediliyor...' : quickAdd ? 'Hızlıca Yayınla' : 'Kaydet'}
-          </button>
-        </div>
-
-        {/* Mobile sticky save bar — fixed at viewport bottom */}
-        <div className="fixed bottom-0 left-0 right-0 z-[60] bg-zinc-900 border-t border-zinc-700 px-4 py-3 flex gap-3 max-sm:block hidden shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
-          <button
-            onClick={() => handleSubmit('draft')}
-            disabled={saving}
-            className="flex-1 py-3 bg-zinc-700 hover:bg-zinc-600 active:bg-zinc-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
-          >
-            {quickAdd ? 'Taslak Kaydet' : 'Taslak'}
-          </button>
-          <button
-            onClick={() => handleSubmit('publish')}
-            disabled={saving || !form.title || !form.price || !form.categoryId}
-            className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-400 text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-colors"
-          >
-            {saving ? 'Kaydediliyor...' : quickAdd ? 'Hızlıca Yayınla' : 'Yayınla'}
           </button>
         </div>
       </div>
