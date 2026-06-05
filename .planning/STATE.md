@@ -4,13 +4,13 @@ milestone: v1.1
 milestone_name: Stabilize & Sharpen
 status: completed
 stopped_at: Phase 9 Plan 01 complete — manualChunks vendor splitting + CI bundle budget check (PERF-01)
-last_updated: '2026-06-05T16:22:42.749Z'
+last_updated: '2026-06-05T18:22:28.232Z'
 last_activity: '2026-06-05 -- Phase 9 Plan 01 complete (PERF-01: bundle splitting + budget CI)'
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 11
+  completed_plans: 8
   percent: 50
 ---
 
@@ -32,7 +32,7 @@ Scope: Phase 8 Admin Access Control (ADM) · Phase 9 Performance (PERF) · Phase
 Carried from v1.0: live UAT debt is folded into BUY-05 (Phase 11). v2 deferrals: multi-currency, Typesense, cross-border.
 Last activity: 2026-06-05 -- Phase 9 Plan 01 complete (PERF-01: bundle splitting + budget CI)
 
-Progress: [██████████] 100%
+Progress: [███████░░░] 73%
 
 ## Performance Metrics
 
@@ -71,6 +71,7 @@ _Updated after each plan completion_
 | Phase 05-shipping-fulfillment P05-01 | 30m | 2 tasks | 3 files |
 | Phase 05-shipping-fulfillment P05-05 | 20min | 2 tasks | 2 files |
 | Phase 05-shipping-fulfillment P06 | 35 | 2 tasks | 3 files |
+| Phase 10-seller-add-flow-ux P01 | 120s | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,7 @@ Recent decisions affecting current work:
 - D-01/D-02: EU sellers → Stripe Connect Express provisioned idempotently on admin approval
 - D-03: TR sellers → Iyzico subMerchantCreate idempotently on admin approval
 - D-PERF-04: OptimizedImage srcSet with 3 breakpoints; WebP audit script; Firebase Image Processing extension documented (forward-compatible until enabled)
+- [Phase ?]: D-SLR-01: Quick-add toggle reduces 25+ field form to 6 essential fields (title, categoryId, price, stock, images, description); hidden fields inherit EMPTY_FORM defaults
 
 ### Pending Todos
 
@@ -114,6 +116,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-05T16:22:42.735Z
+Last session: 2026-06-05T18:22:28.217Z
 Stopped at: Phase 9 Plan 01 complete — manualChunks vendor splitting + CI bundle budget check (PERF-01)
 Resume file: None

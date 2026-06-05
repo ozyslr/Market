@@ -22,7 +22,7 @@
 
 ### Satıcı Ekleme UX (SLR)
 
-- [ ] **SLR-01**: Hızlı-ekle / adımlı ürün oluşturma modu (azaltılmış-alan hızlı yol)
+- [x] **SLR-01**: Hızlı-ekle / adımlı ürün oluşturma modu (azaltılmış-alan hızlı yol)
 - [ ] **SLR-02**: Mobil-optimize ürün formu ergonomisi
 - [ ] **SLR-03**: Toplu görsel yükleme + sürükle-sırala (ürün formunda)
 - [ ] **SLR-04**: İlk-listeleme süresi ölçümü (satıcı onboarding hunisi)
@@ -61,7 +61,7 @@
 | PERF-02     | Phase 9  | Complete |
 | PERF-03     | Phase 9  | Complete |
 | PERF-04     | Phase 9  | Complete |
-| SLR-01      | Phase 10 | Pending  |
+| SLR-01      | Phase 10 | Complete |
 | SLR-02      | Phase 10 | Pending  |
 | SLR-03      | Phase 10 | Pending  |
 | SLR-04      | Phase 10 | Pending  |
