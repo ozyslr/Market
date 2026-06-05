@@ -15,13 +15,15 @@ Satıcıların kendi mağazalarını KYC onayıyla açabildiği ve müşterileri
 - **Carried tech debt:** live UAT sign-off (payments/3DS, shipping, reviews photo + Q&A UI) and a deeper E2E pass — see `.planning/v1.0-MILESTONE-AUDIT.md`.
 - Archive: `.planning/milestones/v1.0-ROADMAP.md` · `.planning/milestones/v1.0-REQUIREMENTS.md`.
 
-## Next Milestone Goals (v2 candidates)
+## Active Milestone — v1.1: Stabilize & Sharpen (started 2026-06-05)
+
+Harden v1.0 for production rather than ship new big features. 17 requirements across 4 phases (8–11): **Admin Access Control** (route guard + granular roles + audit), **Performance** (manualChunks + Lighthouse budget + image/CDN), **Seller Add-Flow UX** (quick-add/mobile/bulk images), **Purchase Funnel & Guest Checkout** (guest E2E + address book + express wallets + funnel analytics + v1.0 UAT closure). See `.planning/REQUIREMENTS.md`, `.planning/ROADMAP.md`, and `.planning/research/vNext-current-state-report.md`. Start execution with `/gsd-plan-phase 8`.
+
+## Deferred to v2
 
 - **Multi-Currency** (CUR-01..04): EUR display, FX rate-locking at checkout, TRY/EUR toggle; Trendyol-style per-country currency + localized routing (`/en`).
 - **Typesense search** (SRC-01 typo-tolerant full-text, SRC-05 event-driven index) when catalog scale demands it.
 - **Cross-Border Compliance** (CROSS-01..04): HS codes, customs docs, total landed cost, EU GPSR labels.
-
-Start with `/gsd-new-milestone` to define fresh requirements + roadmap.
 
 ## Requirements
 

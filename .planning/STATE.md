@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: milestone-complete
-stopped_at: v1.0 shipped (tech debt — live UAT pending)
+milestone: v1.1
+milestone_name: Stabilize & Sharpen
+status: planning
+stopped_at: v1.1 milestone defined — ready to plan Phase 8
 last_updated: '2026-06-05T00:00:00.000Z'
-last_activity: 2026-06-05 -- v1.0 milestone archived + tagged
+last_activity: 2026-06-05 -- v1.1 milestone created (requirements + roadmap)
 progress:
-  total_phases: 8
-  completed_phases: 4
-  total_plans: 27
-  completed_plans: 19
-  percent: 50
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,17 +21,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-02)
 
 **Core value:** Saticilarin KYC onayiyla magaza acabildigi ve musterilerin guvenli alisveris yapabildigi eksiksiz pazar yeri deneyimi
-**Current focus:** Phase 07 complete — milestone v1.0 reached (Phase 08 deferred to v2)
+**Current focus:** Milestone v1.1 (Stabilize & Sharpen) — ready to plan Phase 8 (Admin Access Control)
 
 ## Current Position
 
-Phase: 07 (reviews-trust) — COMPLETE (code-complete + verified; 2 UAT checkpoints pending)
-Plan: 4 of 4 (all plans have SUMMARY + complete)
-Plans: 07-01..07-04 all complete. firestore.rules DEPLOYED 2026-06-05. Pending manual UAT: 07-02 photo UX + 07-04 Q&A flow (blocking human-verify checkpoints deferred by user).
-Status: Phase 07 verified (PASS). Phase 08 (cross-border compliance) deferred to v2 → milestone v1.0 functionally complete.
-Last activity: 2026-06-05 -- Phase 07 executed (12 commits), verified, rules deployed
+Milestone: v1.1 — Stabilize & Sharpen (4 phases, 8–11; 17 requirements)
+Phase: 8 (Admin Access Control) — NOT STARTED
+Status: Milestone defined (REQUIREMENTS.md + ROADMAP.md written). Next: `/gsd-plan-phase 8`.
+Scope: Phase 8 Admin Access Control (ADM) · Phase 9 Performance (PERF) · Phase 10 Seller Add-Flow UX (SLR) · Phase 11 Purchase Funnel & Guest Checkout (BUY).
+Carried from v1.0: live UAT debt is folded into BUY-05 (Phase 11). v2 deferrals: multi-currency, Typesense, cross-border.
+Last activity: 2026-06-05 -- v1.1 milestone created
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
