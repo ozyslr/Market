@@ -8,6 +8,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   onSnapshot,
   writeBatch,
 } from 'firebase/firestore';
@@ -31,10 +32,15 @@ export function subscribeOrdersBySeller(
   onOrders: (orders: Order[]) => void,
   onError?: (error: Error) => void,
 ): Unsubscribe {
+  // NOTE: array-contains + orderBy requires a composite index on
+  // sellerIds + createdAt. This index is not yet in firestore.indexes.json —
+  // add if seller order queries are slow. For now Firestore auto-creates
+  // single-field indexes for array-contains, so basic filtering works.
   const q = query(
     collection(db, ORDERS_COLLECTION),
     where('sellerIds', 'array-contains', sellerId),
     orderBy('createdAt', 'desc'),
+    limit(50),
   );
 
   return onSnapshot(
@@ -59,7 +65,7 @@ export function subscribeAllOrders(
   onOrders: (orders: Order[]) => void,
   onError?: (error: Error) => void,
 ): Unsubscribe {
-  const q = query(collection(db, ORDERS_COLLECTION), orderBy('createdAt', 'desc'));
+  const q = query(collection(db, ORDERS_COLLECTION), orderBy('createdAt', 'desc'), limit(50));
 
   return onSnapshot(
     q,
@@ -88,6 +94,7 @@ export function subscribeOrdersByUser(
     collection(db, ORDERS_COLLECTION),
     where('userId', '==', userId),
     orderBy('createdAt', 'desc'),
+    limit(50),
   );
 
   return onSnapshot(

@@ -61,12 +61,16 @@ export async function submitReview(payload: SubmitReviewPayload): Promise<Review
 
 export async function getReviewsByProduct(productId: string): Promise<Review[]> {
   try {
-    const q = query(collection(db, REVIEWS_COLLECTION), where('productId', '==', productId));
+    const q = query(
+      collection(db, REVIEWS_COLLECTION),
+      where('productId', '==', productId),
+      orderBy('createdAt', 'desc'),
+      limit(50),
+    );
     const snap = await getDocs(q);
     return snap.docs
       .map((d) => ({ id: d.id, ...d.data() }) as Review)
-      .filter((r) => r.status === 'approved')
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      .filter((r) => r.status === 'approved');
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, REVIEWS_COLLECTION);
     return [];
@@ -77,14 +81,18 @@ export function subscribeToProductReviews(
   productId: string,
   callback: (reviews: Review[]) => void,
 ): () => void {
-  const q = query(collection(db, REVIEWS_COLLECTION), where('productId', '==', productId));
+  const q = query(
+    collection(db, REVIEWS_COLLECTION),
+    where('productId', '==', productId),
+    orderBy('createdAt', 'desc'),
+    limit(50),
+  );
   return onSnapshot(
     q,
     (snap) => {
       const reviews = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }) as Review)
-        .filter((r) => r.status === 'approved')
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        .filter((r) => r.status === 'approved');
       callback(reviews);
     },
     () => callback([]),

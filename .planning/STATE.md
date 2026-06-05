@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilize & Sharpen
-status: completed
-stopped_at: Phase 8 Plan 02 complete — AdminRoute + AuthContext adminRole + sidebar sub-role gating
-last_updated: '2026-06-05T12:53:50.266Z'
-last_activity: 2026-06-05 -- Phase 8 Plan 02 complete
+status: in-progress
+stopped_at: Phase 9 Plan 03 complete — OptimizedImage srcSet + image optimization script + Firebase docs
+last_updated: "2026-06-05T16:12:56.881Z"
+last_activity: 2026-06-05 -- Phase 9 Plan 03 complete (PERF-03: responsive images)
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 25
+  total_plans: 7
+  completed_plans: 5
+  percent: 57
 ---
 
 # Project State
@@ -21,18 +21,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-02)
 
 **Core value:** Saticilarin KYC onayiyla magaza acabildigi ve musterilerin guvenli alisveris yapabildigi eksiksiz pazar yeri deneyimi
-**Current focus:** Milestone v1.1 (Stabilize & Sharpen) — ready to plan Phase 8 (Admin Access Control)
+**Current focus:** Milestone v1.1 (Stabilize & Sharpen) — Phase 9 Performance (PERF) in progress
 
 ## Current Position
 
 Milestone: v1.1 — Stabilize & Sharpen (4 phases, 8–11; 17 requirements)
-Phase: 8 (Admin Access Control) — Plan 02 COMPLETE
-Status: Client-side admin access control complete — AdminRoute guard, adminRole in AuthContext from custom claims, sidebar sub-role gating, route-level wrapping in App.tsx. Phase 8 complete.
+Phase: 9 (Performance) — Plan 03 COMPLETE, Plan 04 COMPLETE
+Status: PERF-03 (responsive images + srcSet) and PERF-04 (Firestore indexes + server-side filtering) complete. PERF-01 (bundle splitting) and PERF-02 (Lighthouse thresholds) remain.
 Scope: Phase 8 Admin Access Control (ADM) · Phase 9 Performance (PERF) · Phase 10 Seller Add-Flow UX (SLR) · Phase 11 Purchase Funnel & Guest Checkout (BUY).
 Carried from v1.0: live UAT debt is folded into BUY-05 (Phase 11). v2 deferrals: multi-currency, Typesense, cross-border.
-Last activity: 2026-06-05 -- Phase 8 Plan 02 complete
+Last activity: 2026-06-05 -- Phase 9 Plan 03 complete (PERF-03: responsive images)
 
-Progress: [██████████] 100%
+Progress: [██████░░░░] 57%
 
 ## Performance Metrics
 
@@ -55,13 +55,16 @@ Progress: [██████████] 100%
 | 7. Reviews & Trust           | 0     | N/A   | N/A      |
 | 05                           | 6     | -     | -        |
 | 08-admin-access-control      | 2     | 22min | 11min    |
+| 09-performance               | 2     | 328s  | 164s     |
 
 **Recent Trend:**
 
-- Last 5 plans: N/A
-- Trend: N/A
+- Last 5 plans: 09-03 (328s), 09-04, 08-02 (10min), 08-01 (12min)
+- Trend: stable
 
 _Updated after each plan completion_
+| Phase 09-performance P09-03 | 328s | 3 tasks | 4 files |
+| Phase 09-performance P09-04 | —    | 2 tasks | 2 files |
 | Phase 08-admin-access-control P08-02 | 10min | 3 tasks | 4 files |
 | Phase 08-admin-access-control P08-01 | 12min | 2 tasks | 5 files |
 | Phase 05-shipping-fulfillment P05-01 | 30m | 2 tasks | 3 files |
@@ -84,6 +87,7 @@ Recent decisions affecting current work:
 - D-06: 3-doc gate — Submit disabled until identity/tax_certificate/bank_iban all uploaded
 - D-01/D-02: EU sellers → Stripe Connect Express provisioned idempotently on admin approval
 - D-03: TR sellers → Iyzico subMerchantCreate idempotently on admin approval
+- D-PERF-04: OptimizedImage srcSet with 3 breakpoints; WebP audit script; Firebase Image Processing extension documented (forward-compatible until enabled)
 
 ### Pending Todos
 
@@ -109,6 +113,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-05T12:53:50.249Z
-Stopped at: Phase 8 Plan 02 complete — AdminRoute + AuthContext adminRole + sidebar sub-role gating
+Last session: 2026-06-05T16:06:55.000Z
+Stopped at: Phase 9 Plan 03 complete — OptimizedImage srcSet + optimize-images.mjs + docs/image-optimization.md
 Resume file: None

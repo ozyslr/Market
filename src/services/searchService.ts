@@ -191,6 +191,13 @@ async function searchFirestore(params: SearchParams): Promise<SearchResult | nul
     const productsRef = collection(db, 'products');
     const constraints: any[] = [];
 
+    // Always filter approved products — never return unapproved in search results.
+    // NOTE: Firestore has no native full-text search. Title prefix matching
+    // (where title >= q && title <= q+) is the best approximation.
+    // At scale, a dedicated search engine (Typesense / Algolia) would replace
+    // this client-side text-matching loop. See memory: phase4-search-typesense-deferred.
+    constraints.push(where('status', '==', 'approved'));
+
     // Category filter
     if (params.categoryId) {
       constraints.push(where('categoryId', '==', params.categoryId));
@@ -253,7 +260,9 @@ async function searchFirestore(params: SearchParams): Promise<SearchResult | nul
       }
     }
 
-    // Pagination
+    // Pagination — uses offset-based page numbers (simple, works for moderate result
+    // sets). For deep pagination at scale, replace with cursor-based (startAfter
+    // with the last doc from the previous page) to avoid scanning skipped documents.
     const pageSize = params.pageSize ?? 20;
     const page = params.page ?? 1;
     constraints.push(limit(pageSize + 1)); // fetch +1 to detect hasMore
