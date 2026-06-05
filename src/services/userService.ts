@@ -1,4 +1,16 @@
-import { collection, query, getDoc, getDocs, doc, deleteDoc, updateDoc, serverTimestamp, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  getDoc,
+  getDocs,
+  doc,
+  deleteDoc,
+  updateDoc,
+  serverTimestamp,
+  setDoc,
+  arrayUnion,
+  arrayRemove,
+} from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { User, UserProfile, Seller, Address } from '../types';
 
@@ -8,7 +20,7 @@ export const MAX_ADDRESSES = 6;
 export async function getUsers() {
   try {
     const snapshot = await getDocs(collection(db, 'users'));
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as User);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, 'users');
     throw error;
@@ -20,7 +32,7 @@ export async function updateUser(id: string, data: Partial<UserProfile>) {
     const userRef = doc(db, 'users', id);
     await updateDoc(userRef, {
       ...data,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     });
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, `users/${id}`);
@@ -41,7 +53,7 @@ export async function deleteUser(id: string) {
 export async function getSellers() {
   try {
     const snapshot = await getDocs(collection(db, 'sellers'));
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Seller));
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Seller);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, 'sellers');
     throw error;
@@ -53,7 +65,7 @@ export async function createSeller(sellerId: string, data: Partial<Seller>) {
     const sellerRef = doc(db, 'sellers', sellerId);
     await setDoc(sellerRef, {
       ...data,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, `sellers/${sellerId}`);
@@ -66,7 +78,7 @@ export async function updateSeller(id: string, data: Partial<Seller>) {
     const sellerRef = doc(db, 'sellers', id);
     await updateDoc(sellerRef, {
       ...data,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     });
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, `sellers/${id}`);
@@ -93,6 +105,13 @@ export async function updateProfilePhoto(userId: string, photoURL: string): Prom
   }
 }
 
+/**
+ * Add a new address to the user's address book.
+ * The full address object (including optional `type` field — 'home'|'work'|'other')
+ * is preserved via Firestore arrayUnion.
+ *
+ * @throws {Error} MAX_ADDRESSES_REACHED if the user already has {@link MAX_ADDRESSES} addresses.
+ */
 export async function addAddress(userId: string, address: Omit<Address, 'id'>): Promise<Address> {
   const newAddress: Address = { ...address, id: crypto.randomUUID() };
   try {
@@ -115,10 +134,20 @@ export async function addAddress(userId: string, address: Omit<Address, 'id'>): 
   }
 }
 
-export async function replaceAddress(userId: string, oldAddress: Address, newAddress: Address): Promise<void> {
+export async function replaceAddress(
+  userId: string,
+  oldAddress: Address,
+  newAddress: Address,
+): Promise<void> {
   try {
-    await updateDoc(doc(db, 'users', userId), { addresses: arrayRemove(oldAddress), updatedAt: serverTimestamp() });
-    await updateDoc(doc(db, 'users', userId), { addresses: arrayUnion(newAddress), updatedAt: serverTimestamp() });
+    await updateDoc(doc(db, 'users', userId), {
+      addresses: arrayRemove(oldAddress),
+      updatedAt: serverTimestamp(),
+    });
+    await updateDoc(doc(db, 'users', userId), {
+      addresses: arrayUnion(newAddress),
+      updatedAt: serverTimestamp(),
+    });
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, `users/${userId}`);
     throw error;
