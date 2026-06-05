@@ -22,6 +22,8 @@
     "analyze": "ANALYZE=true npm run build",
     "optimize:images": "node scripts/optimize-images.mjs",
     "lhci": "lhci autorun",
+    "ci:perf": "npm run build && npx lhci autorun",
+    "perf:local": "npx lhci autorun --collect.numberOfRuns=1",
     "prepare": "husky"
   },
   "dependencies": {
