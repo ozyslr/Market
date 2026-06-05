@@ -30,7 +30,7 @@
 ### Satın Alma & Misafir Checkout (BUY)
 
 - [x] **BUY-01**: Misafir checkout uçtan uca tamamlanır (anonim → ödenmiş sipariş) — doğrulanmış
-- [ ] **BUY-02**: Kayıtlı adres defteri / checkout'ta adres otomatik doldurma
+- [x] **BUY-02**: Kayıtlı adres defteri / checkout'ta adres otomatik doldurma
 - [ ] **BUY-03**: Express cüzdanlar (Apple Pay / Google Pay — Stripe Payment Request)
 - [ ] **BUY-04**: Satın alma hunisi ölçümü (cart → checkout → paid dönüşüm analitiği)
 - [x] **BUY-05**: v1.0 canlı UAT kapanışı — ödeme/3DS, sipariş yaşam döngüsü, kargo, reviews/Q&A imzaları
@@ -66,7 +66,7 @@
 | SLR-03      | Phase 10 | Complete |
 | SLR-04      | Phase 10 | Pending  |
 | BUY-01      | Phase 11 | Complete |
-| BUY-02      | Phase 11 | Pending  |
+| BUY-02      | Phase 11 | Complete |
 | BUY-03      | Phase 11 | Pending  |
 | BUY-04      | Phase 11 | Pending  |
 | BUY-05      | Phase 11 | Complete |
