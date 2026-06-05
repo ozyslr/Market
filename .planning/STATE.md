@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilize & Sharpen
-status: in_progress
+status: completed
 stopped_at: Phase 10 Plan 03 complete — bulk image upload + drag-reorder (SLR-03)
-last_updated: '2026-06-05T18:40:00.000Z'
+last_updated: '2026-06-05T19:23:26.453Z'
 last_activity: '2026-06-05 -- Phase 10 Plan 03 complete (SLR-03: bulk image upload + drag-reorder)'
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 12
+  total_plans: 16
   completed_plans: 12
-  percent: 82
+  percent: 75
 ---
 
 # Project State
@@ -76,6 +76,7 @@ _Updated after each plan completion_
 | Phase 10-seller-add-flow-ux P01 | 120s | 1 tasks | 1 files |
 | Phase 10-seller-add-flow-ux P03 | ~5min | 2 tasks | 1 files |
 | Phase 10-seller-add-flow-ux P04 | ~15min | 3 tasks | 6 files |
+| Phase 11-purchase-funnel-guest-checkout P05 | 15min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,7 @@ Recent decisions affecting current work:
 - [Phase 10]: D-SLR-02: ProductForm sticky save bar uses fixed positioning (fixed bottom-0) visible only on mobile via max-sm:block hidden; desktop footer hidden on mobile via max-sm:hidden
 - [Phase 10]: D-SLR-03: Bulk image upload uses simulated per-file progress (setInterval 0→85% then 100% on Firebase completion); SortableImage with GripVertical handle, PointerSensor 8px distance constraint for touch safety; native HTML5 drop zone wraps the dnd-kit sortable grid
 - [Phase 10]: D-SLR-02: CategorySelect bottom sheet uses motion.div spring animation (damping: 30, stiffness: 300) with two-level L1→L2 navigation and 48px minimum touch targets
+- [Phase ?]: UAT checklist + Playwright E2E as verification artifacts only per D-BUY-06
 
 ### Pending Todos
 
@@ -124,6 +126,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-05T18:32:28.000Z
+Last session: 2026-06-05T19:22:22.727Z
 Stopped at: Phase 10 Plan 03 complete — bulk image upload + drag-reorder (SLR-03)
 Resume file: None

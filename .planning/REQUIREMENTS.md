@@ -33,7 +33,7 @@
 - [ ] **BUY-02**: Kayıtlı adres defteri / checkout'ta adres otomatik doldurma
 - [ ] **BUY-03**: Express cüzdanlar (Apple Pay / Google Pay — Stripe Payment Request)
 - [ ] **BUY-04**: Satın alma hunisi ölçümü (cart → checkout → paid dönüşüm analitiği)
-- [ ] **BUY-05**: v1.0 canlı UAT kapanışı — ödeme/3DS, sipariş yaşam döngüsü, kargo, reviews/Q&A imzaları
+- [x] **BUY-05**: v1.0 canlı UAT kapanışı — ödeme/3DS, sipariş yaşam döngüsü, kargo, reviews/Q&A imzaları
 
 ## Deferred to v2 (carried)
 
@@ -69,7 +69,7 @@
 | BUY-02      | Phase 11 | Pending  |
 | BUY-03      | Phase 11 | Pending  |
 | BUY-04      | Phase 11 | Pending  |
-| BUY-05      | Phase 11 | Pending  |
+| BUY-05      | Phase 11 | Complete |
 
 **Coverage:**
 
