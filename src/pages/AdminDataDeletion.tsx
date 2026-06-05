@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, CheckCircle2, XCircle, Loader2, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { audit } from '@/services/auditLogService';
+import { useAuth } from '@/context/AuthContext';
 
 interface DeletionRequest {
   requestId: string;
@@ -23,6 +25,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 ];
 
 export function AdminDataDeletion() {
+  const { user } = useAuth();
   const [requests, setRequests] = useState<DeletionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +71,14 @@ export function AdminDataDeletion() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed');
+      audit(
+        user?.uid ?? '',
+        user?.email ?? '',
+        user?.role ?? 'admin',
+        'user.data_deletion',
+        'user',
+        requestId,
+      );
       fetchRequests();
     } catch {}
   };
@@ -85,6 +96,14 @@ export function AdminDataDeletion() {
         body: JSON.stringify({ reason: rejectReason }),
       });
       if (!res.ok) throw new Error('Failed');
+      audit(
+        user?.uid ?? '',
+        user?.email ?? '',
+        user?.role ?? 'admin',
+        'user.data_deletion',
+        'user',
+        rejectingId,
+      );
       setRejectingId(null);
       setRejectReason('');
       fetchRequests();

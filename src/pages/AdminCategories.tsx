@@ -118,7 +118,7 @@ export function AdminCategories() {
       if (editingCat) {
         await updateCategory(editingCat.id, data);
         audit(
-          user.uid,
+          user.uid ?? '',
           user.email ?? '',
           user.role ?? 'admin',
           'category.update',
@@ -130,7 +130,7 @@ export function AdminCategories() {
       } else {
         const newId = await createCategory(data);
         audit(
-          user.uid,
+          user.uid ?? '',
           user.email ?? '',
           user.role ?? 'admin',
           'category.create',
@@ -150,7 +150,7 @@ export function AdminCategories() {
     if (!confirm(`"${cat.name}" kategorisini silmek istiyor musunuz?`)) return;
     await deleteCategory(cat.id);
     audit(
-      user.uid,
+      user.uid ?? '',
       user.email ?? '',
       user.role ?? 'admin',
       'category.delete',

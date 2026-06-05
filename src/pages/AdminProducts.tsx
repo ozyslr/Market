@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { TableRowSkeleton } from '@/components/ui/Skeleton';
 import { moderateProductBatch, ModerationResult } from '@/services/aiModerationService';
+import { useAuth } from '@/context/AuthContext';
 
 const FLAGS = [
   { key: 'featured' as const, label: 'Öne Çıkan', icon: Star, color: 'text-yellow-500' },
@@ -43,6 +44,7 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
 };
 
 export function AdminProducts() {
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -121,7 +123,10 @@ export function AdminProducts() {
   const handleApprove = async (product: Product) => {
     setActionLoading(product.id + '_approve');
     try {
-      await approveProduct(product.id);
+      await approveProduct(
+        product.id,
+        user ? { uid: user.uid ?? user.id, email: user.email, role: user.role } : undefined,
+      );
       setProducts((prev) =>
         prev.map((p) =>
           p.id === product.id ? { ...p, status: 'approved', moderationNote: '' } : p,
@@ -136,7 +141,11 @@ export function AdminProducts() {
     if (!rejectModal) return;
     setActionLoading(rejectModal.product.id + '_reject');
     try {
-      await rejectProduct(rejectModal.product.id, rejectNote);
+      await rejectProduct(
+        rejectModal.product.id,
+        rejectNote,
+        user ? { uid: user.uid ?? user.id, email: user.email, role: user.role } : undefined,
+      );
       setProducts((prev) =>
         prev.map((p) =>
           p.id === rejectModal.product.id

@@ -16,6 +16,8 @@ import {
   Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { audit } from '@/services/auditLogService';
+import { useAuth } from '@/context/AuthContext';
 import {
   getWebhooks,
   createWebhook,
@@ -48,6 +50,7 @@ const EVENT_GROUPS: { label: string; events: WebhookEventType[] }[] = [
 ];
 
 export function AdminWebhooks() {
+  const { user } = useAuth();
   const [webhooks, setWebhooks] = useState<WebhookSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -98,6 +101,15 @@ export function AdminWebhooks() {
       url: form.url.trim(),
       secret: form.secret.trim() || undefined,
     });
+    audit(
+      user?.uid ?? '',
+      user?.email ?? '',
+      user?.role ?? 'admin',
+      'webhook.create',
+      'webhook',
+      created.id,
+      form.name,
+    );
     setWebhooks((prev) => [created, ...prev]);
     setForm({
       ownerId: 'admin',
@@ -115,12 +127,30 @@ export function AdminWebhooks() {
 
   const handleToggle = async (wh: WebhookSubscription) => {
     await updateWebhook(wh.id, { isActive: !wh.isActive });
+    audit(
+      user?.uid ?? '',
+      user?.email ?? '',
+      user?.role ?? 'admin',
+      'webhook.update',
+      'webhook',
+      wh.id,
+      wh.name,
+      `isActive: ${!wh.isActive}`,
+    );
     setWebhooks((prev) => prev.map((w) => (w.id === wh.id ? { ...w, isActive: !w.isActive } : w)));
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Bu webhook'u silmek istiyor musunuz?")) return;
     await deleteWebhook(id);
+    audit(
+      user?.uid ?? '',
+      user?.email ?? '',
+      user?.role ?? 'admin',
+      'webhook.delete',
+      'webhook',
+      id,
+    );
     setWebhooks((prev) => prev.filter((w) => w.id !== id));
   };
 

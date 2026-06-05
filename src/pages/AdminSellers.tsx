@@ -34,6 +34,8 @@ import {
 } from 'lucide-react';
 import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
+import { audit } from '@/services/auditLogService';
+import { useAuth } from '@/context/AuthContext';
 
 const KYC_BADGE: Record<string, { label: string; cls: string }> = {
   pending: { label: 'Bekliyor', cls: 'bg-yellow-100 text-yellow-700' },
@@ -48,6 +50,7 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
 };
 
 export function AdminSellers() {
+  const { user: actor } = useAuth();
   const [adminTab, setAdminTab] = useState<'sellers' | 'applications' | 'rules'>('sellers');
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -161,6 +164,15 @@ export function AdminSellers() {
   const toggleSuspend = (seller: Seller) => {
     const next = (seller.status ?? 'active') === 'active' ? 'suspended' : 'active';
     update(seller.id, { status: next });
+    audit(
+      actor?.uid ?? '',
+      actor?.email ?? '',
+      actor?.role ?? 'admin',
+      next === 'suspended' ? 'seller.suspend' : 'seller.activate',
+      'seller',
+      seller.id,
+      seller.storeName ?? seller.slug,
+    );
   };
 
   const handleReview = async (app: any, status: 'approved' | 'rejected') => {
@@ -171,6 +183,15 @@ export function AdminSellers() {
         status,
         status === 'approved' ? 'Onaylandı' : 'Reddedildi',
         'admin',
+      );
+      audit(
+        actor?.uid ?? '',
+        actor?.email ?? '',
+        actor?.role ?? 'admin',
+        status === 'approved' ? 'seller.approve' : 'seller.reject',
+        'seller',
+        app.id,
+        app.storeName ?? app.id,
       );
       setApplications((prev) => prev.map((a) => (a.id === app.id ? { ...a, status } : a)));
     } finally {
@@ -205,6 +226,15 @@ export function AdminSellers() {
 
   const setKyc = async (seller: Seller, status: 'verified' | 'rejected') => {
     await update(seller.id, { kycStatus: status, isVerified: status === 'verified' });
+    audit(
+      actor?.uid ?? '',
+      actor?.email ?? '',
+      actor?.role ?? 'admin',
+      status === 'verified' ? 'seller.approve' : 'seller.reject',
+      'seller',
+      seller.id,
+      seller.storeName ?? seller.slug,
+    );
     if (status === 'verified') {
       await createNotification(
         seller.userId,

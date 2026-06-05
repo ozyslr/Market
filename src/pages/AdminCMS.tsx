@@ -18,6 +18,8 @@ import {
 } from '@/services/productService';
 import { uploadCategoryImage } from '@/services/storageService';
 import { getHomepageSections, upsertHomepageSection } from '@/services/cmsService';
+import { audit } from '@/services/auditLogService';
+import { useAuth } from '@/context/AuthContext';
 import {
   Category,
   HomepageSection,
@@ -486,6 +488,7 @@ function SortableCategoryCard({
 
 export function AdminCMS() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'categories' | 'homepage'>('categories');
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -546,8 +549,26 @@ export function AdminCMS() {
     try {
       if (editingCategory) {
         await updateCategory(editingCategory.id, catData);
+        audit(
+          user?.uid ?? '',
+          user?.email ?? '',
+          user?.role ?? 'admin',
+          'category.update',
+          'category',
+          editingCategory.id,
+          editingCategory.name ?? editingCategory.id,
+        );
       } else {
-        await createCategory(catData);
+        const newId = await createCategory(catData);
+        audit(
+          user?.uid ?? '',
+          user?.email ?? '',
+          user?.role ?? 'admin',
+          'category.create',
+          'category',
+          newId,
+          name,
+        );
       }
       await fetchCategories();
       closeForm();
@@ -587,6 +608,14 @@ export function AdminCMS() {
   const handleDelete = async (id: string) => {
     try {
       await deleteCategory(id);
+      audit(
+        user?.uid ?? '',
+        user?.email ?? '',
+        user?.role ?? 'admin',
+        'category.delete',
+        'category',
+        id,
+      );
       await fetchCategories();
     } catch (err) {
       console.error(err);
