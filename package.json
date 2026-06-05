@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx server.ts",
     "build": "node scripts/generate-sitemap.mjs && vite build",
+    "build:check": "npm run build && node scripts/check-bundle-size.mjs",
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist",
