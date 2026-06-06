@@ -17,16 +17,19 @@ Satıcıların kendi mağazalarını KYC onayıyla açabildiği ve müşterileri
 - **Archives:** `.planning/milestones/v1.0-ROADMAP.md` · `.planning/milestones/v1.0-REQUIREMENTS.md` · `.planning/milestones/v1.1-ROADMAP.md` · `.planning/milestones/v1.1-REQUIREMENTS.md`
 - **Carried tech debt:** Live UAT sign-off (BUY-05 checklist + E2E specs yazıldı, manuel doğrulama bekliyor)
 
-## Next Milestone — v2.0 (planning)
+## Current Milestone — v2.0: Trust & Scale
 
-Deferred features from v1.0/v1.1 + scale-driven improvements:
+**Goal:** Scale the marketplace globally (multi-currency, cross-border, Typesense search) while building seller trust through verification, fraud prevention, complaint handling, and workflow automations.
 
-- Multi-Currency (CUR-01..04): EUR display, FX rate-locking, TRY/EUR toggle, per-country routing
-- Typesense search (SRC-01, SRC-05): typo-tolerant full-text, event-driven index
-- Cross-Border Compliance (CROSS-01..04): HS codes, customs docs, total landed cost, EU GPSR
-- And more from the Backlog
+**Target features:**
 
-Start with `/gsd:new-milestone`.
+- Multi-Currency: EUR display, FX rate-locking, TRY/EUR toggle, per-country routing
+- Typesense Search: typo-tolerant full-text, event-driven index sync
+- Cross-Border Compliance: HS codes, customs docs, total landed cost, EU GPSR
+- Seller Trust & Fraud Prevention: phone verification, tax info, product approval workflows, complaint/dispute system, fake listing detection
+- Automations: auto invoice generation (e-fatura), auto email notifications (order, shipping, approval)
+- Bug Fix: Firebase Storage image upload permission for sellers
+- UAT Closure: v1.0 live UAT sign-off (payments/3DS, shipping, reviews)
 
 ## Requirements
 
@@ -52,10 +55,13 @@ Start with `/gsd:new-milestone`.
 
 ### Active
 
-- [ ] Multi-Currency tam desteği (EUR/TRY, FX rate-locking)
-- [ ] Typesense tam-metin arama (typo-tolerant + event-driven index)
-- [ ] Cross-Border Compliance (HS codes, customs, EU GPSR)
-- [ ] Live UAT sign-off (BUY-05: payments/3DS, shipping, reviews/Q&A)
+- [ ] Multi-Currency tam desteği (EUR/TRY, FX rate-locking, per-country routing) — v2.0
+- [ ] Typesense tam-metin arama (typo-tolerant + event-driven index) — v2.0
+- [ ] Cross-Border Compliance (HS codes, customs docs, total landed cost, EU GPSR) — v2.0
+- [ ] Satıcı güvenliği & dolandırıcılık önleme (telefon doğrulama, vergi bilgisi, ürün onay, şikayet sistemi) — v2.0
+- [ ] Otomasyonlar (otomatik fatura, otomatik e-postalar) — v2.0
+- [ ] Firebase Storage resim yükleme izin hatası düzeltmesi — v2.0
+- [ ] Live UAT sign-off (BUY-05: payments/3DS, shipping, reviews/Q&A) — v2.0
 
 ### Out of Scope
 

@@ -1,11 +1,10 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.0
-milestone_name: TBD
+milestone_name: Trust & Scale
 status: planning
-stopped_at: v1.1 milestone archived — all 4 phases (8-11) code-complete and shipped
-last_updated: '2026-06-06T00:00:00.000Z'
-last_activity: '2026-06-06 — v1.1 milestone archived; STATE.md reset for v2.0'
+last_updated: '2026-06-06T23:00:13.759Z'
+last_activity: 2026-06-06
 progress:
   total_phases: 0
   completed_phases: 0
@@ -25,11 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 
 ## Current Position
 
-Milestone: v2.0 (planning)
-Status: v1.1 başarıyla kapatıldı. Sırada v2.0 planlaması var.
-Scope: v2.0 — deferred features (multi-currency, Typesense search, cross-border compliance) + scale improvements.
-
-Progress: [░░░░░░░░░░] 0%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-06 — Milestone v2.0 started
 
 ## Performance Metrics
 
