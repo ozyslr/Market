@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, Globe, Zap, Sparkles, Play, ChevronLeft, Percent } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { useLanguage } from '@/context/LanguageContext';
@@ -41,6 +41,7 @@ const SLIDES = [
 
 export function Hero() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const SLIDES = [
     {
       id: 1,
@@ -96,7 +97,10 @@ export function Hero() {
           transition={{ duration: 0.5, ease: 'easeInOut' }}
           className="absolute inset-0"
         >
-          <Link to={`/search?category=${SLIDES[current].category}`} className="block w-full h-full">
+          <div
+            onClick={() => navigate(`/search?category=${SLIDES[current].category}`)}
+            className="block w-full h-full cursor-pointer"
+          >
             <OptimizedImage
               src={SLIDES[current].image}
               className="absolute inset-0 w-full h-full object-cover md:object-fill"
@@ -155,7 +159,7 @@ export function Hero() {
                 </div>
               </motion.div>
             </div>
-          </Link>
+          </div>
         </motion.div>
       </AnimatePresence>
 
