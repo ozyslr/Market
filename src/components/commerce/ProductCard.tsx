@@ -1,8 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, ShieldCheck, ShoppingCart, Eye, X, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Star,
+  ShieldCheck,
+  ShoppingCart,
+  Eye,
+  X,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Product } from '@/types';
+import { useCurrency } from '@/context/CurrencyContext';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
@@ -21,6 +31,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
   const { t } = useLanguage();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { addItem } = useCart();
+  const { currency, convertPrice } = useCurrency();
   const { user } = useAuth();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -29,8 +40,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
     const el = cardRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { trackEvent('view', product.id, user?.id); observer.disconnect(); } },
-      { threshold: 0.5 }
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          trackEvent('view', product.id, user?.id);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -40,9 +56,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [imgIdx, setImgIdx] = useState(0);
   const [quickViewImgIdx, setQuickViewImgIdx] = useState(0);
-  const images = product.images && product.images.length > 0
-    ? product.images
-    : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'];
+  const images =
+    product.images && product.images.length > 0
+      ? product.images
+      : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'];
   const imgCount = Math.min(images.length, 4);
 
   const handleImageMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -66,7 +83,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
         ref={cardRef}
         data-testid="product-card"
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => { setIsHovered(false); setImgIdx(0); }}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          setImgIdx(0);
+        }}
         className="group bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border border-brand-primary/5 dark:border-white/5 hover:border-brand-primary/20 dark:hover:border-white/20 transition-all duration-300 shadow-sm hover:shadow-lg flex flex-col h-full relative"
       >
         {/* Image Section */}
@@ -74,7 +94,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
           className="relative aspect-3/4 overflow-hidden bg-brand-secondary/30 dark:bg-zinc-800"
           onMouseMove={handleImageMouseMove}
         >
-          <Link to={`/product/${product.slug}`} {...(openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="block w-full h-full relative">
+          <Link
+            to={`/product/${product.slug}`}
+            {...(openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            className="block w-full h-full relative"
+          >
             {product.promotionStatus === 'active' && (
               <div className="absolute top-0 start-0 z-30 px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold rounded-ee-md shadow-xs">
                 REKLAM
@@ -91,7 +115,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
             <div className="absolute inset-x-0 bottom-0 p-3 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10 hidden md:block">
               <button
                 data-testid="add-to-cart"
-                onClick={(e) => { e.preventDefault(); handleAddToCart(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAddToCart();
+                }}
                 className="w-full py-2.5 bg-violet-600 text-white text-xs font-bold rounded-lg shadow-lg hover:bg-black hover:text-white transition-colors"
                 style={{ fontFamily: 'Inter, sans-serif' }}
               >
@@ -103,20 +130,31 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
           {imgCount > 1 && (
             <div className="absolute bottom-12 start-0 end-0 flex justify-center gap-1 z-20 pointer-events-none">
               {[...Array(imgCount)].map((_, i) => (
-                <span key={i} className={cn(
-                  'w-1.5 h-1.5 rounded-full transition-colors duration-150',
-                  i === imgIdx ? 'bg-white' : 'bg-white/40'
-                )} />
+                <span
+                  key={i}
+                  className={cn(
+                    'w-1.5 h-1.5 rounded-full transition-colors duration-150',
+                    i === imgIdx ? 'bg-white' : 'bg-white/40',
+                  )}
+                />
               ))}
             </div>
           )}
-          
+
           {/* Wishlist toggle */}
           <button
-            onClick={(e) => { e.preventDefault(); toggleWishlist(product.id); }}
+            onClick={(e) => {
+              e.preventDefault();
+              toggleWishlist(product.id);
+            }}
             className="absolute top-3 start-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm border border-brand-primary/5 transition-all duration-200 hover:scale-110 z-10"
           >
-            <Heart size={14} className={isWishlisted(product.id) ? 'fill-red-500 text-red-500' : 'text-[#1A1033]/40'} />
+            <Heart
+              size={14}
+              className={
+                isWishlisted(product.id) ? 'fill-red-500 text-red-500' : 'text-[#1A1033]/40'
+              }
+            />
           </button>
 
           {/* Quick View Trigger - Only shown on hover on desktop */}
@@ -126,8 +164,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
               setShowQuickView(true);
             }}
             className={cn(
-              "absolute top-3 end-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-brand-primary shadow-sm border border-brand-primary/5 transition-all duration-300 hover:bg-accent hover:text-white group/view",
-              isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 hidden md:flex"
+              'absolute top-3 end-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-brand-primary shadow-sm border border-brand-primary/5 transition-all duration-300 hover:bg-accent hover:text-white group/view',
+              isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 hidden md:flex',
             )}
           >
             <Eye size={16} />
@@ -136,44 +174,75 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
 
         {/* Info Section */}
         <div className="p-3 flex flex-col flex-1">
-          <Link to={`/product/${product.slug}`} {...(openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="flex flex-col mb-1 flex-1">
+          <Link
+            to={`/product/${product.slug}`}
+            {...(openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            className="flex flex-col mb-1 flex-1"
+          >
             <span className="text-xs font-bold text-brand-primary dark:text-zinc-100 leading-tight uppercase line-clamp-1 mb-0.5">
-              {product.sellerId || "BENIM OLAN"} 
+              {product.sellerId || 'BENIM OLAN'}
             </span>
             <span className="text-xs text-brand-primary/70 dark:text-zinc-400 line-clamp-2 leading-snug">
               {product.title}
             </span>
           </Link>
-          
+
           <div className="flex items-center gap-1 mb-2">
-             <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={10} fill={i < Math.floor(product.rating) ? "#FFC000" : "none"} className={i < Math.floor(product.rating) ? "text-[#FFC000]" : "text-gray-300"} />
-                ))}
-             </div>
-             <span className="text-[10px] text-gray-500">({product.reviewsCount || 42})</span>
+            <div className="flex items-center">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  size={10}
+                  fill={i < Math.floor(product.rating) ? '#FFC000' : 'none'}
+                  className={i < Math.floor(product.rating) ? 'text-[#FFC000]' : 'text-gray-300'}
+                />
+              ))}
+            </div>
+            <span className="text-[10px] text-gray-500">({product.reviewsCount || 42})</span>
           </div>
 
           <div className="mt-auto space-y-1">
             <div className="flex flex-col">
-               {product.oldPrice && <span className="text-[10px] text-gray-400 line-through leading-none mb-0.5">{product.oldPrice.toFixed(2)} TL</span>}
-               <div className="flex items-start text-brand-primary dark:text-white">
-                  <span className="text-lg font-bold leading-none tracking-tight">{Math.floor(product.price)}</span>
-                  <span className="text-[10px] font-bold mt-0.5 ms-0.5 leading-none">,{Math.floor((product.price % 1) * 100).toString().padStart(2, '0')} TL</span>
-               </div>
+              {(() => {
+                const { display, currency: cur, formatted } = convertPrice(product.price);
+                return (
+                  <>
+                    {product.oldPrice && (
+                      <span className="text-[10px] text-gray-400 line-through leading-none mb-0.5">
+                        {product.oldPrice.toFixed(2)} TL
+                      </span>
+                    )}
+                    <div className="flex items-start text-brand-primary dark:text-white">
+                      <span className="text-lg font-bold leading-none tracking-tight">
+                        {cur === 'TRY' ? Math.floor(display) : formatted.replace('€', '')}
+                      </span>
+                      <span className="text-[10px] font-bold mt-0.5 ms-0.5 leading-none">
+                        {cur === 'TRY'
+                          ? `,${Math.floor((display % 1) * 100)
+                              .toString()
+                              .padStart(2, '0')} TL`
+                          : '€'}
+                      </span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             {product.freeShipping && (
               <div className="flex flex-wrap gap-1 mt-2">
-                 <div className="px-1.5 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[9px] font-bold rounded">
-                    {t('product.freeShipping')}
-                 </div>
+                <div className="px-1.5 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[9px] font-bold rounded">
+                  {t('product.freeShipping')}
+                </div>
               </div>
             )}
             {/* Mobile quick add (visible unconditionally on mobile, hidden on desktop ) */}
             <div className="mt-3 md:hidden">
               <button
-                onClick={(e) => { e.preventDefault(); handleAddToCart(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAddToCart();
+                }}
                 className="w-full py-2 border border-brand-primary/20 dark:border-white/20 text-brand-primary dark:text-white text-xs font-bold rounded-lg hover:bg-brand-primary hover:text-white transition-colors"
               >
                 {t('product.addToCart')}
@@ -192,7 +261,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => { setShowQuickView(false); setQuickViewImgIdx(0); }}
+              onClick={() => {
+                setShowQuickView(false);
+                setQuickViewImgIdx(0);
+              }}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -204,14 +276,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
             >
               {/* Close */}
               <button
-                onClick={() => { setShowQuickView(false); setQuickViewImgIdx(0); }}
+                onClick={() => {
+                  setShowQuickView(false);
+                  setQuickViewImgIdx(0);
+                }}
                 className="absolute top-3 end-3 w-8 h-8 flex items-center justify-center bg-white/90 dark:bg-zinc-700 rounded-full text-gray-400 hover:text-accent shadow z-20 transition-colors"
               >
                 <X size={15} />
               </button>
 
               {/* LEFT: Image Gallery — 58% */}
-              <div className="w-full md:w-[58%] relative bg-[#F8F8FA] dark:bg-zinc-800 flex flex-col" style={{ minHeight: 380 }}>
+              <div
+                className="w-full md:w-[58%] relative bg-[#F8F8FA] dark:bg-zinc-800 flex flex-col"
+                style={{ minHeight: 380 }}
+              >
                 {/* Free shipping badge */}
                 {product.estimatedDeliveryDays != null && product.estimatedDeliveryDays <= 3 && (
                   <div className="absolute top-3 start-3 z-10 px-2 py-0.5 bg-[#26A541] text-white text-[9px] font-black uppercase rounded tracking-widest shadow-sm">
@@ -232,13 +310,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                   {product.images.length > 1 && (
                     <>
                       <button
-                        onClick={() => setQuickViewImgIdx(i => (i - 1 + product.images.length) % product.images.length)}
+                        onClick={() =>
+                          setQuickViewImgIdx(
+                            (i) => (i - 1 + product.images.length) % product.images.length,
+                          )
+                        }
                         className="absolute start-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white dark:bg-zinc-700 rounded-full shadow flex items-center justify-center text-gray-400 hover:text-accent transition-colors"
                       >
                         <ChevronLeft size={18} />
                       </button>
                       <button
-                        onClick={() => setQuickViewImgIdx(i => (i + 1) % product.images.length)}
+                        onClick={() => setQuickViewImgIdx((i) => (i + 1) % product.images.length)}
                         className="absolute end-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white dark:bg-zinc-700 rounded-full shadow flex items-center justify-center text-gray-400 hover:text-accent transition-colors"
                       >
                         <ChevronRight size={18} />
@@ -256,10 +338,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                         onClick={() => setQuickViewImgIdx(i)}
                         className={cn(
                           'w-11 h-11 rounded-lg border-2 overflow-hidden bg-white shrink-0 transition-all',
-                          i === quickViewImgIdx ? 'border-accent' : 'border-transparent hover:border-gray-300'
+                          i === quickViewImgIdx
+                            ? 'border-accent'
+                            : 'border-transparent hover:border-gray-300',
                         )}
                       >
-                        <OptimizedImage src={img} alt={product.title} className="w-full h-full object-cover" containerClassName="w-full h-full" referrerPolicy="no-referrer" />
+                        <OptimizedImage
+                          src={img}
+                          alt={product.title}
+                          className="w-full h-full object-cover"
+                          containerClassName="w-full h-full"
+                          referrerPolicy="no-referrer"
+                        />
                       </button>
                     ))}
                   </div>
@@ -267,13 +357,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
               </div>
 
               {/* RIGHT: Product Details — 42% */}
-              <div className="w-full md:w-[42%] flex flex-col overflow-y-auto border-s border-gray-100 dark:border-zinc-700" style={{ maxHeight: '90vh' }}>
+              <div
+                className="w-full md:w-[42%] flex flex-col overflow-y-auto border-s border-gray-100 dark:border-zinc-700"
+                style={{ maxHeight: '90vh' }}
+              >
                 <div className="flex flex-col flex-1 p-5">
                   {/* Category · Seller */}
                   <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-2">
                     {product.categoryId}
                     {product.sellerId && (
-                      <> · <Link to={`/seller/${product.sellerId}`} onClick={() => setShowQuickView(false)} className="text-accent hover:underline">{product.sellerId}</Link></>
+                      <>
+                        {' '}
+                        ·{' '}
+                        <Link
+                          to={`/seller/${product.sellerId}`}
+                          onClick={() => setShowQuickView(false)}
+                          className="text-accent hover:underline"
+                        >
+                          {product.sellerId}
+                        </Link>
+                      </>
                     )}
                   </p>
 
@@ -286,56 +389,85 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                   <div className="flex items-center gap-1.5 mb-3">
                     <div className="flex items-center">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={10} fill={i < Math.floor(product.rating) ? '#FFC000' : 'none'} className={i < Math.floor(product.rating) ? 'text-[#FFC000]' : 'text-gray-200'} />
+                        <Star
+                          key={i}
+                          size={10}
+                          fill={i < Math.floor(product.rating) ? '#FFC000' : 'none'}
+                          className={
+                            i < Math.floor(product.rating) ? 'text-[#FFC000]' : 'text-gray-200'
+                          }
+                        />
                       ))}
                     </div>
                     <span className="text-[10px] font-bold text-gray-500">{product.rating}</span>
                     <span className="text-[9px] text-gray-300">·</span>
-                    <span className="text-[10px] text-gray-400">{product.reviewsCount || 42} Değerlendirme</span>
+                    <span className="text-[10px] text-gray-400">
+                      {product.reviewsCount || 42} Değerlendirme
+                    </span>
                   </div>
 
                   {/* Discount badge */}
                   {product.discountPercentage && (
                     <div className="inline-flex items-center px-2 py-1 bg-orange-50 border border-orange-200 rounded-lg mb-3 self-start">
-                      <span className="text-[10px] font-black text-orange-500">Sepette %{product.discountPercentage} İndirim</span>
+                      <span className="text-[10px] font-black text-orange-500">
+                        Sepette %{product.discountPercentage} İndirim
+                      </span>
                     </div>
                   )}
 
                   {/* Price */}
                   <div className="mb-4">
                     {product.oldPrice && (
-                      <span className="block text-xs text-gray-400 line-through mb-0.5">{product.oldPrice.toFixed(2)} TL</span>
+                      <span className="block text-xs text-gray-400 line-through mb-0.5">
+                        {product.oldPrice.toFixed(2)} TL
+                      </span>
                     )}
                     <div className="flex items-start text-[#E53935]">
-                      <span className="text-2xl font-black leading-none tracking-tight">{Math.floor(product.price)}</span>
-                      <span className="text-xs font-black mt-0.5 ms-0.5">,{Math.floor((product.price % 1) * 100).toString().padStart(2, '0')} TL</span>
+                      <span className="text-2xl font-black leading-none tracking-tight">
+                        {Math.floor(product.price)}
+                      </span>
+                      <span className="text-xs font-black mt-0.5 ms-0.5">
+                        ,
+                        {Math.floor((product.price % 1) * 100)
+                          .toString()
+                          .padStart(2, '0')}{' '}
+                        TL
+                      </span>
                     </div>
                   </div>
 
                   {/* Variant selectors */}
-                  {product.attributes && Object.entries(product.attributes).slice(0, 2).map(([key, value]) => (
-                    <div key={key} className="mb-3">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1.5">
-                        {key}: <span className="text-[#1A1033] dark:text-white normal-case font-bold">{selectedVariants[key] || value}</span>
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {[value as string].map(v => (
-                          <button
-                            key={v}
-                            onClick={() => setSelectedVariants(prev => ({ ...prev, [key]: v }))}
-                            className={cn(
-                              'px-3 py-1.5 text-xs font-bold rounded-lg border transition-all',
-                              (selectedVariants[key] === v || !selectedVariants[key])
-                                ? 'border-accent text-accent bg-accent/10'
-                                : 'border-gray-200 text-gray-500 hover:border-accent/40'
-                            )}
-                          >
-                            {v as string}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                  {product.attributes &&
+                    Object.entries(product.attributes)
+                      .slice(0, 2)
+                      .map(([key, value]) => (
+                        <div key={key} className="mb-3">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1.5">
+                            {key}:{' '}
+                            <span className="text-[#1A1033] dark:text-white normal-case font-bold">
+                              {selectedVariants[key] || value}
+                            </span>
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[value as string].map((v) => (
+                              <button
+                                key={v}
+                                onClick={() =>
+                                  setSelectedVariants((prev) => ({ ...prev, [key]: v }))
+                                }
+                                className={cn(
+                                  'px-3 py-1.5 text-xs font-bold rounded-lg border transition-all',
+                                  selectedVariants[key] === v || !selectedVariants[key]
+                                    ? 'border-accent text-accent bg-accent/10'
+                                    : 'border-gray-200 text-gray-500 hover:border-accent/40',
+                                )}
+                              >
+                                {v as string}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
 
                   <div className="flex-1" />
 
@@ -353,10 +485,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                         onClick={() => toggleWishlist(product.id)}
                         className={cn(
                           'w-12 flex items-center justify-center rounded-xl border-2 transition-all',
-                          isWishlisted(product.id) ? 'border-red-400 bg-red-50 text-red-500' : 'border-gray-200 text-gray-400 hover:border-red-300'
+                          isWishlisted(product.id)
+                            ? 'border-red-400 bg-red-50 text-red-500'
+                            : 'border-gray-200 text-gray-400 hover:border-red-300',
                         )}
                       >
-                        <Heart size={17} className={isWishlisted(product.id) ? 'fill-red-500' : ''} />
+                        <Heart
+                          size={17}
+                          className={isWishlisted(product.id) ? 'fill-red-500' : ''}
+                        />
                       </button>
                     </div>
                     <Link

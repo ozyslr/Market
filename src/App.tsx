@@ -21,6 +21,7 @@ const SentryErrorBoundary = Sentry.ErrorBoundary as any as ComponentType<ErrorBo
 
 import { Footer } from './components/layout/Footer';
 import { LanguageProvider } from './context/LanguageContext';
+import { CurrencyProvider } from './context/CurrencyContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -172,104 +173,109 @@ export default function App() {
                 <FollowsProvider>
                   <NotificationProvider>
                     <LanguageProvider>
-                      <LocationProvider>
-                        <Router>
-                          <ScrollToTop />
-                          <AnalyticsTracker />
-                          <Suspense fallback={<PageLoader />}>
-                            <Routes>
-                              {/* Seller panel — full-screen, no Navbar/Footer */}
-                              <Route path="/seller" element={<SellerLayout />}>
-                                <Route element={<SellerSuspense />}>
-                                  <Route path="dashboard" element={<SellerDashboard />} />
-                                  <Route path="inventory" element={<SellerInventoryPage />} />
-                                  <Route path="orders" element={<SellerOrdersPage />} />
-                                  <Route path="finance" element={<SellerFinance />} />
-                                  <Route path="settings" element={<SellerSettings />} />
-                                  <Route path="import" element={<SellerImportCenter />} />
-                                  <Route path="pricing" element={<SellerPricing />} />
-                                  <Route path="analytics" element={<SellerAnalytics />} />
-                                  <Route path="certificates" element={<SellerCertificates />} />
-                                  <Route path="coupons" element={<SellerCoupons />} />
-                                  <Route path="performance" element={<SellerPerformance />} />
-                                  <Route path="invoices" element={<SellerInvoices />} />
-                                  <Route path="price-analysis" element={<SellerPriceAnalysis />} />
-                                  <Route path="api-keys" element={<SellerApiKeys />} />
-                                  <Route path="messages" element={<SellerMessages />} />
+                      <CurrencyProvider>
+                        <LocationProvider>
+                          <Router>
+                            <ScrollToTop />
+                            <AnalyticsTracker />
+                            <Suspense fallback={<PageLoader />}>
+                              <Routes>
+                                {/* Seller panel — full-screen, no Navbar/Footer */}
+                                <Route path="/seller" element={<SellerLayout />}>
+                                  <Route element={<SellerSuspense />}>
+                                    <Route path="dashboard" element={<SellerDashboard />} />
+                                    <Route path="inventory" element={<SellerInventoryPage />} />
+                                    <Route path="orders" element={<SellerOrdersPage />} />
+                                    <Route path="finance" element={<SellerFinance />} />
+                                    <Route path="settings" element={<SellerSettings />} />
+                                    <Route path="import" element={<SellerImportCenter />} />
+                                    <Route path="pricing" element={<SellerPricing />} />
+                                    <Route path="analytics" element={<SellerAnalytics />} />
+                                    <Route path="certificates" element={<SellerCertificates />} />
+                                    <Route path="coupons" element={<SellerCoupons />} />
+                                    <Route path="performance" element={<SellerPerformance />} />
+                                    <Route path="invoices" element={<SellerInvoices />} />
+                                    <Route
+                                      path="price-analysis"
+                                      element={<SellerPriceAnalysis />}
+                                    />
+                                    <Route path="api-keys" element={<SellerApiKeys />} />
+                                    <Route path="messages" element={<SellerMessages />} />
+                                  </Route>
                                 </Route>
-                              </Route>
-                              {/* All other routes — with Navbar/Footer */}
-                              <Route element={<MainLayout />}>
-                                <Route path="/" element={<Home />} />
-                                <Route path="/product/:slug" element={<ProductDetail />} />
-                                <Route path="/cart" element={<CartPage />} />
-                                <Route path="/campaigns" element={<Campaigns />} />
-                                <Route path="/checkout" element={<CheckoutPage />} />
-                                <Route path="/moderator" element={<ModeratorDashboard />} />
-                                <Route path="/seller/:id" element={<SellerStorePage />} />
-                                <Route path="/store/:slug" element={<SellerStorePage />} />
-                                <Route path="/search" element={<SearchResultsPage />} />
-                                <Route path="/category/:id" element={<CategoryPage />} />
-                                <Route path="/collection/:type" element={<CollectionPage />} />
-                                <Route path="/profile" element={<UserProfilePage />} />
-                                <Route
-                                  path="/admin"
-                                  element={
-                                    <AdminRoute>
-                                      <AdminDashboard />
-                                    </AdminRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/categories"
-                                  element={
-                                    <AdminRoute requiredRole="super-admin">
-                                      <AdminCategories />
-                                    </AdminRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/seller/:sellerId"
-                                  element={
-                                    <AdminRoute requiredRole="support">
-                                      <AdminSellerView />
-                                    </AdminRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/compliance/deletion-requests"
-                                  element={
-                                    <AdminRoute requiredRole="support">
-                                      <AdminDataDeletion />
-                                    </AdminRoute>
-                                  }
-                                />
-                                <Route path="/sell" element={<SellOnBenimOlan />} />
-                                <Route path="/sell/apply" element={<SellerApplication />} />
-                                <Route path="/wishlist" element={<Wishlist />} />
-                                <Route path="/followed-sellers" element={<FollowedSellers />} />
-                                <Route path="/price-alerts" element={<PriceAlerts />} />
-                                <Route path="/orders" element={<OrderHistory />} />
-                                <Route path="/orders/:orderId" element={<OrderTracking />} />
-                                <Route path="/support" element={<UserSupport />} />
-                                <Route path="/visual-search" element={<VisualSearch />} />
-                                <Route path="/verify" element={<ProductVerification />} />
-                                <Route path="/messages" element={<MessageCenter />} />
-                                <Route path="/about" element={<About />} />
-                                <Route path="/contact" element={<Contact />} />
-                                <Route path="/faq" element={<FAQ />} />
-                                {/* Legal pages (D-09) */}
-                                <Route path="/privacy" element={<PrivacyPolicy />} />
-                                <Route path="/terms" element={<TermsOfService />} />
-                                <Route path="/kvkk" element={<KVKKDisclosure />} />
-                                <Route path="/cookies" element={<CookiePolicy />} />
-                                <Route path="/verbis" element={<VERBISInfo />} />
-                                <Route path="*" element={<NotFound />} />
-                              </Route>
-                            </Routes>
-                          </Suspense>
-                        </Router>
-                      </LocationProvider>
+                                {/* All other routes — with Navbar/Footer */}
+                                <Route element={<MainLayout />}>
+                                  <Route path="/" element={<Home />} />
+                                  <Route path="/product/:slug" element={<ProductDetail />} />
+                                  <Route path="/cart" element={<CartPage />} />
+                                  <Route path="/campaigns" element={<Campaigns />} />
+                                  <Route path="/checkout" element={<CheckoutPage />} />
+                                  <Route path="/moderator" element={<ModeratorDashboard />} />
+                                  <Route path="/seller/:id" element={<SellerStorePage />} />
+                                  <Route path="/store/:slug" element={<SellerStorePage />} />
+                                  <Route path="/search" element={<SearchResultsPage />} />
+                                  <Route path="/category/:id" element={<CategoryPage />} />
+                                  <Route path="/collection/:type" element={<CollectionPage />} />
+                                  <Route path="/profile" element={<UserProfilePage />} />
+                                  <Route
+                                    path="/admin"
+                                    element={
+                                      <AdminRoute>
+                                        <AdminDashboard />
+                                      </AdminRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/categories"
+                                    element={
+                                      <AdminRoute requiredRole="super-admin">
+                                        <AdminCategories />
+                                      </AdminRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/seller/:sellerId"
+                                    element={
+                                      <AdminRoute requiredRole="support">
+                                        <AdminSellerView />
+                                      </AdminRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/compliance/deletion-requests"
+                                    element={
+                                      <AdminRoute requiredRole="support">
+                                        <AdminDataDeletion />
+                                      </AdminRoute>
+                                    }
+                                  />
+                                  <Route path="/sell" element={<SellOnBenimOlan />} />
+                                  <Route path="/sell/apply" element={<SellerApplication />} />
+                                  <Route path="/wishlist" element={<Wishlist />} />
+                                  <Route path="/followed-sellers" element={<FollowedSellers />} />
+                                  <Route path="/price-alerts" element={<PriceAlerts />} />
+                                  <Route path="/orders" element={<OrderHistory />} />
+                                  <Route path="/orders/:orderId" element={<OrderTracking />} />
+                                  <Route path="/support" element={<UserSupport />} />
+                                  <Route path="/visual-search" element={<VisualSearch />} />
+                                  <Route path="/verify" element={<ProductVerification />} />
+                                  <Route path="/messages" element={<MessageCenter />} />
+                                  <Route path="/about" element={<About />} />
+                                  <Route path="/contact" element={<Contact />} />
+                                  <Route path="/faq" element={<FAQ />} />
+                                  {/* Legal pages (D-09) */}
+                                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                                  <Route path="/terms" element={<TermsOfService />} />
+                                  <Route path="/kvkk" element={<KVKKDisclosure />} />
+                                  <Route path="/cookies" element={<CookiePolicy />} />
+                                  <Route path="/verbis" element={<VERBISInfo />} />
+                                  <Route path="*" element={<NotFound />} />
+                                </Route>
+                              </Routes>
+                            </Suspense>
+                          </Router>
+                        </LocationProvider>
+                      </CurrencyProvider>
                     </LanguageProvider>
                   </NotificationProvider>
                 </FollowsProvider>

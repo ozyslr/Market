@@ -192,15 +192,17 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
 
   // Stripe Payment Intent
   app.post('/api/create-payment-intent', validate(createPaymentIntentSchema), async (req, res) => {
-    const { amount, currency = 'gbp', orderId, paymentMethodId } = req.body;
+    const { amount, currency = 'try', orderId, paymentMethodId } = req.body;
 
     // â”€â”€ Input validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (!isFiniteNumber(amount) || amount <= 0 || amount > 1_000_000) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
-    if (typeof currency !== 'string' || currency.length > 5) {
-      return res.status(400).json({ error: 'Invalid currency' });
-    }
+    const validCurrency =
+      typeof currency === 'string' &&
+      (currency.toLowerCase() === 'eur' || currency.toLowerCase() === 'try')
+        ? currency.toLowerCase()
+        : 'try';
     if (orderId !== undefined && !isNonEmptyString(orderId, 128)) {
       return res.status(400).json({ error: 'Invalid orderId' });
     }
@@ -473,7 +475,7 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
   // â”€â”€â”€ One-Click Checkout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post('/api/one-click-checkout', verifyFirebaseToken, async (req: any, res) => {
     if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
-    const { items, currency = 'gbp' } = req.body as {
+    const { items, currency = 'try' } = req.body as {
       items: Array<{ productId: string; variantId?: string; quantity: number }>;
       currency: string;
     };

@@ -53,6 +53,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
+import { useCurrency } from '@/context/CurrencyContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -73,6 +74,7 @@ import { LocationModal } from './LocationModal';
 
 export function Navbar() {
   const { lang, setLang, t, availableLanguages } = useLanguage();
+  const { currency, toggleCurrency } = useCurrency();
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
@@ -223,6 +225,16 @@ export function Navbar() {
               aria-label={theme === 'light' ? 'Karanlık moda geç' : 'Aydınlık moda geç'}
             >
               {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
+
+            {/* Currency Toggle */}
+            <button
+              onClick={toggleCurrency}
+              className="p-2 rounded-xl cursor-pointer hidden sm:flex items-center justify-center text-brand-primary dark:text-white hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors"
+              aria-label="Para birimi değiştir"
+              title={currency === 'TRY' ? 'TL → Euro' : 'Euro → TL'}
+            >
+              <span className="text-xs font-bold">{currency === 'TRY' ? '₺' : '€'}</span>
             </button>
 
             {/* Language Dropdown */}
