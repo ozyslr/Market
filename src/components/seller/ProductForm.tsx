@@ -259,12 +259,20 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             URL.revokeObjectURL(entry.preview);
           } catch (err: any) {
             clearInterval(progressInterval);
+            const firebaseErrorMap: Record<string, string> = {
+              'storage/unauthorized': 'Resim yükleme izniniz yok. Lütfen tekrar giriş yapın.',
+              'storage/canceled': 'Yükleme iptal edildi.',
+              'storage/retry-limit-exceeded':
+                'Yükleme zaman aşımına uğradı. Lütfen tekrar deneyin.',
+              'storage/quota-exceeded': 'Depolama kotası aşıldı. Lütfen daha sonra tekrar deneyin.',
+              'storage/invalid-format':
+                'Desteklenmeyen dosya formatı. Lütfen PNG, JPG veya WEBP yükleyin.',
+              'storage/unknown': 'Resim yüklenirken bir hata oluştu. Lütfen tekrar deneyin.',
+            };
+            const friendly =
+              firebaseErrorMap[err?.code] || err?.message || 'Resim yüklenirken bir hata oluştu.';
             setUploadFiles((prev) =>
-              prev.map((f) =>
-                f.id === entry.id
-                  ? { ...f, progress: 0, error: err?.message || 'Yükleme hatası' }
-                  : f,
-              ),
+              prev.map((f) => (f.id === entry.id ? { ...f, progress: 0, error: friendly } : f)),
             );
           }
         }),
