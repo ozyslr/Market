@@ -29,6 +29,7 @@ import { registerShippingRoutes } from './server/routes/shipping.js';
 import { registerCarrierWebhook } from './server/routes/carrierWebhook.js';
 import { registerCarrierPollRoutes } from './server/routes/carrierPoll.js';
 import { registerReturnsRoutes } from './server/routes/returns.js';
+import { registerTypesenseSyncRoutes } from './server/routes/typesenseSync.js';
 import { sendAbandonedCartEmail } from './server/services/emailService.js';
 import { logger, httpLogger } from './server/logger.js';
 import { audit } from './server/lib/auditLog.js';
@@ -480,6 +481,9 @@ async function startServer() {
     verifySeller,
     getIyzico,
   });
+
+  // ─── Typesense search sync → server/routes/typesenseSync.ts ────────────────
+  registerTypesenseSyncRoutes(app, { verifyFirebaseToken });
 
   // â”€â”€â”€ Legacy Scheduled Auto-Payout (sellerBalances â€” kept for backward compat) â”€â”€
   // The new T+7 ledger-based payout is handled by registerPayoutRoutes above.

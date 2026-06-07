@@ -222,6 +222,8 @@ export async function createProduct(data: Omit<Product, 'id'>) {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    // Fire-and-forget Typesense sync
+    syncToTypesense(docRef.id, { ...data, id: docRef.id });
     return docRef.id;
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, 'products');
@@ -239,6 +241,8 @@ export async function updateProduct(id: string, data: Partial<Product>) {
     if (data.price !== undefined) {
       recordPrice(id, data.price);
     }
+    // Fire-and-forget Typesense sync
+    syncToTypesense(id, data);
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, `products/${id}`);
     throw error;
@@ -411,6 +415,8 @@ export async function deleteProduct(id: string) {
   try {
     const productRef = doc(db, 'products', id);
     await deleteDoc(productRef);
+    // Fire-and-forget Typesense sync
+    syncDeleteFromTypesense(id);
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `products/${id}`);
     throw error;
@@ -644,4 +650,49 @@ export async function batchUpdateProducts(
   }
 
   return result;
+}
+
+// ── Typesense sync helpers (fire-and-forget) ────────────────────────────────
+
+async function syncToTypesense(id: string, data: Record<string, any>) {
+  try {
+    const secret = import.meta.env.VITE_TYPESENSE_SYNC_SECRET || 'dev-secret';
+    const baseUrl = window.location.origin;
+    await fetch(`${baseUrl}/api/typesense/sync/product`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Typesense-Sync-Secret': secret,
+      },
+      body: JSON.stringify({
+        id,
+        title: data.title || '',
+        description: data.description || '',
+        price: data.price || 0,
+        categoryId: data.categoryId || '',
+        brand: data.brand || '',
+        rating: data.rating || 0,
+        imageUrl: data.images?.[0] || data.imageUrl || '',
+        storeId: data.storeId || '',
+        language: data.language || 'tr',
+        tags: data.tags || [],
+        createdAt: data.createdAt?._seconds || Math.floor(Date.now() / 1000),
+      }),
+    });
+  } catch {
+    // Fire-and-forget: don't block the product operation on sync failure
+  }
+}
+
+async function syncDeleteFromTypesense(id: string) {
+  try {
+    const secret = import.meta.env.VITE_TYPESENSE_SYNC_SECRET || 'dev-secret';
+    const baseUrl = window.location.origin;
+    await fetch(`${baseUrl}/api/typesense/sync/product/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { 'X-Typesense-Sync-Secret': secret },
+    });
+  } catch {
+    // Fire-and-forget
+  }
 }
