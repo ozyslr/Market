@@ -597,17 +597,18 @@ export function SellerStorePage() {
                     />
                   </section>
 
-                  {/* ── Campaign Banner ── */}
-                  <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-primary via-brand-primary to-accent p-8 md:p-12">
+                  {/* ── Seller Campaign Banner ── */}
+                  <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-accent via-brand-primary to-brand-primary p-8 md:p-12">
                     <div className="relative z-10 max-w-md">
                       <span className="px-3 py-1 bg-white/20 text-white text-[10px] font-black uppercase rounded-full">
-                        Kampanyalar
+                        {seller.name} Kampanyası
                       </span>
                       <h3 className="text-2xl md:text-3xl font-black text-white uppercase mt-4 leading-tight">
-                        Sezonun En İyi Fırsatları
+                        {seller.name} Özel Fırsatlar
                       </h3>
                       <p className="text-white/70 text-sm mt-2">
-                        {seller.name} mağazasında özel indirimler ve kampanyalar sizi bekliyor.
+                        Bu kampanya sadece {seller.name} mağazasında geçerlidir. Özel indirimler ve
+                        fırsatlar için hemen keşfedin.
                       </p>
                       <button className="mt-6 px-6 py-3 bg-white text-brand-primary rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/90 transition-all inline-flex items-center gap-2">
                         Kampanyaları Keşfet <ArrowRight size={14} />
@@ -1012,10 +1013,32 @@ export function SellerStorePage() {
                             </span>
                             <Star size={12} className="text-yellow-400 fill-yellow-400 shrink-0" />
                             <div className="flex-1 h-3 bg-brand-secondary rounded-full overflow-hidden">
-                              <div className="h-full bg-accent" style={{}} />
+                              <div
+                                className="h-full bg-accent"
+                                style={{
+                                  width:
+                                    rating === 5
+                                      ? '73%'
+                                      : rating === 4
+                                        ? '18%'
+                                        : rating === 3
+                                          ? '7%'
+                                          : rating === 2
+                                            ? '2%'
+                                            : '1%',
+                                }}
+                              />
                             </div>
                             <span className="text-[10px] font-black text-brand-primary/40 w-12">
-                              {rating === 5 ? '85%' : rating === 4 ? '12%' : '<1%'}
+                              {rating === 5
+                                ? '73%'
+                                : rating === 4
+                                  ? '18%'
+                                  : rating === 3
+                                    ? '7%'
+                                    : rating === 2
+                                      ? '2%'
+                                      : '<1%'}
                             </span>
                           </button>
                         ))}
@@ -1038,46 +1061,118 @@ export function SellerStorePage() {
                       </button>
                     </div>
                   )}
-                  <div className="space-y-6">
-                    {[1, 2, 3]
-                      .filter(() => reviewFilter === 0 || Math.random() > 0.5)
-                      .map((r) => (
+                  <div className="space-y-4">
+                    {[
+                      {
+                        name: 'Ahmet Y.',
+                        date: '15 Mayıs 2026',
+                        rating: 5,
+                        product: 'Kablosuz Kulaklık Pro',
+                        text: 'Harika bir ürün. Ses kalitesi çok iyi, kargo hızlıydı. Satıcıyla iletişimim çok iyiydi.',
+                        likes: 12,
+                        reported: false,
+                      },
+                      {
+                        name: 'Zeynep K.',
+                        date: '3 Haziran 2026',
+                        rating: 4,
+                        product: 'El Yapımı Seramik Vazo',
+                        text: 'Vazo çok güzel ama kargo kutusu biraz hasarlı geldi. Neyse ki ürün sağlamdı.',
+                        likes: 8,
+                        reported: false,
+                      },
+                      {
+                        name: 'Mehmet D.',
+                        date: '28 Mayıs 2026',
+                        rating: 5,
+                        product: 'Deri El Çantası',
+                        text: 'Tam istediğim gibi. Malzeme kalitesi çok iyi. Kesinlikle tavsiye ederim.',
+                        likes: 5,
+                        reported: false,
+                      },
+                      {
+                        name: 'Ayşe S.',
+                        date: '20 Nisan 2026',
+                        rating: 3,
+                        product: 'Gümüş Kolye Seti',
+                        text: 'Kolye güzel ama zincir biraz kısa. İade etmek istemedim, kullanıyorum.',
+                        likes: 3,
+                        reported: false,
+                      },
+                      {
+                        name: 'Can B.',
+                        date: '10 Mart 2026',
+                        rating: 2,
+                        product: 'Spor Ayakkabı',
+                        text: 'Numarası biraz küçük geldi. İade süreci hızlıydı.',
+                        likes: 1,
+                        reported: true,
+                      },
+                      {
+                        name: 'Elif T.',
+                        date: '1 Haziran 2026',
+                        rating: 5,
+                        product: 'Ahşap Duvar Saati',
+                        text: 'Mükemmel işçilik. Tam el yapımı. Beklediğimden de güzel çıktı.',
+                        likes: 24,
+                        reported: false,
+                      },
+                    ]
+                      .filter((rv) => reviewFilter === 0 || rv.rating === reviewFilter)
+                      .map((rv, idx) => (
                         <div
-                          key={r}
-                          className="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-primary/5"
+                          key={idx}
+                          className="bg-white rounded-2xl p-6 shadow-sm border border-brand-primary/5"
                         >
-                          <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-2xl bg-brand-secondary overflow-hidden">
-                                <img
-                                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${r}`}
-                                  className="w-full h-full"
-                                  alt="Kullanıcı avatarı"
-                                  loading="lazy"
-                                />
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-brand-secondary flex items-center justify-center text-brand-primary font-bold text-sm">
+                                {rv.name.charAt(0)}
                               </div>
                               <div>
-                                <p className="font-bold text-brand-primary">Onaylı Alıcı</p>
-                                <div className="flex gap-0.5 mt-1">
-                                  {[1, 2, 3, 4, 5].map((i) => (
-                                    <Star
-                                      key={i}
-                                      size={10}
-                                      className="text-yellow-400 fill-yellow-400"
-                                    />
-                                  ))}
+                                <p className="text-sm font-bold text-brand-primary">{rv.name}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <div className="flex">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        size={10}
+                                        className={
+                                          i < rv.rating
+                                            ? 'text-yellow-400 fill-yellow-400'
+                                            : 'text-brand-primary/10'
+                                        }
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-[10px] text-brand-primary/30">
+                                    {rv.date}
+                                  </span>
                                 </div>
                               </div>
                             </div>
-                            <span className="text-[10px] font-bold text-brand-primary/30 uppercase tracking-widest">
-                              2 hafta önce
-                            </span>
+                            {rv.reported && (
+                              <span className="text-[9px] text-red-400 bg-red-50 px-2 py-0.5 rounded-full">
+                                İncelendi
+                              </span>
+                            )}
                           </div>
-                          <p className="text-brand-primary/60 leading-relaxed font-medium">
-                            &quot;The engineering on their headsets is unparalleled. You can
-                            literally hear the artisan craftsmanship in the soundstage. Global
-                            shipping was surprisingly fast from Dubai to London.&quot;
+                          <p className="text-xs text-brand-primary/60 leading-relaxed mb-3">
+                            {rv.text}
                           </p>
+                          <div className="flex items-center justify-between text-[10px] text-brand-primary/30">
+                            <span className="bg-brand-secondary/50 px-2 py-0.5 rounded">
+                              {rv.product} hakkında
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <button className="flex items-center gap-1 hover:text-green-500 transition-colors">
+                                👍 {rv.likes}
+                              </button>
+                              <button className="flex items-center gap-1 hover:text-red-400 transition-colors">
+                                🚩 Bildir
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       ))}
                   </div>
