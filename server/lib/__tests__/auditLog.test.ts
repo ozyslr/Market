@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// ─── Mock firebase-admin modules BEFORE importing the module under test ─────
+// â”€â”€â”€ Mock firebase-admin modules BEFORE importing the module under test â”€â”€â”€â”€â”€
 
 const mockCollectionFn = vi.fn();
 const mockAddFn = vi.fn();
@@ -8,7 +8,7 @@ const mockAddFn = vi.fn();
 // Mock all firebase-admin sub-modules that firebase-admin.ts statically imports
 vi.mock('firebase-admin/app', () => ({
   initializeApp: vi.fn(),
-  getApps: vi.fn(() => [{ name: 'mock-app' }]),
+  getApps: vi.fn(() => []),
   cert: vi.fn(() => ({})),
 }));
 
@@ -40,7 +40,7 @@ process.env.FIREBASE_SERVICE_ACCOUNT_B64 = Buffer.from(
   }),
 ).toString('base64');
 
-// ─── Now import the module under test ────────────────────────────────────────
+// â”€â”€â”€ Now import the module under test â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 import { logAudit, audit } from '../auditLog.js';
 import type { AuditAction } from '../auditLog.js';
@@ -51,7 +51,7 @@ beforeEach(() => {
   mockAddFn.mockResolvedValue({ id: 'audit-001' });
 });
 
-// ─── logAudit ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ logAudit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('logAudit', () => {
   it('writes a document to auditLogs collection with all required fields', async () => {
@@ -140,7 +140,7 @@ describe('logAudit', () => {
   });
 });
 
-// ─── audit (fire-and-forget shorthand) ──────────────────────────────────────
+// â”€â”€â”€ audit (fire-and-forget shorthand) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('audit', () => {
   it('calls logAudit with the correct mapped fields', async () => {
@@ -205,11 +205,11 @@ describe('audit', () => {
   });
 });
 
-// ─── AuditAction type check ─────────────────────────────────────────────────
+// â”€â”€â”€ AuditAction type check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('AuditAction union', () => {
   it('includes all mandated D-ADM-03 action members (compile-time check)', () => {
-    // This is a compile-time type check — if any action literal doesn't match
+    // This is a compile-time type check â€” if any action literal doesn't match
     // AuditAction, the test file won't compile (TS error = test failure).
     const actions: AuditAction[] = [
       // Existing
