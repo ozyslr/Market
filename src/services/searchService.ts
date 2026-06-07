@@ -12,6 +12,13 @@ import { Product, Category, SponsoredSlot } from '@/types';
 import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { CATEGORIES } from '@/data/mockCategories';
 import { injectSponsoredProducts } from './adService';
+// Typesense fallback when available
+let typesenseSearch: any = null;
+try {
+  typesenseSearch = (await import('./typesenseService')).searchProducts;
+} catch {
+  /* Typesense not configured — use Firestore */
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

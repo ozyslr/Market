@@ -52,6 +52,7 @@ import { ProductRecommendations } from '@/components/commerce/ProductRecommendat
 import { CampaignBanner } from '@/components/marketing/CampaignBanner';
 import { DeliveryLocationSelector } from '@/components/location/DeliveryLocationSelector';
 import { ProductGridSkeleton } from '@/components/ui/Skeleton';
+import { SearchBar } from '@/components/search/SearchBar';
 
 const CountdownTimer = ({
   hours = 5,
@@ -461,6 +462,18 @@ export function Home() {
           <DeliveryLocationSelector variant="inline" />
         </div>
       </div>
+
+      {/* Search bar — mobile-first, visible on all pages */}
+      <section className="px-4 md:px-0 mb-4">
+        <div className="max-w-[1700px] mx-auto md:px-6">
+          <SearchBar
+            className="max-w-2xl mx-auto"
+            onSearch={(query) => {
+              window.location.href = `/?q=${encodeURIComponent(query)}`;
+            }}
+          />
+        </div>
+      </section>
 
       <section className="px-4 md:px-0 mb-8">
         <div className="max-w-[1700px] mx-auto md:px-6 flex flex-col lg:flex-row gap-4 lg:gap-6 rounded-[2rem] overflow-hidden">
