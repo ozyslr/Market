@@ -47,6 +47,12 @@ export interface ProductFormData {
   estimatedDeliveryDays: number;
   deliveryTerms: string;
   returnPolicy: string;
+  // GPSR compliance
+  gpsrRepName: string;
+  gpsrRepAddress: string;
+  gpsrRepEmail: string;
+  gpsrSafetyDoc: string;
+  gpsrDeclarationDate: string;
   freeShipping: boolean;
   visibility: 'public' | 'hidden' | 'draft' | 'unlisted';
   metaDescription: string;
@@ -72,6 +78,11 @@ const EMPTY_FORM: ProductFormData = {
   estimatedDeliveryDays: 3,
   deliveryTerms: '3-5 iş günü içinde kargo',
   returnPolicy: '14 gün iade hakkı',
+  gpsrRepName: '',
+  gpsrRepAddress: '',
+  gpsrRepEmail: '',
+  gpsrSafetyDoc: '',
+  gpsrDeclarationDate: '',
   freeShipping: false,
   visibility: 'public',
   metaDescription: '',

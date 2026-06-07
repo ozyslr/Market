@@ -25,6 +25,7 @@ import {
   Twitter,
 } from 'lucide-react';
 import { MOCK_PRODUCTS } from '@/data/mockProducts';
+import { isGpsrCompliant, getHsCodeLabel, getHsCode } from '@/services/complianceService';
 import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
@@ -32,6 +33,7 @@ import { useLocationStore } from '@/context/LocationContext';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { SEO } from '@/components/common/SEO';
+import { ShieldCheck, AlertTriangle } from 'lucide-react';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
 import { getProductBySlug } from '@/services/productService';
 import { Product, Campaign, Coupon, ProductVariant } from '@/types';
