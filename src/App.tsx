@@ -79,6 +79,10 @@ const SellerDashboard = named(() => import('./pages/SellerDashboard'), 'SellerDa
 const SellerInventoryPage = named(() => import('./pages/SellerInventory'), 'SellerInventoryPage');
 const SellerOrdersPage = named(() => import('./pages/SellerOrders'), 'SellerOrdersPage');
 const SellerStorePage = named(() => import('./pages/SellerStore'), 'SellerStorePage');
+const SellerStoreSettingsPage = named(
+  () => import('./pages/SellerStoreSettings'),
+  'SellerStoreSettings',
+);
 const SellerSettings = named(() => import('./pages/SellerSettings'), 'SellerSettings');
 const SellerImportCenter = named(() => import('./pages/SellerImportCenter'), 'SellerImportCenter');
 const SellerApplication = named(() => import('./pages/SellerApplication'), 'SellerApplication');
@@ -185,6 +189,11 @@ export default function App() {
                                   <Route element={<SellerSuspense />}>
                                     <Route path="dashboard" element={<SellerDashboard />} />
                                     <Route path="inventory" element={<SellerInventoryPage />} />
+                                    <Route path="store" element={<SellerStorePage />} />
+                                    <Route
+                                      path="store-settings"
+                                      element={<SellerStoreSettingsPage />}
+                                    />
                                     <Route path="orders" element={<SellerOrdersPage />} />
                                     <Route path="finance" element={<SellerFinance />} />
                                     <Route path="settings" element={<SellerSettings />} />
