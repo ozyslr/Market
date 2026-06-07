@@ -90,6 +90,9 @@ const SellerFinance = named(() => import('./pages/SellerFinance'), 'SellerFinanc
 const SellerPricing = named(() => import('./pages/SellerPricing'), 'SellerPricing');
 const SellerCertificates = named(() => import('./pages/SellerCertificates'), 'SellerCertificates');
 const SellerCoupons = named(() => import('./pages/SellerCoupons'), 'SellerCoupons');
+const SellerCouponsPage = named(() => import('./pages/SellerCouponManager'), 'SellerCouponManager');
+const StoreBlocksEditorPage = named(() => import('./pages/StoreBlocksEditor'), 'StoreBlocksEditor');
+const SellerMenuEditorPage = named(() => import('./pages/SellerMenuEditor'), 'SellerMenuEditor');
 const SellerPerformance = named(() => import('./pages/SellerPerformance'), 'SellerPerformance');
 const SellerInvoices = named(() => import('./pages/SellerInvoices'), 'SellerInvoices');
 const SellerPriceAnalysis = named(
@@ -194,6 +197,12 @@ export default function App() {
                                       path="store-settings"
                                       element={<SellerStoreSettingsPage />}
                                     />
+                                    <Route
+                                      path="store-blocks"
+                                      element={<StoreBlocksEditorPage />}
+                                    />
+                                    <Route path="store-menu" element={<SellerMenuEditorPage />} />
+                                    <Route path="coupons" element={<SellerCouponsPage />} />
                                     <Route path="orders" element={<SellerOrdersPage />} />
                                     <Route path="finance" element={<SellerFinance />} />
                                     <Route path="settings" element={<SellerSettings />} />
