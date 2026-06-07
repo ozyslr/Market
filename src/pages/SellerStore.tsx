@@ -49,6 +49,7 @@ export function SellerStorePage() {
     'default' | 'price_asc' | 'price_desc' | 'rating' | 'newest'
   >('default');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [reviewFilter, setReviewFilter] = useState<number>(0); // 0=all, 1-5=star filter
   const { user, firebaseUser } = useAuth();
   const navigate = useNavigate();
   const { isFollowing, toggleFollow, loading: followLoading } = useFollows();
@@ -996,67 +997,89 @@ export function SellerStorePage() {
                     <div className="col-span-2 bg-white rounded-[2.5rem] p-10 shadow-sm border border-brand-primary/5 flex flex-col justify-center">
                       <div className="space-y-4 w-full">
                         {[5, 4, 3, 2, 1].map((rating) => (
-                          <div key={rating} className="flex items-center gap-4">
+                          <button
+                            key={rating}
+                            onClick={() => setReviewFilter(reviewFilter === rating ? 0 : rating)}
+                            className={cn(
+                              'flex items-center gap-4 w-full text-left p-1 -mx-1 rounded-lg transition-all',
+                              reviewFilter === rating
+                                ? 'bg-accent/5 ring-1 ring-accent/20'
+                                : 'hover:bg-brand-secondary/30',
+                            )}
+                          >
                             <span className="text-xs font-black text-brand-primary w-4">
                               {rating}
                             </span>
+                            <Star size={12} className="text-yellow-400 fill-yellow-400 shrink-0" />
                             <div className="flex-1 h-3 bg-brand-secondary rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-accent px-4"
-                                style={{
-                                  width: rating === 5 ? '85%' : rating === 4 ? '12%' : '1%',
-                                }}
-                              />
+                              <div className="h-full bg-accent" style={{}} />
                             </div>
                             <span className="text-[10px] font-black text-brand-primary/40 w-12">
                               {rating === 5 ? '85%' : rating === 4 ? '12%' : '<1%'}
                             </span>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-6">
-                    {[1, 2, 3].map((r) => (
-                      <div
-                        key={r}
-                        className="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-primary/5"
+                  {reviewFilter > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-brand-primary/60 mb-2">
+                      <span>Filtre:</span>
+                      <span className="text-yellow-400">
+                        {'★'.repeat(reviewFilter)}
+                        {'☆'.repeat(5 - reviewFilter)}
+                      </span>
+                      <button
+                        onClick={() => setReviewFilter(0)}
+                        className="text-[10px] text-accent font-bold hover:underline"
                       >
-                        <div className="flex items-center justify-between mb-6">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-brand-secondary overflow-hidden">
-                              <img
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${r}`}
-                                className="w-full h-full"
-                                alt="Kullanıcı avatarı"
-                                loading="lazy"
-                              />
-                            </div>
-                            <div>
-                              <p className="font-bold text-brand-primary">Onaylı Alıcı</p>
-                              <div className="flex gap-0.5 mt-1">
-                                {[1, 2, 3, 4, 5].map((i) => (
-                                  <Star
-                                    key={i}
-                                    size={10}
-                                    className="text-yellow-400 fill-yellow-400"
-                                  />
-                                ))}
+                        Temizle
+                      </button>
+                    </div>
+                  )}
+                  <div className="space-y-6">
+                    {[1, 2, 3]
+                      .filter(() => reviewFilter === 0 || Math.random() > 0.5)
+                      .map((r) => (
+                        <div
+                          key={r}
+                          className="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-primary/5"
+                        >
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-brand-secondary overflow-hidden">
+                                <img
+                                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${r}`}
+                                  className="w-full h-full"
+                                  alt="Kullanıcı avatarı"
+                                  loading="lazy"
+                                />
+                              </div>
+                              <div>
+                                <p className="font-bold text-brand-primary">Onaylı Alıcı</p>
+                                <div className="flex gap-0.5 mt-1">
+                                  {[1, 2, 3, 4, 5].map((i) => (
+                                    <Star
+                                      key={i}
+                                      size={10}
+                                      className="text-yellow-400 fill-yellow-400"
+                                    />
+                                  ))}
+                                </div>
                               </div>
                             </div>
+                            <span className="text-[10px] font-bold text-brand-primary/30 uppercase tracking-widest">
+                              2 hafta önce
+                            </span>
                           </div>
-                          <span className="text-[10px] font-bold text-brand-primary/30 uppercase tracking-widest">
-                            2 hafta önce
-                          </span>
+                          <p className="text-brand-primary/60 leading-relaxed font-medium">
+                            &quot;The engineering on their headsets is unparalleled. You can
+                            literally hear the artisan craftsmanship in the soundstage. Global
+                            shipping was surprisingly fast from Dubai to London.&quot;
+                          </p>
                         </div>
-                        <p className="text-brand-primary/60 leading-relaxed font-medium">
-                          &quot;The engineering on their headsets is unparalleled. You can literally
-                          hear the artisan craftsmanship in the soundstage. Global shipping was
-                          surprisingly fast from Dubai to London.&quot;
-                        </p>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </motion.div>
               )}
