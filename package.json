@@ -46,6 +46,7 @@
     "firebase-admin": "^13.10.0",
     "helmet": "^8.2.0",
     "iyzipay": "^2.0.67",
+    "libphonenumber-js": "^1.13.6",
     "lucide-react": "^0.546.0",
     "motion": "^12.40.0",
     "papaparse": "^5.5.3",
@@ -62,6 +63,7 @@
     "stripe": "^22.1.1",
     "tailwind-merge": "^3.6.0",
     "three": "^0.184.0",
+    "twilio": "^6.0.2",
     "typesense": "^3.0.6",
     "typesense-instantsearch-adapter": "^3.0.2",
     "zod": "^4.4.3"
