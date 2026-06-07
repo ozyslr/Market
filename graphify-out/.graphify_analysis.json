@@ -1,0 +1,489 @@
+{
+  "communities": {
+    "0": [
+      "layout_authmodal",
+      "layout_authmodal_authmodalprops",
+      "layout_megamenu",
+      "layout_megamenu_getl3items",
+      "layout_megamenu_icon_map",
+      "layout_megamenu_megamenu",
+      "layout_megamenu_megamenuprops",
+      "layout_megamenu_normcatname",
+      "layout_mobilemenu",
+      "layout_mobilemenu_category_icons",
+      "layout_mobilemenu_containervariants",
+      "layout_mobilemenu_formatbadgecount",
+      "layout_mobilemenu_itemvariants",
+      "layout_mobilemenu_mobilemenuprops",
+      "layout_mobiletabbar",
+      "layout_mobiletabbar_mobiletabbar",
+      "layout_mobiletabbar_mobiletabbarprops",
+      "layout_navbar",
+      "layout_navbar_navbar",
+      "layout_notificationspanel",
+      "layout_notificationspanel_relativetime",
+      "layout_notificationspanel_system_types",
+      "layout_notificationspanel_tabid",
+      "layout_notificationspanel_tabs",
+      "layout_notificationspanel_type_color",
+      "layout_notificationspanel_type_icon",
+      "layout_searchbar",
+      "layout_searchbar_searchbar",
+      "layout_topticker",
+      "layout_topticker_topticker",
+      "search_searchbar",
+      "search_searchbar_searchbar"
+    ],
+    "1": [
+      "commerce_filterpanel",
+      "commerce_filterpanel_activefilters",
+      "commerce_filterpanel_facetcounts",
+      "commerce_filterpanel_filterpanelprops",
+      "commerce_filterpanel_price_presets",
+      "product_reviewcard",
+      "product_reviewcard_category_labels",
+      "product_reviewcard_props",
+      "product_reviewfilters",
+      "product_reviewfilters_filter_labels",
+      "product_reviewfilters_filteroption",
+      "product_reviewfilters_props",
+      "product_reviewfilters_reviewfilters",
+      "product_reviewfilters_sort_labels",
+      "product_reviewfilters_sortoption",
+      "product_reviewform",
+      "product_reviewform_category_labels",
+      "product_reviewform_props",
+      "product_reviewform_rating_labels",
+      "product_reviewform_reviewformdata",
+      "product_reviewsection",
+      "product_reviewsection_empty_stats",
+      "product_reviewsection_props"
+    ],
+    "2": [
+      "common_breadcrumb",
+      "common_breadcrumb_breadcrumb",
+      "common_breadcrumb_breadcrumbitem",
+      "common_breadcrumb_breadcrumbprops",
+      "common_seo",
+      "common_seo_helmet",
+      "common_seo_languages",
+      "common_seo_seo",
+      "common_seo_seoprops",
+      "seo_jsonld",
+      "seo_jsonld_jsonld",
+      "seo_jsonld_jsonldprops",
+      "seo_schemas",
+      "seo_schemas_breadcrumbschema",
+      "seo_schemas_faqschema",
+      "seo_schemas_organizationschema",
+      "seo_schemas_productschema",
+      "seo_schemas_reviewschema",
+      "seo_schemas_sellerstoreschema",
+      "seo_schemas_websiteschema",
+      "tests_breadcrumb_test",
+      "tests_breadcrumb_test_renderwithrouter"
+    ],
+    "3": [
+      "commerce_productcard",
+      "commerce_productcard_productcardprops",
+      "commerce_productcarousel",
+      "commerce_productrecommendations",
+      "commerce_productrecommendations_props",
+      "commerce_productrecommendations_recommendationstrip",
+      "commerce_productrecommendations_source_colors",
+      "commerce_productrecommendations_source_icons",
+      "commerce_productrecommendations_stripprops",
+      "common_optimizedimage",
+      "common_optimizedimage_buildsrcset",
+      "common_optimizedimage_default_widths",
+      "home_hero",
+      "home_hero_hero",
+      "home_hero_slides",
+      "product_productgallery",
+      "product_productgallery_getyoutubeembedurl",
+      "product_productgallery_productgalleryprops",
+      "search_searchresults",
+      "search_searchresults_props"
+    ],
+    "4": [
+      "seller_categoryselect",
+      "seller_categoryselect_categoryselectprops",
+      "seller_productform",
+      "seller_productform_empty_form",
+      "seller_productform_productform",
+      "seller_productform_productformdata",
+      "seller_productform_productformfield",
+      "seller_productform_productformprops",
+      "seller_productform_quick_add_fields",
+      "seller_productform_sortableimage",
+      "seller_productform_uploadfilestate",
+      "seller_productformmodal",
+      "seller_productformmodal_productformmodalprops"
+    ],
+    "5": [
+      "layout_locationmodal",
+      "layout_locationmodal_empty_address",
+      "layout_locationmodal_props",
+      "location_deliverylocationselector",
+      "location_deliverylocationselector_de_cities",
+      "location_deliverylocationselector_getcitiesformarket",
+      "location_deliverylocationselector_getdistrictsforcity",
+      "location_deliverylocationselector_market_options",
+      "location_deliverylocationselector_marketconfig",
+      "location_deliverylocationselector_uk_cities",
+      "location_deliverylocationselector_us_cities"
+    ],
+    "6": [
+      "seller_financedashboard",
+      "seller_financedashboard_formatcurrency",
+      "seller_financedashboard_formatdate",
+      "seller_financedashboard_props",
+      "seller_financedashboard_skeletonrow",
+      "seller_financedashboard_statcard",
+      "seller_financedashboard_statcardprops",
+      "seller_financedashboard_status_colors",
+      "seller_financedashboard_status_labels",
+      "seller_financedashboard_type_labels"
+    ],
+    "7": [
+      "tests_skeleton_test",
+      "ui_skeleton",
+      "ui_skeleton_categorylistskeleton",
+      "ui_skeleton_productcardskeleton",
+      "ui_skeleton_productdetailskeleton",
+      "ui_skeleton_productgridskeleton",
+      "ui_skeleton_searchresultsskeleton",
+      "ui_skeleton_skeletonprops",
+      "ui_skeleton_tablerowskeleton"
+    ],
+    "8": [
+      "orders_ordertimeline",
+      "orders_ordertimeline_getactiveindex",
+      "orders_ordertimeline_historyentry",
+      "orders_ordertimeline_ordertimeline",
+      "orders_ordertimeline_ordertimelineprops",
+      "orders_ordertimeline_step_order",
+      "orders_ordertimeline_steps",
+      "orders_ordertimeline_terminal_negative"
+    ],
+    "9": [
+      "product_ratingsummary",
+      "product_ratingsummary_category_labels",
+      "product_ratingsummary_compactrating",
+      "product_ratingsummary_compactratingprops",
+      "product_ratingsummary_props",
+      "product_ratingsummary_sellerratingsummary",
+      "product_sellercard",
+      "product_sellercard_sellercardprops"
+    ],
+    "10": [
+      "checkout_ordersummary",
+      "checkout_ordersummary_cartgift",
+      "checkout_ordersummary_ordersummary",
+      "checkout_ordersummary_ordersummaryprops",
+      "checkout_shippingsection",
+      "checkout_shippingsection_carrier_labels"
+    ],
+    "11": [
+      "product_deliverybox",
+      "product_deliverybox_cargo_companies",
+      "product_deliverybox_deliverybox",
+      "product_deliverybox_deliveryboxprops",
+      "product_deliverybox_getcargocompany",
+      "product_deliverybox_getestimateddate"
+    ],
+    "12": [
+      "product_qasection",
+      "product_qasection_category_labels",
+      "product_qasection_props",
+      "product_questioncard",
+      "product_questioncard_category_labels",
+      "product_questioncard_props"
+    ],
+    "13": [
+      "product_variantselector",
+      "product_variantselector_variantselectorprops",
+      "product_variantswatches",
+      "product_variantswatches_variantoption",
+      "product_variantswatches_variantswatchesprops"
+    ],
+    "14": [
+      "ai_shoppingassistant",
+      "ai_shoppingassistant_loadhistory",
+      "ai_shoppingassistant_quick_replies",
+      "ai_shoppingassistant_savehistory"
+    ],
+    "15": [
+      "checkout_manualpayment",
+      "checkout_manualpayment_bankaccount",
+      "checkout_manualpayment_default_accounts",
+      "checkout_manualpayment_manualpaymentprops"
+    ],
+    "16": [
+      "checkout_paymentmethodselector",
+      "checkout_paymentmethodselector_option",
+      "checkout_paymentmethodselector_options",
+      "checkout_paymentmethodselector_paymentmethodselectorprops"
+    ],
+    "17": [
+      "commerce_botsalesengine",
+      "commerce_botsalesengine_bot_names",
+      "commerce_botsalesengine_cities",
+      "commerce_botsalesengine_products"
+    ],
+    "18": [
+      "layout_footer",
+      "layout_footer_appleicon",
+      "layout_footer_footer",
+      "layout_footer_playicon"
+    ],
+    "19": [
+      "product_socialproofbar",
+      "product_socialproofbar_formatcount",
+      "product_socialproofbar_recentpurchases",
+      "product_socialproofbar_socialproofbarprops"
+    ],
+    "20": [
+      "profile_profilesettings",
+      "profile_profilesettings_addressformstate",
+      "profile_profilesettings_cardkey",
+      "profile_profilesettings_empty_address"
+    ],
+    "21": [
+      "seller_returnmanagementsection",
+      "seller_returnmanagementsection_props",
+      "seller_returnmanagementsection_reason_labels",
+      "seller_returnmanagementsection_status_labels"
+    ],
+    "22": [
+      "checkout_addressselector",
+      "checkout_addressselector_addressselector",
+      "checkout_addressselector_addressselectorprops"
+    ],
+    "23": [
+      "checkout_savedcardselector",
+      "checkout_savedcardselector_savedcardselector",
+      "checkout_savedcardselector_savedcardselectorprops"
+    ],
+    "24": ["commerce_arviewer", "commerce_arviewer_arviewer", "commerce_arviewer_props"],
+    "25": [
+      "commerce_authenticitybadge",
+      "commerce_authenticitybadge_certificatedetail",
+      "commerce_authenticitybadge_props"
+    ],
+    "26": ["commerce_reorderbutton", "commerce_reordermodal", "commerce_reordermodal_modalstate"],
+    "27": [
+      "common_cookieconsent",
+      "common_cookieconsent_consentlevel",
+      "common_cookieconsent_togglestate"
+    ],
+    "28": ["layout_sellerlayout", "layout_sellerlayout_kycstatus", "layout_sellerlayout_navitems"],
+    "29": [
+      "orders_sellerorderactions",
+      "orders_sellerorderactions_carrier",
+      "orders_sellerorderactions_carriers"
+    ],
+    "30": [
+      "product_sharemodal",
+      "product_sharemodal_sharemodal",
+      "product_sharemodal_sharemodalprops"
+    ],
+    "31": [
+      "profile_returnrequestmodal",
+      "profile_returnrequestmodal_props",
+      "profile_returnrequestmodal_return_reasons"
+    ],
+    "32": [
+      "profile_savedpaymentmethod",
+      "profile_savedpaymentmethod_setupform",
+      "profile_savedpaymentmethod_stripepromise"
+    ],
+    "33": [
+      "search_facetedfilters",
+      "search_facetedfilters_props",
+      "search_facetedfilters_searchfilters"
+    ],
+    "34": ["auth_adminroute", "auth_adminroute_adminrouteprops"],
+    "35": ["chat_livechatwidget", "chat_livechatwidget_viewstate"],
+    "36": ["checkout_iyzicopayment", "checkout_iyzicopayment_iyzicopaymentprops"],
+    "37": ["checkout_oneclicksuccessmodal", "checkout_oneclicksuccessmodal_props"],
+    "38": ["commerce_comparisonmodal", "commerce_comparisonmodal_comparisonmodalprops"],
+    "39": ["commerce_invoicemodal", "commerce_invoicemodal_invoicemodalprops"],
+    "40": ["commerce_storybar", "commerce_storybar_storybar"],
+    "41": ["marketing_campaignbanner", "marketing_campaignbanner_campaignbannerprops"],
+    "42": ["product_installmenttable", "product_installmenttable_banks"],
+    "43": ["product_othersellers", "product_othersellers_othersellersprops"],
+    "44": ["product_pricehistorychart", "product_pricehistorychart_currency_symbols"],
+    "45": ["product_pricetrackbutton", "product_pricetrackbutton_props"],
+    "46": ["product_stickybuybar", "product_stickybuybar_stickybuybarprops"],
+    "47": ["product_stockalertbutton", "product_stockalertbutton_props"],
+    "48": ["product_trustbadges", "product_trustbadges_badges"],
+    "49": ["seller_bulkeditbar", "seller_bulkeditbar_bulkeditbar"],
+    "50": ["seller_csvimportpanel", "seller_csvimportpanel_csvimportpanelprops"],
+    "51": ["seller_orderstatsbar", "seller_orderstatsbar_orderstatsbarprops"],
+    "52": ["checkout_stripepaymentform"],
+    "53": ["commerce_comparisonbar"],
+    "54": ["common_analyticstracker"],
+    "55": ["common_scrolltotop"],
+    "56": ["common_skiptocontent"],
+    "57": ["product_aiproductinsights"],
+    "58": ["product_frequentlyboughttogether"],
+    "59": ["product_productfeatures"],
+    "60": ["product_unitprice"],
+    "61": ["seller_batchshipmodal"]
+  },
+  "cohesion": {
+    "0": 0.07258064516129033,
+    "1": 0.10276679841897234,
+    "2": 0.1341991341991342,
+    "3": 0.1,
+    "4": 0.19230769230769232,
+    "5": 0.18181818181818182,
+    "6": 0.2,
+    "7": 0.3611111111111111,
+    "8": 0.2857142857142857,
+    "9": 0.2857142857142857,
+    "10": 0.3333333333333333,
+    "11": 0.3333333333333333,
+    "12": 0.3333333333333333,
+    "13": 0.4,
+    "14": 0.5,
+    "15": 0.5,
+    "16": 0.5,
+    "17": 0.5,
+    "18": 0.5,
+    "19": 0.5,
+    "20": 0.5,
+    "21": 0.5,
+    "22": 0.6666666666666666,
+    "23": 0.6666666666666666,
+    "24": 0.6666666666666666,
+    "25": 0.6666666666666666,
+    "26": 0.6666666666666666,
+    "27": 0.6666666666666666,
+    "28": 0.6666666666666666,
+    "29": 0.6666666666666666,
+    "30": 0.6666666666666666,
+    "31": 0.6666666666666666,
+    "32": 0.6666666666666666,
+    "33": 0.6666666666666666,
+    "34": 1.0,
+    "35": 1.0,
+    "36": 1.0,
+    "37": 1.0,
+    "38": 1.0,
+    "39": 1.0,
+    "40": 1.0,
+    "41": 1.0,
+    "42": 1.0,
+    "43": 1.0,
+    "44": 1.0,
+    "45": 1.0,
+    "46": 1.0,
+    "47": 1.0,
+    "48": 1.0,
+    "49": 1.0,
+    "50": 1.0,
+    "51": 1.0,
+    "52": 1.0,
+    "53": 1.0,
+    "54": 1.0,
+    "55": 1.0,
+    "56": 1.0,
+    "57": 1.0,
+    "58": 1.0,
+    "59": 1.0,
+    "60": 1.0,
+    "61": 1.0
+  },
+  "gods": [
+    {
+      "id": "common_breadcrumb_breadcrumb",
+      "label": "Breadcrumb()",
+      "degree": 3
+    },
+    {
+      "id": "common_seo_seo",
+      "label": "SEO()",
+      "degree": 3
+    },
+    {
+      "id": "layout_searchbar_searchbar",
+      "label": "SearchBar()",
+      "degree": 3
+    },
+    {
+      "id": "product_reviewfilters_sortoption",
+      "label": "SortOption",
+      "degree": 3
+    },
+    {
+      "id": "seller_productform_productformdata",
+      "label": "ProductFormData",
+      "degree": 3
+    },
+    {
+      "id": "seo_jsonld_jsonld",
+      "label": "JsonLd()",
+      "degree": 3
+    },
+    {
+      "id": "seo_schemas_organizationschema",
+      "label": "organizationSchema()",
+      "degree": 3
+    },
+    {
+      "id": "seo_schemas_websiteschema",
+      "label": "websiteSchema()",
+      "degree": 3
+    },
+    {
+      "id": "seo_schemas_breadcrumbschema",
+      "label": "breadcrumbSchema()",
+      "degree": 3
+    },
+    {
+      "id": "layout_megamenu_normcatname",
+      "label": "normCatName()",
+      "degree": 2
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Breadcrumb()",
+      "target": "breadcrumbSchema()",
+      "source_files": ["common/Breadcrumb.tsx", "seo/schemas.ts"],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "SEO()",
+      "target": "organizationSchema()",
+      "source_files": ["common/SEO.tsx", "seo/schemas.ts"],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "SEO()",
+      "target": "websiteSchema()",
+      "source_files": ["common/SEO.tsx", "seo/schemas.ts"],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "ProductFormModalProps",
+      "target": "ProductFormData",
+      "source_files": ["seller/ProductFormModal.tsx", "seller/ProductForm.tsx"],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "cross-file semantic connection"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
