@@ -19,7 +19,7 @@ Satıcıların kendi mağazalarını KYC onayıyla açabildiği ve müşterileri
 
 ## Current Milestone — v3.0: Go Live & Scale
 
-**Goal:** Close all remaining UAT debt, provision infrastructure (Typesense, e-fatura), upgrade fraud detection to ML, launch native mobile app, and add B2B wholesale capabilities.
+**Goal:** Close all remaining UAT debt, provision infrastructure (Typesense, e-fatura), upgrade fraud detection to ML, and launch native mobile app.
 
 **Target features:**
 

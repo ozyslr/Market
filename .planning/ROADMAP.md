@@ -5,7 +5,7 @@
 - ✅ **v1.0 — Marketplace Core** — Phases 1–7 (shipped 2026-06-05) → [Archive](./milestones/v1.0-ROADMAP.md)
 - ✅ **v1.1 — Stabilize & Sharpen** — Phases 8–11 (shipped 2026-06-05) → [Archive](./milestones/v1.1-ROADMAP.md)
 - ✅ **v2.0 — Trust & Scale** — Phases 12–17 (shipped 2026-06-07) → [Archive](./milestones/v2.0-ROADMAP.md)
-- 🚧 **v3.0 — Go Live & Scale** — Phases 18–21 (in progress)
+- 🚧 **v3.0 — Go Live & Scale** — Phases 18–20 (complete)
 
 ## Phases
 
