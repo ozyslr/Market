@@ -28,14 +28,6 @@
 - [ ] **MOB-04**: Satıcı dashboard (mobil) — sipariş yönetimi, envanter görüntüleme
 - [ ] **MOB-05**: Push notification altyapısı (Firebase Cloud Messaging)
 
-### B2B Wholesale (B2B)
-
-- [ ] **B2B-01**: Şirket hesabı kaydı — vergi no, ticaret sicil no, şirket adresi
-- [ ] **B2B-02**: Özel fiyat katalogları — satıcı bazlı minimum sipariş adedi ve toptan fiyat
-- [ ] **B2B-03**: Teklif (RFQ) sistemi — alıcı teklif ister, satıcı fiyat verir
-- [ ] **B2B-04**: Net ödeme vadeleri — 30/60/90 gün vadeli fatura seçeneği
-- [ ] **B2B-05**: B2B sipariş onay workflow'u — alıcı siparişi → satıcı onayı → fatura
-
 ## Deferred to v4
 
 - WMS / depo yönetimi
@@ -68,10 +60,5 @@
 | MOB-03      | Phase 20 | Pending |
 | MOB-04      | Phase 20 | Pending |
 | MOB-05      | Phase 20 | Pending |
-| B2B-01      | Phase 21 | Pending |
-| B2B-02      | Phase 21 | Pending |
-| B2B-03      | Phase 21 | Pending |
-| B2B-04      | Phase 21 | Pending |
-| B2B-05      | Phase 21 | Pending |
 
-**Coverage:** 19 requirements, 19 mapped to phases (0 unmapped)
+\***\*Coverage:** 14 requirements, 14 mapped to phases (0 unmapped)

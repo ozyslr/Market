@@ -26,7 +26,6 @@ Satıcıların kendi mağazalarını KYC onayıyla açabildiği ve müşterileri
 - Live UAT & Go Live: close BUY-05 UAT, provision Typesense server, configure e-fatura API keys, production readiness
 - ML Fraud Detection: upgrade rule-based fraud detection to ML (anomaly detection, behavioral analysis)
 - Native Mobile App: React Native iOS/Android app with core marketplace flows
-- B2B Wholesale: company accounts, custom catalogs, quote/negotiation system, net payment terms
 
 ## Requirements
 
@@ -55,7 +54,6 @@ Satıcıların kendi mağazalarını KYC onayıyla açabildiği ve müşterileri
 - [ ] Live UAT kapanışı — BUY-05 checklist + Playwright E2E manuel doğrulama + Typesense sunucu kurulumu — v3.0
 - [ ] ML tabanlı dolandırıcılık tespiti — anomaly detection + behavioral analysis — v3.0
 - [ ] Native mobil uygulama — React Native iOS/Android — v3.0
-- [ ] B2B wholesale — şirket hesapları, özel kataloglar, teklif sistemi, net ödeme vadeleri — v3.0
 - [ ] E-fatura API entegrasyonu — Paraşüt/Logo API anahtarları — v3.0
 
 ### Out of Scope

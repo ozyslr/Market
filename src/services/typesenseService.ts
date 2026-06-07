@@ -1,16 +1,21 @@
-﻿import Typesense from 'typesense';
+﻿import Typesense, { type Client } from 'typesense';
 
-const client = new Typesense.Client({
-  nodes: [
-    {
-      host: process.env.TYPESENSE_HOST || 'localhost',
-      port: Number(process.env.TYPESENSE_PORT) || 8108,
-      protocol: (process.env.TYPESENSE_PROTOCOL as 'http' | 'https') || 'https',
-    },
-  ],
-  apiKey: process.env.TYPESENSE_API_KEY || '',
-  connectionTimeoutSeconds: 5,
-});
+let _client: Client | null = null;
+
+function getClient(): Client {
+  if (_client) return _client;
+  const host = import.meta.env.VITE_TYPESENSE_HOST || 'localhost';
+  const port = Number(import.meta.env.VITE_TYPESENSE_PORT) || 8108;
+  const protocol = (import.meta.env.VITE_TYPESENSE_PROTOCOL as 'http' | 'https') || 'https';
+  const apiKey = import.meta.env.VITE_TYPESENSE_API_KEY || '';
+
+  _client = new Typesense.Client({
+    nodes: [{ host, port, protocol }],
+    apiKey,
+    connectionTimeoutSeconds: 5,
+  });
+  return _client;
+}
 
 export const COLLECTIONS = ['products_tr', 'products_en', 'products_de', 'products_ar'] as const;
 
@@ -37,30 +42,32 @@ export interface TypesenseProduct {
 }
 
 export async function initializeCollections(): Promise<void> {
-  const existing = await client.collections().retrieve();
+  const existing = await getClient().collections().retrieve();
   const existingNames = existing.map((c: { name: string }) => c.name);
 
   for (const lang of ['tr', 'en', 'de', 'ar'] as const) {
     const collectionName = `products_${lang}`;
     if (existingNames.includes(collectionName)) continue;
 
-    await client.collections().create({
-      name: collectionName,
-      default_sorting_field: 'createdAt',
-      fields: [
-        { name: 'title', type: 'string', locale: lang as 'tr' | 'en' | 'de' | 'ar' },
-        { name: 'description', type: 'string', locale: lang as 'tr' | 'en' | 'de' | 'ar' },
-        { name: 'price', type: 'float', facet: true },
-        { name: 'categoryId', type: 'string', facet: true },
-        { name: 'brand', type: 'string', facet: true },
-        { name: 'rating', type: 'float', facet: true },
-        { name: 'imageUrl', type: 'string', index: false },
-        { name: 'storeId', type: 'string' },
-        { name: 'language', type: 'string', facet: true },
-        { name: 'tags', type: 'string[]', optional: true },
-        { name: 'createdAt', type: 'int64' },
-      ],
-    });
+    await getClient()
+      .collections()
+      .create({
+        name: collectionName,
+        default_sorting_field: 'createdAt',
+        fields: [
+          { name: 'title', type: 'string', locale: lang as 'tr' | 'en' | 'de' | 'ar' },
+          { name: 'description', type: 'string', locale: lang as 'tr' | 'en' | 'de' | 'ar' },
+          { name: 'price', type: 'float', facet: true },
+          { name: 'categoryId', type: 'string', facet: true },
+          { name: 'brand', type: 'string', facet: true },
+          { name: 'rating', type: 'float', facet: true },
+          { name: 'imageUrl', type: 'string', index: false },
+          { name: 'storeId', type: 'string' },
+          { name: 'language', type: 'string', facet: true },
+          { name: 'tags', type: 'string[]', optional: true },
+          { name: 'createdAt', type: 'int64' },
+        ],
+      });
   }
 }
 
@@ -87,17 +94,17 @@ export async function upsertProduct(product: TypesenseProduct): Promise<void> {
   if (!lang || !COLLECTIONS.includes(`products_${lang}` as any)) {
     // Fallback: upsert to all collections
     for (const col of COLLECTIONS) {
-      await client.collections(col).documents().upsert(doc);
+      await getClient().collections(col).documents().upsert(doc);
     }
     return;
   }
-  await client.collections(`products_${lang}`).documents().upsert(doc);
+  await getClient().collections(`products_${lang}`).documents().upsert(doc);
 }
 
 export async function deleteProduct(productId: string): Promise<void> {
   for (const col of COLLECTIONS) {
     try {
-      await client
+      await getClient()
         .collections(col)
         .documents()
         .delete({ id: productId } as any);
@@ -141,7 +148,7 @@ export async function searchProducts(
 
   const filterBy = filterParts.length ? filterParts.join(' && ') : undefined;
 
-  const result = await client
+  const result = await getClient()
     .collections(collectionName)
     .documents()
     .search({
@@ -165,7 +172,7 @@ export async function getIndexStatus(): Promise<{
   const counts: Record<string, number> = {};
   for (const col of COLLECTIONS) {
     try {
-      const c = await client.collections(col).retrieve();
+      const c = await getClient().collections(col).retrieve();
       counts[col] = c.num_documents || 0;
     } catch {
       counts[col] = 0;
@@ -177,9 +184,9 @@ export async function getIndexStatus(): Promise<{
 export async function deleteAllProducts(): Promise<void> {
   for (const col of COLLECTIONS) {
     try {
-      const docs = await client.collections(col).documents().search({ q: '*', per_page: 250 });
+      const docs = await getClient().collections(col).documents().search({ q: '*', per_page: 250 });
       for (const hit of (docs as any).hits || []) {
-        await client
+        await getClient()
           .collections(col)
           .documents()
           .delete({ id: hit.document.id } as any);
@@ -190,4 +197,4 @@ export async function deleteAllProducts(): Promise<void> {
   }
 }
 
-export { client as typesenseClient };
+export { getClient as typesenseClient };
