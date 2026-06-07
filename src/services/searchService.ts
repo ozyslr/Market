@@ -12,12 +12,18 @@ import { Product, Category, SponsoredSlot } from '@/types';
 import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { CATEGORIES } from '@/data/mockCategories';
 import { injectSponsoredProducts } from './adService';
-// Typesense fallback when available
+// Typesense lazy fallback — import inline to avoid top-level await (es2020 target)
 let typesenseSearch: any = null;
-try {
-  typesenseSearch = (await import('./typesenseService')).searchProducts;
-} catch {
-  /* Typesense not configured — use Firestore */
+let typesenseLoaded = false;
+async function loadTypesense() {
+  if (typesenseLoaded) return;
+  try {
+    const mod = await import('./typesenseService');
+    typesenseSearch = mod.searchProducts;
+  } catch {
+    /* Typesense not configured */
+  }
+  typesenseLoaded = true;
 }
 
 // ─── Types ───────────────────────────────────────────────────────────────────
