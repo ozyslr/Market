@@ -2,49 +2,37 @@
 
 ## Milestones
 
-- ✅ **v1.0 — Marketplace Core** — Phases 1–7 (shipped 2026-06-05) → [Archive](./milestones/v1.0-ROADMAP.md)
-- ✅ **v1.1 — Stabilize & Sharpen** — Phases 8–11 (shipped 2026-06-05) → [Archive](./milestones/v1.1-ROADMAP.md)
-- ✅ **v2.0 — Trust & Scale** — Phases 12–17 (shipped 2026-06-07) → [Archive](./milestones/v2.0-ROADMAP.md)
-- ✅ **v3.0 — Go Live & Scale** — Phases 18–20 (shipped 2026-06-07)
-- 🚧 **v4.0 — Seller Empire** — Phases 22–25 (in progress)
+- ✅ v1.0 (1-7) · v1.1 (8-11) · v2.0 (12-17) · v3.0 (18-20) · v4.0 (22-25) — SHIPPED
+- 🚧 **v5.0 — Merchant Dashboard** — Phases 26–28 (in progress)
 
 ## Phases
 
-<details>
-<summary>✅ v1.0–v3.0 (Phases 1–20) — SHIPPED</summary>
-
-v1.0 Marketplace Core (1-7) · v1.1 Stabilize & Sharpen (8-11) · v2.0 Trust & Scale (12-17) · v3.0 Go Live & Scale (18-20)
-
+<details><summary>✅ v1.0–v4.0 (Phases 1–25) — SHIPPED</summary>
+v1.0 Marketplace Core (1-7) · v1.1 Stabilize & Sharpen (8-11) · v2.0 Trust & Scale (12-17) · v3.0 Go Live & Scale (18-20) · v4.0 Seller Empire (22-25)
 </details>
 
-### 🚧 v4.0 Seller Empire (Phases 22–25)
+### 🚧 v5.0 Merchant Dashboard (Phases 26–28)
 
-#### Phase 22: Seller Store Management
+#### Phase 26: Seller Panel UI — Blocks, Menu, Coupons
 
-**Goal:** Satıcı admin panelinden mağaza sayfasını düzenleyebilir — banner, logo, açıklama, sosyal linkler, renk teması, canlı önizleme.
-**Requirements:** STO-01..04
+**Goal:** Drag-drop block editor, menu management UI, coupon management UI for seller dashboard.
+**Requirements:** DUI-01..03
 
-#### Phase 23: Store Content Blocks
+#### Phase 27: Seller Store Analytics
 
-**Goal:** Sürükle-bırak blok editörü ile satıcı mağaza sayfasını özelleştirir — Flaş Ürünler, Trend Ürünler, Kampanya, Kategori, Promo Görsel blokları.
-**Requirements:** BLK-01..05
+**Goal:** Store visit stats, sales funnel conversion, product performance dashboard.
+**Requirements:** SAN-01..03
 
-#### Phase 24: Seller Menu Management
+#### Phase 28: Dynamic Pricing + WMS
 
-**Goal:** Satıcı kendi kategori menüsünü ve alt menülerini görselli olarak oluşturup yönetebilir.
-**Requirements:** MNU-01..04
-
-#### Phase 25: Seller Coupons & Discounts
-
-**Goal:** Satıcı mağaza/ürün/sepet bazlı indirim kuponları ve kampanyalar oluşturabilir.
-**Requirements:** CPN-01..04
+**Goal:** Competitor price tracking, auto price update, stock location, inventory movement, low-stock alerts.
+**Requirements:** DPR-01..03, WMS-01..03
 
 ## Progress
 
-| Phase                   | Milestone | Plans | Status      |
-| ----------------------- | --------- | ----- | ----------- |
-| 1–20                    | v1.0–v3.0 | All   | Complete    |
-| 22. Seller Store Mgmt   | v4.0      | 0/1   | Not started |
-| 23. Content Blocks      | v4.0      | 0/1   | Not started |
-| 24. Seller Menu Mgmt    | v4.0      | 0/1   | Not started |
-| 25. Coupons & Discounts | v4.0      | 0/1   | Not started |
+| Phase                     | Milestone | Plans | Status      |
+| ------------------------- | --------- | ----- | ----------- |
+| 1–25                      | v1.0–v4.0 | All   | Complete    |
+| 26. Seller Panel UI       | v5.0      | 0/1   | Not started |
+| 27. Store Analytics       | v5.0      | 0/1   | Not started |
+| 28. Dynamic Pricing + WMS | v5.0      | 0/1   | Not started |

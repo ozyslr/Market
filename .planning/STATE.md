@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
 milestone: v5.0
-milestone_name: TBD
+milestone_name: Merchant Dashboard
 status: planning
-last_updated: '2026-06-07T20:31:02.420Z'
+last_updated: '2026-06-07T20:53:06.236Z'
 last_activity: 2026-06-07
 progress:
   total_phases: 0
