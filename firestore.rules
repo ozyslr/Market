@@ -18,6 +18,11 @@ service cloud.firestore {
     // --- SYSTEM ----------------------------------------------------------
     match /system/connection-test { allow read: if true; }
 
+    // --- PUBLIC CONTENT (homepage, campaigns, deals) — read for everyone ---
+    match /homepage_sections/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /featuredDeals/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /campaigns/{doc} { allow read: if true; allow write: if isAdmin(); }
+
     // --- CATEGORIES ------------------------------------------------------
     match /categories/{cid} {
       allow read: if true;
