@@ -403,316 +403,416 @@ export function SellerStorePage() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-6 mt-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
-        {/* Sidebar Info */}
-        <aside className="lg:col-span-3 space-y-8">
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-brand-primary/5">
-            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-brand-primary/30 mb-6">
-              Satıcı Performansı
-            </h3>
-            <div className="space-y-6">
-              <div className="p-4 bg-brand-secondary rounded-2xl border border-brand-primary/5">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-bold uppercase text-brand-primary/40">
-                    Kargo Hızı
-                  </span>
-                  <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">
-                    Hızlı
-                  </span>
-                </div>
-                <div className="text-lg font-black text-brand-primary">
-                  {seller.fulfillment?.shipSpeed}
-                </div>
-              </div>
-              <div className="p-4 bg-brand-secondary rounded-2xl border border-brand-primary/5">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-bold uppercase text-brand-primary/40">
-                    Uyumluluk
-                  </span>
-                  <span className="text-[10px] font-black text-accent uppercase tracking-widest">
-                    En Üst
-                  </span>
-                </div>
-                <div className="text-lg font-black text-brand-primary">
-                  {seller.fulfillment?.compliance}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-brand-primary text-white rounded-[2.5rem] p-8 overflow-hidden relative group">
-            <Zap
-              size={100}
-              className="absolute -top-10 -end-10 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-700"
-            />
-            <Award size={24} className="text-accent mb-4" />
-            <h4 className="text-xl font-display font-black leading-tight mb-4 uppercase italic">
-              Küresel Çok Merkezli <br /> Satıcı
-            </h4>
-            <p className="text-xs text-white/60 font-medium leading-relaxed">
-              Bu satıcı, hızlı küresel teslimat için İngiltere, Almanya ve Dubai'deki depolarda stok
-              bulundurmaktadır.
-            </p>
-            <button className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-accent hover:gap-4 transition-all">
-              Kimlik Bilgilerini Doğrula <ArrowRight size={14} />
-            </button>
-          </div>
-        </aside>
-
-        {/* Main Products Area */}
-        <main className={cn('lg:col-span-9', activeTab === 'products' ? 'lg:col-span-12' : '')}>
-          {/* Tabs */}
-          <div className="flex items-center justify-between border-b border-brand-primary/5 mb-8 overflow-x-auto">
-            <div className="flex items-center gap-10">
-              {[
-                { id: 'products', label: 'Ana Sayfa', count: null },
-                { id: 'all', label: 'Tüm Ürünler', count: sellerProducts.length },
-                { id: 'deals', label: 'Fırsat Ürünleri', count: flashProducts.length },
-                { id: 'reviews', label: 'Değerlendirmeler', count: seller.reviewsCount },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={cn(
-                    'pb-6 text-sm font-black uppercase tracking-widest transition-all relative',
-                    activeTab === tab.id
-                      ? 'text-brand-primary'
-                      : 'text-brand-primary/20 hover:text-brand-primary',
-                  )}
-                >
-                  {tab.label}{' '}
-                  {tab.count !== null && (
-                    <span className="ms-1 text-[10px] opacity-40">({tab.count})</span>
-                  )}
-                  {activeTab === tab.id && (
-                    <motion.div
-                      layoutId="activeTabSlot"
-                      className="absolute bottom-0 start-0 end-0 h-1 bg-accent rounded-full"
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-4 pb-4">
-              <div className="flex bg-white rounded-xl p-1 border border-brand-primary/5">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    'p-2 rounded-lg transition-all',
-                    viewMode === 'grid' ? 'bg-brand-primary text-white' : 'text-brand-primary/20',
-                  )}
-                >
-                  <Grid size={16} />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={cn(
-                    'p-2 rounded-lg transition-all',
-                    viewMode === 'list' ? 'bg-brand-primary text-white' : 'text-brand-primary/20',
-                  )}
-                >
-                  <ListIcon size={16} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <AnimatePresence mode="wait">
-            {activeTab === 'products' ? (
-              /* ── ANA SAYFA ── */
-              <motion.div
-                key="products"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-10"
+      {/* Tabs + Search Bar */}
+      <div className="max-w-7xl mx-auto px-4 mt-8 border-b border-brand-primary/5">
+        <div className="flex items-center justify-between overflow-x-auto">
+          <div className="flex items-center gap-6 md:gap-8">
+            {[
+              { id: 'products', label: 'Ana Sayfa', count: null },
+              { id: 'all', label: 'Tüm Ürünler', count: sellerProducts.length },
+              { id: 'deals', label: 'Fırsat Ürünleri', count: flashProducts.length },
+              { id: 'reviews', label: 'Değerlendirmeler', count: seller.reviewsCount },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={cn(
+                  'pb-3 text-xs font-bold uppercase tracking-wide transition-all relative whitespace-nowrap',
+                  activeTab === tab.id
+                    ? 'text-brand-primary'
+                    : 'text-brand-primary/30 hover:text-brand-primary/60',
+                )}
               >
-                {/* ── Sponsored Products Carousel ── */}
-                {flashProducts.length > 0 && (
+                {tab.label}{' '}
+                {tab.count !== null && <span className="opacity-40">({tab.count})</span>}
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="tabSlot"
+                    className="absolute bottom-0 start-0 end-0 h-0.5 bg-accent rounded-full"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+          {/* Search */}
+          <div className="hidden sm:block ml-4">
+            <div className="relative">
+              <Search
+                size={14}
+                className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-primary/20"
+              />
+              <input
+                type="text"
+                placeholder="Mağazada ara..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (activeTab === 'products') setActiveTab('all');
+                }}
+                className="w-44 ps-9 pe-3 py-2 bg-white rounded-lg border border-brand-primary/10 text-xs font-medium outline-none focus:ring-1 focus:ring-accent/30"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 mt-6">
+        <div className={cn('flex gap-8', activeTab === 'products' ? '' : '')}>
+          {/* Sidebar — only non-homepage */}
+          {activeTab !== 'products' && (
+            <aside className="w-56 shrink-0 space-y-4 hidden lg:block">
+              <div className="bg-white rounded-2xl p-3 shadow-sm border border-brand-primary/5 text-center">
+                <img
+                  src={seller.avatar}
+                  alt={seller.name}
+                  className="w-10 h-10 rounded-full mx-auto object-cover border border-accent/20"
+                />
+                <h3 className="text-xs font-bold text-brand-primary mt-1.5">{seller.name}</h3>
+                <div className="flex items-center justify-center gap-1 text-[11px]">
+                  <Star size={10} className="text-yellow-400 fill-yellow-400" />
+                  <span className="font-bold">{seller.rating}</span>
+                  <span className="text-brand-primary/30">({seller.reviewsCount})</span>
+                </div>
+                <p className="text-[10px] text-brand-primary/40 mt-0.5">
+                  {seller.followers} Takipçi
+                </p>
+                <div className="flex gap-1.5 mt-2">
+                  <button
+                    onClick={handleFollow}
+                    disabled={followLoading}
+                    className="flex-1 px-2 py-1.5 bg-brand-primary text-white rounded-lg text-[10px] font-bold disabled:opacity-60"
+                  >
+                    {following ? 'Takibi Bırak' : 'Takip Et'}
+                  </button>
+                  <button
+                    onClick={copyToClipboard}
+                    className="px-2 py-1.5 bg-brand-secondary rounded-lg"
+                  >
+                    <Share2 size={11} />
+                  </button>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl p-3 shadow-sm border border-brand-primary/5 space-y-3">
+                <h3 className="text-[10px] font-black uppercase text-brand-primary/30">Filtrele</h3>
+                <div>
+                  <h4 className="text-[10px] font-bold text-brand-primary/50 mb-1">Kategori</h4>
+                  <div className="space-y-0.5 max-h-32 overflow-y-auto">
+                    <button
+                      onClick={() => setSelectedCategory('all')}
+                      className={cn(
+                        'block w-full text-left px-2 py-0.5 rounded text-[11px]',
+                        selectedCategory === 'all'
+                          ? 'bg-accent/10 text-accent font-bold'
+                          : 'text-brand-primary/50 hover:bg-brand-secondary/50',
+                      )}
+                    >
+                      Tümü
+                    </button>
+                    {categories.slice(0, 8).map((catId) => (
+                      <button
+                        key={catId}
+                        onClick={() => setSelectedCategory(catId)}
+                        className={cn(
+                          'block w-full text-left px-2 py-0.5 rounded text-[11px]',
+                          selectedCategory === catId
+                            ? 'bg-accent/10 text-accent font-bold'
+                            : 'text-brand-primary/50 hover:bg-brand-secondary/50',
+                        )}
+                      >
+                        {catId.replace(/-/g, ' ')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold text-brand-primary/50 mb-1">Puan</h4>
+                  {[4, 3, 2, 1].map((r) => (
+                    <button
+                      key={r}
+                      className="block w-full text-left px-2 py-0.5 rounded text-[11px] text-brand-primary/50 hover:bg-brand-secondary/50"
+                    >
+                      {'★'.repeat(r)}
+                      {'☆'.repeat(5 - r)} ve üzeri
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </aside>
+          )}
+
+          <main className="flex-1 min-w-0">
+            <AnimatePresence mode="wait">
+              {activeTab === 'products' ? (
+                /* ── ANA SAYFA ── */
+                <motion.div
+                  key="products"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-10"
+                >
+                  {/* ── Sponsored Products Carousel ── */}
+                  {flashProducts.length > 0 && (
+                    <section>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                            <Zap size={16} className="text-white" />
+                          </div>
+                          <h3 className="font-black text-lg text-brand-primary uppercase tracking-tight">
+                            Mağazanın Flaş Ürünleri
+                          </h3>
+                          <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[9px] font-black rounded-full uppercase">
+                            Sınırlı Süre
+                          </span>
+                        </div>
+                        <button className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1">
+                          Tümünü Gör <ArrowRight size={14} />
+                        </button>
+                      </div>
+                      <ProductCarousel products={flashProducts} title="" />
+                    </section>
+                  )}
+
+                  {/* ── Trending Products ── */}
                   <section>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
-                          <Zap size={16} className="text-white" />
+                        <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                          <Award size={16} className="text-white" />
                         </div>
                         <h3 className="font-black text-lg text-brand-primary uppercase tracking-tight">
-                          Mağazanın Flaş Ürünleri
+                          Trend Ürünler
                         </h3>
-                        <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[9px] font-black rounded-full uppercase">
-                          Sınırlı Süre
-                        </span>
                       </div>
-                      <button className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1">
+                      <button className="text-xs font-bold text-orange-500 hover:text-orange-700 flex items-center gap-1">
                         Tümünü Gör <ArrowRight size={14} />
                       </button>
                     </div>
-                    <ProductCarousel products={flashProducts} title="" />
+                    <ProductCarousel
+                      products={sellerProducts.slice(0, 10).sort(() => Math.random() - 0.5)}
+                      title=""
+                    />
                   </section>
-                )}
 
-                {/* ── Trending Products ── */}
-                <section>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                        <Award size={16} className="text-white" />
-                      </div>
-                      <h3 className="font-black text-lg text-brand-primary uppercase tracking-tight">
-                        Trend Ürünler
+                  {/* ── Campaign Banner ── */}
+                  <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-primary via-brand-primary to-accent p-8 md:p-12">
+                    <div className="relative z-10 max-w-md">
+                      <span className="px-3 py-1 bg-white/20 text-white text-[10px] font-black uppercase rounded-full">
+                        Kampanyalar
+                      </span>
+                      <h3 className="text-2xl md:text-3xl font-black text-white uppercase mt-4 leading-tight">
+                        Sezonun En İyi Fırsatları
                       </h3>
+                      <p className="text-white/70 text-sm mt-2">
+                        {seller.name} mağazasında özel indirimler ve kampanyalar sizi bekliyor.
+                      </p>
+                      <button className="mt-6 px-6 py-3 bg-white text-brand-primary rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/90 transition-all inline-flex items-center gap-2">
+                        Kampanyaları Keşfet <ArrowRight size={14} />
+                      </button>
                     </div>
-                    <button className="text-xs font-bold text-orange-500 hover:text-orange-700 flex items-center gap-1">
-                      Tümünü Gör <ArrowRight size={14} />
-                    </button>
-                  </div>
-                  <ProductCarousel
-                    products={sellerProducts.slice(0, 10).sort(() => Math.random() - 0.5)}
-                    title=""
-                  />
-                </section>
+                    <div className="absolute top-0 end-0 w-1/2 h-full opacity-10">
+                      <Package size={300} className="text-white absolute -top-20 -end-20" />
+                    </div>
+                  </section>
 
-                {/* ── Campaign Banner ── */}
-                <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-primary via-brand-primary to-accent p-8 md:p-12">
-                  <div className="relative z-10 max-w-md">
-                    <span className="px-3 py-1 bg-white/20 text-white text-[10px] font-black uppercase rounded-full">
-                      Kampanyalar
-                    </span>
-                    <h3 className="text-2xl md:text-3xl font-black text-white uppercase mt-4 leading-tight">
-                      Sezonun En İyi Fırsatları
-                    </h3>
-                    <p className="text-white/70 text-sm mt-2">
-                      {seller.name} mağazasında özel indirimler ve kampanyalar sizi bekliyor.
-                    </p>
-                    <button className="mt-6 px-6 py-3 bg-white text-brand-primary rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/90 transition-all inline-flex items-center gap-2">
-                      Kampanyaları Keşfet <ArrowRight size={14} />
-                    </button>
-                  </div>
-                  <div className="absolute top-0 end-0 w-1/2 h-full opacity-10">
-                    <Package size={300} className="text-white absolute -top-20 -end-20" />
-                  </div>
-                </section>
+                  {/* ── Category Navigation Cards ── */}
+                  {categories.length > 1 && (
+                    <section>
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center">
+                          <Grid size={16} className="text-white" />
+                        </div>
+                        <h3 className="font-black text-lg text-brand-primary uppercase tracking-tight">
+                          Kategoriler
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {categories.slice(0, 8).map((catId, idx) => (
+                          <button
+                            key={catId}
+                            onClick={() => setSelectedCategory(catId)}
+                            className={`group relative overflow-hidden rounded-2xl p-4 h-24 flex items-end transition-all ${
+                              selectedCategory === catId
+                                ? 'ring-2 ring-accent bg-brand-primary/5'
+                                : 'bg-gradient-to-br from-brand-secondary to-brand-secondary/50 hover:shadow-md'
+                            }`}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                            <span className="relative z-10 text-xs font-black text-white uppercase tracking-wider">
+                              {catId.replace(/-/g, ' ')}
+                            </span>
+                            <div
+                              className="absolute top-2 end-2 w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-black"
+                              style={{
+                                backgroundColor: [
+                                  '#F97316',
+                                  '#8B5CF6',
+                                  '#06B6D4',
+                                  '#10B981',
+                                  '#F43F5E',
+                                  '#3B82F6',
+                                  '#EAB308',
+                                  '#EC4899',
+                                ][idx % 8],
+                              }}
+                            >
+                              {sellerProducts.filter((p: any) => p.categoryId === catId).length}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  )}
 
-                {/* ── Category Navigation Cards ── */}
-                {categories.length > 1 && (
+                  {/* ── Promo Image Banner ── */}
+                  <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 p-8 h-48 flex items-center group cursor-pointer">
+                      <div className="relative z-10">
+                        <span className="text-[10px] font-black uppercase text-orange-600">
+                          Yeni Sezon
+                        </span>
+                        <h4 className="text-xl font-black text-brand-primary uppercase mt-1">
+                          İlkbahar Koleksiyonu
+                        </h4>
+                        <span className="text-xs text-brand-primary/60 mt-2 block">
+                          %50'ye varan indirimler
+                        </span>
+                      </div>
+                      <div className="absolute -end-10 -bottom-10 text-amber-300/40 group-hover:scale-110 transition-transform">
+                        <Package size={150} />
+                      </div>
+                    </div>
+                    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-100 to-pink-200 p-8 h-48 flex items-center group cursor-pointer">
+                      <div className="relative z-10">
+                        <span className="text-[10px] font-black uppercase text-purple-600">
+                          Özel Teklif
+                        </span>
+                        <h4 className="text-xl font-black text-brand-primary uppercase mt-1">
+                          Premium Ürünler
+                        </h4>
+                        <span className="text-xs text-brand-primary/60 mt-2 block">
+                          Özel fiyatlarla sınırlı stok
+                        </span>
+                      </div>
+                      <div className="absolute -end-10 -bottom-10 text-purple-300/40 group-hover:scale-110 transition-transform">
+                        <ShieldCheck size={150} />
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* ── All Products Grid + Search/Filter ── */}
                   <section>
                     <div className="flex items-center gap-2 mb-4">
                       <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center">
-                        <Grid size={16} className="text-white" />
+                        <Package size={16} className="text-white" />
                       </div>
                       <h3 className="font-black text-lg text-brand-primary uppercase tracking-tight">
-                        Kategoriler
+                        Daha Fazla Ürün
                       </h3>
+                      <span className="text-xs text-brand-primary/40">
+                        ({displayProducts.length})
+                      </span>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                      {categories.slice(0, 8).map((catId, idx) => (
-                        <button
-                          key={catId}
-                          onClick={() => setSelectedCategory(catId)}
-                          className={`group relative overflow-hidden rounded-2xl p-4 h-24 flex items-end transition-all ${
-                            selectedCategory === catId
-                              ? 'ring-2 ring-accent bg-brand-primary/5'
-                              : 'bg-gradient-to-br from-brand-secondary to-brand-secondary/50 hover:shadow-md'
-                          }`}
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                          <span className="relative z-10 text-xs font-black text-white uppercase tracking-wider">
-                            {catId.replace(/-/g, ' ')}
-                          </span>
-                          <div
-                            className="absolute top-2 end-2 w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-black"
-                            style={{
-                              backgroundColor: [
-                                '#F97316',
-                                '#8B5CF6',
-                                '#06B6D4',
-                                '#10B981',
-                                '#F43F5E',
-                                '#3B82F6',
-                                '#EAB308',
-                                '#EC4899',
-                              ][idx % 8],
-                            }}
+
+                    {/* Search & Filter Bar */}
+                    <div className="flex flex-col md:flex-row gap-3 mb-6">
+                      <div className="relative flex-1">
+                        <Search
+                          size={18}
+                          className="absolute start-4 top-1/2 -translate-y-1/2 text-brand-primary/20"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Mağazada ürün ara..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full ps-12 pe-4 py-3 bg-white rounded-2xl border border-brand-primary/5 focus:ring-4 focus:ring-accent/5 outline-none font-medium text-sm transition-all"
+                        />
+                      </div>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                        className="px-4 py-3 bg-[#F8F8FA] rounded-xl text-xs font-bold text-[#1A1033]/60 outline-none cursor-pointer border-0 shrink-0"
+                      >
+                        <option value="default">Varsayılan</option>
+                        <option value="price_asc">Fiyat: Düşükten Yükseğe</option>
+                        <option value="price_desc">Fiyat: Yüksekten Düşüğe</option>
+                        <option value="rating">En Popüler</option>
+                        <option value="newest">En Yeniler</option>
+                      </select>
+                    </div>
+
+                    {/* Category chips */}
+                    {categories.length > 1 && (
+                      <div className="flex flex-wrap gap-2 mb-6">
+                        {(['all', ...categories] as string[]).map((catId) => (
+                          <button
+                            key={catId}
+                            onClick={() => setSelectedCategory(catId)}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                              selectedCategory === catId
+                                ? 'bg-brand-primary text-white'
+                                : 'bg-[#F8F8FA] text-brand-primary/40 hover:text-brand-primary'
+                            }`}
                           >
-                            {sellerProducts.filter((p: any) => p.categoryId === catId).length}
-                          </div>
-                        </button>
+                            {catId === 'all' ? 'Tümü' : catId.replace(/-/g, ' ')}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Product Grid */}
+                    <div
+                      className={cn(
+                        'grid gap-6',
+                        viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1',
+                      )}
+                    >
+                      {displayProducts.slice(0, 12).map((product) => (
+                        <ProductCard key={product.id} product={product} />
                       ))}
                     </div>
+
+                    {displayProducts.length > 12 && (
+                      <div className="flex justify-center mt-8">
+                        <button className="px-8 py-4 bg-white rounded-2xl border-2 border-brand-primary/10 font-black text-xs uppercase tracking-widest text-brand-primary hover:border-accent hover:text-accent transition-all">
+                          Daha Fazla Ürün Göster
+                        </button>
+                      </div>
+                    )}
                   </section>
-                )}
-
-                {/* ── Promo Image Banner ── */}
-                <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 p-8 h-48 flex items-center group cursor-pointer">
-                    <div className="relative z-10">
-                      <span className="text-[10px] font-black uppercase text-orange-600">
-                        Yeni Sezon
-                      </span>
-                      <h4 className="text-xl font-black text-brand-primary uppercase mt-1">
-                        İlkbahar Koleksiyonu
-                      </h4>
-                      <span className="text-xs text-brand-primary/60 mt-2 block">
-                        %50'ye varan indirimler
-                      </span>
-                    </div>
-                    <div className="absolute -end-10 -bottom-10 text-amber-300/40 group-hover:scale-110 transition-transform">
-                      <Package size={150} />
-                    </div>
-                  </div>
-                  <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-100 to-pink-200 p-8 h-48 flex items-center group cursor-pointer">
-                    <div className="relative z-10">
-                      <span className="text-[10px] font-black uppercase text-purple-600">
-                        Özel Teklif
-                      </span>
-                      <h4 className="text-xl font-black text-brand-primary uppercase mt-1">
-                        Premium Ürünler
-                      </h4>
-                      <span className="text-xs text-brand-primary/60 mt-2 block">
-                        Özel fiyatlarla sınırlı stok
-                      </span>
-                    </div>
-                    <div className="absolute -end-10 -bottom-10 text-purple-300/40 group-hover:scale-110 transition-transform">
-                      <ShieldCheck size={150} />
-                    </div>
-                  </div>
-                </section>
-
-                {/* ── All Products Grid + Search/Filter ── */}
-                <section>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center">
-                      <Package size={16} className="text-white" />
-                    </div>
-                    <h3 className="font-black text-lg text-brand-primary uppercase tracking-tight">
-                      Daha Fazla Ürün
-                    </h3>
-                    <span className="text-xs text-brand-primary/40">
-                      ({displayProducts.length})
-                    </span>
-                  </div>
-
-                  {/* Search & Filter Bar */}
-                  <div className="flex flex-col md:flex-row gap-3 mb-6">
+                </motion.div>
+              ) : activeTab === 'all' || activeTab === 'deals' ? (
+                /* ── TÜM ÜRÜNLER / FIRSAT ÜRÜNLERİ ── */
+                <motion.div
+                  key="listing"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-6"
+                >
+                  {/* Search + Sort */}
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <div className="relative flex-1">
                       <Search
-                        size={18}
-                        className="absolute start-4 top-1/2 -translate-y-1/2 text-brand-primary/20"
+                        size={16}
+                        className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-primary/20"
                       />
                       <input
                         type="text"
                         placeholder="Mağazada ürün ara..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full ps-12 pe-4 py-3 bg-white rounded-2xl border border-brand-primary/5 focus:ring-4 focus:ring-accent/5 outline-none font-medium text-sm transition-all"
+                        className="w-full ps-10 pe-4 py-3 bg-white rounded-xl border border-brand-primary/5 text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20"
                       />
                     </div>
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                      className="px-4 py-3 bg-[#F8F8FA] rounded-xl text-xs font-bold text-[#1A1033]/60 outline-none cursor-pointer border-0 shrink-0"
+                      className="px-4 py-3 bg-white rounded-xl text-xs font-bold text-brand-primary/60 outline-none border-0 shrink-0"
                     >
-                      <option value="default">Varsayılan</option>
+                      <option value="default">Sıralama</option>
                       <option value="price_asc">Fiyat: Düşükten Yükseğe</option>
                       <option value="price_desc">Fiyat: Yüksekten Düşüğe</option>
                       <option value="rating">En Popüler</option>
@@ -721,321 +821,248 @@ export function SellerStorePage() {
                   </div>
 
                   {/* Category chips */}
-                  {categories.length > 1 && (
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {(['all', ...categories] as string[]).map((catId) => (
-                        <button
-                          key={catId}
-                          onClick={() => setSelectedCategory(catId)}
-                          className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                            selectedCategory === catId
-                              ? 'bg-brand-primary text-white'
-                              : 'bg-[#F8F8FA] text-brand-primary/40 hover:text-brand-primary'
-                          }`}
-                        >
-                          {catId === 'all' ? 'Tümü' : catId.replace(/-/g, ' ')}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Product Grid */}
-                  <div
-                    className={cn(
-                      'grid gap-6',
-                      viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1',
-                    )}
-                  >
-                    {displayProducts.slice(0, 12).map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                  </div>
-
-                  {displayProducts.length > 12 && (
-                    <div className="flex justify-center mt-8">
-                      <button className="px-8 py-4 bg-white rounded-2xl border-2 border-brand-primary/10 font-black text-xs uppercase tracking-widest text-brand-primary hover:border-accent hover:text-accent transition-all">
-                        Daha Fazla Ürün Göster
-                      </button>
-                    </div>
-                  )}
-                </section>
-              </motion.div>
-            ) : activeTab === 'all' || activeTab === 'deals' ? (
-              /* ── TÜM ÜRÜNLER / FIRSAT ÜRÜNLERİ ── */
-              <motion.div
-                key="listing"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-6"
-              >
-                {/* Search + Sort */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-1">
-                    <Search
-                      size={16}
-                      className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-primary/20"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Mağazada ürün ara..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full ps-10 pe-4 py-3 bg-white rounded-xl border border-brand-primary/5 text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20"
-                    />
-                  </div>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="px-4 py-3 bg-white rounded-xl text-xs font-bold text-brand-primary/60 outline-none border-0 shrink-0"
-                  >
-                    <option value="default">Sıralama</option>
-                    <option value="price_asc">Fiyat: Düşükten Yükseğe</option>
-                    <option value="price_desc">Fiyat: Yüksekten Düşüğe</option>
-                    <option value="rating">En Popüler</option>
-                    <option value="newest">En Yeniler</option>
-                  </select>
-                </div>
-
-                {/* Category chips */}
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setSelectedCategory('all')}
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase',
-                      selectedCategory === 'all'
-                        ? 'bg-brand-primary text-white'
-                        : 'bg-white text-brand-primary/50',
-                    )}
-                  >
-                    Tümü
-                  </button>
-                  {categories.slice(0, 8).map((catId) => (
+                  <div className="flex flex-wrap gap-2">
                     <button
-                      key={catId}
-                      onClick={() => setSelectedCategory(catId)}
+                      onClick={() => setSelectedCategory('all')}
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase',
-                        selectedCategory === catId
+                        selectedCategory === 'all'
                           ? 'bg-brand-primary text-white'
                           : 'bg-white text-brand-primary/50',
                       )}
                     >
-                      {catId.replace(/-/g, ' ')}
+                      Tümü
                     </button>
-                  ))}
-                </div>
-
-                {/* Product count */}
-                <p className="text-xs text-brand-primary/30">
-                  {displayProducts.length} ürün listeleniyor
-                </p>
-
-                {/* Product Grid */}
-                <div
-                  className={cn(
-                    'grid gap-4',
-                    viewMode === 'grid' ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1',
-                  )}
-                >
-                  {(activeTab === 'deals'
-                    ? displayProducts.filter((p: any) => p.isFlashDeal || p.oldPrice)
-                    : displayProducts
-                  )
-                    .slice(0, 24)
-                    .map((product: any) => (
-                      <ProductCard key={product.id} product={product} />
+                    {categories.slice(0, 8).map((catId) => (
+                      <button
+                        key={catId}
+                        onClick={() => setSelectedCategory(catId)}
+                        className={cn(
+                          'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase',
+                          selectedCategory === catId
+                            ? 'bg-brand-primary text-white'
+                            : 'bg-white text-brand-primary/50',
+                        )}
+                      >
+                        {catId.replace(/-/g, ' ')}
+                      </button>
                     ))}
-                </div>
-
-                {displayProducts.length > 24 && (
-                  <div className="flex justify-center pt-4">
-                    <button className="px-8 py-3 bg-white rounded-xl border-2 border-brand-primary/10 text-xs font-black uppercase text-brand-primary/60 hover:border-accent hover:text-accent transition-all">
-                      Daha Fazla Ürün Göster
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            ) : activeTab === 'about' ? (
-              <motion.div
-                key="about"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-white rounded-[3.5rem] p-12 shadow-sm border border-brand-primary/5"
-              >
-                <div className="max-w-2xl mx-auto space-y-8">
-                  <div className="space-y-4">
-                    <h2 className="text-3xl font-display font-black tracking-tight uppercase italic text-brand-primary">
-                      Hikayemiz
-                    </h2>
-                    <p className="text-brand-primary/60 leading-relaxed text-lg font-medium">
-                      {seller.description}
-                    </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-8 py-8 border-y border-brand-primary/5">
-                    <div>
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
-                        Konum
-                      </h4>
-                      <p className="font-bold text-brand-primary flex items-center gap-2">
-                        <MapPin size={16} className="text-accent" /> {seller.origin}
+                  {/* Product count */}
+                  <p className="text-xs text-brand-primary/30">
+                    {displayProducts.length} ürün listeleniyor
+                  </p>
+
+                  {/* Product Grid */}
+                  <div
+                    className={cn(
+                      'grid gap-4',
+                      viewMode === 'grid' ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1',
+                    )}
+                  >
+                    {(activeTab === 'deals'
+                      ? displayProducts.filter((p: any) => p.isFlashDeal || p.oldPrice)
+                      : displayProducts
+                    )
+                      .slice(0, 24)
+                      .map((product: any) => (
+                        <ProductCard key={product.id} product={product} />
+                      ))}
+                  </div>
+
+                  {displayProducts.length > 24 && (
+                    <div className="flex justify-center pt-4">
+                      <button className="px-8 py-3 bg-white rounded-xl border-2 border-brand-primary/10 text-xs font-black uppercase text-brand-primary/60 hover:border-accent hover:text-accent transition-all">
+                        Daha Fazla Ürün Göster
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              ) : activeTab === 'about' ? (
+                <motion.div
+                  key="about"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="bg-white rounded-[3.5rem] p-12 shadow-sm border border-brand-primary/5"
+                >
+                  <div className="max-w-2xl mx-auto space-y-8">
+                    <div className="space-y-4">
+                      <h2 className="text-3xl font-display font-black tracking-tight uppercase italic text-brand-primary">
+                        Hikayemiz
+                      </h2>
+                      <p className="text-brand-primary/60 leading-relaxed text-lg font-medium">
+                        {seller.description}
                       </p>
                     </div>
-                    <div>
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
-                        Satıcı Aktif
-                      </h4>
-                      <p className="font-bold text-brand-primary flex items-center gap-2">
-                        <History size={16} className="text-accent" /> {seller.joinedDate} tarihinden
-                        beri
+
+                    <div className="grid grid-cols-2 gap-8 py-8 border-y border-brand-primary/5">
+                      <div>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
+                          Konum
+                        </h4>
+                        <p className="font-bold text-brand-primary flex items-center gap-2">
+                          <MapPin size={16} className="text-accent" /> {seller.origin}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
+                          Satıcı Aktif
+                        </h4>
+                        <p className="font-bold text-brand-primary flex items-center gap-2">
+                          <History size={16} className="text-accent" /> {seller.joinedDate}{' '}
+                          tarihinden beri
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-display font-black tracking-tight text-brand-primary">
+                        Sertifikalar
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        {[
+                          'B-Corp Sertifikalı',
+                          'CO2 Nötr Kargo',
+                          'Adil Ücret Garantisi',
+                          'Onarılabilir Tasarım',
+                        ].map((badge) => (
+                          <span
+                            key={badge}
+                            className="px-4 py-2 bg-brand-secondary rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/60 border border-brand-primary/5"
+                          >
+                            {badge}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Ek bilgiler: iade politikası + kargo notu */}
+                    {(sellerData.returnPolicy || sellerData.shippingNote) && (
+                      <div className="space-y-6 pt-4">
+                        {sellerData.returnPolicy && (
+                          <div>
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
+                              İade Politikası
+                            </h4>
+                            <p className="text-sm text-brand-primary/60 leading-relaxed">
+                              {sellerData.returnPolicy}
+                            </p>
+                          </div>
+                        )}
+                        {sellerData.shippingNote && (
+                          <div>
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
+                              Kargo Notu
+                            </h4>
+                            <p className="text-sm text-brand-primary/60 leading-relaxed">
+                              {sellerData.shippingNote}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="reviews"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-8"
+                >
+                  {starSummary && starSummary.total > 0 && (
+                    <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-brand-primary/5">
+                      <p className="text-xs font-black uppercase tracking-widest text-brand-primary/40 mb-6">
+                        Onaylı Değerlendirmeler
                       </p>
+                      <SellerRatingSummary summary={starSummary} />
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="col-span-1 bg-white rounded-[2.5rem] p-10 flex flex-col items-center justify-center text-center shadow-sm border border-brand-primary/5">
+                      <p className="text-6xl font-display font-black text-brand-primary">
+                        {seller.rating}
+                      </p>
+                      <div className="flex gap-1 my-4">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <Star key={i} size={20} className="text-yellow-400 fill-yellow-400" />
+                        ))}
+                      </div>
+                      <p className="text-xs font-black uppercase tracking-widest text-brand-primary/40">
+                        Onaylı Sektör Puanı
+                      </p>
+                    </div>
+                    <div className="col-span-2 bg-white rounded-[2.5rem] p-10 shadow-sm border border-brand-primary/5 flex flex-col justify-center">
+                      <div className="space-y-4 w-full">
+                        {[5, 4, 3, 2, 1].map((rating) => (
+                          <div key={rating} className="flex items-center gap-4">
+                            <span className="text-xs font-black text-brand-primary w-4">
+                              {rating}
+                            </span>
+                            <div className="flex-1 h-3 bg-brand-secondary rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-accent px-4"
+                                style={{
+                                  width: rating === 5 ? '85%' : rating === 4 ? '12%' : '1%',
+                                }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-black text-brand-primary/40 w-12">
+                              {rating === 5 ? '85%' : rating === 4 ? '12%' : '<1%'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <h3 className="text-xl font-display font-black tracking-tight text-brand-primary">
-                      Sertifikalar
-                    </h3>
-                    <div className="flex flex-wrap gap-3">
-                      {[
-                        'B-Corp Sertifikalı',
-                        'CO2 Nötr Kargo',
-                        'Adil Ücret Garantisi',
-                        'Onarılabilir Tasarım',
-                      ].map((badge) => (
-                        <span
-                          key={badge}
-                          className="px-4 py-2 bg-brand-secondary rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/60 border border-brand-primary/5"
-                        >
-                          {badge}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Ek bilgiler: iade politikası + kargo notu */}
-                  {(sellerData.returnPolicy || sellerData.shippingNote) && (
-                    <div className="space-y-6 pt-4">
-                      {sellerData.returnPolicy && (
-                        <div>
-                          <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
-                            İade Politikası
-                          </h4>
-                          <p className="text-sm text-brand-primary/60 leading-relaxed">
-                            {sellerData.returnPolicy}
-                          </p>
-                        </div>
-                      )}
-                      {sellerData.shippingNote && (
-                        <div>
-                          <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
-                            Kargo Notu
-                          </h4>
-                          <p className="text-sm text-brand-primary/60 leading-relaxed">
-                            {sellerData.shippingNote}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="reviews"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-8"
-              >
-                {starSummary && starSummary.total > 0 && (
-                  <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-brand-primary/5">
-                    <p className="text-xs font-black uppercase tracking-widest text-brand-primary/40 mb-6">
-                      Onaylı Değerlendirmeler
-                    </p>
-                    <SellerRatingSummary summary={starSummary} />
-                  </div>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="col-span-1 bg-white rounded-[2.5rem] p-10 flex flex-col items-center justify-center text-center shadow-sm border border-brand-primary/5">
-                    <p className="text-6xl font-display font-black text-brand-primary">
-                      {seller.rating}
-                    </p>
-                    <div className="flex gap-1 my-4">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} size={20} className="text-yellow-400 fill-yellow-400" />
-                      ))}
-                    </div>
-                    <p className="text-xs font-black uppercase tracking-widest text-brand-primary/40">
-                      Onaylı Sektör Puanı
-                    </p>
-                  </div>
-                  <div className="col-span-2 bg-white rounded-[2.5rem] p-10 shadow-sm border border-brand-primary/5 flex flex-col justify-center">
-                    <div className="space-y-4 w-full">
-                      {[5, 4, 3, 2, 1].map((rating) => (
-                        <div key={rating} className="flex items-center gap-4">
-                          <span className="text-xs font-black text-brand-primary w-4">
-                            {rating}
-                          </span>
-                          <div className="flex-1 h-3 bg-brand-secondary rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-accent px-4"
-                              style={{ width: rating === 5 ? '85%' : rating === 4 ? '12%' : '1%' }}
-                            />
-                          </div>
-                          <span className="text-[10px] font-black text-brand-primary/40 w-12">
-                            {rating === 5 ? '85%' : rating === 4 ? '12%' : '<1%'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  {[1, 2, 3].map((r) => (
-                    <div
-                      key={r}
-                      className="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-primary/5"
-                    >
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-brand-secondary overflow-hidden">
-                            <img
-                              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${r}`}
-                              className="w-full h-full"
-                              alt="Kullanıcı avatarı"
-                              loading="lazy"
-                            />
-                          </div>
-                          <div>
-                            <p className="font-bold text-brand-primary">Onaylı Alıcı</p>
-                            <div className="flex gap-0.5 mt-1">
-                              {[1, 2, 3, 4, 5].map((i) => (
-                                <Star
-                                  key={i}
-                                  size={10}
-                                  className="text-yellow-400 fill-yellow-400"
-                                />
-                              ))}
+                    {[1, 2, 3].map((r) => (
+                      <div
+                        key={r}
+                        className="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-primary/5"
+                      >
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-brand-secondary overflow-hidden">
+                              <img
+                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${r}`}
+                                className="w-full h-full"
+                                alt="Kullanıcı avatarı"
+                                loading="lazy"
+                              />
+                            </div>
+                            <div>
+                              <p className="font-bold text-brand-primary">Onaylı Alıcı</p>
+                              <div className="flex gap-0.5 mt-1">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                  <Star
+                                    key={i}
+                                    size={10}
+                                    className="text-yellow-400 fill-yellow-400"
+                                  />
+                                ))}
+                              </div>
                             </div>
                           </div>
+                          <span className="text-[10px] font-bold text-brand-primary/30 uppercase tracking-widest">
+                            2 hafta önce
+                          </span>
                         </div>
-                        <span className="text-[10px] font-bold text-brand-primary/30 uppercase tracking-widest">
-                          2 hafta önce
-                        </span>
+                        <p className="text-brand-primary/60 leading-relaxed font-medium">
+                          &quot;The engineering on their headsets is unparalleled. You can literally
+                          hear the artisan craftsmanship in the soundstage. Global shipping was
+                          surprisingly fast from Dubai to London.&quot;
+                        </p>
                       </div>
-                      <p className="text-brand-primary/60 leading-relaxed font-medium">
-                        &quot;The engineering on their headsets is unparalleled. You can literally
-                        hear the artisan craftsmanship in the soundstage. Global shipping was
-                        surprisingly fast from Dubai to London.&quot;
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </main>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
+        </div>
       </div>
     </div>
   );
