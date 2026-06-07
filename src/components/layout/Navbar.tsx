@@ -45,7 +45,6 @@ import {
   UserPlus,
   Bell,
   CheckCheck,
-  MessageSquare,
   Percent,
   Store,
 } from 'lucide-react';
@@ -327,23 +326,6 @@ export function Navbar() {
               </div>
               <span className="text-xs font-bold whitespace-nowrap">Favorilerim</span>
             </button>
-
-            {/* Messages */}
-            {user && (
-              <button
-                type="button"
-                onClick={() => navigate('/messages')}
-                className="hidden lg:flex items-center gap-2 group p-2 hover:text-accent transition-colors text-brand-primary dark:text-white"
-              >
-                <div className="relative">
-                  <MessageSquare
-                    size={20}
-                    className="group-hover:-translate-y-1 transition-transform"
-                  />
-                </div>
-                <span className="text-xs font-bold whitespace-nowrap">Mesajlar</span>
-              </button>
-            )}
 
             {/* Account Dropdown */}
             <div
