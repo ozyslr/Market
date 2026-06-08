@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   onAuthStateChanged,
+  onIdTokenChanged,
   User as FirebaseUser,
   signInWithPopup,
   signInWithEmailAndPassword,
@@ -25,7 +26,9 @@ interface AuthContextType {
   isAnonymous: boolean;
   loading: boolean;
   emailVerified: boolean;
+  tokenError: string | null;
   adminRole: AdminRole | null;
+  clearTokenError: () => void;
   login: () => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmail: (email: string, name: string, password: string) => Promise<void>;
@@ -42,6 +45,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+
+  const clearTokenError = () => setTokenError(null);
 
   const isAnonymous = firebaseUser?.isAnonymous ?? false;
   const emailVerified = firebaseUser?.emailVerified ?? false;
@@ -152,6 +158,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return unsubscribe;
+  }, []);
+
+  // ── Token refresh listener ─────────────────────────────────────────────
+  // onIdTokenChanged fires on every token refresh (~hourly) and when the
+  // token can't be refreshed (e.g. user was disabled/deleted by admin).
+  // Without this, the user silently loses auth and sees permission errors
+  // without knowing they need to re-login.
+  useEffect(() => {
+    const unsub = onIdTokenChanged(auth, async (fUser) => {
+      if (fUser) {
+        // Token refreshed successfully — clear any previous error
+        setTokenError(null);
+      } else {
+        // No user after token refresh failure — token was revoked or user disabled
+        // onAuthStateChanged will pick up the sign-out shortly; surface the error
+      }
+    }, (error: any) => {
+      // Token refresh failed — user may need to re-login
+      console.error('[auth] Token refresh error:', error?.message || error);
+      if (error?.code === 'auth/user-token-expired' ||
+          error?.code === 'auth/user-disabled' ||
+          error?.code === 'auth/user-not-found' ||
+          error?.code === 'auth/network-request-failed') {
+        setTokenError(
+          'Oturumunuz yenilenemedi. Lütfen tekrar giriş yapın.',
+        );
+      }
+    });
+
+    return unsub;
   }, []);
 
   const login = async () => {
@@ -296,7 +332,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAnonymous,
         loading,
         emailVerified,
+        tokenError,
         adminRole,
+        clearTokenError,
         login,
         loginWithEmail,
         registerWithEmail,

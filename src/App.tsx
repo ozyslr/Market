@@ -119,6 +119,7 @@ import { ShoppingAssistant } from './components/ai/ShoppingAssistant';
 import { LiveChatWidget } from './components/chat/LiveChatWidget';
 import { BotSalesEngine } from './components/commerce/BotSalesEngine';
 import { EmailVerificationBanner } from './components/common/EmailVerificationBanner';
+import { TokenErrorBanner } from './components/common/TokenErrorBanner';
 
 // ─── Page loading fallback ─────────────────────────────────────────────────
 
@@ -148,6 +149,7 @@ function MainLayout() {
       <OfflineBanner />
       <SkipToContent />
       <Navbar />
+      <TokenErrorBanner />
       <EmailVerificationBanner />
       <main id="main-content" role="main" className="pt-[144px] md:pt-[156px]" tabIndex={-1}>
         <Suspense fallback={<PageLoader />}>
