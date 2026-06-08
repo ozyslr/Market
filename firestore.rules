@@ -194,15 +194,35 @@ service cloud.firestore {
     // allowed for helpful-votes, seller responses and owner edits, but may NOT
     // escalate the trust fields verified/status/userId.
     // Email-verified accounts only for creating/updating reviews (prevents spam).
+    //
+    // helpfulVoters atomicity: only arrayUnion/add or arrayRemove of a single
+    // voter is allowed. helpfulCount must change by exactly ±1 in lockstep.
+    // This prevents double-voting and batch manipulation from the client.
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if false; // server Admin SDK only
-      allow update: if isAdmin() || (
-        isFullUser() && isEmailVerified() &&
+
+      // Admin can always update
+      allow update: if isAdmin();
+
+      // Non-admin: may only toggle helpful vote (atomic ±1), or edit own
+      // review body without changing trust fields.
+      allow update: if isFullUser() && isEmailVerified() &&
         request.resource.data.verified == resource.data.verified &&
         request.resource.data.status == resource.data.status &&
-        request.resource.data.userId == resource.data.userId
-      );
+        request.resource.data.userId == resource.data.userId && (
+          // ── Helpful vote toggle (atomic arrayUnion/arrayRemove) ──
+          // helpfulCount increases by 1 → helpfulVoters grew by 1 element
+          // helpfulCount decreases by 1 → helpfulVoters shrunk by 1 element
+          (
+            request.resource.data.helpfulCount == resource.data.helpfulCount + 1 &&
+            request.resource.data.helpfulVoters.size() == resource.data.helpfulVoters.size() + 1
+          ) || (
+            request.resource.data.helpfulCount == resource.data.helpfulCount - 1 &&
+            request.resource.data.helpfulVoters.size() == resource.data.helpfulVoters.size() - 1
+          )
+        );
+
       allow delete: if isAdmin() || (isFullUser() && resource.data.userId == getUserId());
     }
 
@@ -211,17 +231,32 @@ service cloud.firestore {
     // via the denormalised sellerId) or an admin may write the public answer.
     // A field-guarded clause still lets any signed-in user cast a helpful vote
     // without touching the answer/sellerId fields (T-07-10, T-07-11).
+    // helpfulVoters atomicity: same ±1 lockstep as reviews.
     match /productQuestions/{questionId} {
       allow read: if true;
       allow create: if isFullUser();
-      allow update: if isAdmin()
-        || (isSignedIn() && request.auth.token.sellerId == resource.data.sellerId)
-        || (
-          isSignedIn() &&
-          request.resource.data.sellerId == resource.data.sellerId &&
-          request.resource.data.answer == resource.data.answer &&
-          request.resource.data.answeredBy == resource.data.answeredBy
+
+      // Admin can always update
+      allow update: if isAdmin();
+
+      // Seller can answer their own product's question
+      allow update: if isSignedIn() &&
+        request.auth.token.sellerId == resource.data.sellerId;
+
+      // Any signed-in user can toggle helpful vote (atomic ±1 only)
+      allow update: if isSignedIn() &&
+        request.resource.data.sellerId == resource.data.sellerId &&
+        request.resource.data.answer == resource.data.answer &&
+        request.resource.data.answeredBy == resource.data.answeredBy && (
+          (
+            request.resource.data.helpfulCount == resource.data.helpfulCount + 1 &&
+            request.resource.data.helpfulVoters.size() == resource.data.helpfulVoters.size() + 1
+          ) || (
+            request.resource.data.helpfulCount == resource.data.helpfulCount - 1 &&
+            request.resource.data.helpfulVoters.size() == resource.data.helpfulVoters.size() - 1
+          )
         );
+
       allow delete: if isAdmin();
     }
 
