@@ -84,13 +84,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const t = useCallback(
     (key: string, fallback?: string) => {
       const tx = translations[lang] as Record<string, string> | undefined;
-      return (
+      const result =
         tx?.[key] ||
         (en as Record<string, string>)[key] ||
-        (tr as Record<string, string>)[key] ||
-        fallback ||
-        key
-      );
+        (tr as Record<string, string>)[key];
+      return result ?? fallback;
     },
     [lang, translations],
   );
