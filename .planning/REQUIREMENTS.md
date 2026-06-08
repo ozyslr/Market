@@ -97,8 +97,35 @@
 
 ## Traceability
 
-_(Roadmap tarafından doldurulacak — her REQ-ID tam olarak bir faza eşlenir.)_
-
-| REQ-ID | Phase |
-| ------ | ----- |
-| —      | —     |
+| REQ-ID | Phase    |
+| ------ | -------- |
+| ACC-01 | Phase 30 |
+| ACC-02 | Phase 30 |
+| ACC-03 | Phase 30 |
+| ACC-04 | Phase 30 |
+| LST-01 | Phase 31 |
+| LST-02 | Phase 31 |
+| LST-03 | Phase 31 |
+| LST-04 | Phase 31 |
+| LST-05 | Phase 31 |
+| DET-01 | Phase 32 |
+| DET-02 | Phase 32 |
+| DET-03 | Phase 32 |
+| DET-04 | Phase 32 |
+| INT-01 | Phase 33 |
+| INT-02 | Phase 33 |
+| INT-03 | Phase 33 |
+| INT-04 | Phase 33 |
+| INT-05 | Phase 33 |
+| INT-06 | Phase 33 |
+| INT-07 | Phase 33 |
+| SEC-02 | Phase 33 |
+| FIN-01 | Phase 34 |
+| FIN-02 | Phase 34 |
+| FIN-03 | Phase 34 |
+| FIN-04 | Phase 34 |
+| TRD-01 | Phase 35 |
+| TRD-02 | Phase 35 |
+| TRD-03 | Phase 35 |
+| TRD-04 | Phase 35 |
+| SEC-01 | Phase 35 |

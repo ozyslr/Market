@@ -6,9 +6,9 @@ status: planning
 last_updated: '2026-06-08T22:30:30.072Z'
 last_activity: 2026-06-08
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
-  total_plans: 0
+  total_plans: 6
   completed_plans: 0
   percent: 0
 ---
@@ -17,17 +17,21 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-06)
+See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** Satıcıların KYC onayıyla mağaza açabildiği ve müşterilerin güvenli alışveriş yapabildiği eksiksiz pazar yeri deneyimi
-**Current focus:** v2.0 planlaması — ertelenen özellikler (multi-currency, Typesense, cross-border) ve scale-driven iyileştirmeler
+**Current focus:** v6.0 — Admin Satıcı Denetim Merkezi (Phases 30–35)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 30 (Foundation & Shared) — Not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-06-08 — Milestone v6.0 started
+Status: Roadmap defined, ready to plan Phase 30
+Last activity: 2026-06-08 — Milestone v6.0 roadmap created
+
+```
+Progress: ░░░░░░░░░░░░░░░░░░░░ 0% (0/6 phases)
+```
 
 ## Performance Metrics
 
@@ -50,14 +54,26 @@ Last activity: 2026-06-08 — Milestone v6.0 started
 
 See .planning/PROJECT.md Key Decisions for full log.
 
+**v6.0 Scoping Decisions:**
+
+- Ban policy: suspend + permanent ban (typed-confirmation, irreversible)
+- performanceScore placeholder: fix in Phase 35 with "placeholder data" warning
+- trustScoreAdjustment ceiling: ±20
+- tierOverride: permanent until manually removed + optional expiry (no cron; checked at read time)
+- complaints.sellerId: forward-only (no backfill of existing complaints)
+- GİB e-fatura: deferred from Finance tab
+- System A (sellerBalances/payoutRequests): left as-is; System B (ledger) shown in Finance tab only
+- Second-admin ban confirmation: typed store name dialog is sufficient (solo dev setup)
+
 ### Pending Todos
 
-None.
+- Phase 30: Verify shared component inventory before building new ones
+- Phase 33: Confirm iyzico route deps type signature before enforcing verifyAdmin non-optional
 
 ### Blockers/Concerns
 
-- Phase 04 (search-discovery) plans 04-01..04-04 are **Typesense-based and on hold**. Revisit in v2.
 - Live UAT sign-off (BUY-05): checklist created, Playwright E2E specs written, manual verification pending on production-like env.
+- Phase 04 (search-discovery) plans 04-01..04-04 are **Typesense-based and on hold**. Revisit in v2.
 
 ### Quick Tasks Completed
 
@@ -69,15 +85,20 @@ None.
 
 ## Deferred Items
 
-| Category | Item                                                        | Status                                      |
-| -------- | ----------------------------------------------------------- | ------------------------------------------- |
-| feature  | Multi-Currency (CUR-01..04)                                 | Deferred to v2                              |
-| feature  | Typesense search (SRC-01, SRC-05)                           | Deferred to v2                              |
-| feature  | Cross-Border Compliance (CROSS-01..04)                      | Deferred to v2                              |
-| uat      | v1.0 live UAT — payments/3DS, shipping, reviews photo + Q&A | Checklist done, manual verification pending |
+| Category | Item                                                        | Status                                             |
+| -------- | ----------------------------------------------------------- | -------------------------------------------------- |
+| feature  | Multi-Currency (CUR-01..04)                                 | Deferred to v2                                     |
+| feature  | Typesense search (SRC-01, SRC-05)                           | Deferred to v2                                     |
+| feature  | Cross-Border Compliance (CROSS-01..04)                      | Deferred to v2                                     |
+| uat      | v1.0 live UAT — payments/3DS, shipping, reviews photo + Q&A | Checklist done, manual verification pending        |
+| feature  | GİB e-fatura Finance tab display                            | Deferred until real GİB credentials                |
+| feature  | System A balance migration/freeze                           | Deferred; System B read-only in v6.0               |
+| feature  | complaints.sellerId backfill migration                      | Forward-only chosen; old complaints join-dependent |
+| bug      | Commission client/server fee divergence (3.5%)              | Deferred; separate accounting-accuracy work        |
+| bug      | Invoice in-memory counter (multi-instance duplicate risk)   | Deferred                                           |
 
 ## Session Continuity
 
-Last session: 2026-06-08T00:10:12.659Z
-Stopped at: context exhaustion at 77% (2026-06-08)
+Last session: 2026-06-08
+Stopped at: Roadmap created, ready to begin Phase 30
 Resume file: None
