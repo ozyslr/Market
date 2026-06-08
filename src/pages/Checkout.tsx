@@ -351,12 +351,29 @@ export function CheckoutPage() {
 
     setIsFetchingIntent(true);
     try {
+      // Build items for server-side price validation
+      const priceItems = cartProducts.map((p) => ({
+        productId: p.id,
+        quantity: p.quantity,
+        price: p.price,
+      }));
+
       const res = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: totals.total, currency: currency.toLowerCase() }),
+        body: JSON.stringify({
+          amount: totals.total,
+          currency: currency.toLowerCase(),
+          items: priceItems,
+        }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        // Price validation failed or other server error — show to user
+        setPaymentError(data?.error || data?.detail || 'Ödeme başlatılamadı. Lütfen sepetinizi yenileyip tekrar deneyin.');
+        setIsFetchingIntent(false);
+        return;
+      }
       setClientSecret(data.clientSecret);
       setIsMock(!!data.isMock);
       setStep(2);
@@ -476,6 +493,12 @@ export function CheckoutPage() {
     setPaymentError(null);
     try {
       const token = await firebaseUser.getIdToken();
+      const priceItems = cartProducts.map((p) => ({
+        productId: p.id,
+        quantity: p.quantity,
+        price: p.price,
+      }));
+
       const res = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: {
@@ -486,6 +509,7 @@ export function CheckoutPage() {
           amount: totals.total,
           currency: currency.toLowerCase(),
           paymentMethodId: selectedCardId,
+          items: priceItems,
         }),
       });
       const data = await res.json();

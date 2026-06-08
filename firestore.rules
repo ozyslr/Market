@@ -7,6 +7,7 @@ service cloud.firestore {
     // Zero get() calls on user documents — eliminates billed reads (Pitfall 1).
     function isSignedIn() { return request.auth != null; }
     function isFullUser() { return isSignedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
+    function isEmailVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
     function isAdmin() { return isSignedIn() && request.auth.token.role == 'admin'; }
     function isSeller() { return isSignedIn() && request.auth.token.role == 'seller'; }
     function isBuyer() { return isSignedIn() && request.auth.token.role == 'buyer'; }
@@ -59,9 +60,10 @@ service cloud.firestore {
     }
 
     // --- ORDERSETS (Plan 1) ----------------------------------------------
+    // Creating orders requires verified email (prevents fraud/fake accounts).
     match /orderSets/{orderSetId} {
       allow read: if isFullUser() && (resource.data.userId == getUserId() || isAdmin());
-      allow create: if isFullUser() && request.resource.data.userId == getUserId();
+      allow create: if isFullUser() && isEmailVerified() && request.resource.data.userId == getUserId();
       allow update: if isAdmin();
       allow delete: if false;
     }
@@ -191,11 +193,12 @@ service cloud.firestore {
     // direct writes are denied (T-07-01, T-07-02). Client updates are still
     // allowed for helpful-votes, seller responses and owner edits, but may NOT
     // escalate the trust fields verified/status/userId.
+    // Email-verified accounts only for creating/updating reviews (prevents spam).
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if false; // server Admin SDK only
       allow update: if isAdmin() || (
-        isFullUser() &&
+        isFullUser() && isEmailVerified() &&
         request.resource.data.verified == resource.data.verified &&
         request.resource.data.status == resource.data.status &&
         request.resource.data.userId == resource.data.userId

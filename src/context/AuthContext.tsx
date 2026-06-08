@@ -11,6 +11,7 @@ import {
   signInAnonymously,
   linkWithCredential,
   EmailAuthProvider,
+  sendEmailVerification,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
@@ -23,6 +24,7 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   isAnonymous: boolean;
   loading: boolean;
+  emailVerified: boolean;
   adminRole: AdminRole | null;
   login: () => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
@@ -30,6 +32,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   upgradeAnonymousAccount: (email: string, password: string) => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
 
   const isAnonymous = firebaseUser?.isAnonymous ?? false;
+  const emailVerified = firebaseUser?.emailVerified ?? false;
 
   useEffect(() => {
     let lastUid: string | null = null;
@@ -82,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else {
             // Initialize new user profile
             const isOwner = fUser.email === 'ozyslr@gmail.com';
+            const now = new Date().toISOString();
             const newUser: UserProfile = {
               id: fUser.uid,
               name: fUser.displayName || 'New User',
@@ -91,7 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               country: 'UK', // Default
               currency: 'GBP',
               spentTotal: 0,
-              lastLogin: new Date().toISOString(),
+              createdAt: now,
+              lastLogin: now,
               orders: [],
               savedItems: [],
               preferences: {
@@ -150,11 +156,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async () => {
     const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error('Login Error:', error);
-    }
+    // Use signInWithPopup; throw so callers can surface the error to the user
+    await signInWithPopup(auth, provider);
   };
 
   const loginWithEmail = async (email: string, password: string) => {
@@ -165,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { user: fbUser } = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(fbUser, { displayName: name });
     const isOwner = email === 'ozyslr@gmail.com';
+    const now = new Date().toISOString();
     const newUser: UserProfile = {
       id: fbUser.uid,
       name,
@@ -173,13 +177,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       country: 'TR',
       currency: 'TRY',
       spentTotal: 0,
-      lastLogin: new Date().toISOString(),
+      createdAt: now,
+      lastLogin: now,
       orders: [],
       savedItems: [],
       preferences: { newsletter: true, personalizedDeals: true, pushNotifications: false },
     };
     await setDoc(doc(db, 'users', fbUser.uid), newUser);
     setUser(newUser);
+    // Send email verification (fire-and-forget)
+    sendEmailVerification(fbUser).catch((err) =>
+      console.warn('[auth] Email verification send failed:', err.message),
+    );
+  };
+
+  const resendVerificationEmail = async () => {
+    const fbUser = auth.currentUser;
+    if (!fbUser || fbUser.isAnonymous) {
+      throw new Error('Doğrulama email\'i göndermek için giriş yapmalısınız.');
+    }
+    if (fbUser.emailVerified) {
+      throw new Error('Email adresiniz zaten doğrulanmış.');
+    }
+    await sendEmailVerification(fbUser);
   };
 
   const logout = async () => {
@@ -275,6 +295,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         firebaseUser,
         isAnonymous,
         loading,
+        emailVerified,
         adminRole,
         login,
         loginWithEmail,
@@ -282,6 +303,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         refreshUser,
         upgradeAnonymousAccount,
+        resendVerificationEmail,
       }}
     >
       {children}

@@ -18,6 +18,7 @@ import { recordEntry } from '../services/ledgerService.js';
 import { confirmStock } from '../services/stockService.js';
 import { sendOrderConfirmationEmail, sendNewSellerOrderEmail } from '../services/emailService.js';
 import { hasAllRequiredDocs, type KycDocumentRef } from '../services/kycService.js';
+import { validatePrices, type PriceCheckItem } from '../lib/priceValidator.js';
 
 export interface IyzicoRouteDeps {
   /** Legacy lazy loader — kept for installment helper and legacy init. */
@@ -71,8 +72,28 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
           });
         }
 
-        // ── Calculate total from items (server-authoritative pricing T-02-001) ──
-        const totalAmount = items.reduce((sum: number, item: any) => sum + item.price, 0);
+        // ── Server-side price validation (prevents client price manipulation) ──
+        const priceCheckItems: PriceCheckItem[] = items.map((item: any) => ({
+          productId: item.productId || item.id,
+          quantity: item.quantity || 1,
+          price: item.price / (item.quantity || 1), // unit price
+        }));
+        const priceCheck = await validatePrices(adminDb, priceCheckItems);
+        if (!priceCheck.valid) {
+          logger.warn('iyzico', 'Price validation failed', {
+            reason: priceCheck.reason,
+            clientTotal: priceCheck.clientTotal,
+            serverTotal: priceCheck.serverTotal,
+            orderSetId,
+          });
+          return res.status(400).json({
+            error: 'Price mismatch detected. Please refresh and try again.',
+            detail: priceCheck.reason,
+          });
+        }
+
+        // ── Calculate total from items (server-authoritative pricing) ──
+        const totalAmount = priceCheck.serverTotal;
 
         // ── Record pending commission entries in ledger (D-05) ──────────────
         // Group items by seller to build per-subOrder commission entries

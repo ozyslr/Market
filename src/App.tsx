@@ -6,6 +6,7 @@ import { initAnalytics, getConsent, trackEvent } from './lib/analytics';
 import { AnalyticsTracker } from './components/common/AnalyticsTracker';
 import { Navbar } from './components/layout/Navbar';
 import { AdminRoute } from './components/auth/AdminRoute';
+import { SellerRoute } from './components/auth/SellerRoute';
 import { OfflineBanner } from './services/offlineService';
 import { SkipToContent } from './components/common/SkipToContent';
 import { CookieConsent } from './components/common/CookieConsent';
@@ -116,6 +117,7 @@ const SellOnBenimOlan = named(() => import('./pages/SellOnBenimOlan'), 'SellOnBe
 import { ShoppingAssistant } from './components/ai/ShoppingAssistant';
 import { LiveChatWidget } from './components/chat/LiveChatWidget';
 import { BotSalesEngine } from './components/commerce/BotSalesEngine';
+import { EmailVerificationBanner } from './components/common/EmailVerificationBanner';
 
 // ─── Page loading fallback ─────────────────────────────────────────────────
 
@@ -145,6 +147,7 @@ function MainLayout() {
       <OfflineBanner />
       <SkipToContent />
       <Navbar />
+      <EmailVerificationBanner />
       <main id="main-content" role="main" className="pt-[144px] md:pt-[156px]" tabIndex={-1}>
         <Suspense fallback={<PageLoader />}>
           <Outlet />
@@ -188,13 +191,23 @@ export default function App() {
                             <Suspense fallback={<PageLoader />}>
                               <Routes>
                                 {/* Seller panel — full-screen, no Navbar/Footer */}
-                                <Route path="/seller" element={<SellerLayout />}>
+                                <Route path="/seller" element={
+                                  <SellerRoute>
+                                    <SellerLayout />
+                                  </SellerRoute>
+                                }>
                                   <Route element={<SellerSuspense />}>
                                     <Route path="dashboard" element={<SellerDashboard />} />
                                     <Route path="inventory" element={<SellerInventoryPage />} />
                                     <Route path="store" element={<SellerStorePage />} />
-                                    <Route path="store-settings" element={<SellerStoreSettingsPage />} />
-                                    <Route path="store-blocks" element={<StoreBlocksEditorPage />} />
+                                    <Route
+                                      path="store-settings"
+                                      element={<SellerStoreSettingsPage />}
+                                    />
+                                    <Route
+                                      path="store-blocks"
+                                      element={<StoreBlocksEditorPage />}
+                                    />
                                     <Route path="store-menu" element={<SellerMenuEditorPage />} />
                                     <Route path="coupons" element={<SellerCouponsPage />} />
                                     <Route path="orders" element={<SellerOrdersPage />} />

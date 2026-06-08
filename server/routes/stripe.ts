@@ -30,6 +30,7 @@ import {
   type KycDocumentRef,
 } from '../services/kycService.js';
 import { StripeConnectProvider } from '../services/paymentProvider.js';
+import { validatePrices, type PriceCheckItem } from '../lib/priceValidator.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
@@ -205,6 +206,36 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         : 'try';
     if (orderId !== undefined && !isNonEmptyString(orderId, 128)) {
       return res.status(400).json({ error: 'Invalid orderId' });
+    }
+
+    // ── Server-side price validation (prevents client price manipulation) ──
+    const items: PriceCheckItem[] | undefined = req.body.items;
+    if (items && items.length > 0 && adminDb) {
+      const priceCheck = await validatePrices(adminDb, items);
+      if (!priceCheck.valid) {
+        logger.warn('stripe', 'Price validation failed', {
+          reason: priceCheck.reason,
+          clientTotal: priceCheck.clientTotal,
+          serverTotal: priceCheck.serverTotal,
+          orderId,
+        });
+        return res.status(400).json({
+          error: 'Price mismatch detected. Please refresh and try again.',
+          detail: priceCheck.reason,
+        });
+      }
+      // If items were provided, use server-computed total for the actual charge
+      // (defense-in-depth: even if the client amount somehow passed the check,
+      // we charge the server-verified amount)
+      if (Math.abs(amount - priceCheck.serverTotal) > 0.5) {
+        logger.info('stripe', 'Correcting payment amount to server-verified total', {
+          clientAmount: amount,
+          serverAmount: priceCheck.serverTotal,
+        });
+        req.body.amount = priceCheck.serverTotal;
+      }
+    } else if (items && items.length > 0 && !adminDb) {
+      logger.warn('stripe', 'Price validation skipped — adminDb not configured');
     }
 
     const stripeKey = process.env.STRIPE_SECRET_KEY;
