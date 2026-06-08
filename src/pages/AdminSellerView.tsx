@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
@@ -43,8 +43,6 @@ interface ToastMsg {
   message: string;
   type: 'success' | 'error';
 }
-
-let _toastId = 0;
 
 // ─── DocViewerCard ────────────────────────────────────────────────────────────
 
@@ -109,8 +107,11 @@ function DocViewerCard({ docType, storagePath, adminToken }: DocViewerCardProps)
 // ─── AdminSellerView ──────────────────────────────────────────────────────────
 
 export function AdminSellerView() {
-  const { sellerId } = useParams<{ sellerId: string }>();
+  const { sellerId: sellerIdParam } = useParams<{ sellerId: string }>();
+  // Stabilize useParams value — React Router v7 can return new object refs
+  const sellerId = useMemo(() => sellerIdParam, [sellerIdParam]);
   const { firebaseUser } = useAuth();
+  const toastIdRef = useRef(0);
   const [seller, setSeller] = useState<Seller | null>(null);
   const [application, setApplication] = useState<SellerApplication | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -134,7 +135,7 @@ export function AdminSellerView() {
   // Toasts
   const [toasts, setToasts] = useState<ToastMsg[]>([]);
   const addToast = (message: string, type: 'success' | 'error') => {
-    const id = ++_toastId;
+    const id = ++toastIdRef.current;
     setToasts((t) => [...t, { id, message, type }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
   };
