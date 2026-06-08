@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
 milestone: v6.0
-milestone_name: TBD
+milestone_name: Admin Satıcı Denetim Merkezi
 status: planning
-last_updated: "2026-06-07T21:22:30.181Z"
-last_activity: 2026-06-07
+last_updated: '2026-06-08T22:30:30.072Z'
+last_activity: 2026-06-08
 progress:
   total_phases: 0
   completed_phases: 0
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 Phase: Not started (defining requirements)
 Plan: —
 Status: Defining requirements
-Last activity: 2026-06-07 — Milestone v6.0 started
+Last activity: 2026-06-08 — Milestone v6.0 started
 
 ## Performance Metrics
 
@@ -78,6 +78,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-06-06
-Stopped at: v1.1 milestone archived — ready for v2.0 planning
+Last session: 2026-06-08T00:10:12.659Z
+Stopped at: context exhaustion at 77% (2026-06-08)
 Resume file: None

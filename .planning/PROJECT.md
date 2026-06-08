@@ -17,15 +17,19 @@ Satıcıların kendi mağazalarını KYC onayıyla açabildiği ve müşterileri
 - **Archives:** `.planning/milestones/v1.0-ROADMAP.md` · `.planning/milestones/v1.1-ROADMAP.md` · `.planning/milestones/v2.0-ROADMAP.md`
 - **Carried tech debt:** Live UAT sign-off, Typesense server provisioning, e-fatura API keys
 
-## Current Milestone — v3.0: Go Live & Scale
+## Current Milestone — v6.0: Admin Satıcı Denetim Merkezi (Admin Seller Control Center)
 
-**Goal:** Close all remaining UAT debt, provision infrastructure (Typesense, e-fatura), upgrade fraud detection to ML, and launch native mobile app.
+**Goal:** Mevcut AdminSellers/AdminSellerView sayfalarını, bir satıcının her şeyini tek ekrandan yönetebileceğin gelişmiş bir admin denetim merkezine dönüştürmek.
 
 **Target features:**
 
-- Live UAT & Go Live: close BUY-05 UAT, provision Typesense server, configure e-fatura API keys, production readiness
-- ML Fraud Detection: upgrade rule-based fraud detection to ML (anomaly detection, behavioral analysis)
-- Native Mobile App: React Native iOS/Android app with core marketplace flows
+- Birleşik satıcı paneli: tek ekranda profil, mağaza, ürünler, siparişler, finans, geçmiş
+- KYC & onay yönetimi: onayla/reddet/değişiklik iste, doküman görünürlüğü, durum geçişleri
+- Tier & trust skoru: görünürlük + manuel müdahale (tier yükselt/düşür, skor faktörleri)
+- Finans denetimi: bakiye, payout onay/geçmiş, komisyon kuralları/oranı görünürlüğü
+- Ürün & uyuşmazlık: moderasyon kuyruğu, şikayet/iade görünürlüğü, satıcı bazlı filtre
+- Müdahale aksiyonları: satıcı askıya alma/yeniden aktifleştirme, not düşme — hepsi audit-log'lu
+- AdminSellerView sonsuz re-render bug'ının kökten çözümü + performans
 
 ## Requirements
 
@@ -133,4 +137,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-07 — v2.0 shipped; v3.0 Go Live & Scale started_
+_Last updated: 2026-06-08 — v6.0 Admin Satıcı Denetim Merkezi started; codebase map (system brain) refreshed_
