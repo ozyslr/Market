@@ -90,6 +90,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       chunkSizeWarningLimit: 500,
+      esbuild: mode === 'production' ? { drop: ['console', 'debugger'] } : undefined,
       rollupOptions: {
         output: {
           manualChunks(id: string) {

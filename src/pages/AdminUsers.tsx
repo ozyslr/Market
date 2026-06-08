@@ -18,10 +18,11 @@ import {
   ChevronDown,
   ShoppingBag,
 } from 'lucide-react';
-import { MOCK_USER } from '@/data/mockUser';
 import { cn } from '@/lib/utils';
 import { audit } from '@/services/auditLogService';
 import { useAuth } from '@/context/AuthContext';
+import { getOrdersByUser } from '@/services/orderService';
+import type { Order } from '@/types/order';
 
 const ROLES: UserRole[] = ['buyer', 'seller', 'moderator', 'admin'];
 
@@ -35,13 +36,6 @@ const ROLE_FILTER_CHIPS = [
   { label: 'Banlı', value: '__banned__' },
 ];
 
-const MOCK_ORDERS = [
-  { id: '#MC-00112', date: '2025-05-10', amount: 1299, status: 'Teslim Edildi' },
-  { id: '#MC-00089', date: '2025-04-22', amount: 549, status: 'İade' },
-  { id: '#MC-00073', date: '2025-03-14', amount: 2849, status: 'Teslim Edildi' },
-  { id: '#MC-00061', date: '2025-02-28', amount: 799, status: 'Teslim Edildi' },
-  { id: '#MC-00044', date: '2025-01-17', amount: 189, status: 'İptal' },
-];
 
 export function AdminUsers() {
   const { user: actor } = useAuth();
@@ -56,6 +50,8 @@ export function AdminUsers() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [filterChip, setFilterChip] = useState('');
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -64,11 +60,10 @@ export function AdminUsers() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      let data = await getUsers();
-      if (data.length === 0) data = [{ ...MOCK_USER, id: 'mock-1' }];
+      const data = await getUsers();
       setUsers(data);
     } catch {
-      setUsers([{ ...MOCK_USER, id: 'mock-1' }]);
+      setUsers([]);
     } finally {
       setIsLoading(false);
     }
@@ -124,10 +119,23 @@ export function AdminUsers() {
     }
   };
 
-  const handleSelectUser = (u: User) => {
+  const handleSelectUser = async (u: User) => {
     setSelectedUser(u);
     setAdminNoteText(u.adminNote || '');
     setActionReason('');
+    // Fetch real orders for this user
+    setOrdersLoading(true);
+    setUserOrders([]);
+    try {
+      if (!u.id.startsWith('mock')) {
+        const orders = await getOrdersByUser(u.id);
+        setUserOrders(orders);
+      }
+    } catch {
+      setUserOrders([]);
+    } finally {
+      setOrdersLoading(false);
+    }
   };
 
   const handleSuspend = async () => {
@@ -229,8 +237,10 @@ export function AdminUsers() {
       'bg-gray-50 text-gray-500 border-gray-200': role === 'buyer',
     });
 
-  // mock order totals for selected user
-  const mockTotalSpent = MOCK_ORDERS.reduce((s, o) => s + (o.status === 'İptal' ? 0 : o.amount), 0);
+  const realTotalSpent = userOrders.reduce(
+    (s, o) => s + (o.status === 'cancelled' || o.status === 'refunded' ? 0 : o.total),
+    0,
+  );
 
   return (
     <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm flex flex-col min-h-[500px]">
@@ -279,7 +289,7 @@ export function AdminUsers() {
           <table className="w-full text-start">
             <thead>
               <tr className="border-b border-brand-primary/5">
-                {['Kullanıcı', 'Email', 'Rol', 'Durum', 'Ülke', 'İşlemler'].map((h) => (
+                {['Kullanıcı', 'Email', 'Rol', 'Durum', 'Ülke', 'Kayıt Tarihi', 'İşlemler'].map((h) => (
                   <th
                     key={h}
                     className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40"
@@ -334,6 +344,11 @@ export function AdminUsers() {
                   </td>
                   <td className="px-6 py-5">{statusBadge(u)}</td>
                   <td className="px-6 py-5 text-sm text-[#1A1033]/60">{u.country || '—'}</td>
+                  <td className="px-6 py-5 text-xs text-[#1A1033]/50 whitespace-nowrap">
+                    {(u as any).createdAt
+                      ? new Date((u as any).createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })
+                      : '—'}
+                  </td>
                   <td className="px-6 py-5">
                     <button
                       onClick={(e) => {
@@ -350,7 +365,7 @@ export function AdminUsers() {
               {filteredUsers.length === 0 && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-8 py-12 text-center text-[#1A1033]/40 text-sm font-bold"
                   >
                     Kullanıcı bulunamadı.
@@ -391,6 +406,15 @@ export function AdminUsers() {
               Askı bitiş: {new Date(selectedUser.suspendedUntil).toLocaleDateString('tr-TR')}
             </p>
           )}
+          <p className="text-[10px] text-gray-400 mt-1">
+            Kayıt: {(selectedUser as any).createdAt
+              ? new Date((selectedUser as any).createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+              : 'Bilinmiyor'}
+            {' · '}
+            Son giriş: {(selectedUser as any).lastLogin
+              ? new Date((selectedUser as any).lastLogin).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+              : 'Bilinmiyor'}
+          </p>
 
           {/* Rol değiştirme */}
           <div className="mt-4">
@@ -417,37 +441,62 @@ export function AdminUsers() {
                 Sipariş Geçmişi
               </label>
               <span className="text-[10px] font-bold text-accent">
-                Toplam: {mockTotalSpent.toLocaleString('tr-TR')} ₺
+                Toplam: {realTotalSpent.toLocaleString('tr-TR')} ₺
               </span>
             </div>
             <div className="space-y-2">
-              {MOCK_ORDERS.map((o) => (
-                <div
-                  key={o.id}
-                  className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl"
-                >
-                  <div>
-                    <p className="text-[10px] font-black text-gray-700">{o.id}</p>
-                    <p className="text-[9px] text-gray-400">
-                      {new Date(o.date).toLocaleDateString('tr-TR')}
-                    </p>
-                  </div>
-                  <div className="text-end">
-                    <p className="text-[10px] font-bold text-gray-700">
-                      {o.amount.toLocaleString('tr-TR')} ₺
-                    </p>
-                    <span
-                      className={cn('text-[9px] font-black', {
-                        'text-green-600': o.status === 'Teslim Edildi',
-                        'text-red-500': o.status === 'İptal',
-                        'text-yellow-600': o.status === 'İade',
-                      })}
-                    >
-                      {o.status}
-                    </span>
-                  </div>
+              {ordersLoading ? (
+                <div className="flex items-center gap-2 py-4 justify-center">
+                  <Loader2 size={14} className="animate-spin text-gray-400" />
+                  <span className="text-[10px] text-gray-400">Yükleniyor...</span>
                 </div>
-              ))}
+              ) : userOrders.length === 0 ? (
+                <p className="text-[10px] text-gray-400 py-2">Henüz sipariş kaydı yok.</p>
+              ) : (
+                userOrders.slice(0, 10).map((o) => (
+                  <div
+                    key={o.id}
+                    className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl"
+                  >
+                    <div>
+                      <p className="text-[10px] font-black text-gray-700">
+                        #{o.id.slice(0, 8).toUpperCase()}
+                      </p>
+                      <p className="text-[9px] text-gray-400">
+                        {o.createdAt
+                          ? new Date(o.createdAt).toLocaleDateString('tr-TR')
+                          : '—'}
+                      </p>
+                    </div>
+                    <div className="text-end">
+                      <p className="text-[10px] font-bold text-gray-700">
+                        {o.total?.toLocaleString('tr-TR') || 0} ₺
+                      </p>
+                      <span
+                        className={cn('text-[9px] font-black', {
+                          'text-green-600': o.status === 'delivered',
+                          'text-red-500': o.status === 'cancelled',
+                          'text-yellow-600': o.status === 'refunded' || o.status === 'returned',
+                          'text-blue-600': o.status === 'shipped',
+                          'text-amber-600': o.status === 'pending' || o.status === 'processing' || o.status === 'paid',
+                          'text-orange-600': o.status === 'return_requested',
+                        })}
+                      >
+                        {o.status === 'pending' ? 'Beklemede'
+                          : o.status === 'paid' ? 'Ödendi'
+                          : o.status === 'processing' ? 'Hazırlanıyor'
+                          : o.status === 'shipped' ? 'Kargoda'
+                          : o.status === 'delivered' ? 'Teslim Edildi'
+                          : o.status === 'cancelled' ? 'İptal'
+                          : o.status === 'refunded' ? 'İade'
+                          : o.status === 'returned' ? 'İade Tamamlandı'
+                          : o.status === 'return_requested' ? 'İade Talebi'
+                          : o.status}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

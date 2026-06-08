@@ -118,8 +118,9 @@ service cloud.firestore {
     }
 
     // --- EVENTS (analytics) ----------------------------------------------
+    // Only full (non-anonymous) users can create analytics events.
     match /events/{eventId} {
-      allow create: if isSignedIn();
+      allow create: if isFullUser();
       allow read: if isAdmin();
     }
 
