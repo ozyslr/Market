@@ -462,7 +462,7 @@ export function SellerStorePage() {
         <div className={cn('flex gap-8', activeTab === 'products' ? '' : '')}>
           {/* Sidebar — only non-homepage */}
           {activeTab !== 'products' && (
-            <aside className="w-56 shrink-0 space-y-4 hidden lg:block">
+            <aside className="w-60 shrink-0 space-y-3 hidden lg:block">
               <div className="bg-white rounded-2xl p-3 shadow-sm border border-brand-primary/5 text-center">
                 <img
                   src={seller.avatar}
@@ -537,6 +537,100 @@ export function SellerStorePage() {
                       {'☆'.repeat(5 - r)} ve üzeri
                     </button>
                   ))}
+                </div>
+                {/* Marka */}
+                <div>
+                  <h4 className="text-[10px] font-bold text-brand-primary/50 mb-1 flex items-center gap-1">
+                    Marka <Search size={10} className="opacity-30" />
+                  </h4>
+                  <div className="space-y-0.5 max-h-28 overflow-y-auto">
+                    {[...new Set(sellerProducts.map((p: any) => p.brand).filter(Boolean))]
+                      .slice(0, 10)
+                      .map((brand: any) => (
+                        <button
+                          key={brand}
+                          onClick={() => setSearchQuery(brand)}
+                          className="flex items-center gap-2 w-full text-left px-2 py-0.5 rounded text-[11px] text-brand-primary/50 hover:bg-brand-secondary/50"
+                        >
+                          <span
+                            className={cn(
+                              'w-3 h-3 rounded border border-brand-primary/20 flex items-center justify-center text-[7px]',
+                              searchQuery === brand && 'bg-accent border-accent text-white',
+                            )}
+                          >
+                            {searchQuery === brand ? '✓' : ''}
+                          </span>
+                          <span className="capitalize">{brand}</span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+                {/* Fiyat */}
+                <div>
+                  <h4 className="text-[10px] font-bold text-brand-primary/50 mb-1">
+                    Fiyat Aralığı
+                  </h4>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      className="w-full px-2 py-1 bg-brand-secondary/30 rounded-lg text-[10px] outline-none border-0"
+                    />
+                    <span className="text-brand-primary/20 text-[10px]">-</span>
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      className="w-full px-2 py-1 bg-brand-secondary/30 rounded-lg text-[10px] outline-none border-0"
+                    />
+                  </div>
+                </div>
+                {/* Renk */}
+                <div>
+                  <h4 className="text-[10px] font-bold text-brand-primary/50 mb-1">Renk</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {[
+                      '#000',
+                      '#fff',
+                      '#808080',
+                      '#f00',
+                      '#00f',
+                      '#008000',
+                      '#ff0',
+                      '#ffa500',
+                      '#800080',
+                      '#ffc0cb',
+                      '#8B4513',
+                      '#0ff',
+                    ].map((c) => (
+                      <button
+                        key={c}
+                        className="w-5 h-5 rounded-full border border-brand-primary/10 hover:border-accent hover:scale-110 transition-all"
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {/* Özellikler */}
+                <div>
+                  <h4 className="text-[10px] font-bold text-brand-primary/50 mb-1">Özellikler</h4>
+                  <div className="space-y-0.5">
+                    {[
+                      'Kargo Bedava',
+                      'Hızlı Teslimat',
+                      'İndirimli',
+                      'Kuponlu',
+                      'Yeni Ürün',
+                      'Son Şans',
+                    ].map((item) => (
+                      <label
+                        key={item}
+                        className="flex items-center gap-2 px-2 py-0.5 rounded text-[11px] text-brand-primary/50 hover:bg-brand-secondary/50 cursor-pointer"
+                      >
+                        <span className="w-3 h-3 rounded border border-brand-primary/20 flex items-center justify-center text-[7px]" />
+                        {item}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
             </aside>
