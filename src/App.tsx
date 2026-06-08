@@ -7,6 +7,7 @@ import { AnalyticsTracker } from './components/common/AnalyticsTracker';
 import { Navbar } from './components/layout/Navbar';
 import { AdminRoute } from './components/auth/AdminRoute';
 import { SellerRoute } from './components/auth/SellerRoute';
+import { ModeratorRoute } from './components/auth/ModeratorRoute';
 import { OfflineBanner } from './services/offlineService';
 import { SkipToContent } from './components/common/SkipToContent';
 import { CookieConsent } from './components/common/CookieConsent';
@@ -235,7 +236,7 @@ export default function App() {
                                   <Route path="/cart" element={<CartPage />} />
                                   <Route path="/campaigns" element={<Campaigns />} />
                                   <Route path="/checkout" element={<CheckoutPage />} />
-                                  <Route path="/moderator" element={<ModeratorDashboard />} />
+                                  <Route path="/moderator" element={<ModeratorRoute><ModeratorDashboard /></ModeratorRoute>} />
                                   <Route path="/seller/:id" element={<SellerStorePage />} />
                                   <Route path="/store/:slug" element={<SellerStorePage />} />
                                   <Route path="/search" element={<SearchResultsPage />} />
