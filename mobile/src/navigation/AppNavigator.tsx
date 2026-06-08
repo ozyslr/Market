@@ -29,17 +29,9 @@ export function AppNavigator() {
       <NavigationContainer>
         <Stack.Navigator>
           <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
-          <Stack.Screen
-            name="ProductDetail"
-            component={ProductDetailScreen}
-            options={{ title: 'Ürün Detayı' }}
-          />
+          <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Ürün Detayı' }} />
           <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: 'Ödeme' }} />
-          <Stack.Screen
-            name="SellerDashboard"
-            component={SellerDashboardScreen}
-            options={{ title: 'Satıcı Paneli' }}
-          />
+          <Stack.Screen name="SellerDashboard" component={SellerDashboardScreen} options={{ title: 'Satıcı Paneli' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

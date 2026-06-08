@@ -11,13 +11,7 @@ export function CheckoutScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#18181b',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
+  container: { flex: 1, backgroundColor: '#18181b', justifyContent: 'center', alignItems: 'center', padding: 20 },
   text: { color: '#fff', fontSize: 20, fontWeight: '700' },
   sub: { color: '#71717a', fontSize: 14, marginTop: 8, textAlign: 'center' },
 });

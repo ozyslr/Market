@@ -8,32 +8,20 @@ export function CartScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       {items.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>Sepetiniz boş</Text>
-        </View>
+        <View style={styles.empty}><Text style={styles.emptyText}>Sepetiniz boş</Text></View>
       ) : (
         <>
-          <FlatList
-            data={items}
-            keyExtractor={(i) => i.id}
+          <FlatList data={items} keyExtractor={(i) => i.id}
             renderItem={({ item }) => (
               <View style={styles.item}>
                 <Text style={styles.itemTitle}>{item.title}</Text>
-                <Text style={styles.itemPrice}>
-                  {item.price?.toFixed(2)} TL x {item.quantity}
-                </Text>
-                <TouchableOpacity onPress={() => removeItem(item.id)}>
-                  <Text style={styles.remove}>Kaldır</Text>
-                </TouchableOpacity>
+                <Text style={styles.itemPrice}>{item.price?.toFixed(2)} TL x {item.quantity}</Text>
+                <TouchableOpacity onPress={() => removeItem(item.id)}><Text style={styles.remove}>Kaldır</Text></TouchableOpacity>
               </View>
-            )}
-          />
+            )} />
           <View style={styles.footer}>
             <Text style={styles.total}>Toplam: {total.toFixed(2)} TL</Text>
-            <TouchableOpacity
-              style={styles.checkoutButton}
-              onPress={() => navigation.navigate('Checkout')}
-            >
+            <TouchableOpacity style={styles.checkoutButton} onPress={() => navigation.navigate('Checkout')}>
               <Text style={styles.checkoutText}>Ödemeye Geç</Text>
             </TouchableOpacity>
           </View>
@@ -53,11 +41,6 @@ const styles = StyleSheet.create({
   remove: { color: '#ef4444', fontSize: 12, marginTop: 8 },
   footer: { borderTopWidth: 1, borderTopColor: '#3f3f46', paddingTop: 16, marginTop: 8 },
   total: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 12 },
-  checkoutButton: {
-    backgroundColor: '#6418E5',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
+  checkoutButton: { backgroundColor: '#6418E5', borderRadius: 12, padding: 16, alignItems: 'center' },
   checkoutText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

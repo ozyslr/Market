@@ -20,9 +20,7 @@ async function loadTypesense() {
   try {
     const mod = await import('./typesenseService');
     typesenseSearch = mod.searchProducts;
-  } catch {
-    /* Typesense not configured */
-  }
+  } catch { /* Typesense not configured */ }
   typesenseLoaded = true;
 }
 

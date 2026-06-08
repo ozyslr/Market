@@ -9,22 +9,14 @@ interface AuthState {
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthState>({
-  user: null,
-  loading: true,
-  signIn: async () => {},
-  logout: async () => {},
-});
+const AuthContext = createContext<AuthState>({ user: null, loading: true, signIn: async () => {}, logout: async () => {} });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-    });
+    const unsub = onAuthStateChanged(auth, (u) => { setUser(u); setLoading(false); });
     return unsub;
   }, []);
 
@@ -36,11 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signOut(auth);
   };
 
-  return (
-    <AuthContext.Provider value={{ user, loading, signIn, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, loading, signIn, logout }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

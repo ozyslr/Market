@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: TBD
 status: planning
-last_updated: '2026-06-07T21:22:30.181Z'
+last_updated: "2026-06-07T21:22:30.181Z"
 last_activity: 2026-06-07
 progress:
   total_phases: 0

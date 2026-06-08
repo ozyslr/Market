@@ -1,25 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { apiGet } from '../services/api';
 
 export function ProductDetailScreen({ route, navigation }: any) {
   const { id } = route.params;
   const [product, setProduct] = useState<any>(null);
 
-  useEffect(() => {
-    apiGet('/products/' + id).then(setProduct);
-  }, [id]);
+  useEffect(() => { apiGet('/products/' + id).then(setProduct); }, [id]);
 
-  if (!product)
-    return <ActivityIndicator size="large" color="#6418E5" style={{ marginTop: 100 }} />;
+  if (!product) return <ActivityIndicator size="large" color="#6418E5" style={{ marginTop: 100 }} />;
 
   return (
     <ScrollView style={styles.container}>

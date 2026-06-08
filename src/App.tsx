@@ -193,14 +193,8 @@ export default function App() {
                                     <Route path="dashboard" element={<SellerDashboard />} />
                                     <Route path="inventory" element={<SellerInventoryPage />} />
                                     <Route path="store" element={<SellerStorePage />} />
-                                    <Route
-                                      path="store-settings"
-                                      element={<SellerStoreSettingsPage />}
-                                    />
-                                    <Route
-                                      path="store-blocks"
-                                      element={<StoreBlocksEditorPage />}
-                                    />
+                                    <Route path="store-settings" element={<SellerStoreSettingsPage />} />
+                                    <Route path="store-blocks" element={<StoreBlocksEditorPage />} />
                                     <Route path="store-menu" element={<SellerMenuEditorPage />} />
                                     <Route path="coupons" element={<SellerCouponsPage />} />
                                     <Route path="orders" element={<SellerOrdersPage />} />

@@ -56,18 +56,10 @@ export function SellerStorePage() {
   const [selectedFeatures, setSelectedFeatures] = useState<Set<string>>(new Set());
 
   function toggleBrand(brand: string) {
-    setSelectedBrands((prev) => {
-      const next = new Set(prev);
-      next.has(brand) ? next.delete(brand) : next.add(brand);
-      return next;
-    });
+    setSelectedBrands((prev) => { const next = new Set(prev); next.has(brand) ? next.delete(brand) : next.add(brand); return next; });
   }
   function toggleFeature(feature: string) {
-    setSelectedFeatures((prev) => {
-      const next = new Set(prev);
-      next.has(feature) ? next.delete(feature) : next.add(feature);
-      return next;
-    });
+    setSelectedFeatures((prev) => { const next = new Set(prev); next.has(feature) ? next.delete(feature) : next.add(feature); return next; });
   }
   const { user, firebaseUser } = useAuth();
   const navigate = useNavigate();
@@ -208,17 +200,14 @@ export function SellerStorePage() {
         (p.description && p.description.toLowerCase().includes(q));
       const matchesCategory = selectedCategory === 'all' || p.categoryId === selectedCategory;
       const matchesBrand = selectedBrands.size === 0 || selectedBrands.has(p.brand);
-      const matchesPrice =
-        (priceMin === '' || p.price >= priceMin) && (priceMax === '' || p.price <= priceMax);
-      const matchesFeatures =
-        selectedFeatures.size === 0 ||
-        [...selectedFeatures].every((f) => {
-          if (f === 'Kargo Bedava') return p.freeShipping;
-          if (f === 'Hızlı Teslimat') return (p.estimatedDeliveryDays || 99) <= 3;
-          if (f === 'İndirimli Ürünler') return p.oldPrice && p.oldPrice > p.price;
-          if (f === 'Kuponlu Ürünler') return p.couponEligible;
-          return true;
-        });
+      const matchesPrice = (priceMin === '' || p.price >= priceMin) && (priceMax === '' || p.price <= priceMax);
+      const matchesFeatures = selectedFeatures.size === 0 || [...selectedFeatures].every((f) => {
+        if (f === 'Kargo Bedava') return p.freeShipping;
+        if (f === 'Hızlı Teslimat') return (p.estimatedDeliveryDays || 99) <= 3;
+        if (f === 'İndirimli Ürünler') return p.oldPrice && p.oldPrice > p.price;
+        if (f === 'Kuponlu Ürünler') return p.couponEligible;
+        return true;
+      });
       return matchesSearch && matchesCategory && matchesBrand && matchesPrice && matchesFeatures;
     });
     switch (sortBy) {
@@ -239,16 +228,7 @@ export function SellerStorePage() {
         break;
     }
     return result;
-  }, [
-    sellerProducts,
-    searchQuery,
-    selectedCategory,
-    sortBy,
-    selectedBrands,
-    priceMin,
-    priceMax,
-    selectedFeatures,
-  ]);
+  }, [sellerProducts, searchQuery, selectedCategory, sortBy, selectedBrands, priceMin, priceMax, selectedFeatures]);
 
   const flashProducts = React.useMemo(
     () => sellerProducts.filter((p: any) => p.isFlashDeal),
@@ -666,16 +646,7 @@ export function SellerStorePage() {
                         key={item}
                         className="flex items-center gap-2 px-2 py-0.5 rounded text-[11px] text-brand-primary/50 hover:bg-brand-secondary/50 cursor-pointer"
                       >
-                        <span
-                          className={cn(
-                            'w-3 h-3 rounded border flex items-center justify-center text-[7px]',
-                            selectedFeatures.has(item)
-                              ? 'bg-accent border-accent text-white'
-                              : 'border-brand-primary/20',
-                          )}
-                        >
-                          {selectedFeatures.has(item) ? '✓' : ''}
-                        </span>
+                        <span className={cn("w-3 h-3 rounded border flex items-center justify-center text-[7px]", selectedFeatures.has(item) ? "bg-accent border-accent text-white" : "border-brand-primary/20")}>{selectedFeatures.has(item) ? "✓" : ""}</span>
                         {item}
                       </label>
                     ))}

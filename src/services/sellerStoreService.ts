@@ -44,18 +44,11 @@ export async function getStoreConfig(sellerId: string): Promise<StoreConfig> {
   return DEFAULT_CONFIG;
 }
 
-export async function saveStoreConfig(
-  sellerId: string,
-  config: Partial<StoreConfig>,
-): Promise<void> {
+export async function saveStoreConfig(sellerId: string, config: Partial<StoreConfig>): Promise<void> {
   const ref = doc(db, 'storeConfigs', sellerId);
-  await setDoc(
-    ref,
-    {
-      ...config,
-      sellerId,
-      updatedAt: new Date().toISOString(),
-    },
-    { merge: true },
-  );
+  await setDoc(ref, {
+    ...config,
+    sellerId,
+    updatedAt: new Date().toISOString(),
+  }, { merge: true });
 }
