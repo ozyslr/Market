@@ -49,7 +49,26 @@ export function SellerStorePage() {
     'default' | 'price_asc' | 'price_desc' | 'rating' | 'newest'
   >('default');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [reviewFilter, setReviewFilter] = useState<number>(0); // 0=all, 1-5=star filter
+  const [reviewFilter, setReviewFilter] = useState<number>(0);
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
+  const [priceMin, setPriceMin] = useState<number | ''>('');
+  const [priceMax, setPriceMax] = useState<number | ''>('');
+  const [selectedFeatures, setSelectedFeatures] = useState<Set<string>>(new Set());
+
+  function toggleBrand(brand: string) {
+    setSelectedBrands((prev) => {
+      const next = new Set(prev);
+      next.has(brand) ? next.delete(brand) : next.add(brand);
+      return next;
+    });
+  }
+  function toggleFeature(feature: string) {
+    setSelectedFeatures((prev) => {
+      const next = new Set(prev);
+      next.has(feature) ? next.delete(feature) : next.add(feature);
+      return next;
+    });
+  }
   const { user, firebaseUser } = useAuth();
   const navigate = useNavigate();
   const { isFollowing, toggleFollow, loading: followLoading } = useFollows();
@@ -188,7 +207,19 @@ export function SellerStorePage() {
         p.title.toLowerCase().includes(q) ||
         (p.description && p.description.toLowerCase().includes(q));
       const matchesCategory = selectedCategory === 'all' || p.categoryId === selectedCategory;
-      return matchesSearch && matchesCategory;
+      const matchesBrand = selectedBrands.size === 0 || selectedBrands.has(p.brand);
+      const matchesPrice =
+        (priceMin === '' || p.price >= priceMin) && (priceMax === '' || p.price <= priceMax);
+      const matchesFeatures =
+        selectedFeatures.size === 0 ||
+        [...selectedFeatures].every((f) => {
+          if (f === 'Kargo Bedava') return p.freeShipping;
+          if (f === 'Hızlı Teslimat') return (p.estimatedDeliveryDays || 99) <= 3;
+          if (f === 'İndirimli Ürünler') return p.oldPrice && p.oldPrice > p.price;
+          if (f === 'Kuponlu Ürünler') return p.couponEligible;
+          return true;
+        });
+      return matchesSearch && matchesCategory && matchesBrand && matchesPrice && matchesFeatures;
     });
     switch (sortBy) {
       case 'price_asc':
@@ -208,7 +239,16 @@ export function SellerStorePage() {
         break;
     }
     return result;
-  }, [sellerProducts, searchQuery, selectedCategory, sortBy]);
+  }, [
+    sellerProducts,
+    searchQuery,
+    selectedCategory,
+    sortBy,
+    selectedBrands,
+    priceMin,
+    priceMax,
+    selectedFeatures,
+  ]);
 
   const flashProducts = React.useMemo(
     () => sellerProducts.filter((p: any) => p.isFlashDeal),
@@ -549,16 +589,16 @@ export function SellerStorePage() {
                       .map((brand: any) => (
                         <button
                           key={brand}
-                          onClick={() => setSearchQuery(brand)}
+                          onClick={() => toggleBrand(brand)}
                           className="flex items-center gap-2 w-full text-left px-2 py-0.5 rounded text-[11px] text-brand-primary/50 hover:bg-brand-secondary/50"
                         >
                           <span
                             className={cn(
                               'w-3 h-3 rounded border border-brand-primary/20 flex items-center justify-center text-[7px]',
-                              searchQuery === brand && 'bg-accent border-accent text-white',
+                              selectedBrands.has(brand) && 'bg-accent border-accent text-white',
                             )}
                           >
-                            {searchQuery === brand ? '✓' : ''}
+                            {selectedBrands.has(brand) ? '✓' : ''}
                           </span>
                           <span className="capitalize">{brand}</span>
                         </button>
@@ -626,7 +666,16 @@ export function SellerStorePage() {
                         key={item}
                         className="flex items-center gap-2 px-2 py-0.5 rounded text-[11px] text-brand-primary/50 hover:bg-brand-secondary/50 cursor-pointer"
                       >
-                        <span className="w-3 h-3 rounded border border-brand-primary/20 flex items-center justify-center text-[7px]" />
+                        <span
+                          className={cn(
+                            'w-3 h-3 rounded border flex items-center justify-center text-[7px]',
+                            selectedFeatures.has(item)
+                              ? 'bg-accent border-accent text-white'
+                              : 'border-brand-primary/20',
+                          )}
+                        >
+                          {selectedFeatures.has(item) ? '✓' : ''}
+                        </span>
                         {item}
                       </label>
                     ))}
