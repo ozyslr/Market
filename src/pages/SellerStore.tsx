@@ -35,6 +35,8 @@ import { ProductCard } from '@/components/commerce/ProductCard';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
 import { SellerRatingSummary } from '@/components/product/RatingSummary';
 import { getSellerStarSummary, type SellerStarSummary } from '@/services/sellerRatingService';
+import { getAllReviews } from '@/services/reviewService';
+import type { Review } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useFollows } from '@/context/FollowsContext';
 
@@ -56,10 +58,18 @@ export function SellerStorePage() {
   const [selectedFeatures, setSelectedFeatures] = useState<Set<string>>(new Set());
 
   function toggleBrand(brand: string) {
-    setSelectedBrands((prev) => { const next = new Set(prev); next.has(brand) ? next.delete(brand) : next.add(brand); return next; });
+    setSelectedBrands((prev) => {
+      const next = new Set(prev);
+      next.has(brand) ? next.delete(brand) : next.add(brand);
+      return next;
+    });
   }
   function toggleFeature(feature: string) {
-    setSelectedFeatures((prev) => { const next = new Set(prev); next.has(feature) ? next.delete(feature) : next.add(feature); return next; });
+    setSelectedFeatures((prev) => {
+      const next = new Set(prev);
+      next.has(feature) ? next.delete(feature) : next.add(feature);
+      return next;
+    });
   }
   const { user, firebaseUser } = useAuth();
   const navigate = useNavigate();
@@ -77,6 +87,20 @@ export function SellerStorePage() {
 
   // REV-03: live seller rating summary aggregated from approved reviews.
   const [starSummary, setStarSummary] = useState<SellerStarSummary | null>(null);
+  const [sellerReviews, setSellerReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setReviewsLoading(true);
+    getAllReviews()
+      .then((all) => {
+        if (active) setSellerReviews(all.filter((r) => r.sellerId === sellerData.id));
+      })
+      .catch(() => {})
+      .finally(() => { if (active) setReviewsLoading(false); });
+    return () => { active = false; };
+  }, [sellerData.id]);
+
   useEffect(() => {
     let active = true;
     getSellerStarSummary(sellerData.id)
@@ -200,14 +224,17 @@ export function SellerStorePage() {
         (p.description && p.description.toLowerCase().includes(q));
       const matchesCategory = selectedCategory === 'all' || p.categoryId === selectedCategory;
       const matchesBrand = selectedBrands.size === 0 || selectedBrands.has(p.brand);
-      const matchesPrice = (priceMin === '' || p.price >= priceMin) && (priceMax === '' || p.price <= priceMax);
-      const matchesFeatures = selectedFeatures.size === 0 || [...selectedFeatures].every((f) => {
-        if (f === 'Kargo Bedava') return p.freeShipping;
-        if (f === 'Hızlı Teslimat') return (p.estimatedDeliveryDays || 99) <= 3;
-        if (f === 'İndirimli Ürünler') return p.oldPrice && p.oldPrice > p.price;
-        if (f === 'Kuponlu Ürünler') return p.couponEligible;
-        return true;
-      });
+      const matchesPrice =
+        (priceMin === '' || p.price >= priceMin) && (priceMax === '' || p.price <= priceMax);
+      const matchesFeatures =
+        selectedFeatures.size === 0 ||
+        [...selectedFeatures].every((f) => {
+          if (f === 'Kargo Bedava') return p.freeShipping;
+          if (f === 'Hızlı Teslimat') return (p.estimatedDeliveryDays || 99) <= 3;
+          if (f === 'İndirimli Ürünler') return p.oldPrice && p.oldPrice > p.price;
+          if (f === 'Kuponlu Ürünler') return p.couponEligible;
+          return true;
+        });
       return matchesSearch && matchesCategory && matchesBrand && matchesPrice && matchesFeatures;
     });
     switch (sortBy) {
@@ -228,7 +255,16 @@ export function SellerStorePage() {
         break;
     }
     return result;
-  }, [sellerProducts, searchQuery, selectedCategory, sortBy, selectedBrands, priceMin, priceMax, selectedFeatures]);
+  }, [
+    sellerProducts,
+    searchQuery,
+    selectedCategory,
+    sortBy,
+    selectedBrands,
+    priceMin,
+    priceMax,
+    selectedFeatures,
+  ]);
 
   const flashProducts = React.useMemo(
     () => sellerProducts.filter((p: any) => p.isFlashDeal),
@@ -594,12 +630,16 @@ export function SellerStorePage() {
                     <input
                       type="number"
                       placeholder="Min"
+                      value={priceMin}
+                      onChange={(e) => setPriceMin(e.target.value === '' ? '' : Number(e.target.value))}
                       className="w-full px-2 py-1 bg-brand-secondary/30 rounded-lg text-[10px] outline-none border-0"
                     />
                     <span className="text-brand-primary/20 text-[10px]">-</span>
                     <input
                       type="number"
                       placeholder="Max"
+                      value={priceMax}
+                      onChange={(e) => setPriceMax(e.target.value === '' ? '' : Number(e.target.value))}
                       className="w-full px-2 py-1 bg-brand-secondary/30 rounded-lg text-[10px] outline-none border-0"
                     />
                   </div>
@@ -646,7 +686,16 @@ export function SellerStorePage() {
                         key={item}
                         className="flex items-center gap-2 px-2 py-0.5 rounded text-[11px] text-brand-primary/50 hover:bg-brand-secondary/50 cursor-pointer"
                       >
-                        <span className={cn("w-3 h-3 rounded border flex items-center justify-center text-[7px]", selectedFeatures.has(item) ? "bg-accent border-accent text-white" : "border-brand-primary/20")}>{selectedFeatures.has(item) ? "✓" : ""}</span>
+                        <span
+                          className={cn(
+                            'w-3 h-3 rounded border flex items-center justify-center text-[7px]',
+                            selectedFeatures.has(item)
+                              ? 'bg-accent border-accent text-white'
+                              : 'border-brand-primary/20',
+                          )}
+                        >
+                          {selectedFeatures.has(item) ? '✓' : ''}
+                        </span>
                         {item}
                       </label>
                     ))}
@@ -1176,119 +1225,66 @@ export function SellerStorePage() {
                     </div>
                   )}
                   <div className="space-y-4">
-                    {[
-                      {
-                        name: 'Ahmet Y.',
-                        date: '15 Mayıs 2026',
-                        rating: 5,
-                        product: 'Kablosuz Kulaklık Pro',
-                        text: 'Harika bir ürün. Ses kalitesi çok iyi, kargo hızlıydı. Satıcıyla iletişimim çok iyiydi.',
-                        likes: 12,
-                        reported: false,
-                      },
-                      {
-                        name: 'Zeynep K.',
-                        date: '3 Haziran 2026',
-                        rating: 4,
-                        product: 'El Yapımı Seramik Vazo',
-                        text: 'Vazo çok güzel ama kargo kutusu biraz hasarlı geldi. Neyse ki ürün sağlamdı.',
-                        likes: 8,
-                        reported: false,
-                      },
-                      {
-                        name: 'Mehmet D.',
-                        date: '28 Mayıs 2026',
-                        rating: 5,
-                        product: 'Deri El Çantası',
-                        text: 'Tam istediğim gibi. Malzeme kalitesi çok iyi. Kesinlikle tavsiye ederim.',
-                        likes: 5,
-                        reported: false,
-                      },
-                      {
-                        name: 'Ayşe S.',
-                        date: '20 Nisan 2026',
-                        rating: 3,
-                        product: 'Gümüş Kolye Seti',
-                        text: 'Kolye güzel ama zincir biraz kısa. İade etmek istemedim, kullanıyorum.',
-                        likes: 3,
-                        reported: false,
-                      },
-                      {
-                        name: 'Can B.',
-                        date: '10 Mart 2026',
-                        rating: 2,
-                        product: 'Spor Ayakkabı',
-                        text: 'Numarası biraz küçük geldi. İade süreci hızlıydı.',
-                        likes: 1,
-                        reported: true,
-                      },
-                      {
-                        name: 'Elif T.',
-                        date: '1 Haziran 2026',
-                        rating: 5,
-                        product: 'Ahşap Duvar Saati',
-                        text: 'Mükemmel işçilik. Tam el yapımı. Beklediğimden de güzel çıktı.',
-                        likes: 24,
-                        reported: false,
-                      },
-                    ]
-                      .filter((rv) => reviewFilter === 0 || rv.rating === reviewFilter)
-                      .map((rv, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-white rounded-2xl p-6 shadow-sm border border-brand-primary/5"
-                        >
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-brand-secondary flex items-center justify-center text-brand-primary font-bold text-sm">
-                                {rv.name.charAt(0)}
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-brand-primary">{rv.name}</p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <div className="flex">
-                                    {Array.from({ length: 5 }).map((_, i) => (
-                                      <Star
-                                        key={i}
-                                        size={10}
-                                        className={
-                                          i < rv.rating
-                                            ? 'text-yellow-400 fill-yellow-400'
-                                            : 'text-brand-primary/10'
-                                        }
-                                      />
-                                    ))}
+                    {reviewsLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 size={20} className="animate-spin text-brand-primary/20" />
+                      </div>
+                    ) : sellerReviews.length === 0 ? (
+                      <p className="text-sm text-brand-primary/40 text-center py-8">
+                        Bu satıcı için henüz değerlendirme bulunmuyor.
+                      </p>
+                    ) : (
+                      sellerReviews
+                        .filter((rv) => reviewFilter === 0 || rv.rating === reviewFilter)
+                        .map((rv, idx) => (
+                          <div
+                            key={rv.id || idx}
+                            className="bg-white rounded-2xl p-6 shadow-sm border border-brand-primary/5"
+                          >
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-brand-secondary flex items-center justify-center text-brand-primary font-bold text-sm">
+                                  {(rv.userName || '?').charAt(0)}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold text-brand-primary">{rv.userName || 'Anonim'}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <div className="flex">
+                                      {Array.from({ length: 5 }).map((_, i) => (
+                                        <Star
+                                          key={i}
+                                          size={10}
+                                          className={
+                                            i < rv.rating
+                                              ? 'text-yellow-400 fill-yellow-400'
+                                              : 'text-brand-primary/10'
+                                          }
+                                        />
+                                      ))}
+                                    </div>
+                                    <span className="text-[10px] text-brand-primary/30">
+                                      {rv.createdAt ? new Date(rv.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                                    </span>
                                   </div>
-                                  <span className="text-[10px] text-brand-primary/30">
-                                    {rv.date}
-                                  </span>
                                 </div>
                               </div>
+                              {rv.status === 'rejected' && (
+                                <span className="text-[9px] text-red-400 bg-red-50 px-2 py-0.5 rounded-full">
+                                  Kaldırıldı
+                                </span>
+                              )}
                             </div>
-                            {rv.reported && (
-                              <span className="text-[9px] text-red-400 bg-red-50 px-2 py-0.5 rounded-full">
-                                İncelendi
+                            <p className="text-xs text-brand-primary/60 leading-relaxed mb-3">
+                              {rv.comment}
+                            </p>
+                            <div className="flex items-center justify-between text-[10px] text-brand-primary/30">
+                              <span className="flex items-center gap-1">
+                                {rv.helpfulCount ? `👍 ${rv.helpfulCount} kişi faydalı buldu` : ''}
                               </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-brand-primary/60 leading-relaxed mb-3">
-                            {rv.text}
-                          </p>
-                          <div className="flex items-center justify-between text-[10px] text-brand-primary/30">
-                            <span className="bg-brand-secondary/50 px-2 py-0.5 rounded">
-                              {rv.product} hakkında
-                            </span>
-                            <div className="flex items-center gap-3">
-                              <button className="flex items-center gap-1 hover:text-green-500 transition-colors">
-                                👍 {rv.likes}
-                              </button>
-                              <button className="flex items-center gap-1 hover:text-red-400 transition-colors">
-                                🚩 Bildir
-                              </button>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                    )}
                   </div>
                 </motion.div>
               )}
