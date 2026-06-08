@@ -508,8 +508,8 @@ export function AdminDashboard() {
     );
   }
 
-  // Final gate for Admin Role
-  if (user.role !== 'admin' && user.email !== 'ozyslr@gmail.com') {
+  // Final gate for Admin Role (defense-in-depth — AdminRoute already checked)
+  if (user.role !== 'admin') {
     return (
       <div className="min-h-screen bg-[#F8F8FA] flex flex-col items-center justify-center p-6 text-center">
         <AlertCircle size={64} className="text-red-500 mb-6" />

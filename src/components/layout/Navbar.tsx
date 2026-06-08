@@ -561,7 +561,7 @@ export function Navbar() {
                           Uzman Portalları
                         </span>
                         <div className="grid grid-cols-2 gap-3">
-                          {(user.email?.includes('admin') || user.email === 'ozyslr@gmail.com') && (
+                          {user.role === 'admin' && (
                             <Link
                               to="/admin"
                               className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 hover:scale-105 transition-transform flex items-center gap-3"
@@ -593,20 +593,22 @@ export function Navbar() {
                               </div>
                             </Link>
                           )}
-                          <Link
-                            to="/seller/dashboard"
-                            className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:scale-105 transition-transform flex items-center gap-3"
-                          >
-                            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                              <Briefcase size={14} />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-xs font-bold">Satıcı Paneli</span>
-                              <span className="text-[9px] font-black uppercase tracking-widest opacity-60">
-                                Mağaza
-                              </span>
-                            </div>
-                          </Link>
+                          {user.role === 'seller' && (
+                            <Link
+                              to="/seller/dashboard"
+                              className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:scale-105 transition-transform flex items-center gap-3"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <Briefcase size={14} />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs font-bold">Satıcı Paneli</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest opacity-60">
+                                  Mağaza
+                                </span>
+                              </div>
+                            </Link>
+                          )}
                         </div>
                       </div>
 
