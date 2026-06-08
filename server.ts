@@ -336,7 +336,7 @@ async function startServer() {
   });
 
   // â”€â”€â”€ Seller REST API (/api/v1) â†' server/routes/sellerApi.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  registerSellerApiRoutes(app, adminDb!);
+  registerSellerApiRoutes(app, adminDb);
 
   registerGeminiRoutes(app);
 
