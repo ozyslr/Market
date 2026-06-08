@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import {
   Store,
   CheckCircle,
@@ -228,6 +228,12 @@ function DocUploadSlot({ config, slotState, onFileSelect, onReplace }: DocUpload
 export function SellerApplication() {
   const { user, firebaseUser } = useAuth();
   const navigate = useNavigate();
+
+  // Already a seller or admin — redirect to seller panel
+  if (user && (user.role === 'seller' || user.role === 'admin')) {
+    return <Navigate to="/seller/dashboard" replace />;
+  }
+
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);

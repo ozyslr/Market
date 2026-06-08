@@ -12,7 +12,7 @@ import {
   Loader2,
   Store,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
@@ -30,6 +30,12 @@ interface ApplyForm {
 export function SellOnBenimOlan() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Already a seller or admin — redirect to seller panel
+  if (user && (user.role === 'seller' || user.role === 'admin')) {
+    return <Navigate to="/seller/dashboard" replace />;
+  }
+
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
