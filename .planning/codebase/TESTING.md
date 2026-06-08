@@ -1,195 +1,392 @@
-# Testing
+# Testing Patterns
 
-> Generated: 2026-05-31 | Source: codebase analysis
+**Analysis Date:** 2026-06-08
 
-## Testing Framework
+## Test Framework
 
-**Vitest** is the primary test runner, paired with **@testing-library/react** for component tests and **jsdom** as the DOM environment.
+**Runner:**
 
-**Playwright** handles end-to-end (E2E) browser testing.
+- Vitest 4.1.7
+- Config: `vitest.config.ts` at project root
+- JSdom environment (simulates browser DOM)
+- Setup file: `src/test/setup.ts` (imports `@testing-library/jest-dom`)
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| vitest | ^3.1.1 | Unit + integration test runner |
-| @testing-library/react | ^16.3.0 | React component rendering & queries |
-| @testing-library/jest-dom | ^6.6.3 | DOM matchers (`toBeInTheDocument`, etc.) |
-| jsdom | ^26.0.0 | Browser-like DOM environment for Node |
-| @playwright/test | ^1.52.0 | E2E browser tests |
-| @vitest/coverage-v8 | ^3.1.1 | Code coverage via V8 |
+**Assertion Library:**
 
-**Test scripts** (from `package.json`):
-- `npm test` — `vitest run` (single run, no watch)
-- `npm run test:watch` — `vitest` (watch mode)
-- `npm run test:coverage` — `vitest run --coverage`
-- `npm run test:e2e` — `playwright test`
+- Vitest built-in `expect` + `@testing-library/jest-dom` matchers
 
-## Test File Locations
+**Run Commands:**
 
-**Convention: `__tests__/` directories**, co-located alongside source code.
-
-```
-src/lib/__tests__/
-├── authMiddleware.test.ts
-├── serverValidators.test.ts
-└── utils.test.ts
-
-src/components/common/__tests__/
-├── Breadcrumb.test.tsx
-└── OptimizedImage.test.tsx
-
-src/components/ui/__tests__/
-└── Skeleton.test.tsx
-
-src/context/__tests__/
-├── AuthContext.test.tsx
-└── LanguageContext.test.tsx
-
-server/lib/__tests__/
-└── validate.test.ts
-
-server/__tests__/
-├── exchangeRate.test.ts
-└── logger.test.ts
-
-src/services/__tests__/
-├── campaignService.test.ts
-├── cartService.test.ts
-├── couponService.test.ts
-├── exchangeRate.test.ts
-├── notificationService.test.ts
-├── priceTrackingService.test.ts
-├── reorderService.test.ts
-└── stockAlertService.test.ts
-
-e2e/__tests__/
-├── homepage.spec.ts
-├── mobile-menu.spec.ts
-├── product-page.spec.ts
-└── pwa.spec.ts
+```bash
+npm run test              # Run all tests once (vitest run)
+npm run test:watch        # Interactive watch mode (vitest)
+npm run test:coverage     # Coverage report (vitest run --coverage)
+npm run test:e2e          # Playwright E2E tests
+npm run test:e2e:ui       # Playwright with interactive UI
 ```
 
-**9 `__tests__/` directories** across the codebase.
+## Test File Organization
 
-Additional test utilities live in:
-- `src/test/setup.ts` — global test setup (jsdom, mocks, cleanup)
-- `src/test/utils.tsx` — shared test utilities and wrappers
+**Location:**
 
-## Test Naming Patterns
+- Services: `src/services/__tests__/serviceName.test.ts` — co-located in `__tests__/` subdirectory
+- Components: `src/components/domain/__tests__/ComponentName.test.tsx`
+- Context: `src/context/__tests__/ContextName.test.tsx`
+- Lib utilities: `src/lib/__tests__/utilName.test.ts`
+- Integration/service tests: `src/test/serviceName.test.ts`
+- E2E tests: `e2e/*.spec.ts`
 
-- **Files:** `*.test.ts` or `*.test.tsx` — suffixed with `.test`
-- **E2E files:** `*.spec.ts` — suffixed with `.spec`
-- **Describe blocks:** Feature/function name, e.g. `describe('authMiddleware', ...)`
-- **It blocks:** Behavior description, e.g. `it('returns 401 when no token provided', ...)`
-- **Test utils:** `describe` + `it` + `expect` pattern consistently used
+**Naming:**
+
+- Unit/component/service: `*.test.ts` or `*.test.tsx`
+- E2E: `*.spec.ts`
+
+**Structure:**
+
+```
+src/
+├── components/
+│   ├── common/__tests__/Breadcrumb.test.tsx
+│   └── ui/__tests__/Skeleton.test.tsx
+├── context/__tests__/AuthContext.test.tsx
+├── lib/__tests__/
+│   ├── utils.test.ts
+│   ├── authMiddleware.test.ts
+│   └── serverValidators.test.ts
+├── services/__tests__/
+│   ├── cartService.test.ts
+│   ├── couponService.test.ts
+│   ├── campaignService.test.ts
+│   ├── priceTrackingService.test.ts
+│   ├── stockAlertService.test.ts
+│   ├── reorderService.test.ts
+│   └── notificationService.test.ts
+└── test/
+    ├── setup.ts
+    ├── oneClickCheckoutService.test.ts
+    └── types.test.ts
+e2e/
+├── home.spec.ts
+├── product.spec.ts
+├── seo.spec.ts
+├── checkout-guest.spec.ts
+├── checkout-authenticated.spec.ts
+├── checkout-address-book.spec.ts
+└── rtl-mobile-menu.spec.ts
+```
 
 ## Test Structure
 
-Tests follow the standard AAA (Arrange-Act-Assert) pattern:
+**Suite Organization:**
 
 ```typescript
-describe('authMiddleware', () => {
-  it('returns 401 when no token provided', async () => {
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// All vi.mock() calls hoisted — place at top of file
+// Use vi.hoisted() for mock values referenced in vi.mock() factories
+
+describe('functionName', () => {
+  beforeEach(() => {
+    vi.clearAllMocks(); // or vi.resetAllMocks()
+  });
+
+  it('describes the expected behavior in plain English', async () => {
     // Arrange
-    const req = mockRequest({ headers: {} });
+    mockGetDoc.mockResolvedValue({ exists: () => true, data: () => ({ items: [] }) });
+
     // Act
-    const result = await authMiddleware(req, mockResponse, next);
+    const result = await getCart('user1');
+
     // Assert
-    expect(result.status).toBe(401);
+    expect(result).toEqual([]);
   });
 });
 ```
 
-- `beforeEach`/`afterEach` used for setup and cleanup (especially `vi.clearAllMocks()`)
-- Tests are co-located with source, keeping related code together
+**Patterns:**
 
-## Mocking Approach
+- `beforeEach(() => vi.clearAllMocks())` — standard reset between tests
+- `vi.resetAllMocks()` used in some test files — clears all mock state including return values
+- `afterEach(() => vi.unstubAllGlobals())` — used when `vi.stubGlobal` is called
+- One `describe` block per exported function (not one per file)
 
-**`vi.fn()` and `vi.stubGlobal()`** are the primary mocking patterns (no MSW).
+## Mocking
 
-| Pattern | Usage |
-|---------|-------|
-| `vi.fn()` | Mock individual functions passed as props or dependencies |
-| `vi.stubGlobal('fetch', ...)` | Mock global `fetch` for API-calling services |
-| Inline factory functions | Create mock objects (e.g., mock product, mock user) |
-| `vi.mock()` | Module-level mocking for imports |
+**Framework:** Vitest `vi` mock utilities
 
-No MSW (Mock Service Worker) is used — API calls are mocked at the function or global fetch level rather than at the network boundary.
+**Critical rule — hoisting:**
 
-## E2E Testing
+```typescript
+// REQUIRED: vi.mock() is hoisted to top of file by Vitest
+// Mock values used inside vi.mock() factory MUST be declared with vi.hoisted():
 
-**Playwright** configured at `playwright.config.ts`. Tests live in `e2e/__tests__/`.
+const { mockGetDocs, mockSetDoc } = vi.hoisted(() => ({
+  mockGetDocs: vi.fn(),
+  mockSetDoc: vi.fn(),
+}));
 
-**4 E2E spec files with 12 tests:**
-| Spec | Tests | Coverage |
-|------|-------|----------|
-| `homepage.spec.ts` | ~3 | Homepage loads, navigation, basic rendering |
-| `mobile-menu.spec.ts` | ~3 | Mobile menu open/close, RTL behavior |
-| `product-page.spec.ts` | ~3 | Product detail page, interactions |
-| `pwa.spec.ts` | ~3 | PWA manifest, service worker |
+vi.mock('firebase/firestore', () => ({
+  getDocs: mockGetDocs,
+  setDoc: mockSetDoc,
+  // ... other exports
+}));
+```
 
-E2E test browser configuration supports multiple viewports and RTL testing (Arabic locale).
+**Standard Firebase mock pattern (services):**
 
-## CI Integration
+```typescript
+vi.mock('firebase/firestore', () => ({
+  doc: mockDoc,
+  getDoc: mockGetDoc,
+  getDocs: mockGetDocs,
+  setDoc: mockSetDoc,
+  updateDoc: mockUpdateDoc,
+  deleteDoc: mockDeleteDoc,
+  collection: mockCollection,
+  query: mockQuery,
+  where: mockWhere,
+  orderBy: vi.fn(),
+  limit: vi.fn(),
+  serverTimestamp: vi.fn(() => 'SERVER_TIMESTAMP'),
+  increment: vi.fn((n: number) => n),
+}));
 
-**GitHub Actions** (`.github/workflows/`):
-- **Type-check + build** run on every push/PR — `npm test` (vitest), `tsc --noEmit`, and `vite build`
-- **Unit tests (vitest) run in CI** on every push/PR
-- **E2E tests** scheduled on weekdays (not per-commit), using Playwright
+vi.mock('../../lib/firebase', () => ({
+  db: {},
+  handleFirestoreError: mockHandleFirestoreError,
+  OperationType: {
+    GET: 'GET',
+    WRITE: 'WRITE',
+    CREATE: 'create',
+    UPDATE: 'update',
+    DELETE: 'delete',
+    LIST: 'list',
+  },
+  auth: { currentUser: null },
+}));
+```
 
-## Coverage Configuration
+**Mocking `fetch` (API service tests):**
 
-V8 coverage provider configured in `vitest.config.ts`:
-- **Provider:** v8 (native Node.js coverage)
-- **Include:** `src/**/*.{ts,tsx}`
-- **Reports:** text summary in terminal
+```typescript
+beforeEach(() => {
+  vi.stubGlobal('fetch', vi.fn());
+  vi.clearAllMocks();
+});
 
-No minimum coverage threshold is configured. Coverage is opt-in via `npm run test:coverage`.
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
-## What's Tested
+// In test:
+(global.fetch as any).mockResolvedValueOnce({
+  ok: true,
+  json: async () => ({ clientSecret: 'seti_xxx' }),
+});
+```
 
-| Area | Tested | Files |
-|------|--------|-------|
-| Auth middleware | Yes | `src/lib/__tests__/authMiddleware.test.ts` |
-| Server validators | Yes | `src/lib/__tests__/serverValidators.test.ts` |
-| Utils | Yes | `src/lib/__tests__/utils.test.ts` |
-| Breadcrumb | Yes | `src/components/common/__tests__/Breadcrumb.test.tsx` |
-| OptimizedImage | Yes | `src/components/common/__tests__/OptimizedImage.test.tsx` |
-| Skeleton | Yes | `src/components/ui/__tests__/Skeleton.test.tsx` |
-| AuthContext | Yes | `src/context/__tests__/AuthContext.test.tsx` |
-| Language context | Yes | `src/context/__tests__/LanguageContext.test.tsx` |
-| Validate middleware | Yes | `server/lib/__tests__/validate.test.ts` |
-| Server logger | Yes | `server/__tests__/logger.test.ts` |
-| Exchange rate (server) | Yes | `server/__tests__/exchangeRate.test.ts` |
-| Cart service | Yes | `src/services/__tests__/cartService.test.ts` |
-| Campaign service | Yes | `src/services/__tests__/campaignService.test.ts` |
-| Coupon service | Yes | `src/services/__tests__/couponService.test.ts` |
-| Notification service | Yes | `src/services/__tests__/notificationService.test.ts` |
-| Price tracking service | Yes | `src/services/__tests__/priceTrackingService.test.ts` |
-| Reorder service | Yes | `src/services/__tests__/reorderService.test.ts` |
-| Stock alert service | Yes | `src/services/__tests__/stockAlertService.test.ts` |
-| Exchange rate (service) | Yes | `src/services/__tests__/exchangeRate.test.ts` |
-| One-click checkout | Yes | `src/test/oneClickCheckoutService.test.ts` |
-| Type definitions | Yes | `src/test/types.test.ts` |
-| E2E critical flows | Yes | 4 specs in `e2e/__tests__/` |
+**Mocking Firebase Auth (context tests):**
 
-**18 unit test files** across the full codebase.
+```typescript
+vi.mock('firebase/auth', () => ({
+  getAuth: vi.fn(() => ({})),
+  onAuthStateChanged: vi.fn((_auth, cb) => {
+    cb(null); // simulate no user
+    return vi.fn(); // return unsubscribe fn
+  }),
+  signOut: vi.fn(),
+  // ... other auth functions
+}));
+```
 
-## What's NOT Tested
+**What to Mock:**
 
-| Area | Gap |
-|------|-----|
-| **~40 services untested** | `productService`, `orderService`, `reviewService`, `searchService`, `paymentService`, `returnService`, `adService`, and ~33 more — zero tests. 8 services newly tested |
-| **All pages** | 65+ page components (`src/pages/`) — zero component tests |
-| **Most context providers** | 6 of 8 contexts untested (AuthContext + LanguageContext tested) |
-| **Custom hooks** | No dedicated hook tests |
-| **Payment flows** | Stripe and Iyzico routes have no tests |
-| **Firestore integration** | No integration tests for database operations |
-| **Server routes** | Only logger and validate tested; stripe, iyzico, seller API routes untested |
-| **Admin pages** | All admin pages — untested |
+- All Firebase SDK calls (`firebase/firestore`, `firebase/auth`, `../../lib/firebase`)
+- `fetch` / `global.fetch` for REST API service functions
+- Inter-service dependencies (e.g. `notificationService` when testing `priceTrackingService`)
+- Firebase Admin SDK in server-side tests
 
-## Summary
+**What NOT to Mock:**
 
-- **Test count:** 18 unit test files + 4 E2E specs = ~40 total test cases
-- **Test-to-source ratio:** Low — testing covers ~5% of source files
-- **CI:** Unit tests (vitest) run on every push/PR via `npm test` ⚠️ Coverage not enforced
-- **Coverage:** No minimum threshold, opt-in only
+- Pure utility functions under test (`cn`, `isFiniteNumber`, `itemsSignature`)
+- The module under test itself
+- React Testing Library's render utilities
+
+## Fixtures and Factories
+
+**Factory helper pattern (used in service tests):**
+
+```typescript
+// Declare at module level, above describe blocks
+function makeCoupon(overrides: Partial<Coupon> = {}): Coupon {
+  return {
+    id: 'c1',
+    code: 'SAVE10',
+    discountType: 'percentage',
+    discountValue: 10,
+    usedCount: 0,
+    isActive: true,
+    createdAt: '2026-01-01',
+    ...overrides,
+  };
+}
+
+// Use in tests:
+mockGetDocs.mockResolvedValue({
+  empty: false,
+  docs: [{ id: 'c1', data: () => makeCoupon({ expiresAt: '2027-12-31' }) }],
+});
+```
+
+**Mock Firestore document shape:**
+
+```typescript
+// Snapshot doc pattern
+{ id: 'docId', data: () => ({ /* fields */ }) }
+
+// Snapshot collection pattern
+{ empty: false, docs: [{ id: 'id', data: () => ({...}) }] }
+
+// Non-existent document
+{ exists: () => false }
+
+// Existing document
+{ exists: () => true, data: () => ({ items: [] }) }
+```
+
+**Location:**
+
+- Inline factories in each test file — no shared fixture directory
+- Mock Firebase user: `{ getIdToken: vi.fn().mockResolvedValue('mock-token'), uid: 'test-user-123' } as any`
+
+## Coverage
+
+**Requirements:**
+
+- Vitest thresholds (intentionally low — codebase is still growing coverage):
+  - Statements: 2%
+  - Branches: 1%
+  - Functions: 2%
+  - Lines: 2%
+- Provider: v8
+
+**View Coverage:**
+
+```bash
+npm run test:coverage     # Generates text + json + html reports
+# HTML report at: coverage/index.html
+```
+
+**Coverage scope:**
+
+- Includes: `src/**/*.{ts,tsx}`, `server/**/*.ts`
+- Excludes: `src/test/**`, `src/**/*.d.ts`, `server/declarations.d.ts`, `server/iyzico.cjs`
+
+## Test Types
+
+**Unit Tests (Vitest — `src/**/**tests**/`, `src/test/`):\*\*
+
+- Scope: Individual service functions, utility functions, React components, context providers
+- All Firebase/external dependencies mocked
+- Fast, no network, no DOM for pure service tests
+- DOM tests use jsdom environment via Testing Library
+
+**Component Tests (Vitest + @testing-library/react):**
+
+- `render()` + `screen.getBy*()` queries
+- Wrapper helpers for router-dependent components: `renderWithRouter(ui)`
+- Tests accessibility attributes (`aria-label`), DOM structure, class names
+- Example: `src/components/common/__tests__/Breadcrumb.test.tsx`
+
+**Type Tests (Vitest `expectTypeOf`):**
+
+- `src/test/types.test.ts` — verifies TypeScript type shapes without runtime values
+- Pattern: `expectTypeOf<UserProfile['field']>().toEqualTypeOf<string | undefined>()`
+
+**Integration Tests (Vitest — `src/test/`):**
+
+- Service-level tests that verify end-to-end behavior with mocked network/DB
+- Example: `src/test/oneClickCheckoutService.test.ts` — verifies full request/response cycle
+
+**E2E Tests (Playwright — `e2e/*.spec.ts`):**
+
+- Framework: Playwright 1.60 — Chromium only (desktop Chrome)
+- Base URL: `http://localhost:4173` (Vite preview) — set via `BASE_URL` env var
+- Tests run against built app (`npm run build && npm run preview`)
+- Coverage: home page, product listing, checkout (guest + authenticated + address book), SEO, RTL mobile menu
+
+## Common Patterns
+
+**Async Testing:**
+
+```typescript
+it('returns cart items when cart exists', async () => {
+  mockGetDoc.mockResolvedValue({
+    exists: () => true,
+    data: () => ({ items }),
+  });
+
+  const result = await getCart('user1');
+  expect(result).toEqual(items);
+});
+```
+
+**Error path testing:**
+
+```typescript
+it('returns empty array and handles error on failure', async () => {
+  const err = new Error('Firestore down');
+  mockGetDoc.mockRejectedValue(err);
+
+  const result = await getCart('user1');
+  expect(result).toEqual([]);
+  expect(mockHandleFirestoreError).toHaveBeenCalledWith(err, 'GET', 'carts/user1');
+});
+```
+
+**Throw testing:**
+
+```typescript
+it('throws on Firestore error and calls handleFirestoreError', async () => {
+  const err = new Error('Permission denied');
+  mockSetDoc.mockRejectedValue(err);
+
+  await expect(createCoupon(validData)).rejects.toThrow('Permission denied');
+  expect(mockHandleFirestoreError).toHaveBeenCalledWith(err, 'create', 'coupons');
+});
+```
+
+**React component testing with required providers:**
+
+```typescript
+function renderWithRouter(ui: React.ReactElement) {
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
+}
+
+// For context-dependent components, wrap with the required provider
+render(
+  <AuthProvider>
+    <TestConsumer />
+  </AuthProvider>
+);
+```
+
+**Testing that hooks throw outside provider:**
+
+```typescript
+it('throws when used outside AuthProvider', () => {
+  const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  function BadComponent() { useAuth(); return null; }
+  expect(() => render(<BadComponent />)).toThrow('useAuth must be used within an AuthProvider');
+  spy.mockRestore();
+});
+```
+
+**E2E — data-testid usage:**
+
+- Components expose `data-testid="product-card"` and `data-testid="add-to-cart"` for E2E targeting
+- E2E tests use `page.locator('[data-testid="..."]')` for stable element selection
+
+---
+
+_Testing analysis: 2026-06-08_

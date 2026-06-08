@@ -1,505 +1,400 @@
-# Benim Olan -- Codebase Structure
+# Codebase Structure
 
-**Date:** 2026-05-31
-**Project Root:** `O:\AI\E-tic 2026`
+**Analysis Date:** 2026-06-08
+
+## Directory Layout
+
+```
+O:/AI/E-tic 2026/                 # Project root
+├── server.ts                     # Express server entry point (ESM, tsx)
+├── vite.config.ts                # Vite build config, PWA, chunk splitting
+├── tsconfig.json                 # TypeScript config (strict, ES2022, react-jsx)
+├── vitest.config.ts              # Vitest unit test config
+├── playwright.config.ts          # Playwright E2E test config
+├── eslint.config.js              # ESLint 10 flat config
+├── firebase.json                 # Firebase project config
+├── firestore.rules               # Firestore security rules
+├── firestore.indexes.json        # Firestore composite indexes
+├── storage.rules                 # Firebase Storage security rules
+├── index.html                    # Vite HTML entry
+├── package.json                  # Dependencies + npm scripts
+│
+├── src/                          # React SPA source
+│   ├── main.tsx                  # React DOM root, Sentry/analytics/SW init
+│   ├── App.tsx                   # Provider hierarchy + React Router routes
+│   ├── index.css                 # Tailwind v4 @theme directives, global CSS
+│   ├── types.ts                  # Core domain types (User, Product, Order, etc.)
+│   ├── mockData.ts               # Mock data (dev/test fallbacks — not for prod use)
+│   │
+│   ├── pages/                    # Route-level page components (70+ files)
+│   │   ├── Home.tsx              # Marketplace homepage
+│   │   ├── ProductDetail.tsx     # Product detail with reviews, variants, 3D
+│   │   ├── Cart.tsx              # Shopping cart
+│   │   ├── Checkout.tsx          # Payment flow (Stripe + Iyzico)
+│   │   ├── SearchResults.tsx     # Search results page
+│   │   ├── CategoryPage.tsx      # Category browse
+│   │   ├── OrderHistory.tsx      # Buyer order history
+│   │   ├── SellerDashboard.tsx   # Seller panel home
+│   │   ├── SellerInventory.tsx   # Seller product management
+│   │   ├── SellerOrders.tsx      # Seller order management
+│   │   ├── SellerFinance.tsx     # Seller earnings / payouts
+│   │   ├── SellerAnalytics.tsx   # Recharts-based seller analytics
+│   │   ├── AdminDashboard.tsx    # Admin panel home
+│   │   ├── AdminProducts.tsx     # Product moderation
+│   │   ├── AdminSellers.tsx      # Seller management / KYC
+│   │   ├── AdminOrders.tsx       # Platform-wide orders
+│   │   └── ...                   # (All other pages follow same pattern)
+│   │
+│   ├── components/               # Reusable UI components (domain-grouped)
+│   │   ├── layout/               # Navbar, Footer, SellerLayout, MegaMenu
+│   │   ├── auth/                 # AuthModal, AdminRoute, SellerRoute, ModeratorRoute
+│   │   ├── product/              # ProductGallery, VariantSelector, ReviewSection, etc.
+│   │   ├── checkout/             # StripePaymentForm, IyzicoPayment, OrderSummary, etc.
+│   │   ├── seller/               # ProductForm, OrderStatsBar, FinanceDashboard, etc.
+│   │   ├── commerce/             # ProductCard, ProductCarousel, ComparisonModal, etc.
+│   │   ├── ai/                   # ShoppingAssistant, ARViewer, AuthenticityBadge
+│   │   ├── home/                 # Hero, StoryBar
+│   │   ├── chat/                 # LiveChatWidget
+│   │   ├── search/               # Search-related UI
+│   │   ├── orders/               # Order-related UI
+│   │   ├── profile/              # User profile UI
+│   │   ├── marketing/            # Campaign/promotion UI
+│   │   ├── location/             # Location picker modal
+│   │   ├── seo/                  # SEO-related components
+│   │   ├── common/               # AnalyticsTracker, CookieConsent, SEO, Breadcrumb, etc.
+│   │   └── ui/                   # Low-level primitives: Skeleton
+│   │
+│   ├── context/                  # React Context providers
+│   │   ├── AuthContext.tsx       # Firebase Auth state
+│   │   ├── CartContext.tsx       # Cart with Firestore persistence
+│   │   ├── WishlistContext.tsx   # Wishlist
+│   │   ├── FollowsContext.tsx    # Seller follows
+│   │   ├── NotificationContext.tsx
+│   │   ├── LanguageContext.tsx   # i18n (TR/EN/DE/AR)
+│   │   ├── CurrencyContext.tsx   # Active currency
+│   │   ├── ThemeContext.tsx      # Dark/light mode
+│   │   └── LocationContext.tsx   # User location
+│   │
+│   ├── services/                 # Firestore + external API service layer (~70 files)
+│   │   ├── productService.ts     # Product CRUD, search filters
+│   │   ├── orderService.ts       # Order creation, status management
+│   │   ├── reviewService.ts      # Reviews + onSnapshot subscription
+│   │   ├── sellerStoreService.ts # Seller store profile
+│   │   ├── couponService.ts      # Coupon validation
+│   │   ├── fraudDetectionService.ts
+│   │   ├── analyticsService.ts   # GA event helpers
+│   │   ├── notificationService.ts
+│   │   ├── recommendationService.ts
+│   │   └── ...                   # (All other services follow same pattern)
+│   │
+│   ├── hooks/                    # Custom React hooks
+│   │   ├── useComparison.ts      # Module-level product comparison state
+│   │   ├── useExchangeRate.ts    # FX rate fetching
+│   │   └── useOneClickCheckout.ts
+│   │
+│   ├── lib/                      # Shared utilities and SDK wrappers
+│   │   ├── firebase.ts           # Firebase client init (db, auth, storage)
+│   │   ├── firebase-admin.ts     # Firebase Admin init (adminDb, adminAuth)
+│   │   ├── authMiddleware.ts     # Express auth middleware factory
+│   │   ├── serverValidators.ts   # Pure input validators, idempotency helpers
+│   │   ├── sentry.ts             # Sentry init + ErrorBoundary export
+│   │   ├── analytics.ts          # Google Analytics helpers
+│   │   ├── gemini.ts             # Gemini AI client
+│   │   ├── utils.ts              # cn() class merge utility
+│   │   ├── taxEngine.ts          # Tax calculation
+│   │   ├── rateLock.ts           # Optimistic concurrency for price locks
+│   │   ├── storage.ts            # Firebase Storage upload helpers
+│   │   └── csvTemplate.ts        # CSV template generation
+│   │
+│   ├── types/                    # Domain-specific type files
+│   │   ├── order.ts              # Order-specific types
+│   │   ├── payment.ts            # Payment-specific types
+│   │   └── returns.ts            # Return/refund types
+│   │
+│   ├── i18n/                     # Translation JSON files
+│   │   ├── tr.json               # Turkish (default)
+│   │   ├── en.json               # English
+│   │   ├── de.json               # German
+│   │   └── ar.json               # Arabic (RTL)
+│   │
+│   ├── config/                   # Feature flags
+│   │   └── features.ts           # Boolean feature toggles
+│   │
+│   ├── data/                     # Static lookup data
+│   │   └── hsCodes.ts            # Harmonized System tariff codes
+│   │
+│   └── test/                     # Shared test utilities / setup
+│
+├── server/                       # Express server modules
+│   ├── routes/                   # Route registration functions
+│   │   ├── stripe.ts             # Stripe endpoints + webhook
+│   │   ├── iyzico.ts             # Iyzico TR payment endpoints
+│   │   ├── sellerApi.ts          # /api/v1/* seller REST API
+│   │   ├── orders.ts             # Order management routes
+│   │   ├── reviews.ts            # Review moderation routes
+│   │   ├── commission.ts         # Commission calculation routes
+│   │   ├── payouts.ts            # Seller payout routes
+│   │   ├── finance.ts            # Finance/ledger routes
+│   │   ├── email.ts              # Email trigger routes
+│   │   ├── refund.ts             # Refund processing routes
+│   │   ├── returns.ts            # Return request routes
+│   │   ├── csvImport.ts          # Product CSV import
+│   │   ├── shipping.ts           # Shipping calculation routes
+│   │   ├── carrierWebhook.ts     # Carrier status webhook
+│   │   ├── carrierPoll.ts        # Carrier polling routes
+│   │   ├── compliance.ts         # KVKK/GDPR compliance routes
+│   │   ├── gemini.ts             # Gemini AI routes
+│   │   ├── fxRates.ts            # FX rate sync routes
+│   │   └── typesenseSync.ts      # Typesense index sync routes
+│   │
+│   ├── services/                 # Server-side business logic
+│   │   ├── paymentProvider.ts    # IPaymentProvider, IyzicoProvider, StripeConnectProvider
+│   │   ├── orderService.ts       # Server-side order processing
+│   │   ├── ledgerService.ts      # Financial ledger entries
+│   │   ├── payoutService.ts      # Seller payout disbursement
+│   │   ├── commissionEngine.ts   # Category-based commission calculation
+│   │   ├── kycService.ts         # KYC document upload/verify
+│   │   ├── refundService.ts      # Refund processing
+│   │   ├── stockService.ts       # Inventory stock management
+│   │   ├── invoiceService.ts     # Invoice generation
+│   │   ├── emailService.ts       # Transactional email sending
+│   │   ├── emailTemplates.ts     # Email HTML templates
+│   │   ├── complianceService.ts  # GDPR/KVKK compliance logic
+│   │   └── transitionEngine.ts   # Order state machine transitions
+│   │
+│   ├── lib/                      # Server-only utilities
+│   │   ├── schemas.ts            # Zod validation schemas for API inputs
+│   │   ├── validate.ts           # Zod middleware helper
+│   │   ├── auditLog.ts           # Audit event logging
+│   │   └── priceValidator.ts     # Server-side price verification
+│   │
+│   ├── logger.ts                 # Pino structured logger + pino-http
+│   ├── iyzico.cjs                # CJS wrapper for iyzipay SDK (ESM compat)
+│   └── declarations.d.ts         # Module declarations for CJS imports
+│
+├── mobile/                       # React Native (Expo) companion app
+│   ├── App.tsx                   # Expo root + navigation setup
+│   ├── package.json              # Mobile-specific dependencies
+│   ├── tsconfig.json
+│   └── src/
+│       ├── screens/              # HomeScreen, CartScreen, CheckoutScreen, etc.
+│       ├── navigation/           # AppNavigator.tsx
+│       ├── context/              # AuthContext.tsx, cartStore.ts (Zustand)
+│       └── services/             # api.ts, firebase.ts, notifications.ts
+│
+├── e2e/                          # Playwright E2E test files
+├── tests/                        # Additional integration tests
+├── scripts/                      # Build and utility scripts
+│   └── generate-sitemap.mjs      # Sitemap generator
+├── public/                       # Static assets served directly
+│   └── icons/                    # PWA icon set
+├── docs/                         # Project documentation (non-committed artifacts)
+├── .planning/                    # GSD planning artifacts
+│   ├── STATE.md                  # Current project state
+│   ├── ROADMAP.md                # High-level roadmap
+│   ├── codebase/                 # Codebase map documents (this directory)
+│   ├── milestones/               # Milestone requirements and roadmaps
+│   └── phases/                   # Phase execution plans and summaries
+└── .claude/                      # Claude AI configuration
+    ├── settings.local.json
+    └── hooks/
+```
+
+## Directory Purposes
+
+**`src/pages/`:**
+
+- Purpose: One file per route. Each page component handles data fetching and assembles domain components.
+- Contains: 70+ `.tsx` files named after the feature (PascalCase)
+- Key files: `Home.tsx`, `ProductDetail.tsx`, `Checkout.tsx`, `SellerDashboard.tsx`, `AdminDashboard.tsx`
+
+**`src/components/`:**
+
+- Purpose: Reusable UI components grouped by domain subdirectory
+- Contains: Domain folders — `layout/`, `auth/`, `product/`, `checkout/`, `seller/`, `commerce/`, `ai/`, `common/`, `ui/`
+- Key files: `layout/Navbar.tsx`, `layout/SellerLayout.tsx`, `commerce/ProductCard.tsx`, `checkout/StripePaymentForm.tsx`
+
+**`src/context/`:**
+
+- Purpose: All React Context providers. Each file exports a `Provider` component and a `useXxx()` hook.
+- Key files: `AuthContext.tsx`, `CartContext.tsx`, `LanguageContext.tsx`
+
+**`src/services/`:**
+
+- Purpose: All Firestore SDK operations. Functions wrap queries/mutations; errors handled via `handleFirestoreError`.
+- Key files: `productService.ts`, `orderService.ts`, `reviewService.ts`
+
+**`src/lib/`:**
+
+- Purpose: Shared utilities, SDK initializations, and cross-cutting helpers
+- Key files: `firebase.ts` (client SDK init), `firebase-admin.ts` (server SDK init — imported in server code only), `authMiddleware.ts`, `utils.ts`
+
+**`server/routes/`:**
+
+- Purpose: Express route registration. Each file exports a `registerXxxRoutes(app, deps)` function.
+- Key files: `stripe.ts`, `iyzico.ts`, `sellerApi.ts`, `orders.ts`
+
+**`server/services/`:**
+
+- Purpose: Server-side business logic that requires Admin SDK access or external payment APIs
+- Key files: `paymentProvider.ts`, `commissionEngine.ts`, `ledgerService.ts`, `orderService.ts`
+
+**`server/lib/`:**
+
+- Purpose: Server-exclusive utilities (Zod schemas, validation middleware, audit log, price validation)
+- Key files: `schemas.ts`, `validate.ts`, `auditLog.ts`
+
+**`src/i18n/`:**
+
+- Purpose: Static translation key-value JSON files for all four supported locales
+- Key files: `tr.json` (primary), `en.json`, `de.json`, `ar.json`
+
+**`src/types/`:**
+
+- Purpose: Domain-specific extended types that complement `src/types.ts`
+- Key files: `order.ts`, `payment.ts`, `returns.ts`
+
+**`mobile/`:**
+
+- Purpose: Standalone React Native (Expo) app sharing the same Firebase project
+- Key files: `App.tsx`, `src/context/cartStore.ts`, `src/services/api.ts`
+
+**`.planning/`:**
+
+- Purpose: GSD workflow artifacts — roadmap, phase plans, codebase maps
+- Generated: No
+- Committed: Yes (all planning docs are version-controlled)
+
+## Naming Conventions
+
+**Files:**
+
+- Pages and components: PascalCase, noun phrase — `ProductDetail.tsx`, `SellerLayout.tsx`
+- Services: camelCase with `Service` suffix — `productService.ts`, `reviewService.ts`
+- Hooks: camelCase with `use` prefix — `useComparison.ts`, `useExchangeRate.ts`
+- Context files: PascalCase with `Context` suffix — `AuthContext.tsx`, `CartContext.tsx`
+- Server routes: camelCase, domain noun — `stripe.ts`, `orders.ts`, `sellerApi.ts`
+- Tests: `*.test.ts` or `*.test.tsx` co-located with source or in `__tests__/` sibling
+
+**Directories:**
+
+- Component domains: lowercase, no separator — `product/`, `checkout/`, `seller/`
+- Test directories: `__tests__/` inside the module they test
+
+## Where to Add New Code
+
+**New buyer-facing feature:**
+
+- Page component: `src/pages/NewFeature.tsx`
+- Add lazy route in: `src/App.tsx` (use `named()` helper for named exports)
+- Domain components: `src/components/<domain>/NewFeatureComponent.tsx`
+- Firestore service: `src/services/newFeatureService.ts`
+- Types: Add to `src/types.ts` (shared) or `src/types/newFeature.ts` (isolated)
+
+**New seller panel page:**
+
+- Page: `src/pages/SellerNewFeature.tsx`
+- Register as nested route under `<Route path="/seller">` in `src/App.tsx`
+- Seller-specific components: `src/components/seller/`
+
+**New admin panel page:**
+
+- Page: `src/pages/AdminNewFeature.tsx`
+- Wrap in `<AdminRoute>` in `src/App.tsx`
+
+**New server API endpoint:**
+
+- If it fits an existing domain: add to `server/routes/<domain>.ts`
+- New domain: create `server/routes/newDomain.ts` with `registerNewDomainRoutes(app, deps)` export
+- Register in `server.ts` with the appropriate import and call
+
+**New context/global state:**
+
+- Create `src/context/NewFeatureContext.tsx` following existing pattern: `createContext` + `Provider` + `useNewFeature()` hook
+- Add `<NewFeatureProvider>` to the provider chain in `src/App.tsx`
+
+**New translation key:**
+
+- Add to all four files: `src/i18n/tr.json`, `en.json`, `de.json`, `ar.json`
+- Access via `t('key.path')` from `LanguageContext`
+
+**Shared utility:**
+
+- Pure functions with no Firebase/Express dependency: `src/lib/utils.ts`
+- Server-only utilities: `server/lib/`
+- Client Firebase helpers: `src/lib/firebase.ts`
+
+**Tests:**
+
+- Unit/component tests: `__tests__/` subdirectory next to the file being tested, or `*.test.ts(x)` co-located
+- E2E tests: `e2e/` at project root
+
+## Key File Locations
+
+**Entry Points:**
+
+- `server.ts`: Express server entry — all route registration happens here
+- `src/main.tsx`: React DOM root
+- `src/App.tsx`: Provider tree and all route definitions
+- `index.html`: Vite HTML shell
+
+**Configuration:**
+
+- `vite.config.ts`: Build config, chunk splitting, PWA manifest
+- `tsconfig.json`: TypeScript compiler options (strict, ESM, `@/` alias)
+- `vitest.config.ts`: Unit test config
+- `playwright.config.ts`: E2E config
+- `eslint.config.js`: Linting rules
+- `firestore.rules`: Firestore security rules (MUST deploy after changes)
+- `firestore.indexes.json`: Composite index definitions
+
+**Core Logic:**
+
+- `src/lib/firebase.ts`: Client SDK — `db`, `auth`, `storage`, `handleFirestoreError`
+- `src/lib/firebase-admin.ts`: Server SDK — `adminDb`, `adminAuth`
+- `src/lib/authMiddleware.ts`: Express auth middleware factory
+- `src/lib/serverValidators.ts`: Input validation helpers
+- `server/services/paymentProvider.ts`: Payment abstraction
+- `server/services/commissionEngine.ts`: Commission calculation logic
+- `server/logger.ts`: Pino logger
+
+**Types:**
+
+- `src/types.ts`: All core domain types (User, Product, Order, Seller, Review, etc.)
+- `src/types/order.ts`, `payment.ts`, `returns.ts`: Extended domain types
+
+## Special Directories
+
+**`node_modules/`:**
+
+- Purpose: npm dependencies
+- Generated: Yes
+- Committed: No
+
+**`dist/`:**
+
+- Purpose: Vite production build output (served statically by Express)
+- Generated: Yes
+- Committed: No
+
+**`.planning/codebase/`:**
+
+- Purpose: GSD codebase map documents (ARCHITECTURE.md, STRUCTURE.md, STACK.md, etc.)
+- Generated: Yes (by GSD map-codebase command)
+- Committed: Yes
+
+**`src/.venv/`:**
+
+- Purpose: Python virtual environment for utility scripts
+- Generated: Yes
+- Committed: No (should be in .gitignore)
+
+**`mobile/`:**
+
+- Purpose: Standalone React Native (Expo) app — separate build pipeline
+- Generated: No
+- Committed: Yes
 
 ---
 
-## 1. Top-Level Directory Layout
-
-```
-O:\AI\E-tic 2026\
-├── server.ts                    # Express server entry point (monolithic, 20KB)
-├── package.json                 # Project metadata, scripts, dependencies
-├── package-lock.json            # Locked dependency tree
-├── tsconfig.json                # TypeScript compiler configuration
-├── vite.config.ts               # Vite build + PWA config
-├── vitest.config.ts             # Vitest test runner configuration
-├── playwright.config.ts         # Playwright E2E test configuration
-├── .eslintrc.json               # ESLint configuration
-├── .prettierrc.json             # Prettier formatting configuration
-├── .env                         # Environment variables (gitignored)
-├── .env.example                 # Environment variable template
-│
-├── src/                         # React application source code
-├── server/                      # Server-side route modules
-├── public/                      # Static assets (served as-is)
-├── scripts/                     # Build/utility scripts
-├── test-results/                # Playwright test output
-├── docs/                        # Documentation and planning files
-├── node_modules/                # Dependency packages
-│
-├── ROADMAP.md                   # Project roadmap
-├── security_spec.md             # Security specification
-├── README.md                    # Project introduction
-│
-├── firebase-applet-config.json  # Firebase client config
-├── market-ecommerce-app-...json # Firebase admin service account
-│
-├── Logo.png                     # Brand assets
-├── Logolar.png
-├── yedek_logo.cdr
-│
-├── .claude/                     # Claude Code AI configuration
-├── .planning/                   # Architecture/planning documents
-│
-├── ALIŞVERIŞ_AKIŞI_ANALİZİ.md  # Shopping flow analysis (Turkish)
-├── APPENDIX_TECHNICAL_IMPLEMENTATION.md
-├── CFO_EXECUTIVE_BRIEF.md
-├── EXECUTIVE_BRIEF_1PAGER.txt
-├── EXECUTIVE_SUMMARY_COMPETITIVE_ANALYSIS_ROADMAP.md
-├── FINDINGS_SUMMARY.txt
-├── KARGO_LOJISTIK_ANALIZ_RAPORU.md
-├── PAYMENT_FINANCIAL_ANALYSIS.md
-├── QUICK_REFERENCE_DASHBOARD.md
-├── RETURN_IMPLEMENTATION_GUIDE.md
-├── RETURN_REFUND_COMPARATIVE_REPORT.md
-│
-├── temp_close_divs.txt          # Temporary/legacy files
-├── temp_divs.txt
-```
-
----
-
-## 2. `src/` -- React Application Source
-
-```
-src/
-├── main.tsx                     # React DOM entry: render, Sentry init, Analytics init, SW register
-├── App.tsx                      # Root component: providers, router, global layout
-├── index.css                    # Global styles (Tailwind CSS)
-│
-├── pages/                       # Page-level components (one per route)
-│   ├── Home.tsx                 #   Landing page
-│   ├── ProductDetail.tsx        #   Product detail page
-│   ├── About.tsx                #   About us page
-│   ├── Cart.tsx                 #   Shopping cart
-│   ├── Campaigns.tsx            #   Campaign listing
-│   ├── CategoryPage.tsx         #   Category listing
-│   ├── Checkout.tsx             #   Checkout flow
-│   ├── CollectionPage.tsx       #   Curated collection
-│   ├── Contact.tsx              #   Contact page
-│   ├── FAQ.tsx                  #   Frequently asked questions
-│   ├── FollowedSellers.tsx      #   Followed sellers feed
-│   ├── MessageCenter.tsx        #   Internal messaging inbox
-│   ├── NotFound.tsx             #   404 page
-│   ├── OrderHistory.tsx         #   Past orders list
-│   ├── OrderTracking.tsx        #   Order tracking
-│   ├── PriceAlerts.tsx          #   Price drop alerts
-│   ├── ProductVerification.tsx  #   Product authenticity verification
-│   ├── SearchResults.tsx        #   Search results
-│   ├── SellOnBenimOlan.tsx      #   "Sell on our platform" landing
-│   ├── SellerApplication.tsx    #   Seller application form
-│   ├── UserProfile.tsx          #   User profile/settings
-│   ├── UserSupport.tsx          #   User support/tickets
-│   ├── VisualSearch.tsx         #   Image-based search
-│   ├── Wishlist.tsx             #   User wishlist
-│   │
-│   ├── AdminDashboard.tsx       #   Admin panel home
-│   ├── AdminAnalytics.tsx       #   Admin analytics
-│   ├── AdminAuditLog.tsx        #   Admin audit log
-│   ├── AdminCampaigns.tsx       #   Admin campaign management
-│   ├── AdminCategories.tsx      #   Admin category management
-│   ├── AdminChat.tsx            #   Admin support chat
-│   ├── AdminCMS.tsx             #   Admin CMS/menu management
-│   ├── AdminCoupons.tsx         #   Admin coupon management
-│   ├── AdminDeals.tsx           #   Admin featured deals
-│   ├── AdminFinance.tsx         #   Admin finance panel
-│   ├── AdminIntegrations.tsx    #   Admin integrations
-│   ├── AdminLanguages.tsx       #   Admin translation studio
-│   ├── AdminOrders.tsx          #   Admin order management
-│   ├── AdminPayments.tsx        #   Admin payment management
-│   ├── AdminProducts.tsx        #   Admin product management
-│   ├── AdminReports.tsx         #   Admin reports
-│   ├── AdminReturns.tsx         #   Admin return management
-│   ├── AdminReviews.tsx         #   Admin review moderation
-│   ├── AdminSellers.tsx         #   Admin seller management
-│   ├── AdminSellerView.tsx      #   Admin single seller detail
-│   ├── AdminSettings.tsx        #   Admin site settings
-│   ├── AdminSupport.tsx         #   Admin support tickets
-│   ├── AdminTiers.tsx           #   Admin tier configuration
-│   ├── AdminUsers.tsx           #   Admin user management
-│   ├── AdminWebhooks.tsx        #   Admin webhook configuration
-│   │
-│   ├── SellerDashboard.tsx      #   Seller panel home
-│   ├── SellerAnalytics.tsx      #   Seller analytics dashboard
-│   ├── SellerApiKeys.tsx        #   Seller API key management
-│   ├── SellerCertificates.tsx   #   Seller certificates/credentials
-│   ├── SellerCoupons.tsx        #   Seller coupon management
-│   ├── SellerFinance.tsx        #   Seller financials
-│   ├── SellerImportCenter.tsx   #   CSV product import
-│   ├── SellerInventory.tsx      #   Seller product inventory
-│   ├── SellerInvoices.tsx       #   Seller invoice management
-│   ├── SellerMessages.tsx       #   Seller messaging
-│   ├── SellerOrders.tsx         #   Seller order management
-│   ├── SellerPerformance.tsx    #   Seller performance metrics
-│   ├── SellerPriceAnalysis.tsx  #   Seller price analysis
-│   ├── SellerPricing.tsx        #   Seller pricing tools
-│   ├── SellerSettings.tsx       #   Seller store settings
-│   ├── SellerStore.tsx          #   Public seller storefront
-│   ├── AdCampaigns.tsx          #   Seller ad campaigns (CPC)
-│   │
-│   ├── ModeratorDashboard.tsx   #   Moderator panel
-│
-├── components/                  # Reusable UI components
-│   ├── layout/                  #   Layout/shell components
-│   │   ├── Navbar.tsx           #     Top navigation bar
-│   │   ├── Footer.tsx           #     Site footer
-│   │   ├── MobileMenu.tsx       #     Mobile navigation drawer (RTL-aware)
-│   │   ├── MobileTabBar.tsx     #     Mobile bottom tab bar
-│   │   ├── MegaMenu.tsx         #     Desktop mega menu dropdown
-│   │   ├── SearchBar.tsx        #     Global search input
-│   │   ├── TopTicker.tsx        #     Top announcement ticker
-│   │   ├── AuthModal.tsx        #     Login/register modal
-│   │   ├── LocationModal.tsx    #     Location selection modal
-│   │   ├── NotificationsPanel.tsx #   Notification dropdown
-│   │   └── SellerLayout.tsx     #     Seller panel layout (no nav/footer)
-│   │
-│   ├── location/                #   Delivery location components
-│   │   └── DeliveryLocationSelector.tsx # Location picker with cascade
-│   │
-│   ├── commerce/                #   E-commerce specific components
-│   │   ├── ProductCard.tsx      #     Product listing card
-│   │   ├── ProductCarousel.tsx  #     Product carousel/slider
-│   │   ├── ProductRecommendations.tsx # AI recommendations
-│   │   ├── FilterPanel.tsx      #     Product filtering sidebar
-│   │   ├── ComparisonBar.tsx    #     Product comparison bar
-│   │   ├── ComparisonModal.tsx  #     Comparison detail modal
-│   │   ├── StoryBar.tsx         #     Instagram-style stories
-│   │   ├── ARViewer.tsx         #     3D/AR product viewer
-│   │   ├── AuthenticityBadge.tsx #    Blockchain authenticity badge
-│   │   ├── BotSalesEngine.tsx   #     AI sales chatbot
-│   │   ├── InvoiceModal.tsx     #     Invoice display modal
-│   │   └── StickyBuyBar.tsx     #     Sticky add-to-cart bar
-│   │
-│   ├── product/                 #   Product detail components
-│   │   ├── ProductGallery.tsx   #     Image gallery/zoom
-│   │   ├── ReviewCard.tsx       #     Single review display
-│   │   ├── ReviewSection.tsx    #     Full review section
-│   │   ├── RatingSummary.tsx    #     Star rating breakdown
-│   │   ├── QASection.tsx        #     Q&A section
-│   │   ├── QuestionCard.tsx     #     Single Q&A card
-│   │   ├── DeliveryBox.tsx      #     Delivery info box
-│   │   ├── InstallmentTable.tsx #     Installment payment table
-│   │   ├── OtherSellers.tsx     #     Other sellers listing
-│   │   ├── PriceHistoryChart.tsx #    Price history (Recharts)
-│   │   ├── UnitPrice.tsx        #     Unit price display
-│   │   ├── SocialProofBar.tsx   #     Social proof indicators
-│   │   ├── AIProductInsights.tsx #    AI-generated insights
-│   │   └── ProductFeatures.tsx  #     Features/specifications
-│   │
-│   ├── checkout/                #   Checkout-specific components
-│   │   ├── IyzicoPayment.tsx    #     Iyzico payment form
-│   │   ├── ManualPayment.tsx    #     Manual/offline payment
-│   │   ├── PaymentMethodSelector.tsx # Card selection
-│   │   └── OneClickSuccessModal.tsx # Fast checkout success
-│   │
-│   ├── common/                  #   Shared/generic components
-│   │   ├── SEO.tsx              #     Meta tags (react-helmet-async)
-│   │   ├── Breadcrumb.tsx       #     Breadcrumb navigation
-│   │   ├── OptimizedImage.tsx   #     Lazy-loaded optimized image
-│   │   ├── ScrollToTop.tsx      #     Route change scroll reset
-│   │   ├── CookieConsent.tsx    #     GDPR cookie consent banner
-│   │   ├── SkipToContent.tsx    #     Accessibility skip link
-│   │   ├── AnalyticsTracker.tsx #     Page view tracking
-│   │   └── __tests__/           #     Component tests
-│   │       ├── Breadcrumb.test.tsx
-│   │       └── OptimizedImage.test.tsx
-│   │
-│   ├── home/                    #   Homepage components
-│   │   └── Hero.tsx             #     Hero carousel/slider
-│   │
-│   ├── ai/                      #   AI integration components
-│   │   └── ShoppingAssistant.tsx #    AI shopping assistant chat
-│   │
-│   ├── chat/                    #   Live support components
-│   │   └── LiveChatWidget.tsx   #     Live chat widget
-│   │
-│   ├── profile/                 #   User profile components
-│   │   ├── ProfileSettings.tsx  #     Profile settings form
-│   │   ├── ReturnRequestModal.tsx #   Return request form
-│   │   └── SavedPaymentMethod.tsx #  Saved payment card display
-│   │
-│   ├── seller/                  #   Seller panel components
-│   │   ├── BatchShipModal.tsx   #     Batch shipping modal
-│   │   ├── BulkEditBar.tsx      #     Bulk product edit bar
-│   │   ├── CategorySelect.tsx   #     Category tree selector
-│   │   ├── CSVImportPanel.tsx   #     CSV import panel
-│   │   ├── OrderStatsBar.tsx    #     Order statistics bar
-│   │   ├── ProductForm.tsx      #     Product add/edit form
-│   │   ├── ProductFormModal.tsx #     Product form in modal
-│   │   └── ReturnManagementSection.tsx # Return management
-│   │
-│   ├── seo/                     #   Structured data & SEO components
-│   │   ├── JsonLd.tsx           #     JSON-LD structured data
-│   │   └── schemas.ts           #     Schema.org type definitions
-│   │
-│   ├── ui/                      #   Generic UI primitives
-│   │   ├── Skeleton.tsx         #     Loading skeleton placeholder
-│   │   └── __tests__/           #     UI component tests
-│   │
-│   └── marketing/               #   Marketing components
-│       └── CampaignBanner.tsx   #     Campaign promotion banner
-│
-├── context/                     # React Context providers (state management)
-│   ├── AuthContext.tsx          #   Firebase Auth + user profile
-│   ├── CartContext.tsx          #   Shopping cart (Firestore backed)
-│   ├── WishlistContext.tsx      #   Product wishlist/favorites
-│   ├── FollowsContext.tsx       #   Seller following system
-│   ├── NotificationContext.tsx  #   In-app notifications
-│   ├── LanguageContext.tsx      #   i18n + RTL (101 lines, lazy-loads DE+AR)
-│   ├── ThemeContext.tsx         #   Visual theme
-│   └── LocationContext.tsx      #   User location/delivery region
-│
-├── hooks/                       # Custom React hooks
-│   ├── useComparison.ts         #   Product comparison state
-│   ├── useExchangeRate.ts       #   Currency exchange rate conversion
-│   └── useOneClickCheckout.ts   #   One-click checkout flow
-│
-├── services/                    # Data access / business logic services (60 files)
-│   ├── adService.ts             #   CPC advertising engine
-│   ├── aiContentService.ts      #   AI-generated product content
-│   ├── aiModerationService.ts   #   AI content moderation
-│   ├── analyticsService.ts      #   Business analytics queries
-│   ├── apiKeyService.ts         #   Seller API key management
-│   ├── arService.ts             #   AR/3D model service
-│   ├── auditLogService.ts       #   Admin audit logging
-│   ├── behaviorService.ts       #   User behavior tracking
-│   ├── blockchainService.ts     #   Blockchain authenticity records
-│   ├── botService.ts            #   AI chatbot logic
-│   ├── campaignService.ts       #   Campaign management
-│   ├── cargoService.ts          #   Shipping/logistics tracking
-│   ├── cartService.ts           #   Cart Firestore operations
-│   ├── chatService.ts           #   Live support chat
-│   ├── cmsService.ts            #   CMS/menu management
-│   ├── commissionService.ts     #   Platform commission calculation
-│   ├── couponService.ts         #   Coupon code validation
-│   ├── dealService.ts           #   Featured deals management
-│   ├── dynamicPricingService.ts #   Dynamic pricing rules
-│   ├── emailService.ts          #   Transactional email sending
-│   ├── featuredService.ts       #   Featured deals management
-│   ├── financeService.ts        #   Seller payout + commission
-│   ├── followService.ts         #   Follow/unfollow operations
-│   ├── invoiceService.ts        #   Invoice generation
-│   ├── loyaltyService.ts        #   Loyalty points system
-│   ├── moderationService.ts     #   Content moderation
-│   ├── notificationService.ts   #   Push + in-app notifications
-│   ├── offlineService.tsx       #   Offline detection + banner
-│   ├── oneClickCheckoutService.ts # One-click checkout logic
-│   ├── orderService.ts          #   Order lifecycle management
-│   ├── paymentProviderService.ts #   Payment provider abstraction
-│   ├── priceAnalysisService.ts  #   Competitive price analysis
-│   ├── priceHistoryService.ts   #   Price history records
-│   ├── priceTrackingService.ts  #   Price tracking service
-│   ├── priceTrackService.ts     #   User price alerts
-│   ├── productQuestionService.ts # Product Q&A service
-│   ├── productService.ts        #   Product CRUD + search + filtering
-│   ├── pushNotificationService.ts # Push notification dispatch
-│   ├── recommendationService.ts #   Product recommendation engine
-│   ├── reorderService.ts        #   Reorder/past purchase
-│   ├── returnService.ts         #   Return/refund processing
-│   ├── reviewService.ts         #   Product reviews + moderation
-│   ├── searchService.ts         #   Full-text product search
-│   ├── seedService.ts           #   Database seeding
-│   ├── sellerAnalyticsService.ts #   Seller analytics data
-│   ├── sellerApplicationService.ts # Seller application processing
-│   ├── sellerPayoutService.ts   #   Seller payout management
-│   ├── sellerRatingService.ts   #   Seller rating calculation
-│   ├── sellerService.ts         #   Seller profile + operations
-│   ├── sellerTierService.ts     #   Seller tier management
-│   ├── settingsService.ts       #   App settings
-│   ├── stockAlertService.ts     #   Low stock alerts
-│   ├── storageService.ts        #   Firebase Storage wrapper
-│   ├── supportService.ts        #   User support tickets
-│   ├── swRegistration.ts        #   Service worker registration
-│   ├── userService.ts           #   User profile operations
-│   ├── visualSearchService.ts   #   Image-based search
-│   └── webhookService.ts        #   Webhook dispatch
-│
-├── lib/                         # Shared utilities and configuration
-│   ├── firebase.ts              #   Firebase client SDK init + error handling
-│   ├── firebase-admin.ts        #   Firebase Admin SDK (server-side)
-│   ├── authMiddleware.ts        #   Express middleware: verifyFirebaseToken, verifyAdmin
-│   ├── serverValidators.ts      #   Request validation utilities
-│   ├── analytics.ts             #   Google Analytics setup + events
-│   ├── sentry.ts                #   Sentry error monitoring init
-│   ├── gemini.ts                #   Gemini AI shopping assistant (server-proxied)
-│   ├── taxEngine.ts             #   VAT/customs/duty calculation
-│   ├── turkeyLocations.ts       #   Turkish province + district data
-│   ├── csvTemplate.ts           #   CSV import template builder
-│   ├── storage.ts               #   Firebase Storage helper
-│   ├── utils.ts                 #   Generic utility functions
-│   └── __tests__/               #   Lib unit tests
-│
-├── types.ts                     # Core TypeScript type definitions (490 lines)
-│                               #   7 domain-organized sections:
-│                               #   Auth, Marketplace, Catalog, Content, Commerce,
-│                               #   Community, Advertising
-│
-├── data/                        # Domain-specific mock data fixtures
-│   ├── mockSellers.ts           #   Mock seller profiles (150 lines)
-│   ├── mockCategories.ts        #   Mock category tree (716 lines)
-│   ├── mockProducts.ts          #   Mock product catalog (2,830 lines)
-│   └── mockUser.ts              #   Mock user profile (37 lines)
-│
-├── i18n/                        # Per-locale translation files
-│   ├── index.ts                 #   Lazy loader with cache
-│   ├── tr.ts                    #   Turkish translations (340 keys)
-│   ├── en.ts                    #   English translations (338 keys)
-│   ├── de.ts                    #   German translations (338 keys)
-│   └── ar.ts                    #   Arabic translations (338 keys)
-│
-├── mockData.ts                  # Barrel re-export for backward compat (7 lines)
-│
-├── .claude/                     # Claude Code AI configuration
-│   ├── rules.md                 # Project rules for AI
-│   ├── settings.local.json      # Local AI settings
-│   ├── SKILL.md                 # Skill definitions
-│   └── skills/                  # Loaded skills (ecom-cfo, ui-ux, etc.)
-│
-└── .venv/                       # Python virtual environment (unrelated tooling)
-```
-
----
-
-## 3. `server/` -- Server Route Modules
-
-```
-server/
-├── iyzico.cjs                   # Iyzico SDK loader (CommonJS wrapper for ESM)
-├── logger.ts                    # Structured JSON logger (zero-dependency)
-├── declarations.d.ts            # Type declarations for packages missing @types/*
-├── lib/
-│   ├── validate.ts              # Request body validation middleware factory
-│   ├── schemas.ts               # Zod schemas for validation
-│   └── __tests__/               # Validation tests
-└── routes/
-    ├── stripe.ts                # All Stripe endpoints + webhook handler
-    ├── iyzico.ts                # Iyzico payment endpoints
-    ├── sellerApi.ts             # Seller REST API (API-key auth, versioned)
-    └── gemini.ts                # Gemini AI proxy (text, vision, image)
-```
-
-All route modules export `register*` functions that receive the Express `app` instance plus dependency injection (Firestore, Stripe SDK, middleware, etc.).
-
----
-
-## 4. `public/` -- Static Assets
-
-```
-public/
-├── favicon.ico                  # Favicon
-├── favicon.png                  # PNG favicon
-├── favicon-16.png               # 16px favicon
-├── favicon-32.png               # 32px favicon
-├── favicon-48.png               # 48px favicon
-├── apple-touch-icon.png         # iOS home screen icon
-├── robots.txt                   # Search engine crawling rules
-├── sitemap.xml                  # SEO sitemap
-├── manifest.json                # PWA manifest
-├── offline.html                 # PWA offline fallback page
-├── firebase-messaging-sw.js     # Firebase push notification service worker
-├── service-worker.js            # Service worker
-├── og-image.png                 # Open Graph share image
-├── logo.png                     # Site logo
-├── brand-bag.png                # Brand shopping bag icon
-├── modulus-pro-medium.otf       # Custom font
-└── icons/                       # PWA app icons (192px, 512px)
-    ├── icon-192.png
-    └── icon-512.png
-```
-
----
-
-## 5. `scripts/` -- Build and Utility Scripts
-
-```
-scripts/
-├── generate-sitemap.mjs         # Dynamic sitemap generator (run during build)
-└── pre-commit.sh                # Secret scanner pre-commit hook
-```
-
----
-
-## 6. Key Configuration Files
-
-| File | Purpose |
-|---|---|
-| `vite.config.ts` | Vite + React + Tailwind + PWA + visualizer plugins, `@` path alias |
-| `tsconfig.json` | TypeScript (JSX react-jsx, ESNext, strictNullChecks + noImplicitAny enabled) |
-| `vitest.config.ts` | Unit test runner config (jsdom environment) |
-| `playwright.config.ts` | E2E test runner config |
-| `.prettierrc.json` | Prettier formatting rules |
-| `package.json` | `scripts.dev` = `tsx server.ts`, `scripts.build` = sitemap + vite build |
-
----
-
-## 7. Naming Conventions
-
-- **Files:** PascalCase for React components (`ProductCard.tsx`), camelCase for utilities/services (`productService.ts`, `firebase.ts`).
-- **Exports:** Named exports for components (`export function Navbar`), default exports used sparingly.
-- **Functions:** camelCase (`createPaymentIntent`, `getCart`).
-- **Interfaces/ Types:** PascalCase (`UserProfile`, `CartItem`, `AdCampaign`).
-- **TypeScript:** Strong typing throughout. Core types in `src/types.ts`, component-specific types in local files.
-- **CSS:** Tailwind CSS utility classes (v4), no separate CSS modules.
-- **Contexts:** `XxxProvider` + `useXxx` pattern per context file.
-
----
-
-## 8. Where to Find Things
-
-| What | Where |
-|---|---|
-| Server entry + all API routes | `server.ts` (root) |
-| Route modules | `server/routes/` (4 files) |
-| Server utilities | `server/lib/`, `server/logger.ts` |
-| App routing + provider hierarchy | `src/App.tsx` (lazy-loaded pages) |
-| Page components | `src/pages/` (55 files, React.lazy) |
-| UI components by domain | `src/components/{domain}/` |
-| Global state (React Context) | `src/context/` (8 providers) |
-| Data access services | `src/services/` (55 files) |
-| Shared utilities | `src/lib/` (12 files + tests) |
-| Custom hooks | `src/hooks/` (3 files) |
-| Type definitions | `src/types.ts` (7 domain sections) |
-| Mock data fixtures | `src/data/` (4 domain files) |
-| i18n translations | `src/i18n/` (4 locale files + loader) |
-| Static assets | `public/` |
-| Build configuration | `vite.config.ts` (root) |
-| ESLint configuration | `.eslintrc.json` (root) |
-| Tests | Co-located `__tests__/` dirs + `test-results/` |
-| Pre-commit hooks | `scripts/pre-commit.sh` |
-| Claude AI config | `src/.claude/` |
-| Firebase client config | `firebase-applet-config.json` (root) |
-
----
-
-## 9. Module Boundaries and Dependencies
-
-```
-src/main.tsx
-  └── src/App.tsx
-        ├── src/context/(Auth|Cart|Wishlist|Follows|Notification|Language|Theme|Location)Context.tsx
-        │     └── src/services/xxxService.ts
-        │           └── src/lib/firebase.ts (client-side Firestore)
-        ├── src/pages/*.tsx
-        │     ├── src/components/{domain}/*.tsx
-        │     ├── src/hooks/use*.ts
-        │     └── src/services/xxxService.ts
-        └── src/components/common/*.tsx
-              └── src/lib/analytics.ts
-
-server.ts
-  ├── server/routes/stripe.ts
-  │     └── src/lib/firebase-admin.ts
-  ├── server/routes/iyzico.ts
-  │     └── server/iyzico.cjs
-  ├── server/routes/sellerApi.ts
-  │     └── src/lib/firebase-admin.ts
-  ├── server/routes/gemini.ts
-  │     └── @google/genai (server-side only)
-  ├── server/logger.ts
-  ├── server/lib/validate.ts
-  ├── src/lib/authMiddleware.ts
-  │     └── src/lib/firebase-admin.ts
-  └── src/lib/serverValidators.ts
-```
+_Structure analysis: 2026-06-08_

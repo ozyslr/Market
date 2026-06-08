@@ -1,172 +1,227 @@
 # Coding Conventions
 
-**Date:** 2026-05-31
-**Project:** Benim Olan (Global Artisan Marketplace)
+**Analysis Date:** 2026-06-08
 
----
+## Naming Patterns
 
-## Code Style / Formatting
+**Files:**
 
-- **ESLint and Prettier configured.** `.eslintrc.json` (ESLint 10) and `.prettierrc.json` at project root. The `npm run lint` script runs `tsc --noEmit` for type-checking.
-- **Vite build pipeline** uses `@vitejs/plugin-react` with `@tailwindcss/vite` for CSS. The `vite.config.ts` defines a `@/` path alias mapping to `./src`.
-- **CSS approach:** Tailwind CSS v4 via the Vite plugin. The `cn()` utility (`src/lib/utils.ts`) wraps `clsx` and `tailwind-merge` for conditional class merging.
-- **File extension convention:** Components — `.tsx`, pure logic/services — `.ts`, tests — `.test.tsx` or `.test.ts`.
+- Components: PascalCase `.tsx` — `ProductCard.tsx`, `ComparisonModal.tsx`, `Breadcrumb.tsx`
+- Services: camelCase `.ts` — `productService.ts`, `orderService.ts`, `couponService.ts`
+- Hooks: camelCase `.ts` — `useComparison.ts`, `useExchangeRate.ts`, `useOneClickCheckout.ts`
+- Types: camelCase `.ts` — `src/types.ts` (root), `src/types/order.ts` (domain-specific)
+- Tests: Co-located in `__tests__/` subdirectory or `src/test/` for integration-style
 
----
+**Functions:**
 
-## TypeScript Usage Patterns
+- Components: PascalCase — `export function Breadcrumb(...)`, `export function ProductCard(...)`
+- Hooks: camelCase with `use` prefix — `useComparison`, `useExchangeRate`
+- Service functions: camelCase, verb-first — `getCart`, `saveCart`, `clearCart`, `createCoupon`, `validateCoupon`
+- Internal helpers: camelCase, plain verbs — `generateSlug`, `applyClientFilters`, `ensureProductHasSlug`
 
-- **tsconfig** (`O:/AI/E-tic 2026/tsconfig.json`):
-  - Target: `ES2022`
-  - Module: `ESNext` with `bundler` resolution
-  - JSX: `react-jsx`
-  - `strict: true` is enabled (includes strictNullChecks, strict function types, etc.)
-  - `skipLibCheck: true`, `isolatedModules: true`
-  - `noEmit: true`
-  - Path alias: `@/*` mapped to `./src/*`
-- **Type vs Interface:** The codebase consistently uses `interface` for object shapes and props, and `type` for unions, aliases, and complex types. Examples:
-  - `interface Props { ... }` or `interface ComponentNameProps { ... }` for component props
-  - `type UserRole = 'buyer' | 'seller' | 'admin' | 'moderator'` for string unions
-  - `export type ProductStatus = 'draft' | 'pending' | 'approved' | 'rejected'`
-- **`import type`** is used for type-only imports (e.g., `import type { ProductCertificate } from '@/services/blockchainService'` in `AuthenticityBadge.tsx`).
-- **Type exports:** Core domain types live in `src/types.ts`. Domain-specific types in `src/types/` (e.g., `src/types/order.ts`).
+**Variables:**
 
----
+- camelCase throughout — `cartItems`, `sellerId`, `firebaseUser`
+- Boolean flags: adjective or `is`/`has` prefix — `isActive`, `hasDiscount`, `isTrending`
 
-## Component Patterns
+**Types/Interfaces:**
 
-- **Functional components only.** Every component is a function, no class components.
-- **Named exports (preferred):** `export function ComponentName({ prop1, prop2 }: Props)`. This is the dominant pattern.
-- **Default exports (rare):** A few exceptions exist (`SellerLayout`, `SellerAnalytics`). These are the minority.
-- **Props typing:** A local `interface Props` (or `interface ComponentNameProps`) declared immediately above the component, destructured in the function signature.
-- **File-per-component:** Each component gets its own `.tsx` file. No barrel exports from `index.ts` — components are imported by full path.
-- **Composition:** Components import sub-components by `@/components/*` alias paths.
+- PascalCase — `UserProfile`, `ProductVariant`, `CartItem`, `OrderSet`
+- Props: `Props` (local, preferred) or `ComponentNameProps`
+- Context type suffix: `XxxContextType` — `AuthContextType`, e.g. in `src/context/AuthContext.tsx`
+- Server-side enum: `OperationType` in `src/lib/firebase.ts`
 
----
+## Code Style
 
-## Naming Conventions
+**Formatting (Prettier — `.prettierrc.json`):**
 
-| Category | Convention | Example |
-|---|---|---|
-| Components | PascalCase, noun phrase | `ProductCard`, `ComparisonModal` |
-| Hooks | camelCase, `use` prefix | `useComparison`, `useExchangeRate` |
-| Services | camelCase, function-based | `addReview`, `getProductCertificate` |
-| Variables | camelCase | `items`, `viewerRef` |
-| Files | PascalCase for components | `ProductRecommendations.tsx` |
-| Files | camelCase for services/hooks | `productService.ts`, `useComparison.ts` |
-| Types/Interfaces | PascalCase | `UserProfile`, `ProductVariant` |
-| Props interface | `Props` or `ComponentNameProps` | `Props` (local), `ComparisonModalProps` |
+- Semicolons: always
+- Quotes: single quotes
+- Trailing commas: `all`
+- Print width: 100 characters
+- Tab width: 2 spaces
+- Arrow parens: always — `(x) => x`
+- Bracket spacing: enabled
+- End of line: `lf`
 
----
+**Linting (ESLint 10 — `eslint.config.js`):**
 
-## Error Handling Patterns
-
-- **Service layer:** Every Firestore service function wraps logic in `try/catch`, calls `handleFirestoreError(error, OperationType, context)`, then **re-throws** or returns a fallback value:
-  ```ts
-  try { /* firestore op */ }
-  catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, 'categories');
-    throw error;  // or return [] / null for read operations
-  }
-  ```
-- **Graceful degradation in reads:** `getCategories`, `getReviewsByProduct` return empty arrays (`[]`) or fallback data on error instead of throwing.
-- **Server (Express):** Routes use `try/catch` with `res.status(400|500).json({ error: error.message })`.
-- **Stripe webhooks:** Pattern of `try/catch` with `console.error` logging and `res.status(400).json({ error })`.
-- **No React Error Boundaries** found in the codebase (Sentry integration exists in `src/lib/sentry.ts` for crash reporting).
-- **Optional chaining** (`?.`) and nullish coalescing (`??`) are used throughout for safe property access.
-
----
+- TypeScript ESLint recommended rules applied
+- React hooks exhaustive-deps: `warn` (not error)
+- `@typescript-eslint/no-unused-vars`: `off` (codebase debt acknowledged)
+- `@typescript-eslint/no-explicit-any`: `off` (used freely in tests and wrappers)
+- `react-hooks/rules-of-hooks`: `warn`
+- Firebase security rules plugin: `@firebase/eslint-plugin-security-rules` (flat/recommended)
+- Run linting: `npm run lint` — runs `eslint src/ server/ && tsc --noEmit`
 
 ## Import Organization
 
-Import groups appear in this loose order (not enforced by tooling):
+**Order (observed pattern):**
 
-1. **React / React DOM** (or hooks from React)
-2. **Third-party UI libraries** (lucide-react, motion, react-router-dom, @google/model-viewer)
-3. **Project-internal modules** (sorted by `@/` alias):
-   - `@/components/*`
-   - `@/context/*`
-   - `@/hooks/*`
-   - `@/services/*`
-   - `@/lib/*`
-   - `@/types` or `@/types/*`
-4. **CSS** (typically `'./index.css'` in `main.tsx`)
+1. External library imports — `import React from 'react'`, `import { collection } from 'firebase/firestore'`
+2. Internal lib/config imports — `import { db, handleFirestoreError, OperationType } from '../lib/firebase'`
+3. Type imports — `import { Product, Category } from '../types'`
+4. Relative service/component imports — `import { recordPrice } from './priceHistoryService'`
 
-Relative imports (`../`) are used for sibling files within the same directory. Absolute `@/` imports are used for cross-module references.
+**Path Aliases:**
 
-There is no blank-line separation between groups enforced — imports are often clustered by proximity.
+- `@/` maps to `./src` — defined in `vite.config.ts` and `vitest.config.ts`
+- Example: `import { cn } from '@/lib/utils'`, `import type { Coupon } from '@/types'`
+- Use `@/` for cross-tree imports; relative paths for same-directory or parent imports
 
----
+**Type-only imports:**
 
-## React Patterns
+- Use `import type` for type-only imports: `import type { ProductCertificate } from '@/services/blockchainService'`
+- Test files freely mix `import type` with value imports
 
-- **Custom hooks:** Named with `use` prefix, placed in `src/hooks/`. Examples:
-  - `useComparison()` — module-level shared state (pub/sub pattern without Context)
-  - `useExchangeRate(pair)` — fetches exchange rates with mock fallback
-- **Context providers:** Defined in `src/context/`, following the pattern:
-  1. Create context: `const XxxContext = createContext<Type | undefined>(undefined)`
-  2. Provider component: `export function XxxProvider({ children }: { children: ReactNode })`
-  3. Consumer hook: `export function useXxx() { const ctx = useContext(XxxContext); if (!ctx) throw Error(...); return ctx; }`
-  - Contexts used: `LanguageProvider`, `ThemeProvider`, `AuthProvider`, `CartProvider`, `LocationProvider`, `WishlistProvider`, `FollowsProvider`, `NotificationProvider`.
-- **Module-level state:** `useComparison` uses module-level variables + listener set + `forceUpdate` pattern instead of Context, enabling cross-hook state sharing without nesting providers.
-- **Animations:** `motion` (framer-motion v12 via `motion/react`) for transitions, `AnimatePresence` for mount/unmount animations.
-- **Icons:** `lucide-react` for iconography.
-- **Routing:** `react-router-dom` v7 (`BrowserRouter`, `Routes`, `Route`).
-- **Helmet:** `react-helmet-async` for SEO meta tags.
-- **PWA:** `vite-plugin-pwa` with Workbox for service worker and offline support.
+## Error Handling
 
----
+**Service layer (Firestore):**
 
-## API Call Patterns
+- Wrap all Firestore calls in `try/catch`
+- On error: call `handleFirestoreError(error, OperationType.GET|WRITE|etc, 'collection/docId')` — defined in `src/lib/firebase.ts`
+- After calling `handleFirestoreError`, the function **throws** (for write operations) or returns a graceful fallback (for reads)
+- Read fallbacks: return `[]` or `null` — never throw from `getXxx` functions
+- Write operations: re-throw after `handleFirestoreError`
 
-- **Firebase Firestore (primary):** Direct Firestore SDK calls (`collection`, `addDoc`, `getDocs`, `doc`, `updateDoc`, `deleteDoc`, `query`, `where`, `orderBy`, `limit`, `serverTimestamp`, `runTransaction`) wrapped in service modules under `src/services/`. Examples: `productService.ts`, `reviewService.ts`, `orderService.ts`.
-- **REST API (secondary):** Some services use `fetch()` for backend API calls:
-  - `src/services/oneClickCheckoutService.ts` — calls `/api/create-setup-intent`, `/api/setup-payment-method`, `/api/one-click-checkout`
-  - Pattern: `const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(data) })`
-- **Server routes:** Express-based API in `server/`, e.g., `server/routes/stripe.ts`. Follows route registration pattern with dependency injection (deps object with `stripe`, `adminDb`, `verifyFirebaseToken`).
-- **Realtime subscriptions:** Firestore `onSnapshot` used for live data (e.g., `subscribeToProductReviews` in `reviewService.ts`).
+```typescript
+// Read: graceful fallback
+export async function getCart(userId: string): Promise<CartItem[]> {
+  try {
+    const snap = await getDoc(doc(db, 'carts', userId));
+    if (!snap.exists()) return [];
+    return snap.data().items ?? [];
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `carts/${userId}`);
+    return [];
+  }
+}
 
----
-
-## State Management Conventions
-
-- **React Context API** is the primary state management approach. No Redux, Zustand, or Jotai.
-- **Auth state:** Firebase Auth via `AuthContext`.
-- **Cart state:** `CartContext` with `addItem`, `removeItem` methods.
-- **i18n:** `LanguageContext` holds language selection and translation key-value pairs.
-- **Theme:** `ThemeContext` for dark/light mode.
-- **Module-level singleton state:** `useComparison` hook manages shared state at the module level (not in Context) using a listener-notify pattern.
-- **Server-side state:** Firebase Firestore is the source of truth for orders, products, reviews, categories, etc. — fetched on demand or subscribed to.
-
----
-
-## File Structure
-
+// Write: re-throw
+export async function createCoupon(data: Omit<Coupon, 'id'>): Promise<Coupon> {
+  try {
+    // ...
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'coupons');
+    throw error;
+  }
+}
 ```
-src/
-  App.tsx               — Root component, routing, context providers
-  main.tsx              — Entry point, Sentry + Analytics init
-  components/
-    ai/                 — ShoppingAssistant
-    chat/               — LiveChatWidget
-    checkout/           — Payment components
-    commerce/           — Product cards, recommendations, comparison, etc.
-    common/             — Breadcrumb, OptimizedImage, SEO, CookieConsent, etc.
-    home/               — Hero component
-    layout/             — Navbar, Footer, SellerLayout
-    location/           — DeliveryLocationSelector
-    marketing/          — CampaignBanner
-    product/            — Product gallery, reviews, Q&A, delivery box, etc.
-    profile/            — ProfileSettings, ReturnRequestModal, SavedPaymentMethod
-    seller/             — ProductForm, CSVImportPanel, BulkEditBar, CategorySelect, etc.
-    seo/                — JsonLd, schema.org types
-    ui/                 — Skeleton loaders, base UI primitives
-  context/              — React Context providers
-  hooks/                — Custom hooks
-  lib/                  — Firebase init, sentry, analytics, utils, validators
-  pages/                — Page-level components (Home, ProductDetail, Cart, etc.)
-  services/             — Firebase data access layer (40+ service modules)
-  test/                 — Test setup + miscellaneous tests
-  types/                — Additional type definitions (order.ts, etc.)
-  types.ts              — Core domain type definitions
+
+**Server (Express routes):**
+
+- `try/catch` blocks with `res.status(400|500).json({ error: error.message })`
+- Stripe webhooks: `try/catch` with `console.error` logging then `res.status(400).json({ error })`
+
+**React components:**
+
+- No React Error Boundaries in codebase (Sentry via `src/lib/sentry.ts` handles crash reporting)
+- Optional chaining `?.` and nullish coalescing `??` used throughout for safe property access
+
+## Logging
+
+**Framework:** `pino` (server-side) + `console` (client-side)
+
+**Patterns:**
+
+- Service errors: `console.error('[serviceName] error description:', error)` — e.g. `[orderService] subscribeOrdersBySeller error:`
+- Service warnings: `console.warn('[productService] Some filters could not be pushed to Firestore...')`
+- Firebase connection: `console.log('Firebase connection established.')` in `src/lib/firebase.ts`
+- No structured logging from React components; rely on Sentry for error capture
+
+## Comments
+
+**When to Comment:**
+
+- JSDoc `/** ... */` blocks on exported service functions explaining intent — e.g. `productService.ts` documents Firestore vs client-side filter split
+- Inline section dividers using `// ── Section Name ──────` (em-dash style) in test files
+- `// NOTE:` prefix for known limitations and deferred work — e.g. composite index warnings
+- Block comments for non-obvious query constraints and their tradeoffs
+
+**JSDoc/TSDoc:**
+
+- Used selectively on exported service functions, not on every function
+- Focus on "why" (Firestore constraints, tradeoffs) rather than "what"
+
+## Function Design
+
+**Size:** Service functions are typically 20–50 lines. No strict limit enforced.
+
+**Parameters:** Options objects with optional fields preferred for multi-param functions — e.g. `GetProductsOptions` interface in `src/services/productService.ts`.
+
+**Return Values:**
+
+- Async service functions: `Promise<T>` for writes, `Promise<T | T[]>` for reads
+- Boolean predicates: return `boolean` directly — `isFiniteNumber`, `isNonEmptyString`
+- Unsubscribe pattern: real-time subscriptions return `() => void` — e.g. `subscribeOrdersBySeller`
+
+## Module Design
+
+**Exports:**
+
+- Named exports dominant: `export function`, `export interface`, `export type`
+- Default exports rare and discouraged — only present in `SellerLayout`, `SellerAnalytics`
+- No barrel `index.ts` files — import components and services by full path
+
+**Component props:**
+
+- Local `interface Props` declared immediately above the component
+- Destructured in the function signature: `export function Breadcrumb({ items, className, light = false }: Props)`
+
+## TypeScript Patterns
+
+**Strict mode:** Enabled in `tsconfig.json`
+
+**Interface vs Type:**
+
+- `interface` for object shapes and props
+- `type` for unions, aliases, and complex/computed types
+
+**Enums:**
+
+- `enum OperationType` in `src/lib/firebase.ts` — used throughout all service files
+
+**`any` usage:**
+
+- `any` is used in test mocks, Express request type augmentation, and Firebase wrapper parameters
+- ESLint `no-explicit-any` is turned off — not enforced
+
+**Module system:** ESM (`"type": "module"` in `package.json`); CJS wrapper only for iyzico via `server/iyzico.cjs`
+
+## State Management Patterns
+
+**React Context API — standard pattern (`src/context/`):**
+
+```typescript
+// 1. Type the context
+interface AuthContextType {
+  user: UserProfile | null;
+  loading: boolean; /* ... */
+}
+
+// 2. Create context with undefined default
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// 3. Provider component with named export
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  /* ... */
+}
+
+// 4. Custom hook that throws if used outside provider
+export function useAuth(): AuthContextType {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+  return ctx;
+}
 ```
+
+**Module-level singleton state (alternative to Context):**
+
+- Used in `src/hooks/useComparison.ts` for comparison feature
+- Module-level `let items` + `Set<() => void>` listener pattern
+- `forceUpdate` via `useState(0)` counter to trigger re-renders
+- Appropriate for cross-component state that doesn't need React tree lifecycle
+
+---
+
+_Convention analysis: 2026-06-08_

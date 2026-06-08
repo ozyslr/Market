@@ -1,245 +1,283 @@
-# Benim Olan -- Architecture Overview
+<!-- refreshed: 2026-06-08 -->
 
-**Date:** 2026-05-31
-**Project:** Benim Olan (Global Artisan Marketplace)
+# Architecture
 
----
+**Analysis Date:** 2026-06-08
 
-## 1. Overall Architectural Pattern
+## System Overview
 
-This is a **client-server SPA (Single Page Application)** with **server-side rendering support via Vite middleware** during development. The architecture uses a **monolithic server** that serves both the API and the frontend build output from the same Express process.
-
-- **Frontend:** React 19 SPA built with Vite 6, delivered by the Express server.
-- **Backend:** Express.js (Node.js) running on port 3000.
-- **Database:** Firebase Firestore (NoSQL) accessed both from the client (via `firebase` SDK) and the server (via `firebase-admin` SDK).
-- **Authentication:** Firebase Auth (Google OAuth + email/password).
-- **Payments:** Stripe (primary, full PCI-compliant) + Iyzico (Turkish market, sandbox).
-- **i18n:** Multi-language (TR, EN, DE, AR) with RTL support for Arabic.
-
----
-
-## 2. Frontend-Backend Communication
-
-Two communication patterns coexist:
-
-### Pattern A: Direct Firestore Access (Client-Side)
-The React app reads/writes Firestore directly using the `firebase` client SDK (`src/lib/firebase.ts`). This is used for most data operations: products, reviews, cart, user profiles, seller data. All service files in `src/services/` use this pattern:
-
-```
-React Component --> src/services/xxxService.ts --> Firebase Firestore SDK --> Firestore
-```
-
-### Pattern B: Server REST API (Express Routes)
-The server exposes RESTful JSON endpoints mounted under `/api/`. These handle operations requiring server-side secrets or processing:
-
-| Endpoint | Purpose |
-|---|---|
-| `POST /api/create-payment-intent` | Stripe payment creation |
-| `POST /api/create-setup-intent` | Stripe card saving setup |
-| `POST /api/setup-payment-method` | Attach Stripe card to customer |
-| `POST /api/one-click-checkout` | One-click checkout using saved card |
-| `GET /api/payment-methods` | List saved Stripe cards |
-| `DELETE /api/payment-methods/:id` | Remove saved card |
-| `PATCH /api/payment-methods/default` | Set default card |
-| `POST /api/webhook` | Stripe webhook (raw body) |
-| `POST /api/iyzico/init` | Iyzico payment init |
-| `POST /api/iyzico/check` | Iyzico payment check |
-| `POST /api/abandoned-cart/check` | Abandoned cart email cron |
-| `POST /api/send-push` | Push notification sending |
-| `POST /api/process-scheduled-payouts` | Seller payout processing |
-| `GET /api/health` | Health check |
-| `GET /api/v1/*` | Seller REST API (API-key auth) |
-| `GET /api/v1/` | Seller API info |
-
-The React services layer uses **Axios** (`axios` library) to call these endpoints when server-side processing is needed (typically in `src/services/` files or directly from components).
-
-### Pattern C: Seller REST API
-Third-party/automated seller access via `GET /api/v1/*` with API key authentication (`Bearer bo_<api_key>`). Supports product CRUD, inventory batch updates, and order queries with per-endpoint rate limiting.
-
----
-
-## 3. Architectural Layers
-
-### Presentation Layer
-- **Pages** (`src/pages/`): 65+ page components each mapping to a React Router route. Covers buyer (Home, ProductDetail, Cart, Checkout, etc.), seller (Dashboard, Inventory, Orders, Finance, etc.), and admin (Dashboard, Products, Users, CMS, etc.) flows.
-- **Components** (`src/components/`): Reusable UI components organized by domain:
-  - `layout/` -- Navbar, Footer, MobileMenu, MegaMenu, SearchBar, AuthModal, etc.
-  - `location/` -- DeliveryLocationSelector with province/district cascade.
-  - `commerce/` -- ProductCard, ProductCarousel, FilterPanel, ComparisonBar, StoryBar, ARViewer, etc.
-  - `product/` -- ProductGallery, ReviewCard, RatingSummary, DeliveryBox, InstallmentTable, etc.
-  - `checkout/` -- IyzicoPayment, ManualPayment, PaymentMethodSelector, OneClickSuccessModal.
-  - `common/` -- SEO, Breadcrumb, OptimizedImage, ScrollToTop, CookieConsent, SkipToContent.
-  - `home/` -- Hero component.
-  - `ai/` -- ShoppingAssistant (AI chat integration).
-  - `chat/` -- LiveChatWidget.
-  - `profile/` -- ProfileSettings, ReturnRequestModal, SavedPaymentMethod.
-  - `seller/` -- ProductForm, CSVImportPanel, BulkEditBar, CategorySelect, etc.
-  - `seo/` -- JsonLd structured data, schema.org types.
-  - `ui/` -- Skeleton loaders.
-  - `marketing/` -- CampaignBanner.
-
-### Business Logic / State Management Layer
-- **React Contexts** (`src/context/`): 8 context providers manage global state:
-  1. `AuthContext` -- user session, Firebase Auth integration, user profile CRUD
-  2. `CartContext` -- shopping cart with Firestore persistence and debounced saves
-  3. `WishlistContext` -- wishlist/favorites
-  4. `FollowsContext` -- seller following
-  5. `NotificationContext` -- in-app notifications
-  6. `LanguageContext` -- i18n + RTL direction + translations
-  7. `ThemeContext` -- visual theming
-  8. `LocationContext` -- user location/delivery region
-- **Providers** are nested in `App.tsx` in a specific order: SentryErrorBoundary > ThemeProvider > AuthProvider > CartProvider > WishlistProvider > FollowsProvider > NotificationProvider > LanguageProvider > LocationProvider > Router.
-- **Hooks** (`src/hooks/`): Custom React hooks (`useComparison`, `useExchangeRate`, `useOneClickCheckout`).
-
-### Data Access / Service Layer
-- **Services** (`src/services/`): ~55 service modules encapsulating Firestore read/write operations:
-  - `productService.ts` -- product CRUD, search, filtering
-  - `orderService.ts` -- order lifecycle
-  - `reviewService.ts` -- reviews and ratings
-  - `cartService.ts` -- cart persistence
-  - `adService.ts` -- CPC advertising engine
-  - `searchService.ts` -- product search
-  - `campaignService.ts` -- campaign management
-  - `sellerService.ts` -- seller operations
-  - Plus: finance, cargo, notification, email, invoice, loyalty, blockchain, coupon, commission, dynamic pricing, CSV import, etc.
-- **Lib** (`src/lib/`): Shared utilities and configurations:
-  - `firebase.ts` -- Firebase client SDK initialization + custom `FirestoreError` class
-  - `firebase-admin.ts` -- Server-side Firebase Admin SDK (lazy loaded, base64-encoded service account)
-  - `authMiddleware.ts` -- Express middleware for Firebase token verification + admin check
-  - `serverValidators.ts` -- `isFiniteNumber`, `isNonEmptyString`, `itemsSignature` helpers
-  - `analytics.ts` -- Google Analytics integration
-  - `sentry.ts` -- Sentry error tracking
-  - `gemini.ts` -- Google Gemini AI integration
-  - `taxEngine.ts` -- VAT/customs/handling fee calculation
-  - `turkeyLocations.ts` -- Turkish province/district data
-  - `csvTemplate.ts` -- CSV import templates
-  - `storage.ts` -- Firebase Storage helper
-  - `utils.ts` -- `cn()` class merge utility
-- **Server Lib** (`server/lib/`): Validation utilities:
-  - `validate.ts` -- Zod-based request body validation middleware factory
-  - `schemas.ts` -- Shared Zod schemas for payment, auth, and seller API validation
-
----
-
-## 4. State Management Approach
-
-The project uses **React Context exclusively** for state management (no Redux, Zustand, or other external state libraries). Each context:
-
-- Provides its own `Provider` component wrapping children in `App.tsx`.
-- Exports a custom `useXxx()` hook that wraps `useContext(XxxContext)`.
-- Persists state to Firestore where appropriate (CartContext debounces saves to Firestore; AuthContext reads user profile from Firestore).
-- Uses `localStorage` for lightweight persistence (language preference via `LanguageContext`).
-
----
-
-## 5. Routing Structure
-
-### React Router (Client-Side)
-Defined in `src/App.tsx` using `react-router-dom` v7:
-
-- **Seller Layout Route Group** (`/seller/*`): Uses `SellerLayout` component (no Navbar/Footer), nested routes:
-  - `/seller/dashboard`, `/seller/inventory`, `/seller/orders`, `/seller/finance`, `/seller/settings`, `/seller/import`, `/seller/pricing`, `/seller/analytics`, `/seller/certificates`, `/seller/coupons`, `/seller/performance`, `/seller/invoices`, `/seller/price-analysis`, `/seller/api-keys`
-
-- **Main Layout Route Group** (uses `MainLayout` wrapping children with Navbar + Footer):
-  - `/` -- Home
-  - `/product/:slug` -- Product Detail
-  - `/cart` -- Cart
-  - `/checkout` -- Checkout
-  - `/moderator` -- Moderator Dashboard
-  - `/seller/:id` -- Seller Store
-  - `/search` -- Search Results
-  - `/category/:id` -- Category Page
-  - `/collection/:type` -- Collection Page
-  - `/profile` -- User Profile
-  - `/admin` -- Admin Dashboard
-  - `/admin/categories` -- Admin Categories
-  - `/admin/seller/:sellerId` -- Admin Seller View
-  - `/sell` -- Sell On Benim Olan
-  - `/sell/apply` -- Seller Application
-  - `/wishlist` -- Wishlist
-  - `/order-tracking` -- Order Tracking
-  - `/product-verification` -- Product Verification
-  - `/support` -- User Support
-  - `/visual-search` -- Visual Search
-  - `*` -- 404 NotFound
-
-### Server-Side Catch-All
-Express serves all unmatched routes (`app.get('*')`) with the SPA's `index.html`, enabling client-side routing.
-
----
-
-## 6. Data Flow Patterns
-
-### Typical Read Flow
-```
-React Component → useXxx() hook → Context Provider → xxxService → Firebase Firestore (read)
-                                                    ↕ (optional)
-                                                Axios → Express API → firebase-admin → Firestore
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        Browser / PWA (React 19 SPA)                         │
+│  Buyer Flow         Seller Panel          Admin Panel                        │
+│  `src/pages/`       `src/pages/Seller*`   `src/pages/Admin*`                │
+└──────────┬──────────────────┬─────────────────────┬───────────────────────-─┘
+           │ Direct Firestore │ REST API calls        │ REST API + Firestore
+           │ SDK calls         │ fetch() / axios       │
+           ▼                  ▼                       ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                   Express Server — `server.ts` (port 3000)                   │
+│  Routes: Stripe, Iyzico, Orders, Reviews, Commission, Payouts, Finance,      │
+│          Email, Refund, CSV, Shipping, Returns, Gemini, Seller API v1,       │
+│          FxRates, Typesense Sync, Carrier Webhook/Poll                        │
+│  `server/routes/*.ts`                                                        │
+│  Auth: Firebase custom claims via `src/lib/authMiddleware.ts`                │
+└──────────┬───────────────────────────────┬───────────────────────────────────┘
+           │ firebase-admin SDK             │ stripe / iyzipay SDKs
+           ▼                               ▼
+┌──────────────────────┐    ┌─────────────────────────────┐
+│   Firebase Firestore │    │   Stripe / Iyzico           │
+│   Firebase Auth      │    │   (Payment Processing)      │
+│   Firebase Storage   │    └─────────────────────────────┘
+│   (Source of truth)  │
+└──────────────────────┘
+           ▲
+           │ firebase client SDK (browser-direct reads/writes)
+           │
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  Service Layer — `src/services/*.ts`                                         │
+│  ~70 modules wrapping Firestore SDK: productService, orderService,           │
+│  reviewService, sellerStoreService, couponService, fraudDetectionService…    │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Typical Write Flow (e.g., placing an order)
-```
-Checkout Page → CartContext → cartService (reads cart)
-             → Payment component → Express API → Stripe/Iyzico SDK
-             → orderService → Firestore (writes order)
-```
+## Component Responsibilities
 
-### Real-time Updates
-- Firebase `onAuthStateChanged` listener in `AuthContext` for session persistence.
-- Notifications and chat may use Firebase real-time listeners (not fully verified).
+| Component            | Responsibility                                                             | File                                  |
+| -------------------- | -------------------------------------------------------------------------- | ------------------------------------- |
+| Express Server       | HTTP entry point, API routes, Vite middleware in dev                       | `server.ts`                           |
+| React Entry          | DOM root creation, Sentry init, analytics init, SW registration            | `src/main.tsx`                        |
+| App Root             | Provider hierarchy + React Router configuration                            | `src/App.tsx`                         |
+| AuthContext          | Firebase Auth state, anonymous auth, token refresh                         | `src/context/AuthContext.tsx`         |
+| CartContext          | Cart state, Firestore persistence with debounce                            | `src/context/CartContext.tsx`         |
+| LanguageContext      | i18n (TR/EN/DE/AR), RTL support, localStorage persistence                  | `src/context/LanguageContext.tsx`     |
+| ThemeContext         | Dark/light mode toggle                                                     | `src/context/ThemeContext.tsx`        |
+| CurrencyContext      | Active currency, FX rate lookup                                            | `src/context/CurrencyContext.tsx`     |
+| WishlistContext      | Wishlist items, Firestore persistence                                      | `src/context/WishlistContext.tsx`     |
+| FollowsContext       | Seller follow state                                                        | `src/context/FollowsContext.tsx`      |
+| NotificationContext  | In-app notification state                                                  | `src/context/NotificationContext.tsx` |
+| LocationContext      | User location for delivery filtering                                       | `src/context/LocationContext.tsx`     |
+| productService       | Firestore CRUD for product catalog                                         | `src/services/productService.ts`      |
+| orderService         | Order creation, status, Firestore transactions                             | `src/services/orderService.ts`        |
+| reviewService        | Reviews, real-time subscription via onSnapshot                             | `src/services/reviewService.ts`       |
+| authMiddleware       | Express role-based guard factory (buyer/seller/admin)                      | `src/lib/authMiddleware.ts`           |
+| firebase.ts (client) | Firebase SDK init, `db`, `auth`, `storage` exports, `handleFirestoreError` | `src/lib/firebase.ts`                 |
+| firebase-admin.ts    | Firebase Admin SDK init, `adminDb`, `adminAuth` exports                    | `src/lib/firebase-admin.ts`           |
+| serverValidators     | Pure validation helpers, idempotency signature                             | `src/lib/serverValidators.ts`         |
+| stripe routes        | All Stripe endpoints + raw-body webhook                                    | `server/routes/stripe.ts`             |
+| iyzico routes        | Turkish market payment init/check                                          | `server/routes/iyzico.ts`             |
+| sellerApi routes     | API-key-authenticated `/api/v1/*` REST API                                 | `server/routes/sellerApi.ts`          |
+| paymentProvider      | `IPaymentProvider` interface, `IyzicoProvider`, `StripeConnectProvider`    | `server/services/paymentProvider.ts`  |
+| logger               | Pino-based structured logger + pino-http Express middleware                | `server/logger.ts`                    |
+
+## Pattern Overview
+
+**Overall:** Layered Monolith — Single Express server serves both the React SPA and REST APIs, backed by Firebase as the sole data store.
+
+**Key Characteristics:**
+
+- React SPA with route-level code-splitting via `React.lazy` and `Suspense`
+- Direct client-to-Firestore reads (browser SDK) for most catalog/user data
+- Server API layer for payment-sensitive and privileged operations
+- Context API (no Redux/Zustand) for all client-side global state
+- Firebase custom claims for role checks — zero Firestore reads per auth guard
+
+## Layers
+
+**Presentation Layer:**
+
+- Purpose: UI rendering, routing, user interactions
+- Location: `src/pages/`, `src/components/`
+- Contains: 70+ lazy-loaded page components, domain-grouped UI components
+- Depends on: Context layer, Service layer, React Router
+- Used by: Browser / PWA
+
+**Context / State Layer:**
+
+- Purpose: Global client-side state management
+- Location: `src/context/`
+- Contains: 9 React Context providers (Auth, Cart, Wishlist, Follows, Notification, Language, Currency, Theme, Location)
+- Depends on: Service layer, Firebase client SDK
+- Used by: All page and component code
+
+**Service Layer (Client):**
+
+- Purpose: Encapsulate all Firestore read/write operations from the browser
+- Location: `src/services/`
+- Contains: ~70 service modules, each domain-focused
+- Depends on: `src/lib/firebase.ts` (db/storage), `src/types.ts`
+- Used by: Context providers and page components
+
+**Library / Shared Utilities:**
+
+- Purpose: Cross-cutting concerns (auth, validation, error handling, analytics, i18n data)
+- Location: `src/lib/`
+- Contains: `firebase.ts`, `firebase-admin.ts`, `authMiddleware.ts`, `serverValidators.ts`, `sentry.ts`, `analytics.ts`, `gemini.ts`, `utils.ts`, `taxEngine.ts`, `rateLock.ts`
+- Depends on: External SDKs
+- Used by: Services, server routes, context providers
+
+**API / Server Layer:**
+
+- Purpose: Privileged operations requiring server-side secrets (payments, admin tasks, webhooks)
+- Location: `server/routes/`, `server/services/`, `server/lib/`
+- Contains: 18 route modules, server-side services (ledger, payout, KYC, commission, email)
+- Depends on: `firebase-admin` SDK, Stripe SDK, Iyzico SDK
+- Used by: React frontend via `fetch()` / `axios`
+
+**Mobile Layer:**
+
+- Purpose: React Native companion app (Expo)
+- Location: `mobile/`
+- Contains: Screens, navigation, Firebase client, Zustand-based cart store
+- Depends on: Same Firebase project as web; standalone auth and API calls
+
+## Data Flow
+
+### Typical Read Flow (catalog data)
+
+1. Page component mounts, calls service function (`getProducts(options)`) — `src/services/productService.ts`
+2. Service executes Firestore query via client SDK (`getDocs`, `query`, `where`, `orderBy`) — `src/lib/firebase.ts` → `db`
+3. Result typed against `Product` interface from `src/types.ts`
+4. Page component stores result in local `useState`, renders
+
+### Typical Write Flow (placing an order)
+
+1. `CheckoutPage` collects cart + address + payment method — `src/pages/Checkout.tsx`
+2. Payment intent created via `POST /api/create-payment-intent` with Firebase ID token in `Authorization` header
+3. `verifyFirebaseToken` middleware decodes token — `src/lib/authMiddleware.ts`
+4. Server route creates Stripe PaymentIntent, validates prices against Firestore — `server/routes/stripe.ts`
+5. On Stripe confirmation, `POST /api/webhook` fires (raw body); server creates order documents in Firestore via Admin SDK
+6. Client reads updated order from Firestore via `src/services/orderService.ts`
+
+### Real-time Subscription Flow
+
+1. Component calls `subscribeToProductReviews(productId, callback)` — `src/services/reviewService.ts`
+2. Firestore `onSnapshot` listener attaches; any write to the reviews collection triggers callback
+3. Component updates state and re-renders
+4. Cleanup: unsubscribe function returned and called in `useEffect` cleanup
+
+### Seller API Flow (external integrations)
+
+1. Third-party system sends `GET /api/v1/products` with `Authorization: Bearer bo_<key>`
+2. `sellerApi` router extracts key, hashes with SHA-256, compares against Firestore `apiKeys` collection — `server/routes/sellerApi.ts`
+3. Firestore-backed rate limit checked per permission bucket
+4. Response returns seller's own products/orders only (scoped by `sellerId`)
+
+**State Management:**
+
+- React Context API is the sole client state mechanism
+- No Redux, Zustand, or Jotai in the web frontend (mobile uses Zustand for cart — `mobile/src/context/cartStore.ts`)
+- Firestore is the source of truth; contexts sync on auth change or explicit refresh
+
+## Key Abstractions
+
+**IPaymentProvider:**
+
+- Purpose: Abstraction over Stripe and Iyzico for unified checkout
+- Examples: `server/services/paymentProvider.ts`
+- Pattern: Interface `IPaymentProvider` with `initCheckout()` / `checkPayment()` methods; `IyzicoProvider` and `StripeConnectProvider` are concrete implementations
+
+**handleFirestoreError:**
+
+- Purpose: Translate raw Firestore errors into structured `FirestoreError` with `OperationType` context
+- Examples: `src/lib/firebase.ts` (exported), used in all service modules
+- Pattern: `try/catch` in every service function, calls `handleFirestoreError(error, OperationType.X, collectionPath)`, then re-throws or returns fallback
+
+**AuthMiddlewares factory:**
+
+- Purpose: Create Express middleware set for role-based route protection using Firebase custom claims
+- Examples: `src/lib/authMiddleware.ts`
+- Pattern: `createAuthMiddlewares(adminAuth)` returns `{ verifyFirebaseToken, verifyAdmin, verifySeller, verifyBuyer, verifyCronSecret, requireAdminRole }`
+
+**named() / defaultPage() lazy loaders:**
+
+- Purpose: Route-level code splitting while preserving named exports (React.lazy requires default exports)
+- Examples: `src/App.tsx` lines 39-45
+- Pattern: `named(() => import('./pages/Foo'), 'Foo')` wraps named export in default for lazy loading
+
+**Route guards:**
+
+- Purpose: Protect seller/admin/moderator routes at the React Router level
+- Examples: `src/components/auth/AdminRoute.tsx`, `SellerRoute.tsx`, `ModeratorRoute.tsx`
+- Pattern: Component wraps children, checks `user.role` from AuthContext, redirects if unauthorized
+
+## Entry Points
+
+**Server Entry:**
+
+- Location: `server.ts` (project root)
+- Triggers: `tsx server.ts` (dev) / `node server.js` (prod)
+- Responsibilities: Creates Express app, registers all route modules, attaches Vite dev middleware in development, serves static dist in production, listens on port 3000
+
+**Build Entry:**
+
+- Location: `vite.config.ts` (project root)
+- Triggers: `vite build`
+- Responsibilities: Bundles React SPA with manual chunk splitting (vendor-react, vendor-firebase, vendor-firebase-firestore, vendor-charts, vendor-motion, vendor-stripe, vendor-dnd, vendor-three, vendor-ui, vendor-utils)
+
+**React Entry:**
+
+- Location: `src/main.tsx`
+- Triggers: Browser loads `index.html`
+- Responsibilities: `initSentry()`, `initAnalytics()`, `registerSW()`, creates React DOM root in StrictMode
+
+**App Root:**
+
+- Location: `src/App.tsx`
+- Triggers: Rendered by `src/main.tsx`
+- Responsibilities: Nested provider hierarchy + `BrowserRouter` + `Routes` configuration
+
+## Architectural Constraints
+
+- **Threading:** Single-threaded Node.js event loop. No worker threads. Heavy computation (CSV import, price analysis) is synchronous in the request/response cycle.
+- **Global state:** Module-level singletons — `db`, `auth`, `storage` in `src/lib/firebase.ts`; `adminDb`, `adminAuth` in `src/lib/firebase-admin.ts`; lazy iyzico SDK `iyzicoSdk` in `server.ts`. `useComparison` hook uses module-level variable + listener set.
+- **Circular imports:** `src/lib/firebase.ts` is imported by virtually every service. Services must not import from pages or components.
+- **Client-direct Firestore:** Browser writes directly to Firestore for many operations (cart, wishlist, reviews). Firestore security rules (`firestore.rules`) are the enforcement layer — server rules are not a substitute.
+- **Stripe webhook ordering:** `registerStripeWebhook` (raw body parser) must be called before `express.json()` middleware in `server.ts`. This is enforced by registration order.
+- **Iyzico SDK CJS compatibility:** `server/iyzico.cjs` is a CommonJS wrapper loaded lazily via dynamic `import()` to maintain ESM compatibility throughout the rest of the codebase.
+
+## Anti-Patterns
+
+### Mock Data in Production Code
+
+**What happens:** `src/services/productService.ts` imports `MOCK_PRODUCTS` and `CATEGORIES` from `src/mockData` and falls back to them when Firestore is unavailable.
+**Why it's wrong:** Mock data can appear in production if Firestore connectivity fails, causing confusing UX and inconsistent product IDs.
+**Do this instead:** Return an empty array and surface an error state to the UI. Remove the mock fallback from `productService.ts`.
+
+### Duplicate Route Definitions
+
+**What happens:** `/seller/coupons` is registered twice in `src/App.tsx` (lines 215 and 223) — once for `SellerCouponsPage` (CouponManager) and once for `SellerCoupons`.
+**Why it's wrong:** React Router uses the first match; the second route is dead code and causes confusion.
+**Do this instead:** Use distinct paths (`/seller/coupons` and `/seller/promotions`) or remove the duplicate.
+
+### Admin SDK in Shared Validator Path
+
+**What happens:** `src/lib/serverValidators.ts` is imported by both `server.ts` (Node) and indirectly through shared types. The file itself is clean, but it lives under `src/lib/` alongside client-only Firebase config.
+**Why it's wrong:** Mixing server-only utilities and client-only utilities in the same `src/lib/` directory creates import confusion.
+**Do this instead:** Keep `server/lib/` for all server-exclusive utilities. `src/lib/serverValidators.ts` should move to `server/lib/serverValidators.ts`.
+
+## Error Handling
+
+**Strategy:** Try/catch at service boundaries; structured error propagation; Sentry for production crash reporting.
+
+**Patterns:**
+
+- Service functions: `try/catch` → `handleFirestoreError(error, OperationType, path)` → re-throw or return empty/fallback — `src/lib/firebase.ts`
+- Express routes: `try/catch` → `res.status(400|500).json({ error: error.message })`
+- Stripe webhook: `try/catch` → `console.error` + `res.status(400).json({ error })`
+- Client rendering: `Sentry.ErrorBoundary` at `App.tsx` root (no other error boundaries)
+- Token errors: `onIdTokenChanged` in `AuthContext` surfaces token failures as `tokenError` string, displayed by `TokenErrorBanner` component
+
+## Cross-Cutting Concerns
+
+**Logging:** Pino structured logger (`server/logger.ts`) for server; `console.*` for client. HTTP requests logged via `pino-http` middleware.
+**Validation:** Zod schemas in `server/lib/schemas.ts` + pure validators in `src/lib/serverValidators.ts`. Client-side form validation is ad-hoc per component.
+**Authentication:** Firebase Auth (Google OAuth + email/password + anonymous). Server routes verified via Bearer token + `verifyFirebaseToken`. Role enforcement via Firebase custom claims.
+**i18n:** Four locale JSON files in `src/i18n/` (tr.json, en.json, de.json, ar.json). `LanguageContext` resolves keys. RTL layout toggled for Arabic.
+**SEO:** `react-helmet-async` in page components; `SEO` utility component in `src/components/common/SEO.tsx`; sitemap generated by `scripts/generate-sitemap.mjs`.
+**Analytics:** Google Analytics / custom analytics via `src/lib/analytics.ts`; consent-gated in `MainLayout`.
+**PWA:** Workbox service worker via `vite-plugin-pwa`; offline banner via `src/services/offlineService.tsx`.
 
 ---
 
-## 7. Entry Points
-
-| Entry | File | Purpose |
-|---|---|---|
-| **Server** | `server.ts` (root) | Express server, loads Vite middleware, registers all API + webhook routes. Started via `tsx server.ts`. |
-| **Build Entry** | `vite.config.ts` (root) | Vite build configuration with React, Tailwind CSS v4, PWA plugins. |
-| **React Entry** | `src/main.tsx` | React DOM root creation. Calls `initSentry()`, `initAnalytics()`, `registerSW()`. |
-| **App Root** | `src/App.tsx` | Provider hierarchy and router configuration. |
-
----
-
-## 8. Key Abstractions and Shared Modules
-
-### Server-Side Validators (`src/lib/serverValidators.ts`)
-Lightweight validation utilities (`isFiniteNumber`, `isNonEmptyString`, `itemsSignature`) used across Express route handlers to sanitize request bodies.
-
-### Auth Middleware (`src/lib/authMiddleware.ts`)
-Generates `verifyFirebaseToken` and `verifyAdmin` Express middleware functions that decode Firebase ID tokens from the `Authorization` header and attach `req.uid`.
-
-### Firestore Error Handling (`src/lib/firebase.ts`)
-Custom `FirestoreError` class with `FirestoreErrorInfo` interface, sanitizing error messages in production while preserving debug info internally.
-
-### Seller API Authentication
-API keys (prefixed `bo_`) validated against the `apiKeys` Firestore collection with per-permission rate limiting (`products:read`, `products:write`, etc.).
-
-### Payment Abstractions
-- `server/routes/stripe.ts` -- All Stripe endpoints + webhook handling in one module. Exports `registerStripeWebhook` (raw body, must register first) and `registerStripeRoutes` (JSON body).
-- `server/routes/iyzico.ts` -- Iyzico Turkish payment gateway endpoints.
-- `server/iyzico.cjs` -- Lazy-loaded Iyzico SDK wrapper.
-
----
-
-## 9. Key Technologies
-
-| Technology | Version | Usage |
-|---|---|---|
-| React | 19.2 | UI framework |
-| React Router | 7.15 | Client-side routing |
-| Vite | 6.2 | Build tool + dev server |
-| Express | 4.21 | HTTP server + API |
-| Firebase | 12.13 | Auth + Firestore + Storage |
-| Firebase Admin | 13.10 | Server-side Firestore access |
-| Stripe | 22.1 | Payment processing |
-| Tailwind CSS | 4.3 | Utility-first CSS |
-| TypeScript | 5.8 | Type safety |
-| Sentry | 10.53 | Error monitoring |
-| Google Gemini | 1.29 | AI features |
-| Vitest | 4.1 | Unit testing |
-| Playwright | 1.60 | E2E testing |
-| Recharts | 3.8 | Charts (seller analytics) |
-| Lucide React | 0.54 | Icon library |
-| Motion (Framer Motion) | 12.40 | Animations |
-| DnD Kit | 6.3 | Drag-and-drop |
+_Architecture analysis: 2026-06-08_

@@ -1,233 +1,388 @@
 # Codebase Concerns
 
-**Date:** 2026-05-31
-**Scope:** Full codebase audit covering `src/`, `server/`, and root config
-**Source:** 215 TypeScript/TSX files, 50,302 total lines across `src/` (49,275) and `server/` (1,027)
+**Analysis Date:** 2026-06-08
 
 ---
 
-## 1. Technical Debt
+## Tech Debt
 
-### Critical
+### Mock Data Leaked into Production Code Paths
 
-- **`src/mockData.ts` -- 3,735 lines of inline mock data (7.6% of all `src/` code).** Contains hardcoded sellers, products, reviews, categories, and user profiles. Blots dev bundle, makes test data inseparable from app logic. ✅ **RESOLVED** (2026-05-31) — Refactored to external files in `src/data/`. Now 10 lines (barrel re-export).
+**Issue:** `MOCK_PRODUCTS` (2,832-line fixture), `MOCK_SELLERS`, `MOCK_CATEGORIES`, and `MOCK_USER` are imported directly in production pages and services. These are not just for tests — they are imported and rendered on live pages.
 
-- **`src/context/LanguageContext.tsx` -- 1,434 lines with inline translations for 6 locales.** Translation strings for tr/en/ar/de/fr/es are embedded directly in the component. Should be external JSON files loaded lazily by locale. ✅ **RESOLVED** (2026-05-31) — Translations extracted to per-locale `.ts` files in `src/i18n/`. Now 102 lines.
+**Files:**
 
-### High
+- `src/pages/Home.tsx` — initialises `products` state with `MOCK_PRODUCTS`, renders `MOCK_PRODUCTS.slice(0, 20)` as "Senin İçin Seçtiklerimiz"
+- `src/pages/Cart.tsx` — resolves cart items via `MOCK_PRODUCTS.find()`; "Suggested" row uses `MOCK_PRODUCTS.slice(4, 6)`
+- `src/pages/Checkout.tsx` — builds checkout product list from `MOCK_PRODUCTS.find()`
+- `src/pages/ProductDetail.tsx` — related products, "bought together", and seller products all sourced from `MOCK_PRODUCTS`
+- `src/pages/SearchResults.tsx` — falls back to `MOCK_PRODUCTS` during search
+- `src/pages/AdminSellers.tsx` (line 84) — falls back to `MOCK_SELLERS` when Firestore returns empty
+- `src/pages/AdminCMS.tsx` — category items from `MOCK_CATEGORIES`
+- `src/services/botService.ts`, `src/services/campaignService.ts`, `src/services/moderationService.ts`, `src/services/searchService.ts` — use `MOCK_PRODUCTS` as data source
+- `src/components/layout/SearchBar.tsx` — autocomplete shows `MOCK_PRODUCTS.slice(0, 4)` when no real results
+- `src/hooks/useExchangeRate.ts` — falls back to hardcoded rates (`USD/TRY: 32.12` etc.) if `VITE_EXCHANGE_RATE_API_KEY` absent
 
-- **No formatter configured.** ❌ **HALF-RESOLVED** — `.prettierrc.json` added (2026-05-31). No `format` script in `package.json` yet.
+**Impact:** Users see fake/sample products in live flows. Admin seller list may show mock sellers. Cart and checkout pricing may reference non-Firestore prices. Any order placed from a mock product will have incorrect data.
 
-- **`lint` script is `tsc --noEmit` only.** ❌ **HALF-RESOLVED** — `.eslintrc.json` added (2026-05-31) with ESLint configuration, but wire-up to `lint` script is incomplete.
-
-- **34 packages misplaced in `dependencies` vs `devDependencies`.** ✅ **RESOLVED** (2026-06-01) — All build/lint/type tooling already in devDependencies. Only misplaced package was `@testing-library/dom` (test utility), moved to devDependencies. The listed server packages (`cors`, `express`, `helmet`, etc.) are correctly in `dependencies` as runtime deps.
-
-### Medium
-
-- **Page components over 900 lines.** `SellerOrders.tsx` (1,008), `Checkout.tsx` (998), `ProductDetail.tsx` (969), `SellerInventory.tsx` (921). Should be decomposed into sub-components or custom hooks.
-
-- **`src/types.ts` (472 lines) mixes production and mock/test types** with no separation boundary.
-
----
-
-## 2. Security Concerns
-
-### Critical
-
-- **`GEMINI_API_KEY` exposed to client bundle via `vite.config.ts` `define` block.** ✅ **RESOLVED** — Key removed from Vite define; all Gemini calls now proxy through `server/routes/gemini.ts`. Client services call `/api/gemini/*` endpoints.
-
-- **`.env` contains production Stripe keys (`sk_live_...`, `pk_live_...`) and a Firebase Admin SDK service account key in plaintext.** While `.env` is gitignored, a single dev machine compromise exposes full production payment and Firebase admin access. Use environment-level secret injection or a secrets manager.
-
-### High
-
-- **No server-side request validation.** `server/routes/stripe.ts`, `iyzico.ts`, and `sellerApi.ts` parse `req.body` directly with no schema validation. ✅ **RESOLVED** (2026-05-31) — Zod-based validation added via `server/lib/schemas.ts` + `server/lib/validate.ts`. Routes now use `validate(schema)` middleware.
-
-- **Rate limiting is narrow.** `express-rate-limit` is applied only to `/api/` and specific payment/checkout endpoints in `server.ts`. Webhook endpoints, static serving, and Vite dev middleware are unprotected.
-
-- **In-memory rate-limit map resets on restart.** `src/services/apiKeyService.ts` uses a `Map<string, { count; resetAt }>` -- all rate-limit state is lost on restart, enabling windowed attacks.
-
-- **TypeScript strict mode is disabled.** `tsconfig.json` had `"strict": false`. ✅ **RESOLVED** (2026-05-31) — Now `"strict": true` with strictNullChecks, noImplicitAny enabled.
-
-### Medium
-
-- **`cors()` called with no origin whitelist** in `server.ts`. Fine for development, but production should restrict origins.
-
-- **No explicit Content-Security-Policy.** `helmet()` is configured but with defaults only. CSP headers are not customized.
+**Fix approach:** Replace all `MOCK_PRODUCTS` fallbacks in pages/services with real Firestore queries. Move `MOCK_PRODUCTS` import to test files only. Add a build-time lint rule (`no-restricted-imports`) to block mock imports outside `src/data/` and test files.
 
 ---
 
-## 3. Performance Issues
+### Unbound Firestore Full-Collection Scans
 
-### High
+**Issue:** Several queries fetch entire collections without pagination or `limit()`, which will become prohibitively expensive as data grows.
 
-- **3,735-line `mockData.ts` is imported across the app** and must be parsed on every dev build. ✅ **RESOLVED** (2026-05-31) — Refactored to 10-line barrel export.
+**Files:**
 
-- **1,434-line `LanguageContext.tsx` is loaded eagerly at the `App.tsx` level.** ✅ **RESOLVED** (2026-05-31) — Translations extracted to per-locale `.ts` files (102 lines). Lazy-loaded by `LanguageContext`.
+- `src/pages/AdminDashboard.tsx` (lines 341–344) — `getDocs(collection(db, 'users'))`, `getDocs(collection(db, 'products'))`, `getDocs(collection(db, 'orders'))` — three unbounded scans on every admin dashboard load
+- `src/services/userService.ts` (line 22) — `getDocs(collection(db, 'users'))` — used by admin user list
+- `src/services/recommendationService.ts` (line 211) — full products scan as fallback when composite index is missing
 
-### Medium
+**Impact:** At 10k+ users/products/orders the admin dashboard will hit Firestore read quotas and slow to seconds. Firestore billing scales linearly per document read.
 
-- **No `React.lazy()` or `<Suspense>` usage detected** -- all route components are likely bundled into a single chunk. ✅ **RESOLVED** (2026-05-31) — All pages use `React.lazy()` with dynamic imports in `App.tsx`. Named export extraction via lazy loading helper.
-
-- **8 page components over 600 lines** contribute to large route chunks: `AdminDashboard.tsx` (703), `SearchResults.tsx` (771), `AdminCMS.tsx` (694), `AdminSellers.tsx` (667), `SellerAnalytics.tsx` (659), `Home.tsx` (613), `UserProfile.tsx` (705), `SellerFinance.tsx` (551).
-
-### Low
-
-- **Bundle analyzer exists but is opt-in** (`ANALYZE=true npm run build`). No automated bundle-size monitoring in CI.
-
-- **No image optimization pipeline** -- product images served from Firebase Storage without responsive sizing or WebP conversion.
+**Fix approach:** Add `limit()` + cursor-based pagination to admin list queries. Replace AdminDashboard counts with aggregation queries (`count()` — available in Firestore SDK v9.13+). Fix the composite index in `firestore.indexes.json` to remove the products fallback scan.
 
 ---
 
-## 4. Fragile Areas
+### Typesense Sync Secret Has Hardcoded Fallback
 
-### High
+**Issue:** `src/services/productService.ts` (lines 659, 689) uses `import.meta.env.VITE_TYPESENSE_SYNC_SECRET || 'dev-secret'`. The string `'dev-secret'` is bundled into the production JavaScript.
 
-- **`Sentry.ErrorBoundary as any` in `App.tsx` (line 16).** Bypasses all TypeScript checking on the error boundary. A single error boundary wrapping the entire app means one uncaught error takes down all routes.
+**Files:** `src/services/productService.ts` (lines 659, 689)
 
-- **`server.ts` at 490 lines** contains inline static file serving, Vite middleware, Helmet config, CORS, rate-limiters, error handlers, and route mounting. Moderate, but continued extraction of route modules is recommended.
+**Impact:** If `VITE_TYPESENSE_SYNC_SECRET` is unset in production, the sync endpoint becomes accessible with the publicly-known string `dev-secret`. This allows anyone who reads the bundle to trigger Typesense product reindexing.
 
-### Medium
-
-- **Server error handling uses `console.log` only** -- `server/routes/stripe.ts` lines 44, 58, 65, 77, 83. No Sentry capture, no alert if a payment webhook fails.
-
-- **Centralized Express error handler exists** at `server.ts:473`, but 16 `try/catch` blocks remain with inconsistent formatting.
-
-- **55 service files in `src/services/` each independently call Firebase Firestore** with duplicated try/catch patterns. No repository or data-access abstraction layer.
-
-- **Complex checkout logic** -- `Checkout.tsx` (998 lines) handles guest, logged-in, one-click, promo codes, payment method selection, and address management in a single component.
-
-### Low
-
-- **`vite.config.ts` has a safety comment:** "Do not modify -- file watching is disabled to prevent flickering during agent edits." An agent workflow constraint baked into config.
+**Fix approach:** Remove the fallback string. Fail fast with a runtime error if the env var is absent in production. Add `VITE_TYPESENSE_SYNC_SECRET` to the deployment secrets checklist.
 
 ---
 
-## 5. Known Issues (TODO / FIXME / HACK / XXX)
+### `Date.now()` / `Math.random()` Used as Persistent IDs
 
-Only 4 markers found, all benign Turkish placeholder text:
+**Issue:** Multiple services generate IDs using `Date.now()` and `Math.random()`. These are not collision-resistant, not URL-safe, and not portable.
 
-| File | Line | Content |
-|------|------|---------|
-| `src/pages/ProductVerification.tsx` | 54 | Certificate ID placeholder (Turkish) |
-| `src/pages/SellerApplication.tsx` | 210 | Phone number placeholder (Turkish) |
-| `src/pages/SellOnBenimOlan.tsx` | 287 | Phone number placeholder (Turkish) |
-| `src/services/returnService.ts` | 45 | Return code format comment |
+**Files:**
 
-**Observation:** Near-zero markers could mean issues are simply not tracked in code. Not necessarily healthy given the other concerns.
+- `src/services/adService.ts` — `ad-${Date.now()}-${Math.random()...}`
+- `src/services/commissionService.ts` — `ctx-${Date.now()}-${Math.random()...}`
+- `src/services/botService.ts` — `product-${Date.now()}-${botId}`
+- `src/pages/AdminCMS.tsx`, `src/pages/AdminDeals.tsx`, `src/pages/SellerMenuEditor.tsx`, `src/pages/Checkout.tsx` (line 883: `orderId={"pending_"+Date.now()}`)
+- `src/lib/storage.ts` — `${folder}/${Date.now()}-${Math.random()...}` for storage paths
 
----
+**Impact:** Two concurrent writes within the same millisecond will produce a duplicate ID. The `pending_${Date.now()}` order ID passed to the Iyzico payment component means Iyzico is tracking orders with ephemeral timestamps, not real order IDs — reconciliation will fail.
 
-## 6. Missing Infrastructure
-
-### High
-
-- **No pre-commit hooks.** No `husky`, `lint-staged`, or `commitlint`. Commits bypass all checks.
-
-- **Formatter exists** (`.prettierrc.json`) but no `format` script in `package.json` (see Technical Debt).
-
-- **Logging is `console.log` throughout `server/`**. No structured logger (winston, pino, morgan). No log levels, no metadata, no aggregation.
-
-### Medium
-
-- **Test coverage is thin:** 18 unit test files found (up from 8):
-  - `src/lib/__tests__/` (3 files)
-  - `src/services/__tests__/` (6 files: campaignService, cartService, couponService, notificationService, priceTrackingService, reorderService, stockAlertService)
-  - `src/components/common/__tests__/` (2 files)
-  - `src/components/ui/__tests__/` (1 file)
-  - `src/context/__tests__/` (1 file: AuthContext)
-  - `server/lib/__tests__/` (1 file: validate)
-  - `server/__tests__/` (1 file: logger)
-  - `src/test/` (2 files)
-  - Plus 4 e2e specs in `e2e/`
-  For 49,275 lines in `src/`, this is still <0.5% test coverage.
-
-- **CI workflows** (`.github/workflows/ci.yml`) **now run `vitest`** — `npm test`, `tsc --noEmit`, and `vite build` are executed on every push/PR. ✅ **RESOLVED**
-
-- **Sentry DSN** is configured via `VITE_SENTRY_DSN` env var. ✅ **RESOLVED** — Gracefully disabled when unset (console.warn).
-
-### Low
-
-- **No `.nvmrc` or Node engine in `package.json`.** No `Dockerfile` or `docker-compose.yml`.
-- **`npm audit` reports 4 vulnerabilities** including 1 critical (transitive via `postman-request`). No Dependabot or automated scanning.
+**Fix approach:** Use `crypto.randomUUID()` (available in all modern browsers and Node 18+). Replace `pending_${Date.now()}` in Checkout with the real Firestore order ID, available after order creation.
 
 ---
 
-## 7. Dependency Risks
+### Twilio Credentials Exposed to Client Bundle
 
-### High
+**Issue:** `src/services/sellerVerificationService.ts` reads `import.meta.env.VITE_TWILIO_ACCOUNT_SID`, `VITE_TWILIO_AUTH_TOKEN`, and `VITE_TWILIO_VERIFY_SID` from client-side env vars. The `VITE_` prefix means these values are embedded in the JavaScript bundle served to browsers.
 
-- **`@dnd-kit/sortable ^10.0.0` vs `@dnd-kit/core ^6.3.1`** -- a 4-major-version gap in semver range, but npm resolves correctly at install time: `sortable@10.0.0` lists `@dnd-kit/core@^6.x` as a peer dependency. ✅ **FALSE POSITIVE — no action needed.**
+**Files:** `src/services/sellerVerificationService.ts` (lines 20–22)
 
-### Medium
+**Impact:** Twilio `authToken` is a sensitive credential. Embedding it client-side exposes it to anyone who opens DevTools. An attacker can use it to send arbitrary SMS at the project's expense.
 
-- **`@firebase/eslint-plugin-security-rules ^0.0.2`** -- pre-release 0.0.x, unclear if maintained.
-- **16 outdated packages** per `npm outdated`. No Renovate/Dependabot configured.
-
-### Low
-
-- **`typescript ~5.8.2`** uses tilde range (patch-only). Overly restrictive.
-- **`express-rate-limit ^8.5.2`** -- caret allows v9+ which may have breaking API changes.
-- **Mock cargo providers in production path** -- `src/services/cargoService.ts` has mocks for 7 carriers (PTT, Yurtici, Aras, MNG, Surat, UPS, DHL). Real integrations need to replace mocks individually.
+**Fix approach:** Move the Twilio `sendOtp`/`verifyOtp` logic entirely to the server (`server/routes/` behind `verifyFirebaseToken`). Remove `VITE_TWILIO_*` env vars. The `/api/verification/send-otp` and `/api/verification/verify-otp` endpoints (already referenced in the same file) are the correct path — the client should only call those, not instantiate Twilio itself.
 
 ---
 
-## 8. Architectural Concerns
+### `subOrders` Firestore Rules Block Sellers from Reading Own Orders
 
-### High
+**Issue:** `firestore.rules` (line 72–77) restricts `subOrders` reads to `isAdmin()` only. Sellers cannot read their own sub-orders directly from Firestore.
 
-- **`package.json` name was `"react-example"`** -- misleading for a production marketplace. ✅ **RESOLVED** (2026-06-01) — Changed to `"benim-olan"`.
+**Files:** `firestore.rules` (lines 72–77), `src/pages/SellerOrders.tsx`
 
-- **`tsconfig.json` had `strict: false`** and `skipLibCheck: true`. ✅ **RESOLVED** (2026-05-31) — Now `"strict": true` with strictNullChecks enabled.
+**Impact:** `SellerOrders.tsx` works around this by using a Realtime subscription helper (`subscribeOrdersBySeller`) that must go through the server, not direct Firestore. If the server is down, sellers see no orders. The rules create an inconsistency — sellers can ship orders but cannot query them client-side.
 
-- **No barrel exports.** 215+ files with no `index.ts` barrel files. Components imported by deep relative paths. The `@` alias is configured but usage was not verified.
-
-### Medium
-
-- **Client and server share one `package.json`.** Express server deps, React client deps, build tooling, and PWA config are all mixed. No separation of concerns.
-
-- **Server route modules are only partially extracted.** `server/routes/` has 3 modules (1,027 lines); `server.ts` retains 472 lines of inline logic. Recent commits show extraction in progress, which is positive.
-
-### Low
-
-- **`experimentalDecorators: true` in tsconfig** with no decorator usage detected -- adds compilation overhead for nothing.
-- **`mobile/` directory excluded from tsconfig** -- suggests a future React Native app not yet integrated.
+**Fix approach:** Add a seller-scoped read rule: `allow read: if isSeller() && resource.data.sellerId == request.auth.token.sellerId;`. Verify this against existing server-side security model before deploying.
 
 ---
 
-## Severity Summary
+### 172 `any` Type Usages Undermine TypeScript Strictness
 
-| Category | Critical | High | Medium | Low |
-|----------|----------|------|--------|-----|
-| Technical Debt | 0 | 0 | 1 | 0 |
-| Security | 1 | 2 | 2 | 0 |
-| Performance | 0 | 0 | 1 | 2 |
-| Fragile Areas | 0 | 1 | 2 | 1 |
-| Known Issues | 0 | 0 | 0 | 4 |
-| Missing Infrastructure | 0 | 1 | 1 | 2 |
-| Dependency Risks | 0 | 0 | 2 | 3 |
-| Architectural | 0 | 1 | 2 | 2 |
-| **Total** | **1** | **6** | **11** | **14** |
+**Issue:** 172 occurrences of `: any`, `as any`, or `<any>` detected across `src/`. Notable patterns include `Sentry.ErrorBoundary as any` in `src/App.tsx` and the Stripe API version cast `'2025-03-31.basil' as any` in `server.ts`.
 
-**Resolved since initial audit (2026-05-31):** 15 items (4 critical, 7 high, 2 medium, 1 false positive, 1 HALF-resolved)→✅
-- ✅ GEMINI_API_KEY removed from Vite define
-- ✅ mockData.ts refactored (3,735 → 10 lines)
-- ✅ LanguageContext.tsx extracted (1,434 → 102 lines)
-- ✅ TypeScript `strict: true` enabled
-- ✅ Server-side request validation (Zod) added
-- ✅ Prettier + ESLint configured
-- ✅ React.lazy/lazy loading implemented
-- ✅ Express error handler added
-- ✅ Sentry DSN configured
-- ✅ CI runs vitest
-- ✅ 10 new test files added (8 → 18)
-- ✅ Gemini proxy route extracted
-- ✅ package.json name fixed (`"react-example"` → `"benim-olan"`)
-- ✅ Structured logging upgraded to pino + pino-http (2026-06-01)
-- ✅ @dnd-kit version gap: false positive — npm resolves correctly at install time
-- ✅ Dependencies split: `@testing-library/dom` moved to devDependencies; server runtime deps correctly placed
+**Files:** Spread across `src/` — highest concentration in service files and page components.
 
-**Top 4 remaining priorities:**
-1. Increase test coverage with minimum threshold in CI
-2. Extract `LanguageContext.tsx` translations into per-locale JSON files (Critical -- tech debt / performance)
-3. Add pre-commit hooks (husky/lint-staged)
-4. Set up Dependabot / Renovate for automated dependency updates
+**Impact:** Bypasses type checking in the exact areas (payments, auth, Firestore reads) where runtime type errors are most harmful. IDE autocompletion and refactoring break down on `any`-typed values.
+
+**Fix approach:** Address incrementally. Priority targets: payment-related `any` casts in `server/routes/stripe.ts` and `src/pages/Checkout.tsx`. The Stripe API version cast should use a typed constant from the Stripe SDK.
+
+---
+
+## Known Bugs
+
+### Mock Payment Fallback Leaks into Production Orders
+
+**Symptoms:** When `VITE_STRIPE_PUBLISHABLE_KEY` is undefined or the `/api/create-payment-intent` call fails (line 381 of `Checkout.tsx` sets `isMock(true)`), a real order can be created with `paymentMethod: 'manual'` (line 433) and `clientSecret: 'mock_fallback'`. The order is written to Firestore as if payment succeeded.
+
+**Files:** `src/pages/Checkout.tsx` (lines 378–382, 433), `src/components/checkout/StripePaymentForm.tsx` (line 134 — generates `mock_pi_*` on mock path)
+
+**Trigger:** Missing `VITE_STRIPE_PUBLISHABLE_KEY` env var, or network failure calling `/api/create-payment-intent`.
+
+**Workaround:** Ensure `VITE_STRIPE_PUBLISHABLE_KEY` is set. Monitor for orders with `paymentMethod: 'manual'` in Firestore that lack a real Stripe payment intent.
+
+---
+
+### `useExchangeRate` Returns Stale Hardcoded Rates Silently
+
+**Symptoms:** If `VITE_EXCHANGE_RATE_API_KEY` is missing or set to `"YOUR_EXCHANGE_RATE_API_KEY"`, the hook silently returns hardcoded rates (`USD/TRY: 32.12`, `EUR/TRY: 34.55`) from 2024 without any visual indicator to the user.
+
+**Files:** `src/hooks/useExchangeRate.ts` (lines 3–17)
+
+**Trigger:** `VITE_EXCHANGE_RATE_API_KEY` env var not configured.
+
+**Workaround:** Set the API key. Until then, prices shown in foreign currency are incorrect.
+
+---
+
+### Duplicate SearchBar Components — Only Layout Version Is Used
+
+**Symptoms:** Two separate `SearchBar` components exist: `src/components/layout/SearchBar.tsx` (used by Navbar) and `src/components/search/SearchBar.tsx` (imports Typesense directly, never imported by anything in the main app). This means the Typesense-powered search UI is dead code.
+
+**Files:** `src/components/search/SearchBar.tsx`, `src/components/layout/SearchBar.tsx`, `src/components/layout/Navbar.tsx` (line 66)
+
+**Trigger:** All routes use the layout `SearchBar` via `Navbar`.
+
+**Workaround:** None needed at runtime, but `src/components/search/SearchBar.tsx` is maintenance burden if both are evolved separately.
+
+---
+
+## Security Considerations
+
+### `dangerouslySetInnerHTML` with Unescaped External Data (XSS Risk)
+
+**Risk:** Typesense search result highlights rendered without sanitization.
+
+**Files:** `src/components/search/SearchBar.tsx` (line 136) — `dangerouslySetInnerHTML={{ __html: hit.highlights?.[0]?.snippet || doc.title }}`
+
+**Current mitigation:** The Typesense snippet is controlled by the search backend. If Typesense is misconfigured or compromised, arbitrary HTML executes in user browsers.
+
+**Recommendations:** Sanitize the snippet with `DOMPurify` before rendering. The `src/pages/AdminDashboard.tsx` (line 1523) and `src/pages/SellerDashboard.tsx` (line 818) uses of `dangerouslySetInnerHTML` contain only inline CSS strings and are lower risk, but should be converted to Tailwind classes.
+
+---
+
+### File Upload Has No Server-Side MIME or Size Validation
+
+**Risk:** `src/lib/storage.ts` uploads files directly to Firebase Storage without MIME type or size checks. Client-side checks exist in some forms (`SellerStore.tsx`, `ReviewForm.tsx`) but are absent in the core `uploadImage()` utility.
+
+**Files:** `src/lib/storage.ts` (lines 4–9), `src/components/seller/ProductForm.tsx` (line 262)
+
+**Current mitigation:** Firebase Storage security rules (not reviewed in this audit) may provide a secondary gate.
+
+**Recommendations:** Add MIME and size validation inside `uploadImage()`. Add Firebase Storage rules that restrict allowed content types. Validate file types server-side for the CSV import route (`server/routes/csvImport.ts`).
+
+---
+
+### Rate Limiting Not Applied to OTP / Verification Endpoints
+
+**Risk:** `/api/verification/send-otp` and `/api/verification/verify-otp` are referenced from `src/services/sellerVerificationService.ts` but no rate limiter is applied to those paths in `server.ts`. The existing `generalLimiter` (200 req/15 min) is too permissive for OTP endpoints.
+
+**Files:** `server.ts` (rate limit configuration), `src/services/sellerVerificationService.ts`
+
+**Current mitigation:** Twilio Verify has its own anti-abuse controls, but reliance on a third-party limit is not sufficient.
+
+**Recommendations:** Add a dedicated `otpLimiter` (e.g., 5 req/hour per IP) on `/api/verification/*` routes.
+
+---
+
+### `dev-secret` Hardcoded Default for Typesense Sync Authentication
+
+See Tech Debt section above. Restated here because the impact is a security boundary bypass, not just code quality.
+
+**Files:** `src/services/productService.ts` (lines 659, 689)
+
+---
+
+## Performance Bottlenecks
+
+### AdminDashboard Fetches Entire Users, Products, and Orders Collections
+
+**Problem:** Three unbounded `getDocs()` calls fire in parallel on every `AdminDashboard` mount. At scale (10k users, 50k products, 100k orders) this reads ~160k documents per page load.
+
+**Files:** `src/pages/AdminDashboard.tsx` (lines 341–344)
+
+**Cause:** No aggregation queries or server-side pagination in place for admin stats.
+
+**Improvement path:** Use Firestore `count()` aggregation (SDK v9.13+) for totals. Move revenue/GMV calculations to a scheduled Cloud Function that writes a `stats/summary` document. Paginate product/user lists.
+
+---
+
+### `recommendationService` Full Products Fallback Scan
+
+**Problem:** When a composite Firestore index is missing, `src/services/recommendationService.ts` (line 211) fetches the entire `products` collection to sort in memory. This is triggered on the Home page.
+
+**Files:** `src/services/recommendationService.ts` (lines 205–217)
+
+**Cause:** Missing `firestore.indexes.json` entries for the composite query (category + isActive + rating).
+
+**Improvement path:** Add the required index to `firestore.indexes.json` and deploy. Remove the catch-block full-scan fallback after confirming index is live.
+
+---
+
+### Large Page Components (1,000+ Lines)
+
+**Problem:** Several page components are monolithic, making them slow to parse and difficult to split for code-splitting.
+
+**Files (by line count):**
+
+- `src/pages/AdminDashboard.tsx` — 1,537 lines
+- `src/pages/SellerImportCenter.tsx` — 1,336 lines
+- `src/pages/SellerStore.tsx` — 1,297 lines
+- `src/components/seller/ProductForm.tsx` — 1,276 lines
+- `src/pages/AdminCMS.tsx` — 1,271 lines
+- `src/pages/Checkout.tsx` — 1,211 lines
+- `src/pages/ProductDetail.tsx` — 1,189 lines
+
+**Cause:** Business logic, UI, and data access mixed directly in page components rather than delegated to hooks/services.
+
+**Improvement path:** Extract sub-sections into named sub-components and move data-fetching logic to custom hooks. Apply React lazy loading (`React.lazy`) at the route level for all heavy admin pages.
+
+---
+
+## Fragile Areas
+
+### Checkout Payment Flow (`src/pages/Checkout.tsx`)
+
+**Files:** `src/pages/Checkout.tsx` — 1,211 lines, 5 `eslint-disable-next-line react-hooks/exhaustive-deps` suppressions
+
+**Why fragile:** Multiple `useEffect` hooks with suppressed dependency arrays (lines 85, 105, 163, 244, 590, 612) mean state changes may silently fail to retrigger payment initialisation. The `isMock` flag branches throughout the file — any regression in the real Stripe path might silently fall back to mock mode.
+
+**Safe modification:** When touching `useEffect` hooks here, explicitly audit every dependency suppression. Write a Playwright test covering the full Stripe payment flow before making changes.
+
+**Test coverage:** E2E test exists (`e2e/checkout-authenticated.spec.ts`, `e2e/checkout-guest.spec.ts`) but mock mode may mask real Stripe integration failures.
+
+---
+
+### Firebase Auth Token / Firestore Rules Synchronisation
+
+**Files:** `firestore.rules`, `src/lib/authMiddleware.ts`, `src/lib/firebase-admin.ts`
+
+**Why fragile:** Custom claims (`role`, `sellerId`) are set server-side and cached in the Firebase ID token (valid up to 1 hour). A seller's role change (e.g., suspension) will not reflect in Firestore rules until their token expires or they re-authenticate. The MEMORY file notes: "Phase 5 firebase rules deploy pending" — rules edits may not be deployed.
+
+**Safe modification:** After editing `firestore.rules`, always run `firebase deploy --only firestore:rules`. Test all four UAT flows noted in MEMORY (`phase5-firebase-rules-deploy-pending.md`). Force token refresh via `user.getIdToken(true)` where immediate role changes must take effect.
+
+---
+
+### Blockchain Certificate Service Is Simulated
+
+**Files:** `src/services/blockchainService.ts` — `generateTxHash()` (line ~44) produces random hex strings, not real on-chain transactions
+
+**Why fragile:** `txHash`, `blockNumber`, and `network` fields in `productCertificates` Firestore documents are synthetic. The "Verify Product" flow at `/verify` and `SellerCertificates` page presents these as authentic blockchain proofs. A user or auditor checking the tx hash against a real block explorer will find it does not exist.
+
+**Safe modification:** Clearly label certificates as "in-platform" (not on-chain) until a real blockchain integration is built. Do not expand the UI to claim on-chain authenticity.
+
+---
+
+### `src/data/mockProducts.ts` Is 2,832 Lines Bundled into Production
+
+**Files:** `src/data/mockProducts.ts`
+
+**Why fragile:** This file is imported by production pages and services. It is included in the Vite build output, adding significant bundle weight. It also contains hardcoded Turkish/English product names, prices, and image URLs that may become stale or broken.
+
+**Safe modification:** Before removing, audit all import sites (20 non-test files) to ensure each has a working Firestore fallback. Do not remove until all pages can render without it.
+
+---
+
+## Scaling Limits
+
+### Single Express Server, No Horizontal Scaling
+
+**Current capacity:** One `tsx server.ts` process on port 3000.
+
+**Limit:** CPU-bound tasks (PDF invoice generation, Gemini AI, CSV imports) block the event loop. A single crash takes down both the API and Vite middleware.
+
+**Scaling path:** Separate the Vite dev server from the Express API for production. Use Cloud Run or a managed Node host with autoscaling. Move heavy tasks (invoice generation, AI calls) to Cloud Functions or background workers.
+
+---
+
+### Firestore Write Rate for Real-Time Analytics Events
+
+**Current capacity:** `src/services/analyticsService.ts` writes per-event documents to Firestore.
+
+**Limit:** Firestore has a 1 write/second sustained limit per document and soft limits on collection write throughput at scale.
+
+**Scaling path:** Batch analytics events (buffer in-memory, flush every N seconds). Consider BigQuery streaming inserts for analytics instead of Firestore.
+
+---
+
+## Dependencies at Risk
+
+### `iyzipay` (CJS Module, No TypeScript Types)
+
+**Risk:** `server/iyzico.cjs` wraps `iyzipay` v2.0.67 which is a CommonJS module without TypeScript types. The integration uses `any` types throughout and is lazy-loaded with a CJS interop wrapper.
+
+**Impact:** Type errors in the Iyzico payment path go undetected. The CJS/ESM boundary adds fragility on Node version upgrades.
+
+**Migration plan:** Check if a typed TypeScript wrapper or official SDK exists. If not, write a narrow type definition file (`iyzipay.d.ts`) covering only the used methods.
+
+---
+
+### `typesense` Client Installed But Service Not Configured
+
+**Risk:** `src/services/typesenseService.ts` is wired up but requires a running Typesense instance. Per MEMORY notes, Typesense was deferred (`phase4-search-typesense-deferred.md`). The package is bundled into the client build even when Typesense is not available.
+
+**Impact:** `VITE_TYPESENSE_HOST` defaults to `localhost:8108`, which will throw connection errors in production if unconfigured. The lazy-load in `searchService.ts` silently swallows the error, so search degrades without logging.
+
+**Migration plan:** Either fully disable the Typesense import path with a feature flag checked at build time, or set up a production Typesense instance. Add explicit logging when Typesense fails to initialise.
+
+---
+
+## Missing Critical Features
+
+### E-Fatura Integration Is a Stub
+
+**Problem:** `src/services/efaturaService.ts` returns `{ success: false, error: 'E-Fatura API yapılandırılmamış' }` when `EFATURA_API_URL`/`EFATURA_API_KEY` are absent. Turkish tax law requires e-invoicing for sellers above a revenue threshold.
+
+**Blocks:** Legal compliance for TR sellers at scale.
+
+---
+
+### No Email Transactional System Verified End-to-End
+
+**Problem:** `server/routes/email.ts` and `server/services/emailService.ts` exist, but the abandoned cart email cron (`/api/abandoned-cart/check`) and payout notification emails are the only verified send paths. Order confirmation emails, seller application status emails, and return approval emails are not confirmed as working in the current deployment.
+
+**Blocks:** Core buyer/seller communication; impacts trust.
+
+---
+
+## Test Coverage Gaps
+
+### Payment Critical Path Has No Unit Tests
+
+**What's not tested:** `src/pages/Checkout.tsx` payment flow, `src/components/checkout/StripePaymentForm.tsx`, and mock fallback branching logic have no unit tests.
+
+**Files:** `src/pages/Checkout.tsx`, `src/components/checkout/StripePaymentForm.tsx`
+
+**Risk:** Mock/real payment branching can silently fall back to mock mode in production.
+
+**Priority:** High
+
+---
+
+### All 65+ Page Components Have No Unit or Integration Tests
+
+**What's not tested:** Only 3 component unit tests exist (`Breadcrumb`, `OptimizedImage`, `Skeleton`). Zero page-level component tests. The 77 pages/components representing buyer, seller, and admin flows are tested only through a small set of Playwright E2E specs.
+
+**Files:** `src/pages/` (65+ files), `src/components/` (100+ files)
+
+**Risk:** Regressions in individual component logic (form validation, state transitions) are not caught until E2E or manual testing.
+
+**Priority:** Medium — focus first on checkout, auth, and seller onboarding flows.
+
+---
+
+### `firestore.rules` Not Covered by Automated Tests
+
+**What's not tested:** No Firebase Emulator-based rules tests (`@firebase/rules-unit-testing`). The rules are complex (282 lines, atomic helpful-vote checks, role-based write guards).
+
+**Files:** `firestore.rules`
+
+**Risk:** A rules change that inadvertently opens a collection to all users, or blocks sellers from reading their own data, will not be caught before deployment.
+
+**Priority:** High — especially before expanding seller or buyer write permissions.
+
+---
+
+_Concerns audit: 2026-06-08_

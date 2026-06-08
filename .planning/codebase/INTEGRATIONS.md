@@ -1,234 +1,209 @@
 # External Integrations
 
-**Last updated:** 2026-05-31
+**Analysis Date:** 2026-06-08
+
+## APIs & External Services
+
+**Payments:**
+
+- Stripe — primary payment processor (EU/global); PaymentIntents, SetupIntents, one-click checkout, saved cards, webhooks, Stripe Tax
+  - SDK: `stripe` (server) + `@stripe/stripe-js` + `@stripe/react-stripe-js` (client)
+  - Auth: `STRIPE_SECRET_KEY` (server), `VITE_STRIPE_PUBLISHABLE_KEY` (client)
+  - Webhook endpoint: `POST /api/webhook` (raw body, HMAC-SHA256 verified via `Stripe-Signature`)
+  - API version: `2025-03-31.basil`
+- Iyzico — Turkish market payment gateway; sandbox + production
+  - SDK: `iyzipay` 2.0.67 loaded via `server/iyzico.cjs` (lazy-loaded CJS wrapper)
+  - Auth: `IYZICO_API_KEY`, `IYZICO_SECRET_KEY`, `IYZICO_BASE_URL`
+  - Endpoints: `POST /api/iyzico/init`, `POST /api/iyzico/check`
+
+**AI / Machine Learning:**
+
+- Google Gemini — AI text generation, vision, and image features; API key kept server-side
+  - SDK: `@google/genai` 1.29.0
+  - Auth: `GEMINI_API_KEY` (server-side only; never exposed to client)
+  - Proxy endpoints: `POST /api/gemini/text`, `POST /api/gemini/vision`, `POST /api/gemini/image`
+
+**Search:**
+
+- Typesense — typo-tolerant full-text product search; self-hosted or Typesense Cloud
+  - SDK: `typesense` 3.0.6 + `typesense-instantsearch-adapter` 3.0.2
+  - Auth: `TYPESENSE_API_KEY` (server), `VITE_TYPESENSE_API_KEY` (client read-only key)
+  - Config: `TYPESENSE_HOST`, `TYPESENSE_PORT`, `TYPESENSE_PROTOCOL`, `TYPESENSE_SYNC_SECRET`
+  - Sync webhook: `POST /api/typesense/sync/product`, `DELETE /api/typesense/sync/product/:id`
+  - Client: `src/services/typesenseService.ts`
+
+**Shipping / Carriers:**
+
+- EasyPost — international shipping label creation and tracking webhooks
+  - Integration: `src/services/cargoService.ts` (provider pattern; mock + real)
+  - Webhook: `POST /api/carrier/easypost/webhook` (HMAC-SHA256 via `X-Hmac-Signature`)
+- Turkish domestic carriers (PTT, Yurtici, Aras, MNG, Surat) — abstracted via `CargoProvider` interface in `src/services/cargoService.ts`; mock implementations with env-var-based swap to real APIs
+  - Carrier routing: `routeCarrierByRegion()` selects carrier by destination country
+
+**SMS / Phone Verification:**
+
+- Twilio Verify — OTP/phone verification for seller KYC
+  - SDK: `twilio` 6.0.2
+  - Auth: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `VITE_TWILIO_VERIFY_SID`
+  - Client: `src/services/sellerVerificationService.ts` (dev bypass: code `123456` always valid)
+
+**Currency Exchange:**
+
+- exchangerate.host — FX rates (TRY→EUR); polled server-side, cached in Firestore
+  - Endpoint: `GET https://api.exchangerate.host/latest?base=TRY&symbols=EUR`
+  - No auth key required (public API)
+  - Cache refresh: `POST /api/fx-rates/refresh` (cron-protected with `CRON_SECRET`)
+  - Client reads: `GET /api/fx-rates`
+
+**E-Invoice (Turkish):**
+
+- Paraşüt / Logo API — Turkish e-fatura (electronic invoice) compliance; stub, not yet active
+  - Client: `src/services/efaturaService.ts`
+  - Auth: `EFATURA_API_URL`, `EFATURA_API_KEY`
+  - Status: returns error if not configured; stored for manual processing
+
+## Data Storage
+
+**Databases:**
+
+- Firebase Firestore — primary NoSQL document database; all business data
+  - Client connection: `src/lib/firebase.ts` (reads config from `firebase-applet-config.json`)
+  - Admin connection: `src/lib/firebase-admin.ts` (reads `FIREBASE_SERVICE_ACCOUNT_B64` or `GOOGLE_APPLICATION_CREDENTIALS`)
+  - No ORM — raw Firestore SDK calls in `src/services/*.ts`
+  - Key collections: `products`, `orders`, `subOrders`, `users`, `sellers`, `reviews`, `categories`, `fxRates`, `emailConfig`, `processedWebhooks`
+
+**File Storage:**
+
+- Firebase Storage — product images, seller documents, KYC uploads
+  - SDK: `firebase/storage`
+  - Config: `VITE_FIREBASE_STORAGE_BUCKET`
+
+**Caching:**
+
+- Firestore used as cache layer for FX rates (`fxRates` collection, TTL ~1h via Cache-Control header)
+- localStorage for consent preferences (`mcr_consent`), language selection
+- Workbox (PWA) — service worker caches static assets, images (CacheFirst 30 days), Google Fonts
+
+## Authentication & Identity
+
+**Auth Provider:**
+
+- Firebase Auth — primary authentication
+  - Methods: Google OAuth, email/password, Firebase Anonymous Auth (guest users)
+  - Server-side verification: `src/lib/authMiddleware.ts` — `createAuthMiddlewares()` returns `verifyFirebaseToken`, `verifyAdmin`, `verifySeller`, `verifyCronSecret`, `requireAdminRole`
+  - Custom Claims: `{ role: "admin"|"seller"|"buyer", sellerId?: "..." }` set via `POST /api/admin/set-claims`
+  - Client: `src/context/AuthContext.tsx`
+
+## Monitoring & Observability
+
+**Error Tracking:**
+
+- Sentry — frontend error monitoring, performance tracing, session replay
+  - SDK: `@sentry/react` 10.53.1
+  - Init: `src/lib/sentry.ts` — `initSentry()` called in `src/main.tsx`
+  - Config: `VITE_SENTRY_DSN`
+  - Integrations: `browserTracingIntegration`, `replayIntegration`
+  - Sample rates: 10% traces in production, 10% replays, 100% on error
+
+**Analytics (consent-gated, GDPR/KVKK compliant):**
+
+- Google Analytics 4 — page views, events, user identification
+  - Config: `VITE_GA4_MEASUREMENT_ID` or `VITE_GA_MEASUREMENT_ID`
+  - Loaded dynamically only after analytics consent
+- Meta (Facebook) Pixel — marketing events (add to cart, purchase, etc.)
+  - Config: `VITE_META_PIXEL_ID`
+  - Loaded only after marketing consent
+- TikTok Pixel — marketing events
+  - Config: `VITE_TIKTOK_PIXEL_ID`
+  - Loaded only after marketing consent
+- All analytics: `src/lib/analytics.ts` — 3-tier consent model (mandatory / analytics / marketing)
+
+**Logs:**
+
+- Pino structured JSON logging (`server/logger.ts`) — all server-side logs
+- Pattern: `logger.info(context, message, meta)` / `logger.error(context, message, meta)`
+- HTTP request logging via `pino-http` middleware
+
+**Performance:**
+
+- Lighthouse CI (`lhci`) — automated performance audit on CI; `lhci autorun`
+- Bundle analysis: `rollup-plugin-visualizer` — `npm run analyze` generates `dist/stats.html`
+
+## Email
+
+**Provider:**
+
+- Resend — transactional email sending
+  - SDK: `resend` 6.12.4
+  - Auth: `RESEND_API_KEY`, `EMAIL_FROM` (e.g. `Benim Olan <noreply@benimolan.com>`)
+  - Client: `server/services/emailService.ts` — lazy-loaded, gracefully degrades if not configured
+  - Triggers: order confirmation, shipping update, delivery confirmation, refund notification, seller new order, abandoned cart
+  - Config stored in Firestore `emailConfig/triggers` (admin-toggleable per trigger type)
+
+## CI/CD & Deployment
+
+**Hosting:**
+
+- Google Cloud Run (inferred from AI Studio injection pattern for `APP_URL` env var)
+- Single Express process on port 3000 serves API + static SPA
+
+**CI Pipeline:**
+
+- No CI config file detected in root (GitHub Actions / Cloud Build not found)
+- Lighthouse CI: `npm run ci:perf` (build + lhci autorun)
+- Pre-commit hooks via Husky + lint-staged (ESLint fix + Prettier on staged TS/TSX files)
+
+## Webhooks & Callbacks
+
+**Incoming (server receives):**
+
+- `POST /api/webhook` — Stripe payment events (raw body, registered before JSON middleware)
+- `POST /api/carrier/easypost/webhook` — EasyPost shipping/tracking events (raw body, HMAC-SHA256)
+- `POST /api/typesense/sync/product` — Typesense product sync (shared secret header `x-typesense-sync-secret`)
+- `DELETE /api/typesense/sync/product/:id` — Typesense product deletion
+
+**Outgoing (server calls):**
+
+- Stripe API (`api.stripe.com`) — payment intents, setup intents, customer management
+- Iyzico API (`sandbox.iyzipay.com` / `api.iyzipay.com`) — Turkish payments
+- Resend API — transactional emails
+- Twilio Verify API — OTP SMS verification
+- Google Gemini API — AI generation
+- exchangerate.host — FX rate polling
+- EasyPost API — shipping label creation
+- Typesense API — product index sync
+- E-Fatura API (Paraşüt/Logo) — Turkish e-invoicing (stub, not yet active)
+
+## Environment Configuration
+
+**Required env vars (production):**
+
+- `NODE_ENV=production`
+- `APP_URL` — deployed service URL
+- `STRIPE_SECRET_KEY`, `VITE_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
+- `IYZICO_API_KEY`, `IYZICO_SECRET_KEY`, `IYZICO_BASE_URL`
+- `FIREBASE_SERVICE_ACCOUNT_B64` or `GOOGLE_APPLICATION_CREDENTIALS`
+- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`
+- `RESEND_API_KEY`, `EMAIL_FROM`
+- `GEMINI_API_KEY`
+- `CRON_SECRET` — protects payout and FX refresh cron endpoints
+
+**Optional env vars:**
+
+- `VITE_SENTRY_DSN` — error monitoring
+- `VITE_GA4_MEASUREMENT_ID` — Google Analytics 4
+- `VITE_META_PIXEL_ID` — Meta Pixel
+- `VITE_TIKTOK_PIXEL_ID` — TikTok Pixel
+- `TYPESENSE_API_KEY`, `TYPESENSE_HOST`, `TYPESENSE_PORT`, `TYPESENSE_PROTOCOL`, `TYPESENSE_SYNC_SECRET`, `VITE_TYPESENSE_*`
+- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `VITE_TWILIO_VERIFY_SID`
+- `EFATURA_API_URL`, `EFATURA_API_KEY`
+- `VITE_EXCHANGE_RATE_API_KEY`
+
+**Secrets location:**
+
+- `.env` file at project root (gitignored)
+- `firebase-applet-config.json` at project root — Firebase client config (committed, non-secret)
 
 ---
 
-## Payment Gateways
-
-### Stripe (Primary -- Live Keys Active)
-
-| Detail | Value |
-|---|---|
-| SDK (server) | `stripe` npm 22.1.1, API version `2025-03-31.basil` |
-| SDK (client) | `@stripe/stripe-js` 9.6, `@stripe/react-stripe-js` 6.4 |
-| Mode | Production (live keys in .env) |
-| Route module | `server/routes/stripe.ts` (25.7 KB) |
-
-**Endpoints:**
-
-| Method | Route | Purpose |
-|---|---|---|
-| POST | `/api/create-payment-intent` | Create PaymentIntent for checkout |
-| POST | `/api/create-setup-intent` | Create SetupIntent for card saving |
-| POST | `/api/setup-payment-method` | Attach saved card to customer |
-| GET | `/api/payment-methods` | List user's saved cards |
-| PATCH | `/api/payment-methods/default` | Set default card |
-| DELETE | `/api/payment-methods/:id` | Detach a saved card |
-| POST | `/api/one-click-checkout` | Checkout with saved card |
-| POST | `/api/refund` | Process a refund |
-
-**Webhook events handled (`/api/webhook`):**
-- `checkout.session.completed` -- marks order as paid in Firestore
-- `payment_intent.succeeded` -- logs success
-- `payment_intent.payment_failed` -- marks order as failed
-
-**Env vars:** `VITE_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
-
-### iyzico (Turkey -- Sandbox Default)
-
-| Detail | Value |
-|---|---|
-| SDK | `iyzipay` npm 2.0.67 via CJS wrapper (`server/iyzico.cjs`) |
-| Mode | Sandbox by default (`IYZICO_BASE_URL` defaults to `https://sandbox.iyzipay.com`) |
-| Route module | `server/routes/iyzico.ts` (9.0 KB) |
-
-**Endpoints:**
-
-| Method | Route | Purpose |
-|---|---|---|
-| POST | `/api/iyzico/init` | Initialize checkout form (returns token + payment page URL) |
-| POST | `/api/iyzico/callback` | Server-to-server callback (raw body, signature verification) |
-| GET | `/api/iyzico/callback` | Browser redirect after payment |
-| GET | `/api/iyzico/installments` | Query installment options by BIN |
-
-**Env vars:** `IYZICO_API_KEY`, `IYZICO_SECRET_KEY`, `IYZICO_BASE_URL`
-
----
-
-## Authentication
-
-| Provider | Detail |
-|---|---|
-| **Firebase Auth** (primary) | Client: `firebase/auth` SDK. Server: `firebase-admin/auth` for token verification. |
-| **Seller API Keys** | Custom `bo_`-prefixed keys. Hashed server-side, stored in Firestore `apiKeys` collection. Scoped permissions. |
-| **Cron Secret** | `X-Cron-Secret` header verification against `CRON_SECRET` env var. |
-| Admin override | Email `ozyslr@gmail.com` always treated as admin. |
-
-**Auth middleware file:** `src/lib/authMiddleware.ts` -- factory `createAuthMiddlewares(adminAuth, adminDb)` producing `verifyFirebaseToken`, `verifyAdmin`, `verifyCronSecret`.
-
----
-
-## External APIs
-
-### Google Gemini AI
-
-| Detail | Value |
-|---|---|
-| SDK | `@google/genai` 1.29.0 |
-| Model | `gemini-3-flash-preview` |
-| Source | `server/routes/gemini.ts` (server-side proxy) |
-| Features | AI shopping assistant (Turkish), AI content generation, AI content moderation, visual search, AI recommendations |
-| Env var | `GEMINI_API_KEY` (server-side only — never in client bundle) |
-
-### Exchange Rate API
-
-| Detail | Value |
-|---|---|
-| Provider | `exchangerate-api.com` |
-| Usage | Live multi-currency conversion in footer/ticker |
-| Env var | `VITE_EXCHANGE_RATE_API_KEY` |
-
----
-
-## Analytics & Monitoring
-
-### Google Analytics 4
-
-| Detail | Value |
-|---|---|
-| ID env var | `VITE_GA4_MEASUREMENT_ID` (fallback: `VITE_GA_MEASUREMENT_ID`) |
-| Loading | Consent-first via `src/lib/analytics.ts`. Script injected after user grants consent. |
-| Tracks | Page views, product views, add-to-cart, checkout, purchases, searches, wishlist |
-
-### Meta/Facebook Pixel
-
-| Detail | Value |
-|---|---|
-| ID env var | `VITE_META_PIXEL_ID` |
-| Event mapping | `PageView`, `ViewContent`, `AddToCart`, `InitiateCheckout`, `Purchase`, `Search`, `AddToWishlist` |
-| Loading | Inline script in `index.html` + consent-gated dynamic loading |
-
-### TikTok Pixel
-
-| Detail | Value |
-|---|---|
-| ID env var | `VITE_TIKTOK_PIXEL_ID` |
-| Events | `page`, `track` |
-| Loading | Consent-gated dynamic script injection |
-
-### Sentry (Error Monitoring)
-
-| Detail | Value |
-|---|---|
-| SDK | `@sentry/react` 10.53.1 + `@sentry/vite-plugin` 5.3.0 |
-| Source | `src/lib/sentry.ts` |
-| Features | `browserTracingIntegration()`, `replayIntegration()` |
-| Traces sample rate | 0.1 (production), 1.0 (development) |
-| Env var | `VITE_SENTRY_DSN` |
-
----
-
-## Email / SMS
-
-| Service | Integration |
-|---|---|
-| **Firebase Trigger Email** | Order confirmations (iyzico flow), abandoned cart reminders. Emails triggered by writing to Firestore email collection. |
-| **Push notifications** | `POST /api/send-push` endpoint. Firebase Cloud Messaging via PWA service worker. Tokens in Firestore `pushTokens` collection. |
-
----
-
-## File Storage / CDN
-
-| Service | Detail |
-|---|---|
-| **Firebase Storage** | All product images, user avatars, seller logos. |
-| Client library | `firebase/storage` -- `uploadBytes` / `getDownloadURL` via `src/lib/storage.ts` |
-| Image resizing | Client-side resize to 400px max before upload |
-| CDN | Firebase Storage via Google's global CDN |
-| Fonts CDN | Google Fonts (`fonts.googleapis.com`) -- Inter font family |
-
----
-
-## Third-Party Embeds
-
-All consent-gated via CookieConsent component:
-
-| Script | Env Var | Mechanism |
-|---|---|---|
-| GA4 gtag | `VITE_GA4_MEASUREMENT_ID` | Dynamic script injection |
-| Meta Pixel | `VITE_META_PIXEL_ID` | Inline + dynamic script |
-| TikTok Pixel | `VITE_TIKTOK_PIXEL_ID` | Dynamic script injection |
-| Google Fonts | -- | Preloaded link in head |
-
----
-
-## Webhook Handlers
-
-| Webhook | Route | Signature | Purpose |
-|---|---|---|---|
-| **Stripe** | `POST /api/webhook` | `stripe-signature` + `STRIPE_WEBHOOK_SECRET` | Payment lifecycle events |
-| **iyzico callback** | `POST /api/iyzico/callback` | Raw body parsing | Payment result notification |
-| **Scheduled payouts** | `POST /api/process-scheduled-payouts` | `X-Cron-Secret` | Weekly auto-payouts |
-| **Abandoned cart** | `POST /api/abandoned-cart/check` | `X-Cron-Secret` | Cart recovery emails |
-| **Event-driven webhook infra** | Configurable (service layer) | Trendyol-compatible | Real-time notifications |
-
----
-
-## Seller REST API (`/api/v1`)
-
-| Detail | Value |
-|---|---|
-| Auth | `Authorization: Bearer bo_<api_key>` (hashed server-side) |
-| Route module | `server/routes/sellerApi.ts` (10.8 KB) |
-
-**Endpoints:** `GET/POST /api/v1/products`, `GET/PUT /api/v1/products/:id`, `PUT /api/v1/products/stock`, `GET /api/v1/orders`, `GET /api/v1/orders/:id`.
-
----
-
-## Shipping / Cargo Integration
-
-| Detail | Value |
-|---|---|
-| Source | `src/services/cargoService.ts` (13.0 KB) |
-| Pattern | Provider interface with mock implementations |
-| Supported carriers | PTT, Yurtici, Aras, MNG, Surat, UPS, DHL |
-| Current state | Mock providers -- real API keys can be swapped via env vars |
-
----
-
-## Additional Service Integrations
-
-| Service | File | Purpose |
-|---|---|---|
-| Blockchain | `src/services/blockchainService.ts` | Product authenticity verification |
-| E-Fatura | `src/services/invoiceService.ts` | Turkish GIB-compliant UBL-TR e-invoice |
-| Webhook infra | `src/services/webhookService.ts` | Event-driven notifications |
-| Chat | `src/services/chatService.ts` | Buyer-seller messaging |
-| Loyalty | `src/services/loyaltyService.ts` | Points/rewards system |
-| AR (3D) | `src/services/arService.ts` | Augmented reality product viewing |
-| AI Content | `src/services/aiContentService.ts` | AI-generated product descriptions |
-| AI Moderation | `src/services/aiModerationService.ts` | Policy-violation screening |
-
----
-
-## Environment Variables Summary
-
-| Variable | Category | Required |
-|---|---|---|
-| `VITE_STRIPE_PUBLISHABLE_KEY` | Payments | Yes |
-| `STRIPE_SECRET_KEY` | Payments | Yes |
-| `STRIPE_WEBHOOK_SECRET` | Payments | Yes |
-| `IYZICO_API_KEY` | Payments | No (iyzico only) |
-| `IYZICO_SECRET_KEY` | Payments | No (iyzico only) |
-| `IYZICO_BASE_URL` | Payments | No (defaults to sandbox) |
-| `GEMINI_API_KEY` | AI (server) | No (disables all AI features) |
-| `VITE_EXCHANGE_RATE_API_KEY` | External API | No (disables currency ticker) |
-| `VITE_GA4_MEASUREMENT_ID` | Analytics | No (consent-first) |
-| `VITE_META_PIXEL_ID` | Analytics | No (consent-first) |
-| `VITE_TIKTOK_PIXEL_ID` | Analytics | No (consent-first) |
-| `VITE_SENTRY_DSN` | Monitoring | No (graceful disable) |
-| `FIREBASE_SERVICE_ACCOUNT_B64` | Firebase | Yes (webhooks/payouts) |
-| `CRON_SECRET` | Auth | Yes (cron endpoints) |
-| `APP_URL` | Config | Yes (OAuth callbacks) |
-| `VITE_FIREBASE_*` (6 vars) | Firebase | Yes (client config) |
+_Integration audit: 2026-06-08_
