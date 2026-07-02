@@ -1,4 +1,4 @@
-﻿import React, { FormEvent, useState, useEffect, useRef } from 'react';
+﻿import React, { FormEvent, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion } from 'motion/react';
 import {
   ShieldCheck,
@@ -19,9 +19,13 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { createOrder, getOrderById } from '@/services/orderService';
-import { decreaseProductStock, validateCartStock } from '@/services/productService';
+import {
+  decreaseProductStock,
+  validateCartStock,
+  getProductsByIds,
+} from '@/services/productService';
+import { LoadingState, ErrorState } from '@/components/shared/DataStates';
 import { addAddress, MAX_ADDRESSES } from '@/services/userService';
 import { sendOrderConfirmationEmail } from '@/services/emailService';
 import { InvoiceModal } from '@/components/commerce/InvoiceModal';
@@ -44,7 +48,7 @@ import {
   getCartCampaignGifts,
 } from '@/services/campaignService';
 import type { CartCampaign } from '@/types';
-import type { Address, AddressType, Coupon } from '@/types';
+import type { Address, AddressType, Coupon, Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { getAllShippingRates } from '@/services/cargoService';
@@ -180,12 +184,38 @@ export function CheckoutPage() {
 
   const currency = user?.currency ?? 'GBP';
   const market = MARKETS[user?.country ?? 'UK'] ?? MARKETS['UK'];
+
+  // ─── Resolve cart products from Firestore (real data, not mock) ──────────
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsStatus, setProductsStatus] = useState<'loading' | 'error' | 'ready'>('loading');
+
+  const productIds = useMemo(() => items.map((item) => item.productId), [items]);
+
+  const loadProducts = useCallback(async () => {
+    setProductsStatus('loading');
+    try {
+      setProducts(productIds.length ? await getProductsByIds(productIds) : []);
+      setProductsStatus('ready');
+    } catch {
+      setProductsStatus('error');
+    }
+  }, [productIds]);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  const missingIds = useMemo(
+    () => productIds.filter((id) => !products.some((p) => p.id === id)),
+    [productIds, products],
+  );
+
   const cartProducts = items
     .map((item) => {
-      const product = MOCK_PRODUCTS.find((p) => p.id === item.productId);
+      const product = products.find((p) => p.id === item.productId);
       return product ? { ...product, quantity: item.quantity } : null;
     })
-    .filter(Boolean) as ((typeof MOCK_PRODUCTS)[0] & { quantity: number })[];
+    .filter(Boolean) as (Product & { quantity: number })[];
 
   const subtotal = cartProducts.reduce((s, p) => s + p.price * p.quantity, 0);
   const totalDiscount = discountAmount + cartCampaignDiscount;
@@ -370,7 +400,11 @@ export function CheckoutPage() {
       const data = await res.json();
       if (!res.ok) {
         // Price validation failed or other server error — show to user
-        setPaymentError(data?.error || data?.detail || 'Ödeme başlatılamadı. Lütfen sepetinizi yenileyip tekrar deneyin.');
+        setPaymentError(
+          data?.error ||
+            data?.detail ||
+            'Ödeme başlatılamadı. Lütfen sepetinizi yenileyip tekrar deneyin.',
+        );
         setIsFetchingIntent(false);
         return;
       }
@@ -617,6 +651,10 @@ export function CheckoutPage() {
       ? { clientSecret, appearance: { theme: 'stripe' as const } }
       : undefined;
 
+  if (productsStatus === 'loading') return <LoadingState />;
+  if (productsStatus === 'error')
+    return <ErrorState message="Sepet ürünleri yüklenemedi." onRetry={loadProducts} />;
+
   return (
     <>
       <div className="min-h-screen bg-[#F8F8FA] pt-32 pb-20 px-4">
@@ -632,6 +670,19 @@ export function CheckoutPage() {
               Secure Checkout
             </h1>
           </div>
+
+          {missingIds.length > 0 && (
+            <div className="mb-8 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+              Sepetinde artık mevcut olmayan ürünler var.{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/cart')}
+                className="underline font-medium"
+              >
+                Sepete dön
+              </button>
+            </div>
+          )}
 
           {/* Progress Bar */}
           <div className="flex items-center justify-between mb-12 relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-0 before:w-full before:h-1 before:bg-[#1A1033]/5 before:-z-10">
@@ -729,7 +780,7 @@ export function CheckoutPage() {
 
                     <button
                       type="submit"
-                      disabled={isFetchingIntent}
+                      disabled={isFetchingIntent || missingIds.length > 0}
                       className="w-full py-4 bg-[#1A1033] text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 mt-8 disabled:opacity-60"
                     >
                       {isFetchingIntent ? (
@@ -859,7 +910,7 @@ export function CheckoutPage() {
                       <button
                         type="button"
                         onClick={proceedToPayment}
-                        disabled={isFetchingIntent}
+                        disabled={isFetchingIntent || missingIds.length > 0}
                         className="py-4 px-8 bg-accent text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 mx-auto disabled:opacity-60"
                       >
                         {isFetchingIntent ? (
