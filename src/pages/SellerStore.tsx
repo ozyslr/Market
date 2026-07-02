@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Star,
@@ -27,16 +27,17 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { storage, db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'motion/react';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { MOCK_USER } from '@/data/mockUser';
-import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
 import { SellerRatingSummary } from '@/components/product/RatingSummary';
 import { getSellerStarSummary, type SellerStarSummary } from '@/services/sellerRatingService';
 import { getAllReviews } from '@/services/reviewService';
-import type { Review } from '@/types';
+import { getSellerBySlug, getSellerById } from '@/services/userService';
+import { getProducts } from '@/services/productService';
+import { LoadingState, ErrorState, EmptyState } from '@/components/shared/DataStates';
+import type { Review, Seller, Product } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useFollows } from '@/context/FollowsContext';
 
@@ -76,20 +77,47 @@ export function SellerStorePage() {
   const { isFollowing, toggleFollow, loading: followLoading } = useFollows();
 
   // Route param: /seller/:id OR /store/:slug
-  const routeKey = slugParam ?? id;
+  const routeKey = useMemo(() => slugParam ?? id, [slugParam, id]);
 
-  // Find seller from mock data or use the first one as fallback
-  const sellerData =
-    MOCK_SELLERS.find((s) => s.id === routeKey || s.slug === routeKey) || MOCK_SELLERS[0];
+  // Real seller + products, loaded from Firestore (no MOCK fallback — ACC-03/ACC-04).
+  const [sellerData, setSellerData] = useState<Seller | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading');
+
+  const loadStore = useCallback(async () => {
+    if (!routeKey) {
+      setStatus('error');
+      return;
+    }
+    setStatus('loading');
+    try {
+      const s = (await getSellerBySlug(routeKey)) ?? (await getSellerById(routeKey));
+      if (!s) {
+        setSellerData(null);
+        setStatus('ready');
+        return;
+      }
+      setSellerData(s);
+      setProducts(await getProducts({ sellerId: s.id }));
+      setStatus('ready');
+    } catch {
+      setStatus('error');
+    }
+  }, [routeKey]);
+
+  useEffect(() => {
+    loadStore();
+  }, [loadStore]);
 
   // Store URL (shareable, public)
-  const storeSlug = sellerData.slug || sellerData.id;
+  const storeSlug = sellerData?.slug || sellerData?.id || '';
 
   // REV-03: live seller rating summary aggregated from approved reviews.
   const [starSummary, setStarSummary] = useState<SellerStarSummary | null>(null);
   const [sellerReviews, setSellerReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   useEffect(() => {
+    if (!sellerData) return;
     let active = true;
     setReviewsLoading(true);
     getAllReviews()
@@ -97,11 +125,16 @@ export function SellerStorePage() {
         if (active) setSellerReviews(all.filter((r) => r.sellerId === sellerData.id));
       })
       .catch(() => {})
-      .finally(() => { if (active) setReviewsLoading(false); });
-    return () => { active = false; };
-  }, [sellerData.id]);
+      .finally(() => {
+        if (active) setReviewsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [sellerData]);
 
   useEffect(() => {
+    if (!sellerData) return;
     let active = true;
     getSellerStarSummary(sellerData.id)
       .then((s) => {
@@ -111,7 +144,7 @@ export function SellerStorePage() {
     return () => {
       active = false;
     };
-  }, [sellerData.id]);
+  }, [sellerData]);
   const storeUrl =
     typeof window !== 'undefined'
       ? `${window.location.origin}/store/${storeSlug}`
@@ -127,18 +160,27 @@ export function SellerStorePage() {
   }
 
   // Is the logged-in user the owner of this store?
-  const isOwner = !!firebaseUser && user?.id === sellerData.id;
+  const isOwner = !!firebaseUser && !!sellerData && user?.id === sellerData.id;
 
   // Store management: logo / banner upload + about counter (owner only)
-  const [aboutText, setAboutText] = useState(sellerData.description || '');
+  const [aboutText, setAboutText] = useState('');
   const [logoUploading, setLogoUploading] = useState(false);
   const [bannerUploading, setBannerUploading] = useState(false);
-  const [logoUrl, setLogoUrl] = useState(sellerData.logoUrl || '');
-  const [bannerUrl, setBannerUrl] = useState(sellerData.bannerUrl || '');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [bannerUrl, setBannerUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState(false);
 
+  // Sync editable store fields once seller data loads (state initializers only run on mount).
+  useEffect(() => {
+    if (!sellerData) return;
+    setAboutText(sellerData.description || '');
+    setLogoUrl(sellerData.logoUrl || '');
+    setBannerUrl(sellerData.bannerUrl || '');
+  }, [sellerData]);
+
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!sellerData) return;
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) return;
@@ -159,6 +201,7 @@ export function SellerStorePage() {
   }
 
   async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!sellerData) return;
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) return;
@@ -179,6 +222,7 @@ export function SellerStorePage() {
   }
 
   async function handleSaveStore() {
+    if (!sellerData) return;
     setSaving(true);
     try {
       await updateDoc(doc(db, 'sellers', sellerData.id), {
@@ -194,21 +238,7 @@ export function SellerStorePage() {
     }
   }
 
-  const seller = {
-    name: sellerData.storeName,
-    origin: sellerData.origin,
-    rating: sellerData.rating,
-    reviewsCount: sellerData.reviewsCount,
-    followers: sellerData.followersCount,
-    isVerified: sellerData.isVerified,
-    joinedDate: sellerData.joinedDate,
-    description: sellerData.description || 'Sertifikalı Benim Olan Satıcısı.',
-    banner: bannerUrl || 'https://picsum.photos/seed/shop/1920/1080?blur=4',
-    avatar: logoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${sellerData.storeName}`,
-    fulfillment: sellerData.fulfillmentHealth,
-  };
-
-  const sellerProducts = MOCK_PRODUCTS.filter((p) => p.sellerId === sellerData.id);
+  const sellerProducts = products;
 
   const categories = React.useMemo(
     () => [...new Set(sellerProducts.map((p: any) => p.categoryId).filter(Boolean))] as string[],
@@ -271,11 +301,31 @@ export function SellerStorePage() {
     [sellerProducts],
   );
 
+  // Render branching: loading / error / not-found (no MOCK_SELLERS fallback — ACC-03).
+  if (status === 'loading') return <LoadingState />;
+  if (status === 'error') return <ErrorState message="Mağaza yüklenemedi." onRetry={loadStore} />;
+  if (!sellerData) return <EmptyState title="Mağaza bulunamadı" />;
+
+  const seller = {
+    name: sellerData.storeName,
+    origin: sellerData.origin,
+    rating: sellerData.rating,
+    reviewsCount: sellerData.reviewsCount,
+    followers: sellerData.followersCount,
+    isVerified: sellerData.isVerified,
+    joinedDate: sellerData.joinedDate,
+    description: sellerData.description || 'Sertifikalı Benim Olan Satıcısı.',
+    banner: bannerUrl || 'https://picsum.photos/seed/shop/1920/1080?blur=4',
+    avatar: logoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${sellerData.storeName}`,
+    fulfillment: sellerData.fulfillmentHealth,
+  };
+
   const following = isFollowing(sellerData.id);
 
+  const sellerId = sellerData.id;
   async function handleFollow() {
     if (!firebaseUser) return;
-    await toggleFollow(sellerData.id);
+    await toggleFollow(sellerId);
   }
 
   return (
@@ -631,7 +681,9 @@ export function SellerStorePage() {
                       type="number"
                       placeholder="Min"
                       value={priceMin}
-                      onChange={(e) => setPriceMin(e.target.value === '' ? '' : Number(e.target.value))}
+                      onChange={(e) =>
+                        setPriceMin(e.target.value === '' ? '' : Number(e.target.value))
+                      }
                       className="w-full px-2 py-1 bg-brand-secondary/30 rounded-lg text-[10px] outline-none border-0"
                     />
                     <span className="text-brand-primary/20 text-[10px]">-</span>
@@ -639,7 +691,9 @@ export function SellerStorePage() {
                       type="number"
                       placeholder="Max"
                       value={priceMax}
-                      onChange={(e) => setPriceMax(e.target.value === '' ? '' : Number(e.target.value))}
+                      onChange={(e) =>
+                        setPriceMax(e.target.value === '' ? '' : Number(e.target.value))
+                      }
                       className="w-full px-2 py-1 bg-brand-secondary/30 rounded-lg text-[10px] outline-none border-0"
                     />
                   </div>
@@ -929,16 +983,20 @@ export function SellerStorePage() {
                     )}
 
                     {/* Product Grid */}
-                    <div
-                      className={cn(
-                        'grid gap-6',
-                        viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1',
-                      )}
-                    >
-                      {displayProducts.slice(0, 12).map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                      ))}
-                    </div>
+                    {sellerProducts.length === 0 ? (
+                      <EmptyState title="Bu mağazada henüz ürün yok" />
+                    ) : (
+                      <div
+                        className={cn(
+                          'grid gap-6',
+                          viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1',
+                        )}
+                      >
+                        {displayProducts.slice(0, 12).map((product) => (
+                          <ProductCard key={product.id} product={product} />
+                        ))}
+                      </div>
+                    )}
 
                     {displayProducts.length > 12 && (
                       <div className="flex justify-center mt-8">
@@ -1020,21 +1078,25 @@ export function SellerStorePage() {
                   </p>
 
                   {/* Product Grid */}
-                  <div
-                    className={cn(
-                      'grid gap-4',
-                      viewMode === 'grid' ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1',
-                    )}
-                  >
-                    {(activeTab === 'deals'
-                      ? displayProducts.filter((p: any) => p.isFlashDeal || p.oldPrice)
-                      : displayProducts
-                    )
-                      .slice(0, 24)
-                      .map((product: any) => (
-                        <ProductCard key={product.id} product={product} />
-                      ))}
-                  </div>
+                  {sellerProducts.length === 0 ? (
+                    <EmptyState title="Bu mağazada henüz ürün yok" />
+                  ) : (
+                    <div
+                      className={cn(
+                        'grid gap-4',
+                        viewMode === 'grid' ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1',
+                      )}
+                    >
+                      {(activeTab === 'deals'
+                        ? displayProducts.filter((p: any) => p.isFlashDeal || p.oldPrice)
+                        : displayProducts
+                      )
+                        .slice(0, 24)
+                        .map((product: any) => (
+                          <ProductCard key={product.id} product={product} />
+                        ))}
+                    </div>
+                  )}
 
                   {displayProducts.length > 24 && (
                     <div className="flex justify-center pt-4">
@@ -1247,7 +1309,9 @@ export function SellerStorePage() {
                                   {(rv.userName || '?').charAt(0)}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-bold text-brand-primary">{rv.userName || 'Anonim'}</p>
+                                  <p className="text-sm font-bold text-brand-primary">
+                                    {rv.userName || 'Anonim'}
+                                  </p>
                                   <div className="flex items-center gap-2 mt-0.5">
                                     <div className="flex">
                                       {Array.from({ length: 5 }).map((_, i) => (
@@ -1263,7 +1327,13 @@ export function SellerStorePage() {
                                       ))}
                                     </div>
                                     <span className="text-[10px] text-brand-primary/30">
-                                      {rv.createdAt ? new Date(rv.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                                      {rv.createdAt
+                                        ? new Date(rv.createdAt).toLocaleDateString('tr-TR', {
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric',
+                                          })
+                                        : ''}
                                     </span>
                                   </div>
                                 </div>
