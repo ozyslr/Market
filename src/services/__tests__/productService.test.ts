@@ -44,7 +44,7 @@ vi.mock('../../lib/firebase', () => ({
 
 vi.mock('../priceHistoryService', () => ({ recordPrice: vi.fn() }));
 
-import { getProductsByIds, getProductById } from '../productService';
+import { getProductsByIds, getProductById, getProducts } from '../productService';
 
 function snapFromDocs(docs: { id: string; data: any }[]) {
   return { docs: docs.map((d) => ({ id: d.id, data: () => d.data })), empty: docs.length === 0 };
@@ -123,5 +123,20 @@ describe('getProductById', () => {
     const { getDoc } = await import('firebase/firestore');
     (getDoc as any).mockRejectedValueOnce(new Error('down'));
     await expect(getProductById('p1')).rejects.toThrow();
+  });
+});
+
+describe('getProducts (no mock fallback)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns empty array when Firestore has no products', async () => {
+    mockGetDocs.mockResolvedValueOnce(snapFromDocs([]));
+    const result = await getProducts();
+    expect(result).toEqual([]);
+  });
+
+  it('throws when Firestore query fails', async () => {
+    mockGetDocs.mockRejectedValueOnce(new Error('firestore down'));
+    await expect(getProducts()).rejects.toThrow();
   });
 });

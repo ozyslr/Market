@@ -175,8 +175,6 @@ export async function getProducts(options?: GetProductsOptions) {
     const snapshot = await getDocs(q);
     let products = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Product[];
 
-    if (products.length === 0) products = MOCK_PRODUCTS;
-
     // Ensure all products have slugs
     products = products.map(ensureProductHasSlug);
 
@@ -199,9 +197,8 @@ export async function getProducts(options?: GetProductsOptions) {
 
     return products;
   } catch (error) {
-    console.error('Error fetching products:', error);
-    const fallback = options ? applyClientFilters(MOCK_PRODUCTS, options) : MOCK_PRODUCTS;
-    return fallback.map(ensureProductHasSlug);
+    handleFirestoreError(error, OperationType.LIST, 'products');
+    throw error;
   }
 }
 
