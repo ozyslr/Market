@@ -850,7 +850,7 @@ export function CheckoutPage() {
                       <button
                         type="button"
                         onClick={handleSavedCardPay}
-                        disabled={savedCardPaying}
+                        disabled={savedCardPaying || missingIds.length > 0}
                         className="w-full py-4 bg-accent text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
                       >
                         {savedCardPaying ? (
