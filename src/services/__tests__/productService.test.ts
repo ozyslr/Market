@@ -44,7 +44,7 @@ vi.mock('../../lib/firebase', () => ({
 
 vi.mock('../priceHistoryService', () => ({ recordPrice: vi.fn() }));
 
-import { getProductsByIds } from '../productService';
+import { getProductsByIds, getProductById } from '../productService';
 
 function snapFromDocs(docs: { id: string; data: any }[]) {
   return { docs: docs.map((d) => ({ id: d.id, data: () => d.data })), empty: docs.length === 0 };
@@ -95,5 +95,33 @@ describe('getProductsByIds', () => {
     mockGetDocs.mockRejectedValueOnce(new Error('firestore down'));
     await expect(getProductsByIds(['a'])).rejects.toThrow();
     expect(mockHandleFirestoreError).toHaveBeenCalled();
+  });
+});
+
+describe('getProductById', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns the product when it exists', async () => {
+    const { getDoc } = await import('firebase/firestore');
+    (getDoc as any).mockResolvedValueOnce({
+      exists: () => true,
+      id: 'p1',
+      data: () => ({ title: 'P1' }),
+    });
+    const result = await getProductById('p1');
+    expect(result?.id).toBe('p1');
+  });
+
+  it('returns null when the product does not exist', async () => {
+    const { getDoc } = await import('firebase/firestore');
+    (getDoc as any).mockResolvedValueOnce({ exists: () => false });
+    const result = await getProductById('missing');
+    expect(result).toBeNull();
+  });
+
+  it('throws on Firestore error', async () => {
+    const { getDoc } = await import('firebase/firestore');
+    (getDoc as any).mockRejectedValueOnce(new Error('down'));
+    await expect(getProductById('p1')).rejects.toThrow();
   });
 });

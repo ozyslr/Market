@@ -119,6 +119,17 @@ export async function getProductsByIds(ids: string[]): Promise<Product[]> {
   }
 }
 
+export async function getProductById(id: string): Promise<Product | null> {
+  try {
+    const snapshot = await getDoc(doc(db, 'products', id));
+    if (!snapshot.exists()) return null;
+    return ensureProductHasSlug({ id: snapshot.id, ...snapshot.data() } as Product);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `products/${id}`);
+    throw error;
+  }
+}
+
 export async function getProducts(options?: GetProductsOptions) {
   try {
     const productsRef = collection(db, 'products');
