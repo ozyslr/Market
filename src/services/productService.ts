@@ -15,6 +15,7 @@ import {
   runTransaction,
   increment,
   writeBatch,
+  documentId,
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Product, Category } from '../types';
@@ -85,6 +86,37 @@ function applyClientFilters(products: Product[], options: GetProductsOptions): P
   if (options.minRating != null) list = list.filter((p) => p.rating >= options.minRating!);
   if (options.limit) list = list.slice(0, options.limit);
   return list;
+}
+
+/**
+ * Fetch multiple products by their document IDs in one pass.
+ * Firestore `in` supports max 10 values, so ids are chunked in 10s.
+ * Returns ONLY the products that exist — callers detect missing/invalid
+ * ids by diffing requested ids against the returned ids. No mock fallback.
+ */
+export async function getProductsByIds(ids: string[]): Promise<Product[]> {
+  if (ids.length === 0) return [];
+  try {
+    const productsRef = collection(db, 'products');
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += 10) chunks.push(ids.slice(i, i + 10));
+
+    const results = await Promise.all(
+      chunks.map(async (chunk) => {
+        const q = query(productsRef, where(documentId(), 'in', chunk));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Product);
+      }),
+    );
+
+    const found = results.flat().map(ensureProductHasSlug);
+    // Preserve requested order, drop missing ids.
+    const byId = new Map(found.map((p) => [p.id, p]));
+    return ids.map((id) => byId.get(id)).filter((p): p is Product => p != null);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, 'products/byIds');
+    throw error;
+  }
 }
 
 export async function getProducts(options?: GetProductsOptions) {
