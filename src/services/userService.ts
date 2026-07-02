@@ -1,6 +1,8 @@
 import {
   collection,
   query,
+  where,
+  limit,
   getDoc,
   getDocs,
   doc,
@@ -56,6 +58,30 @@ export async function getSellers() {
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Seller);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, 'sellers');
+    throw error;
+  }
+}
+
+export async function getSellerById(id: string): Promise<Seller | null> {
+  try {
+    const snapshot = await getDoc(doc(db, 'sellers', id));
+    if (!snapshot.exists()) return null;
+    return { id: snapshot.id, ...snapshot.data() } as Seller;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `sellers/${id}`);
+    throw error;
+  }
+}
+
+export async function getSellerBySlug(slug: string): Promise<Seller | null> {
+  try {
+    const q = query(collection(db, 'sellers'), where('slug', '==', slug), limit(1));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return null;
+    const d = snapshot.docs[0];
+    return { id: d.id, ...d.data() } as Seller;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, `sellers?slug=${slug}`);
     throw error;
   }
 }
