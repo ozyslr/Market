@@ -62,15 +62,18 @@ export function AdminSellers() {
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [sellerProducts, setSellerProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [errorProducts, setErrorProducts] = useState(false);
 
   // Application state
   const [applications, setApplications] = useState<any[]>([]);
   const [loadingApps, setLoadingApps] = useState(false);
+  const [errorApps, setErrorApps] = useState(false);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
 
   // Commission rules state
   const [rules, setRules] = useState<CommissionRule[]>([]);
   const [loadingRules, setLoadingRules] = useState(false);
+  const [errorRules, setErrorRules] = useState(false);
   const [editingRule, setEditingRule] = useState<CommissionRule | null>(null);
   const [savingRule, setSavingRule] = useState(false);
 
@@ -94,8 +97,10 @@ export function AdminSellers() {
   useEffect(() => {
     if (!selectedSeller) return;
     setLoadingProducts(true);
+    setErrorProducts(false);
     getProducts({ sellerId: selectedSeller.userId, includeNonApproved: true })
       .then(setSellerProducts)
+      .catch(() => setErrorProducts(true))
       .finally(() => setLoadingProducts(false));
   }, [selectedSeller]);
 
@@ -103,8 +108,10 @@ export function AdminSellers() {
   useEffect(() => {
     if (adminTab !== 'applications') return;
     setLoadingApps(true);
+    setErrorApps(false);
     getApplications()
       .then(setApplications)
+      .catch(() => setErrorApps(true))
       .finally(() => setLoadingApps(false));
   }, [adminTab]);
 
@@ -112,8 +119,10 @@ export function AdminSellers() {
   useEffect(() => {
     if (adminTab !== 'rules') return;
     setLoadingRules(true);
+    setErrorRules(false);
     getCommissionRules()
       .then(setRules)
+      .catch(() => setErrorRules(true))
       .finally(() => setLoadingRules(false));
   }, [adminTab]);
 
@@ -145,7 +154,7 @@ export function AdminSellers() {
   const update = async (id: string, data: Partial<Seller>) => {
     setSavingId(id);
     try {
-      if (!id.startsWith('s')) await updateSeller(id, data);
+      await updateSeller(id, data);
       setSellers((prev) => prev.map((s) => (s.id === id ? { ...s, ...data } : s)));
       if (selectedSeller?.id === id)
         setSelectedSeller((prev) => (prev ? { ...prev, ...data } : null));
@@ -622,7 +631,19 @@ export function AdminSellers() {
                 </div>
 
                 <div className="overflow-y-auto flex-1 space-y-2">
-                  {loadingProducts ? (
+                  {errorProducts ? (
+                    <ErrorState
+                      message="Ürünler yüklenemedi."
+                      onRetry={() => {
+                        setErrorProducts(false);
+                        setLoadingProducts(true);
+                        getProducts({ sellerId: selectedSeller!.userId, includeNonApproved: true })
+                          .then(setSellerProducts)
+                          .catch(() => setErrorProducts(true))
+                          .finally(() => setLoadingProducts(false));
+                      }}
+                    />
+                  ) : loadingProducts ? (
                     <div className="flex justify-center py-8">
                       <Loader2 className="w-6 h-6 animate-spin text-accent" />
                     </div>
@@ -682,7 +703,19 @@ export function AdminSellers() {
       {/* ── APPLICATIONS TAB ── */}
       {adminTab === 'applications' && (
         <>
-          {loadingApps ? (
+          {errorApps ? (
+            <ErrorState
+              message="Başvurular yüklenemedi."
+              onRetry={() => {
+                setErrorApps(false);
+                setLoadingApps(true);
+                getApplications()
+                  .then(setApplications)
+                  .catch(() => setErrorApps(true))
+                  .finally(() => setLoadingApps(false));
+              }}
+            />
+          ) : loadingApps ? (
             <div className="flex justify-center py-16">
               <Loader2 className="w-6 h-6 animate-spin text-accent" />
             </div>
@@ -824,7 +857,19 @@ export function AdminSellers() {
       {adminTab === 'rules' && (
         <div className="space-y-6">
           {/* Rule list */}
-          {loadingRules ? (
+          {errorRules ? (
+            <ErrorState
+              message="Komisyon kuralları yüklenemedi."
+              onRetry={() => {
+                setErrorRules(false);
+                setLoadingRules(true);
+                getCommissionRules()
+                  .then(setRules)
+                  .catch(() => setErrorRules(true))
+                  .finally(() => setLoadingRules(false));
+              }}
+            />
+          ) : loadingRules ? (
             <div className="flex justify-center py-16">
               <Loader2 className="w-6 h-6 animate-spin text-accent" />
             </div>
