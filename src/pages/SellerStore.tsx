@@ -27,7 +27,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { storage, db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'motion/react';
-import { MOCK_USER } from '@/data/mockUser';
+
 import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
@@ -1233,38 +1233,31 @@ export function SellerStorePage() {
                                 : 'hover:bg-brand-secondary/30',
                             )}
                           >
-                            <span className="text-xs font-black text-brand-primary w-4">
-                              {rating}
-                            </span>
-                            <Star size={12} className="text-yellow-400 fill-yellow-400 shrink-0" />
-                            <div className="flex-1 h-3 bg-brand-secondary rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-accent"
-                                style={{
-                                  width:
-                                    rating === 5
-                                      ? '73%'
-                                      : rating === 4
-                                        ? '18%'
-                                        : rating === 3
-                                          ? '7%'
-                                          : rating === 2
-                                            ? '2%'
-                                            : '1%',
-                                }}
-                              />
-                            </div>
-                            <span className="text-[10px] font-black text-brand-primary/40 w-12">
-                              {rating === 5
-                                ? '73%'
-                                : rating === 4
-                                  ? '18%'
-                                  : rating === 3
-                                    ? '7%'
-                                    : rating === 2
-                                      ? '2%'
-                                      : '<1%'}
-                            </span>
+                            {(() => {
+                              const total = starSummary?.total ?? 0;
+                              const count = starSummary?.distribution?.[rating] ?? 0;
+                              const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                              return (
+                                <>
+                                  <span className="text-xs font-black text-brand-primary w-4">
+                                    {rating}
+                                  </span>
+                                  <Star
+                                    size={12}
+                                    className="text-yellow-400 fill-yellow-400 shrink-0"
+                                  />
+                                  <div className="flex-1 h-3 bg-brand-secondary rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-accent transition-all duration-500"
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-[10px] font-black text-brand-primary/40 w-12">
+                                    {pct}%
+                                  </span>
+                                </>
+                              );
+                            })()}
                           </button>
                         ))}
                       </div>
@@ -1288,13 +1281,9 @@ export function SellerStorePage() {
                   )}
                   <div className="space-y-4">
                     {reviewsLoading ? (
-                      <div className="flex justify-center py-8">
-                        <Loader2 size={20} className="animate-spin text-brand-primary/20" />
-                      </div>
+                      <LoadingState label="Değerlendirmeler yükleniyor…" />
                     ) : sellerReviews.length === 0 ? (
-                      <p className="text-sm text-brand-primary/40 text-center py-8">
-                        Bu satıcı için henüz değerlendirme bulunmuyor.
-                      </p>
+                      <EmptyState title="Bu satıcı için henüz değerlendirme bulunmuyor." />
                     ) : (
                       sellerReviews
                         .filter((rv) => reviewFilter === 0 || rv.rating === reviewFilter)

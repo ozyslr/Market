@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Package,
   Heart,
@@ -26,8 +26,6 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
-import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -42,6 +40,10 @@ import { SavedPaymentMethod } from '@/components/profile/SavedPaymentMethod';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { ReorderButton } from '@/components/commerce/ReorderButton';
 import { getUserTracks, untrackPrice, PriceTrack } from '@/services/priceTrackService';
+import { getProductsByIds, getProducts } from '@/services/productService';
+import { getSellerById } from '@/services/userService';
+import type { Product, Seller } from '@/types';
+import { LoadingState, ErrorState } from '@/components/shared/DataStates';
 
 type ProfileTab =
   | 'overview'
@@ -131,23 +133,20 @@ const OrderCard: React.FC<{ order: Order; expanded?: boolean }> = ({ order, expa
 
       {expanded && (
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-3">
-          {order.items.map((item, idx) => {
-            const product = MOCK_PRODUCTS.find((p) => p.id === item.productId);
-            return (
-              <div
-                key={idx}
-                className="shrink-0 w-14 h-14 rounded-xl bg-brand-secondary/50 dark:bg-zinc-800 p-1.5"
-              >
-                <img
-                  src={item.image || product?.images[0]}
-                  alt={item.name || product?.title}
-                  loading="lazy"
-                  className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-            );
-          })}
+          {order.items.map((item, idx) => (
+            <div
+              key={idx}
+              className="shrink-0 w-14 h-14 rounded-xl bg-brand-secondary/50 dark:bg-zinc-800 p-1.5"
+            >
+              <img
+                src={item.image}
+                alt={item.name}
+                loading="lazy"
+                className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+          ))}
         </div>
       )}
 
@@ -284,6 +283,82 @@ export function UserProfilePage() {
   const [tracks, setTracks] = useState<PriceTrack[]>([]);
   const [tracksLoading, setTracksLoading] = useState(false);
 
+  // Products backing cart-widget / wishlist / price-track cards shown on this
+  // page. Resolved from Firestore by id — no MOCK_PRODUCTS fallback (ACC-03).
+  const [catalogProducts, setCatalogProducts] = useState<Product[]>([]);
+  const [catalogStatus, setCatalogStatus] = useState<'loading' | 'error' | 'ready'>('loading');
+
+  const catalogProductIds = useMemo(() => {
+    const ids = new Set<string>();
+    wishlist.forEach((id) => ids.add(id));
+    cartItems.forEach((i) => ids.add(i.productId));
+    tracks.forEach((t) => ids.add(t.productId));
+    return Array.from(ids);
+  }, [wishlist, cartItems, tracks]);
+
+  const loadCatalogProducts = useCallback(async () => {
+    if (catalogProductIds.length === 0) {
+      setCatalogProducts([]);
+      setCatalogStatus('ready');
+      return;
+    }
+    setCatalogStatus('loading');
+    try {
+      setCatalogProducts(await getProductsByIds(catalogProductIds));
+      setCatalogStatus('ready');
+    } catch {
+      setCatalogStatus('error');
+    }
+  }, [catalogProductIds]);
+
+  useEffect(() => {
+    loadCatalogProducts();
+  }, [loadCatalogProducts]);
+
+  // Followed-seller store cards — resolved from Firestore by id, no
+  // MOCK_SELLERS fallback (ACC-03).
+  const [followedSellerDocs, setFollowedSellerDocs] = useState<Seller[]>([]);
+  const [sellersStatus, setSellersStatus] = useState<'loading' | 'error' | 'ready'>('loading');
+
+  const loadFollowedSellers = useCallback(async () => {
+    if (followedSellers.length === 0) {
+      setFollowedSellerDocs([]);
+      setSellersStatus('ready');
+      return;
+    }
+    setSellersStatus('loading');
+    try {
+      const results = await Promise.all(followedSellers.map((id) => getSellerById(id)));
+      setFollowedSellerDocs(results.filter((s): s is Seller => s != null));
+      setSellersStatus('ready');
+    } catch {
+      setSellersStatus('error');
+    }
+  }, [followedSellers]);
+
+  useEffect(() => {
+    loadFollowedSellers();
+  }, [loadFollowedSellers]);
+
+  // "Curated for you" preview strip on the overview tab — real featured
+  // products, no MOCK_PRODUCTS fallback (ACC-03).
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [featuredStatus, setFeaturedStatus] = useState<'loading' | 'error' | 'ready'>('loading');
+
+  const loadFeaturedProducts = useCallback(async () => {
+    setFeaturedStatus('loading');
+    try {
+      setFeaturedProducts(await getProducts({ limit: 4 }));
+      setFeaturedStatus('ready');
+    } catch {
+      setFeaturedStatus('error');
+    }
+  }, []);
+
+  useEffect(() => {
+    loadFeaturedProducts();
+  }, [loadFeaturedProducts]);
+
   useEffect(() => {
     if (!firebaseUser || activeTab !== 'pricetracks') return;
     setTracksLoading(true);
@@ -311,13 +386,10 @@ export function UserProfilePage() {
 
   const trackedProducts = tracks
     .map((track) => {
-      const product = MOCK_PRODUCTS.find((p) => p.id === track.productId);
+      const product = catalogProducts.find((p) => p.id === track.productId);
       return { track, product };
     })
-    .filter(
-      (item): item is { track: PriceTrack; product: (typeof MOCK_PRODUCTS)[0] } =>
-        item.product !== undefined,
-    );
+    .filter((item): item is { track: PriceTrack; product: Product } => item.product !== undefined);
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -349,16 +421,13 @@ export function UserProfilePage() {
   ).length;
   const userRole = authUser.role;
 
-  const wishlistProducts = MOCK_PRODUCTS.filter((p) => wishlist.includes(p.id));
+  const wishlistProducts = catalogProducts.filter((p) => wishlist.includes(p.id));
   const cartLineItems = cartItems
     .map((it) => {
-      const product = MOCK_PRODUCTS.find((p) => p.id === it.productId);
+      const product = catalogProducts.find((p) => p.id === it.productId);
       return product ? { item: it, product } : null;
     })
-    .filter(
-      (x): x is { item: (typeof cartItems)[number]; product: (typeof MOCK_PRODUCTS)[number] } =>
-        x !== null,
-    );
+    .filter((x): x is { item: (typeof cartItems)[number]; product: Product } => x !== null);
   const cartTotal = cartLineItems.reduce(
     (s, { item, product }) => s + product.price * item.quantity,
     0,
@@ -430,6 +499,9 @@ export function UserProfilePage() {
                   color: 'text-red-400',
                 },
                 { label: t('profile.rewardPoints'), value: '0', color: 'text-accent' },
+                {
+                  /* TODO(scope: loyalty-phase): puan backend'i yok; ayrı fazda ele alınacak */
+                },
               ].map((s, i) => (
                 <div key={i} className="text-center">
                   <p className={cn('text-xl font-black leading-none mb-0.5', s.color)}>{s.value}</p>
@@ -627,7 +699,7 @@ export function UserProfilePage() {
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {MOCK_PRODUCTS.slice(0, 4).map((p) => (
+                  {featuredProducts.slice(0, 4).map((p) => (
                     <Link key={p.id} to={`/product/${p.slug}`}>
                       <motion.div
                         whileHover={{ scale: 1.05 }}
@@ -888,7 +960,7 @@ export function UserProfilePage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {followedSellers.map((sellerId) => {
-                  const seller = MOCK_SELLERS.find((s) => s.id === sellerId);
+                  const seller = followedSellerDocs.find((s) => s.id === sellerId);
                   if (!seller) return null;
                   return (
                     <div
