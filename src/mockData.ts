@@ -1,4 +1,8 @@
 /**
+ * KARANTİNA: Bu mock veri YALNIZCA seedService ve testler tarafından kullanılır.
+ * Runtime/UI kodundan (sayfalar, servisler) import ETMEYİN. Gerçek veri için
+ * productService / userService fonksiyonlarını kullanın. (ACC-03)
+ *
  * Mock Data — barrel re-exports from domain-specific fixture files.
  * Each file can be imported directly (e.g. `import { MOCK_PRODUCTS } from '@/data/mockProducts'`)
  * for tree-shaking, or from here for backwards compatibility.
