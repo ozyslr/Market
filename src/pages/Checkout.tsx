@@ -239,7 +239,11 @@ export function CheckoutPage() {
 
   // Kargo ücretleri TL bazlıdır → market para birimine çevir.
   const convertTRY = (tryAmount: number) =>
-    currency === 'TRY' ? tryAmount : tryPerUnit > 0 ? tryAmount / tryPerUnit : tryAmount;
+    currency === 'TRY'
+      ? tryAmount
+      : tryPerUnit && tryPerUnit > 0
+        ? tryAmount / tryPerUnit
+        : tryAmount;
 
   useEffect(() => {
     const destCity = address.city.trim();

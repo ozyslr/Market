@@ -184,6 +184,9 @@ const STATUS_NOTIFY: Partial<Record<OrderStatus, { title: string; message: strin
   shipped: { title: 'Siparişiniz Kargoya Verildi', message: 'Siparişiniz kargoya verildi.' },
   delivered: { title: 'Siparişiniz Teslim Edildi', message: 'Siparişiniz teslim edildi.' },
   cancelled: { title: 'Siparişiniz İptal Edildi', message: 'Siparişiniz iptal edildi.' },
+  returned: { title: 'İadeniz Alındı', message: 'İadeniz teslim alındı.' },
+  refunded: { title: 'İadeniz Onaylandı', message: 'İade tutarınız hesabınıza aktarıldı.' },
+  return_requested: { title: 'İade Talebiniz Alındı', message: 'İade talebiniz alındı.' },
 };
 
 export async function updateOrderStatus(
@@ -357,6 +360,153 @@ export async function batchUpdateOrders(updates: BatchOrderUpdate[]): Promise<Ba
   }
 
   return result;
+}
+
+/**
+ * Cancel an order. Only allowed when status is 'pending' or 'processing'.
+ * Restores stock, sends notification, and returns the updated order or null.
+ */
+export async function cancelOrder(orderId: string, userId: string): Promise<Order | null> {
+  try {
+    const snap = await getDoc(doc(db, ORDERS_COLLECTION, orderId));
+    if (!snap.exists()) return null;
+
+    const order = { id: snap.id, ...snap.data() } as Order;
+
+    // Ownership check: only the buyer who placed the order can cancel
+    if (order.userId !== userId) return null;
+
+    // Only pending or processing orders can be cancelled
+    if (order.status !== 'pending' && order.status !== 'processing') return null;
+
+    await updateDoc(doc(db, ORDERS_COLLECTION, orderId), {
+      status: 'cancelled' as OrderStatus,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // Restore stock
+    if (order.items.length > 0) {
+      await restoreProductStock(
+        order.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      );
+    }
+
+    // Send notification
+    const msg = STATUS_NOTIFY.cancelled;
+    if (msg) {
+      await createNotification(
+        order.userId,
+        'order_status',
+        msg.title,
+        msg.message,
+        `/orders/${orderId}`,
+      );
+    }
+
+    return { ...order, status: 'cancelled' as OrderStatus, updatedAt: new Date().toISOString() };
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `${ORDERS_COLLECTION}/${orderId}`);
+    return null;
+  }
+}
+
+/**
+ * Request a return for a delivered order. Creates a return request document
+ * in the `returns` collection and updates the order status to 'return_requested'.
+ */
+export async function requestReturn(
+  orderId: string,
+  userId: string,
+  reason: string,
+): Promise<string | null> {
+  try {
+    const snap = await getDoc(doc(db, ORDERS_COLLECTION, orderId));
+    if (!snap.exists()) return null;
+
+    const order = { id: snap.id, ...snap.data() } as Order;
+
+    if (order.userId !== userId) return null;
+    if (order.status !== 'delivered') return null;
+
+    const now = new Date().toISOString();
+
+    // Create return request in `returns` collection
+    const returnDoc = await addDoc(collection(db, 'returns'), {
+      orderId,
+      userId,
+      reason,
+      status: 'pending',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Update order status
+    await updateDoc(doc(db, ORDERS_COLLECTION, orderId), {
+      status: 'return_requested' as OrderStatus,
+      updatedAt: now,
+    });
+
+    // Send notification
+    const msg = STATUS_NOTIFY.return_requested;
+    if (msg) {
+      await createNotification(
+        order.userId,
+        'order_status',
+        msg.title,
+        msg.message,
+        `/orders/${orderId}`,
+      );
+    }
+
+    return returnDoc.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'returns');
+    return null;
+  }
+}
+
+/**
+ * Seller adds shipment tracking to an order. Updates the order with carrier and
+ * tracking number, sets status to 'shipped', and sends a notification.
+ */
+export async function addTracking(
+  orderId: string,
+  carrier: string,
+  trackingNumber: string,
+): Promise<void> {
+  try {
+    const now = new Date().toISOString();
+
+    await updateDoc(doc(db, ORDERS_COLLECTION, orderId), {
+      carrier,
+      trackingNumber,
+      status: 'shipped' as OrderStatus,
+      shippedAt: now,
+      updatedAt: now,
+    });
+
+    // Send notification with tracking info
+    const msg = STATUS_NOTIFY.shipped;
+    if (msg) {
+      const order = await getOrderById(orderId);
+      if (order?.userId) {
+        const message = `${carrier} ile yola çıktı. Takip No: ${trackingNumber}`;
+        await createNotification(
+          order.userId,
+          'order_status',
+          msg.title,
+          message,
+          `/orders/${orderId}`,
+        );
+      }
+    }
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `${ORDERS_COLLECTION}/${orderId}`);
+    throw error;
+  }
 }
 
 // ─── OrderSet / SubOrder API Functions (Order Walking Skeleton) ─────────────
