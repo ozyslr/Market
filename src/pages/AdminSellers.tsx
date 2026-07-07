@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getSellers, updateSeller } from '@/services/userService';
 import { createNotification } from '@/services/notificationService';
@@ -32,10 +32,10 @@ import {
   Save,
   Medal,
 } from 'lucide-react';
-import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
 import { audit } from '@/services/auditLogService';
 import { useAuth } from '@/context/AuthContext';
+import { LoadingState, ErrorState, EmptyState } from '@/components/shared/DataStates';
 
 const KYC_BADGE: Record<string, { label: string; cls: string }> = {
   pending: { label: 'Bekliyor', cls: 'bg-yellow-100 text-yellow-700' },
@@ -53,7 +53,7 @@ export function AdminSellers() {
   const { user: actor } = useAuth();
   const [adminTab, setAdminTab] = useState<'sellers' | 'applications' | 'rules'>('sellers');
   const [sellers, setSellers] = useState<Seller[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading');
   const [search, setSearch] = useState('');
   const [kycFilter, setKycFilter] = useState<'all' | 'pending' | 'verified' | 'rejected'>('all');
   const [editingCommission, setEditingCommission] = useState<string | null>(null);
@@ -77,19 +77,19 @@ export function AdminSellers() {
   // Performance scores cache
   const [perfScores, setPerfScores] = useState<Record<string, SellerPerformanceScore>>({});
 
-  useEffect(() => {
-    (async () => {
-      try {
-        let data = await getSellers();
-        if (data.length === 0) data = MOCK_SELLERS as Seller[];
-        setSellers(data);
-      } catch {
-        setSellers(MOCK_SELLERS as Seller[]);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
+  const load = useCallback(async () => {
+    setStatus('loading');
+    try {
+      setSellers(await getSellers());
+      setStatus('ready');
+    } catch {
+      setStatus('error');
+    }
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   useEffect(() => {
     if (!selectedSeller) return;
@@ -256,12 +256,8 @@ export function AdminSellers() {
 
   const pendingKycCount = sellers.filter((s) => s.kycStatus === 'pending').length;
 
-  if (isLoading)
-    return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
-      </div>
-    );
+  if (status === 'loading') return <LoadingState />;
+  if (status === 'error') return <ErrorState message="Satıcılar yüklenemedi." onRetry={load} />;
 
   return (
     <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm">
@@ -339,239 +335,243 @@ export function AdminSellers() {
             ))}
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[#F8F8FA]">
-                  <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
-                    Mağaza
-                  </th>
-                  <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
-                    KYC
-                  </th>
-                  <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
-                    Komisyon
-                  </th>
-                  <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
-                    Durum
-                  </th>
-                  <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
-                    Rating
-                  </th>
-                  <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
-                    Performans
-                  </th>
-                  <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
-                    İşlemler
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((seller) => {
-                  const status = seller.status ?? 'active';
-                  const statusBadge = STATUS_BADGE[status] ?? STATUS_BADGE.active;
-                  const kycBadge = KYC_BADGE[seller.kycStatus] ?? KYC_BADGE.pending;
-                  const isSaving = savingId === seller.id;
-                  return (
-                    <tr
-                      key={seller.id}
-                      className="border-b border-[#F8F8FA] hover:bg-[#F8F8FA]/50 transition-colors"
-                    >
-                      <td className="py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-[#F8F8FA] flex items-center justify-center text-[#1A1033]/40">
-                            <Store size={16} />
+          {sellers.length === 0 && status === 'ready' ? (
+            <EmptyState title="Kayıtlı satıcı yok" />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#F8F8FA]">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                      Mağaza
+                    </th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                      KYC
+                    </th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                      Komisyon
+                    </th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                      Durum
+                    </th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                      Rating
+                    </th>
+                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                      Performans
+                    </th>
+                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                      İşlemler
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((seller) => {
+                    const status = seller.status ?? 'active';
+                    const statusBadge = STATUS_BADGE[status] ?? STATUS_BADGE.active;
+                    const kycBadge = KYC_BADGE[seller.kycStatus] ?? KYC_BADGE.pending;
+                    const isSaving = savingId === seller.id;
+                    return (
+                      <tr
+                        key={seller.id}
+                        className="border-b border-[#F8F8FA] hover:bg-[#F8F8FA]/50 transition-colors"
+                      >
+                        <td className="py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-[#F8F8FA] flex items-center justify-center text-[#1A1033]/40">
+                              <Store size={16} />
+                            </div>
+                            <div>
+                              <p className="font-bold text-[#1A1033] text-xs">{seller.storeName}</p>
+                              <p className="text-[10px] text-[#1A1033]/40">
+                                {seller.origin} · {seller.joinedDate}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-[#1A1033] text-xs">{seller.storeName}</p>
-                            <p className="text-[10px] text-[#1A1033]/40">
-                              {seller.origin} · {seller.joinedDate}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3">
-                        <div className="flex items-center gap-1.5">
-                          <span
-                            className={cn(
-                              'px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest',
-                              kycBadge.cls,
-                            )}
-                          >
-                            {kycBadge.label}
-                          </span>
-                          {seller.kycStatus === 'pending' && (
-                            <>
-                              <button
-                                onClick={() => setKyc(seller, 'verified')}
-                                disabled={isSaving}
-                                className="p-1 rounded bg-green-50 text-green-600 hover:bg-green-100 transition-all disabled:opacity-50"
-                                title="Onayla"
-                              >
-                                {isSaving ? (
-                                  <Loader2 size={12} className="animate-spin" />
-                                ) : (
-                                  <CheckCircle size={12} />
-                                )}
-                              </button>
-                              <button
-                                onClick={() => setKyc(seller, 'rejected')}
-                                disabled={isSaving}
-                                className="p-1 rounded bg-red-50 text-red-500 hover:bg-red-100 transition-all disabled:opacity-50"
-                                title="Reddet"
-                              >
-                                <XCircle size={12} />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3">
-                        {editingCommission === seller.id ? (
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              step="0.5"
-                              value={commissionValue}
-                              onChange={(e) => setCommissionValue(e.target.value)}
-                              className="w-14 px-2 py-1 border border-accent/30 rounded-lg text-xs font-bold outline-none"
-                              autoFocus
-                            />
-                            <span className="text-[10px] text-[#1A1033]/50">%</span>
-                            <button
-                              onClick={() => saveCommission(seller)}
-                              disabled={isSaving}
-                              className="p-1 rounded bg-green-50 text-green-600 hover:bg-green-100 transition-all"
+                        </td>
+                        <td className="py-3">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={cn(
+                                'px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest',
+                                kycBadge.cls,
+                              )}
                             >
-                              <Check size={12} />
-                            </button>
-                            <button
-                              onClick={() => setEditingCommission(null)}
-                              className="p-1 rounded bg-[#F8F8FA] text-[#1A1033]/40 hover:bg-[#1A1033]/10 transition-all"
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setEditingCommission(seller.id);
-                              setCommissionValue(String(seller.commissionRate));
-                            }}
-                            className="flex items-center gap-1 text-xs font-black text-[#1A1033] hover:text-accent transition-colors group"
-                          >
-                            %{seller.commissionRate}
-                            <Edit2
-                              size={11}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            />
-                          </button>
-                        )}
-                      </td>
-                      <td className="py-3">
-                        <span
-                          className={cn(
-                            'px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest',
-                            statusBadge.cls,
-                          )}
-                        >
-                          {statusBadge.label}
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs font-bold text-[#1A1033]">
-                            {seller.rating.toFixed(1)}
-                          </span>
-                          <span className="text-[10px] text-[#1A1033]/40">
-                            ({seller.reviewsCount})
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3 text-end">
-                        {perfScores[seller.id] ? (
-                          <span
-                            className={cn(
-                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest',
-                              perfScores[seller.id].level === 'platinum'
-                                ? 'bg-purple-100 text-purple-700'
-                                : perfScores[seller.id].level === 'gold'
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : perfScores[seller.id].level === 'silver'
-                                    ? 'bg-gray-100 text-gray-600'
-                                    : 'bg-orange-100 text-orange-700',
-                            )}
-                          >
-                            <Medal size={10} />
-                            {perfScores[seller.id].level}
-                            <span className="ms-0.5 opacity-60">
-                              {perfScores[seller.id].overall}
+                              {kycBadge.label}
                             </span>
-                          </span>
-                        ) : (
-                          <span className="text-[9px] text-[#1A1033]/30">—</span>
-                        )}
-                      </td>
-                      <td className="py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => toggleSuspend(seller)}
-                            disabled={isSaving}
-                            title={status === 'active' ? 'Askıya Al' : 'Aktifleştir'}
+                            {seller.kycStatus === 'pending' && (
+                              <>
+                                <button
+                                  onClick={() => setKyc(seller, 'verified')}
+                                  disabled={isSaving}
+                                  className="p-1 rounded bg-green-50 text-green-600 hover:bg-green-100 transition-all disabled:opacity-50"
+                                  title="Onayla"
+                                >
+                                  {isSaving ? (
+                                    <Loader2 size={12} className="animate-spin" />
+                                  ) : (
+                                    <CheckCircle size={12} />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => setKyc(seller, 'rejected')}
+                                  disabled={isSaving}
+                                  className="p-1 rounded bg-red-50 text-red-500 hover:bg-red-100 transition-all disabled:opacity-50"
+                                  title="Reddet"
+                                >
+                                  <XCircle size={12} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          {editingCommission === seller.id ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.5"
+                                value={commissionValue}
+                                onChange={(e) => setCommissionValue(e.target.value)}
+                                className="w-14 px-2 py-1 border border-accent/30 rounded-lg text-xs font-bold outline-none"
+                                autoFocus
+                              />
+                              <span className="text-[10px] text-[#1A1033]/50">%</span>
+                              <button
+                                onClick={() => saveCommission(seller)}
+                                disabled={isSaving}
+                                className="p-1 rounded bg-green-50 text-green-600 hover:bg-green-100 transition-all"
+                              >
+                                <Check size={12} />
+                              </button>
+                              <button
+                                onClick={() => setEditingCommission(null)}
+                                className="p-1 rounded bg-[#F8F8FA] text-[#1A1033]/40 hover:bg-[#1A1033]/10 transition-all"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setEditingCommission(seller.id);
+                                setCommissionValue(String(seller.commissionRate));
+                              }}
+                              className="flex items-center gap-1 text-xs font-black text-[#1A1033] hover:text-accent transition-colors group"
+                            >
+                              %{seller.commissionRate}
+                              <Edit2
+                                size={11}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              />
+                            </button>
+                          )}
+                        </td>
+                        <td className="py-3">
+                          <span
                             className={cn(
-                              'p-1.5 rounded-lg transition-all disabled:opacity-50',
-                              status === 'active'
-                                ? 'bg-orange-50 text-orange-500 hover:bg-orange-100'
-                                : 'bg-green-50 text-green-600 hover:bg-green-100',
+                              'px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest',
+                              statusBadge.cls,
                             )}
                           >
-                            {status === 'active' ? (
-                              <ShieldOff size={14} />
-                            ) : (
-                              <ShieldCheck size={14} />
-                            )}
-                          </button>
-                          <Link
-                            to={`/seller/dashboard?asSeller=${seller.userId || seller.id}`}
-                            className="px-3 py-1.5 rounded-lg bg-accent/10 text-accent text-[9px] font-black uppercase hover:bg-accent/20 transition-all"
-                            title="Satıcı Panelini Gör"
-                          >
-                            Satıcı Paneli
-                          </Link>
-                          <button
-                            onClick={() => setSelectedSeller(seller)}
-                            className="p-1.5 rounded-lg bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/10 transition-all"
-                            title="Ürünleri Gör"
-                          >
-                            <Package size={14} />
-                          </button>
-                          <Link
-                            to={`/admin/seller/${seller.id}`}
-                            className="p-1.5 rounded-lg bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-accent hover:text-white transition-all"
-                            title="Satıcı Paneli Görünümü"
-                          >
-                            <ChevronRight size={14} />
-                          </Link>
-                        </div>
+                            {statusBadge.label}
+                          </span>
+                        </td>
+                        <td className="py-3">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs font-bold text-[#1A1033]">
+                              {seller.rating.toFixed(1)}
+                            </span>
+                            <span className="text-[10px] text-[#1A1033]/40">
+                              ({seller.reviewsCount})
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 text-end">
+                          {perfScores[seller.id] ? (
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest',
+                                perfScores[seller.id].level === 'platinum'
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : perfScores[seller.id].level === 'gold'
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : perfScores[seller.id].level === 'silver'
+                                      ? 'bg-gray-100 text-gray-600'
+                                      : 'bg-orange-100 text-orange-700',
+                              )}
+                            >
+                              <Medal size={10} />
+                              {perfScores[seller.id].level}
+                              <span className="ms-0.5 opacity-60">
+                                {perfScores[seller.id].overall}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-[9px] text-[#1A1033]/30">—</span>
+                          )}
+                        </td>
+                        <td className="py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => toggleSuspend(seller)}
+                              disabled={isSaving}
+                              title={status === 'active' ? 'Askıya Al' : 'Aktifleştir'}
+                              className={cn(
+                                'p-1.5 rounded-lg transition-all disabled:opacity-50',
+                                status === 'active'
+                                  ? 'bg-orange-50 text-orange-500 hover:bg-orange-100'
+                                  : 'bg-green-50 text-green-600 hover:bg-green-100',
+                              )}
+                            >
+                              {status === 'active' ? (
+                                <ShieldOff size={14} />
+                              ) : (
+                                <ShieldCheck size={14} />
+                              )}
+                            </button>
+                            <Link
+                              to={`/seller/dashboard?asSeller=${seller.userId || seller.id}`}
+                              className="px-3 py-1.5 rounded-lg bg-accent/10 text-accent text-[9px] font-black uppercase hover:bg-accent/20 transition-all"
+                              title="Satıcı Panelini Gör"
+                            >
+                              Satıcı Paneli
+                            </Link>
+                            <button
+                              onClick={() => setSelectedSeller(seller)}
+                              className="p-1.5 rounded-lg bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/10 transition-all"
+                              title="Ürünleri Gör"
+                            >
+                              <Package size={14} />
+                            </button>
+                            <Link
+                              to={`/admin/seller/${seller.id}`}
+                              className="p-1.5 rounded-lg bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-accent hover:text-white transition-all"
+                              title="Satıcı Paneli Görünümü"
+                            >
+                              <ChevronRight size={14} />
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="py-10 text-center text-[#1A1033]/30 text-sm font-bold"
+                      >
+                        Satıcı bulunamadı
                       </td>
                     </tr>
-                  );
-                })}
-                {filtered.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="py-10 text-center text-[#1A1033]/30 text-sm font-bold"
-                    >
-                      Satıcı bulunamadı
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Seller Products Panel */}
           {selectedSeller && (
