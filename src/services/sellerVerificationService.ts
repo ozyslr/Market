@@ -11,18 +11,8 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; error?
   const national = parsed.nationalNumber;
   if (String(national).length < 7) return { success: false, error: 'Sanal numaralar desteklenmez' };
 
-  // In dev mode, accept any code. Production uses Twilio Verify API.
-  if (process.env.NODE_ENV !== 'production') {
-    return { success: true }; // dev: OTP code is '123456'
-  }
-
   try {
-    const accountSid = import.meta.env.VITE_TWILIO_ACCOUNT_SID;
-    const authToken = import.meta.env.VITE_TWILIO_AUTH_TOKEN;
-    const serviceSid = import.meta.env.VITE_TWILIO_VERIFY_SID;
-    if (!accountSid || !serviceSid) return { success: false, error: 'Twilio yapılandırılmamış' };
-
-    // Call Twilio Verify API via backend proxy
+    // Server handles Twilio Verify (dev mode auto-accepts)
     const res = await fetch('/api/verification/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -35,8 +25,6 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; error?
 }
 
 export async function verifyOtp(phone: string, code: string): Promise<boolean> {
-  if (process.env.NODE_ENV !== 'production' && code === '123456') return true;
-
   try {
     const parsed = parsePhoneNumberFromString(phone);
     const res = await fetch('/api/verification/verify-otp', {
