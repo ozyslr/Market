@@ -17,7 +17,15 @@ import {
   seedDefaultCategories,
 } from '@/services/productService';
 import { uploadCategoryImage } from '@/services/storageService';
-import { getHomepageSections, upsertHomepageSection } from '@/services/cmsService';
+import {
+  getHomepageSections,
+  upsertHomepageSection,
+  getBanners,
+  createBanner,
+  updateBanner,
+  deleteBanner,
+} from '@/services/cmsService';
+import type { Banner } from '@/services/cmsService';
 import { audit } from '@/services/auditLogService';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -74,13 +82,25 @@ const SECTION_LABELS: Record<string, string> = {
 function HomepageSectionsEditor() {
   const [sections, setSections] = useState<HomepageSection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
 
+  const fetchSections = () => {
+    setLoading(true);
+    setError(null);
+    getHomepageSections()
+      .then((data) => {
+        setSections(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Veri yuklenemedi');
+        setLoading(false);
+      });
+  };
+
   useEffect(() => {
-    getHomepageSections().then((data) => {
-      setSections(data);
-      setLoading(false);
-    });
+    fetchSections();
   }, []);
 
   const updateSection = (id: string, updates: Partial<HomepageSection>) =>
@@ -168,6 +188,22 @@ function HomepageSectionsEditor() {
     return (
       <div className="flex justify-center py-16">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4">
+        <div className="text-center">
+          <p className="text-sm font-bold text-red-500 mb-1">Yukleme hatasi</p>
+          <p className="text-xs text-[#1A1033]/40 max-w-xs">{error}</p>
+        </div>
+        <button
+          onClick={fetchSections}
+          className="px-5 py-2.5 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all"
+        >
+          <RefreshCw size={14} /> Tekrar Dene
+        </button>
       </div>
     );
 

@@ -3,6 +3,8 @@ import {
   doc,
   getDocs,
   setDoc,
+  addDoc,
+  updateDoc,
   deleteDoc,
   orderBy,
   query,
@@ -11,6 +13,18 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { HomepageSection } from '../types';
+
+// ─── Banner Type ────────────────────────────────────────────────────────────
+
+export interface Banner {
+  id: string;
+  title: string;
+  subtitle?: string;
+  imageUrl: string;
+  link?: string;
+  active: boolean;
+  order: number;
+}
 
 const COL = 'homepage_sections';
 
@@ -77,6 +91,56 @@ export async function deleteHomepageSection(id: string): Promise<void> {
     await deleteDoc(doc(db, COL, id));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `${COL}/${id}`);
+    throw error;
+  }
+}
+
+// ─── Banner CRUD ───────────────────────────────────────────────────────────
+
+const BANNERS_COL = 'banners';
+
+export async function getBanners(): Promise<Banner[]> {
+  try {
+    const q = query(collection(db, BANNERS_COL), orderBy('order'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Banner);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, BANNERS_COL);
+    return [];
+  }
+}
+
+export async function createBanner(data: Omit<Banner, 'id'>): Promise<string> {
+  try {
+    const docRef = await addDoc(collection(db, BANNERS_COL), {
+      ...data,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, BANNERS_COL);
+    throw error;
+  }
+}
+
+export async function updateBanner(id: string, data: Partial<Banner>): Promise<void> {
+  try {
+    const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
+    await updateDoc(doc(db, BANNERS_COL, id), {
+      ...clean,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `${BANNERS_COL}/${id}`);
+    throw error;
+  }
+}
+
+export async function deleteBanner(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, BANNERS_COL, id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `${BANNERS_COL}/${id}`);
     throw error;
   }
 }
