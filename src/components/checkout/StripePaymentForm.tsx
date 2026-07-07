@@ -1,5 +1,5 @@
 import React, { FormEvent, useState, useEffect, useRef } from 'react';
-import { Loader2, CreditCard } from 'lucide-react';
+import { Loader2, CreditCard, AlertTriangle } from 'lucide-react';
 import {
   PaymentElement,
   PaymentRequestButtonElement,
@@ -13,7 +13,6 @@ import { useAuth } from '@/context/AuthContext';
 interface StripePaymentFormProps {
   total: number;
   currency: string;
-  isMock: boolean;
   shippingAddress: ShippingAddress;
   onSuccess: (paymentIntentId: string) => void;
   onBack: () => void;
@@ -22,7 +21,6 @@ interface StripePaymentFormProps {
 export function StripePaymentForm({
   total,
   currency,
-  isMock,
   shippingAddress: _shippingAddress,
   onSuccess,
   onBack,
@@ -49,7 +47,7 @@ export function StripePaymentForm({
   onSuccessRef.current = onSuccess;
 
   useEffect(() => {
-    if (!stripe || isMock || prInitialised.current) return;
+    if (!stripe || prInitialised.current) return;
     prInitialised.current = true;
 
     const pr = stripe.paymentRequest({
@@ -123,18 +121,39 @@ export function StripePaymentForm({
     // No explicit off — destroy() in the creation useEffect handles cleanup
   }, [paymentRequest]);
 
+  // Stripe not loaded — show error instead of mock fallback
+  if (!stripe || !elements) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-3">
+          <AlertTriangle size={20} className="text-red-500 shrink-0 mt-0.5" />
+          <div>
+            <strong className="block mb-1 uppercase text-xs tracking-widest text-red-700">
+              Ödeme altyapısı yüklenemedi
+            </strong>
+            <p className="text-sm text-red-600">
+              Stripe ödeme sistemi şu anda kullanılamıyor. Lütfen internet bağlantınızı kontrol edip
+              sayfayı yenileyin.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={onBack}
+            className="px-6 py-4 bg-[#F8F8FA] text-[#1A1033] rounded-2xl font-black uppercase text-[11px] hover:bg-[#1A1033]/5 transition-all"
+          >
+            Geri
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
     setError(null);
-
-    if (isMock || !stripe || !elements) {
-      setTimeout(() => {
-        setIsProcessing(false);
-        onSuccess('mock_pi_' + Math.random().toString(36).substring(7));
-      }, 1500);
-      return;
-    }
 
     const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
       elements,
@@ -169,7 +188,7 @@ export function StripePaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {!isMock && canMakePayment && paymentRequest && (
+      {canMakePayment && paymentRequest && (
         <div className="mb-6">
           <PaymentRequestButtonElement
             options={{
@@ -193,18 +212,10 @@ export function StripePaymentForm({
         </div>
       )}
 
-      {isMock ? (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800 font-medium">
-          <strong className="block mb-1 uppercase text-xs tracking-widest">Demo Mode</strong>
-          Add your Stripe keys to <code className="bg-amber-100 px-1 rounded">.env</code> to enable
-          real payments. This checkout will simulate a successful payment.
-        </div>
-      ) : (
-        <PaymentElement />
-      )}
+      <PaymentElement />
 
-      {/* Save card checkbox — only for logged-in users with real Stripe */}
-      {!isMock && firebaseUser && (
+      {/* Save card checkbox — only for logged-in users */}
+      {firebaseUser && (
         <label className="flex items-start gap-3 cursor-pointer group">
           <input
             type="checkbox"

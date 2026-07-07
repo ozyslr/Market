@@ -75,15 +75,9 @@
 
 ---
 
-### Twilio Credentials Exposed to Client Bundle
+### ✅ FIXED (2026-07-08): Twilio Credentials Exposed to Client Bundle
 
-**Issue:** `src/services/sellerVerificationService.ts` reads `import.meta.env.VITE_TWILIO_ACCOUNT_SID`, `VITE_TWILIO_AUTH_TOKEN`, and `VITE_TWILIO_VERIFY_SID` from client-side env vars. The `VITE_` prefix means these values are embedded in the JavaScript bundle served to browsers.
-
-**Files:** `src/services/sellerVerificationService.ts` (lines 20–22)
-
-**Impact:** Twilio `authToken` is a sensitive credential. Embedding it client-side exposes it to anyone who opens DevTools. An attacker can use it to send arbitrary SMS at the project's expense.
-
-**Fix approach:** Move the Twilio `sendOtp`/`verifyOtp` logic entirely to the server (`server/routes/` behind `verifyFirebaseToken`). Remove `VITE_TWILIO_*` env vars. The `/api/verification/send-otp` and `/api/verification/verify-otp` endpoints (already referenced in the same file) are the correct path — the client should only call those, not instantiate Twilio itself.
+**Resolution:** `server/routes/verification.ts` handles all Twilio operations server-side. Client calls `/api/verification/send-otp` and `/api/verification/verify-otp` — never touches Twilio directly. `VITE_TWILIO_*` env vars removed from client. OTP rate limiter added (5 req/hour/IP).
 
 ---
 
@@ -113,15 +107,9 @@
 
 ## Known Bugs
 
-### Mock Payment Fallback Leaks into Production Orders
+### ✅ FIXED (2026-07-08): Mock Payment Fallback Leaks into Production Orders
 
-**Symptoms:** When `VITE_STRIPE_PUBLISHABLE_KEY` is undefined or the `/api/create-payment-intent` call fails (line 381 of `Checkout.tsx` sets `isMock(true)`), a real order can be created with `paymentMethod: 'manual'` (line 433) and `clientSecret: 'mock_fallback'`. The order is written to Firestore as if payment succeeded.
-
-**Files:** `src/pages/Checkout.tsx` (lines 378–382, 433), `src/components/checkout/StripePaymentForm.tsx` (line 134 — generates `mock_pi_*` on mock path)
-
-**Trigger:** Missing `VITE_STRIPE_PUBLISHABLE_KEY` env var, or network failure calling `/api/create-payment-intent`.
-
-**Workaround:** Ensure `VITE_STRIPE_PUBLISHABLE_KEY` is set. Monitor for orders with `paymentMethod: 'manual'` in Firestore that lack a real Stripe payment intent.
+**Resolution:** `isMock` state and `mock_pi_*` fallback removed from both `StripePaymentForm.tsx` and `Checkout.tsx`. If Stripe SDK fails to load, the form now shows an error message with a back button instead of simulating a successful payment. Server-side mock fallback in `create-payment-intent` was already removed in phase-30.
 
 ---
 

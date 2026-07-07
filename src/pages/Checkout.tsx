@@ -70,7 +70,6 @@ export function CheckoutPage() {
   const [step, setStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('stripe');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [isMock, setIsMock] = useState(false);
   const [isFetchingIntent, setIsFetchingIntent] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [confirmedOrderId, setConfirmedOrderId] = useState<string | null>(null);
@@ -410,7 +409,6 @@ export function CheckoutPage() {
         return;
       }
       setClientSecret(data.clientSecret);
-      setIsMock(!!data.isMock);
       setStep(2);
     } catch {
       setPaymentError(
@@ -647,10 +645,9 @@ export function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentMethod]);
 
-  const elementsOptions =
-    clientSecret && !isMock
-      ? { clientSecret, appearance: { theme: 'stripe' as const } }
-      : undefined;
+  const elementsOptions = clientSecret
+    ? { clientSecret, appearance: { theme: 'stripe' as const } }
+    : undefined;
 
   if (productsStatus === 'loading')
     return (
@@ -899,29 +896,15 @@ export function CheckoutPage() {
 
                   {/* Stripe Payment */}
                   {paymentMethod === 'stripe' && clientSecret && (
-                    <>
-                      {stripePromise && elementsOptions ? (
-                        <Elements stripe={stripePromise} options={elementsOptions}>
-                          <StripePaymentForm
-                            total={totals.total}
-                            currency={currency}
-                            isMock={false}
-                            shippingAddress={address}
-                            onSuccess={handlePaymentSuccess}
-                            onBack={() => setStep(1)}
-                          />
-                        </Elements>
-                      ) : (
-                        <StripePaymentForm
-                          total={totals.total}
-                          currency={currency}
-                          isMock={true}
-                          shippingAddress={address}
-                          onSuccess={handlePaymentSuccess}
-                          onBack={() => setStep(1)}
-                        />
-                      )}
-                    </>
+                    <Elements stripe={stripePromise} options={elementsOptions}>
+                      <StripePaymentForm
+                        total={totals.total}
+                        currency={currency}
+                        shippingAddress={address}
+                        onSuccess={handlePaymentSuccess}
+                        onBack={() => setStep(1)}
+                      />
+                    </Elements>
                   )}
 
                   {/* Stripe: need to init payment intent first */}
