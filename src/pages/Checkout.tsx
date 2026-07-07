@@ -13,6 +13,7 @@ import {
   Check,
   Download,
   Building2,
+  AlertTriangle,
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -412,9 +413,9 @@ export function CheckoutPage() {
       setIsMock(!!data.isMock);
       setStep(2);
     } catch {
-      setClientSecret('mock_fallback');
-      setIsMock(true);
-      setStep(2);
+      setPaymentError(
+        'Ödeme altyapısına bağlanılamadı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.',
+      );
     } finally {
       setIsFetchingIntent(false);
     }
@@ -651,9 +652,22 @@ export function CheckoutPage() {
       ? { clientSecret, appearance: { theme: 'stripe' as const } }
       : undefined;
 
-  if (productsStatus === 'loading') return <LoadingState />;
+  if (productsStatus === 'loading')
+    return (
+      <div className="min-h-screen bg-[#F8F8FA] pt-32 pb-20 px-4">
+        <div className="max-w-4xl mx-auto">
+          <LoadingState />
+        </div>
+      </div>
+    );
   if (productsStatus === 'error')
-    return <ErrorState message="Sepet ürünleri yüklenemedi." onRetry={loadProducts} />;
+    return (
+      <div className="min-h-screen bg-[#F8F8FA] pt-32 pb-20 px-4">
+        <div className="max-w-4xl mx-auto">
+          <ErrorState message="Sepet ürünleri yüklenemedi." onRetry={loadProducts} />
+        </div>
+      </div>
+    );
 
   return (
     <>
@@ -672,15 +686,21 @@ export function CheckoutPage() {
           </div>
 
           {missingIds.length > 0 && (
-            <div className="mb-8 rounded-lg bg-red-50 p-4 text-sm text-red-700">
-              Sepetinde artık mevcut olmayan ürünler var.{' '}
-              <button
-                type="button"
-                onClick={() => navigate('/cart')}
-                className="underline font-medium"
-              >
-                Sepete dön
-              </button>
+            <div
+              role="alert"
+              className="mb-8 rounded-lg bg-red-50 p-4 text-sm text-red-700 flex items-start gap-2"
+            >
+              <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+              <span>
+                Sepetinde artık mevcut olmayan ürünler var.{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate('/cart')}
+                  className="underline font-medium"
+                >
+                  Sepete dön
+                </button>
+              </span>
             </div>
           )}
 

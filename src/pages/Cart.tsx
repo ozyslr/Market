@@ -172,8 +172,22 @@ export function CartPage() {
   const currentMarket = MARKETS[location.market] ?? MARKETS['UK'];
   const totals = calculateTotal(subtotal, 12, currentMarket, true);
 
-  if (status === 'loading') return <LoadingState />;
-  if (status === 'error') return <ErrorState message="Sepet yüklenemedi." onRetry={loadProducts} />;
+  if (status === 'loading')
+    return (
+      <div className="min-h-screen bg-brand-secondary/30 pb-20 px-4 transition-colors duration-300">
+        <div className="max-w-7xl mx-auto">
+          <LoadingState />
+        </div>
+      </div>
+    );
+  if (status === 'error')
+    return (
+      <div className="min-h-screen bg-brand-secondary/30 pb-20 px-4 transition-colors duration-300">
+        <div className="max-w-7xl mx-auto">
+          <ErrorState message="Sepet yüklenemedi." onRetry={loadProducts} />
+        </div>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-brand-secondary/30 pb-20 px-4 transition-colors duration-300">
@@ -191,8 +205,14 @@ export function CartPage() {
             </div>
 
             {missingIds.length > 0 && (
-              <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-                Sepetindeki {missingIds.length} ürün artık mevcut değil ve toplamdan çıkarıldı.
+              <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 flex items-start gap-2">
+                <Info size={16} className="shrink-0 mt-0.5" />
+                <span>
+                  Sepetindeki {missingIds.length} ürün artık mevcut değil ve toplamdan çıkarıldı.{' '}
+                  <button type="button" onClick={loadProducts} className="underline font-medium">
+                    Listeyi güncelle
+                  </button>
+                </span>
               </div>
             )}
 
