@@ -534,7 +534,7 @@ export function AdminCMS() {
     const parentId = formData.get('parentId') as string;
     let finalImageUrl = imageUrl;
     if (imageFile) {
-      const tempId = editingCategory?.id ?? `cat_${Date.now()}`;
+      const tempId = editingCategory?.id ?? `cat_${crypto.randomUUID()}`;
       finalImageUrl = await uploadCategoryImage(tempId, imageFile);
     }
     const catData: Partial<Category> = {

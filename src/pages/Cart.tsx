@@ -389,13 +389,16 @@ export function CartPage() {
                     <ShoppingBag size={40} className="text-brand-primary/10" />
                   </div>
                   <h2 className="text-2xl font-black text-brand-primary mb-4 uppercase">
-                    Your bay is empty.
+                    {t('cart.empty_title', 'Sepetin boş')}
                   </h2>
+                  <p className="text-sm text-brand-primary/40 mb-6 max-w-xs mx-auto">
+                    {t('cart.empty_desc', 'Henüz sepetine ürün eklemedin.')}
+                  </p>
                   <Link
                     to="/"
                     className="px-8 py-3 bg-brand-primary text-white rounded-xl font-black uppercase text-xs tracking-widest hover:bg-accent transition-all"
                   >
-                    Start Archiving
+                    {t('cart.start_shopping', 'Keşfet')}
                   </Link>
                 </div>
               )}

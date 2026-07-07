@@ -934,7 +934,7 @@ export function CheckoutPage() {
                     <IyzicoPayment
                       total={totals.total}
                       currency={currency}
-                      orderId={`pending_${Date.now()}`}
+                      orderId={crypto.randomUUID()}
                       userId={firebaseUser.uid}
                       userEmail={firebaseUser.email || ''}
                       userName={address.fullName}

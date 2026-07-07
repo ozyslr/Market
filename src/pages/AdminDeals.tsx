@@ -104,7 +104,7 @@ export function AdminDeals() {
   const handleUpload = async (file: File) => {
     setUploading(true);
     try {
-      const id = editing?.id ?? `temp-${Date.now()}`;
+      const id = editing?.id ?? crypto.randomUUID();
       const url = await uploadDealImage(id, file);
       set('image', url);
     } finally {

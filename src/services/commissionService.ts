@@ -109,7 +109,7 @@ export function calcCommission(
 export async function recordCommission(
   tx: Omit<CommissionTransaction, 'id' | 'createdAt'>,
 ): Promise<string> {
-  const id = `ctx-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const id = `ctx-${crypto.randomUUID()}`;
   try {
     await setDoc(doc(db, TX_COL, id), {
       ...tx,

@@ -54,7 +54,7 @@ export async function createAdCampaign(
 ): Promise<AdCampaign> {
   try {
     const now = new Date().toISOString();
-    const id = `ad-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const id = `ad-${crypto.randomUUID()}`;
     const campaign: AdCampaign = {
       ...data,
       id,
@@ -317,7 +317,7 @@ export async function recordAdClick(
       tx.update(ref, updates as any);
 
       // Log AdEvent
-      const eventId = `click-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const eventId = `click-${crypto.randomUUID()}`;
       const event: AdEvent = {
         id: eventId,
         adCampaignId: campaign!.id,

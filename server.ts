@@ -38,6 +38,16 @@ import { audit } from './server/lib/auditLog.js';
 
 dotenv.config();
 
+// ─── Sentry error monitoring (server-side) ─────────────────────────────
+import * as Sentry from '@sentry/node';
+if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 0.1,
+    environment: process.env.NODE_ENV,
+  });
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -653,6 +663,8 @@ if (typeof firebase !== 'undefined') {
   }
 
   // â”€â”€â”€ Centralized error handler (must be last middleware) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Sentry.setupExpressErrorHandler(app);
+
   app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     logger.error('server', 'Unhandled error', {
       message: err?.message,

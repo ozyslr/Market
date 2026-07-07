@@ -1,13 +1,9 @@
 import { AlertCircle, Inbox, Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 
-export function LoadingState({
-  label = 'Yükleniyor…',
-  fullPage = false,
-}: {
-  label?: string;
-  fullPage?: boolean;
-}) {
+export function LoadingState({ label, fullPage = false }: { label?: string; fullPage?: boolean }) {
+  const { t } = useLanguage();
   return (
     <div
       role="status"
@@ -15,12 +11,21 @@ export function LoadingState({
       className={`flex flex-col items-center justify-center gap-3 py-16 text-gray-500 dark:text-gray-400 ${fullPage ? 'min-h-[60vh]' : ''}`}
     >
       <Loader2 className="h-8 w-8 animate-spin" />
-      <span className="text-sm">{label}</span>
+      <span className="text-sm">{label ?? t('common.loading', 'Yükleniyor…')}</span>
     </div>
   );
 }
 
-export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+export function ErrorState({
+  message,
+  onRetry,
+  retryLabel,
+}: {
+  message: string;
+  onRetry: () => void;
+  retryLabel?: string;
+}) {
+  const { t } = useLanguage();
   return (
     <div
       role="alert"
@@ -33,7 +38,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
         onClick={onRetry}
         className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 focus-visible:ring-2 focus-visible:ring-[#6418E5] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 transition-all"
       >
-        Yeniden dene
+        {retryLabel ?? t('common.retry', 'Yeniden dene')}
       </button>
     </div>
   );
