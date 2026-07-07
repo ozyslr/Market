@@ -418,31 +418,63 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
   );
 
   // ─── Browser redirect callback (user lands here after payment) ──────────
+  // Uses iyzicoProvider when available (consistent with server callback);
+  // falls back to legacy getIyzico() for backwards compatibility.
   app.get('/api/iyzico/callback', async (req: any, res: any) => {
     const token = req.query.token as string;
     const frontendUrl = process.env.APP_URL || `http://localhost:${PORT}`;
     if (!token) {
+      logger.warn('iyzico', 'Browser callback missing token');
       return res.redirect(`${frontendUrl}/checkout?iyzico_status=error&reason=missing_token`);
     }
+
     try {
-      const iyzico = await getIyzico();
-      if (!iyzico) {
-        return res.redirect(`${frontendUrl}/checkout?iyzico_status=error&reason=not_configured`);
+      let orderSetId = '';
+      let paymentStatus = '';
+
+      // Prefer iyzicoProvider (standardized verifyPayment flow)
+      if (iyzicoProvider) {
+        const verification = await iyzicoProvider.verifyPayment(token);
+        paymentStatus = verification.status;
+        orderSetId = (verification as any).orderSetId || '';
+        logger.info('iyzico', 'Browser callback verified via iyzicoProvider', {
+          token: token.slice(0, 8) + '***',
+          status: paymentStatus,
+          orderSetId,
+        });
+      } else {
+        // Legacy fallback
+        const iyzico = await getIyzico();
+        if (!iyzico) {
+          logger.error('iyzico', 'Browser callback — iyzico not configured');
+          return res.redirect(`${frontendUrl}/checkout?iyzico_status=error&reason=not_configured`);
+        }
+        const result = await iyzico.retrieveCheckoutForm(iyzico.client, { locale: 'tr', token });
+        orderSetId = (result.basketId || '') as string;
+        paymentStatus = result.paymentStatus === 'SUCCESS' ? 'SUCCESS' : result.status || '';
+        logger.info('iyzico', 'Browser callback verified via legacy', {
+          token: token.slice(0, 8) + '***',
+          status: paymentStatus,
+          orderSetId,
+        });
       }
-      const result = await iyzico.retrieveCheckoutForm(iyzico.client, { locale: 'tr', token });
-      const orderSetId = (result.basketId || '') as string;
-      if (result.status === 'success' && result.paymentStatus === 'SUCCESS') {
+
+      if (paymentStatus === 'SUCCESS' || paymentStatus === 'success') {
         res.redirect(
-          `${frontendUrl}/checkout?iyzico_status=success&orderSetId=${orderSetId}&token=${token}`,
+          `${frontendUrl}/checkout?iyzico_status=success&orderSetId=${encodeURIComponent(orderSetId)}&token=${encodeURIComponent(token)}`,
         );
       } else {
         res.redirect(
-          `${frontendUrl}/checkout?iyzico_status=failed&orderSetId=${orderSetId}&reason=${result.errorMessage || 'payment_failed'}`,
+          `${frontendUrl}/checkout?iyzico_status=failed&orderSetId=${encodeURIComponent(orderSetId)}&reason=payment_failed`,
         );
       }
     } catch (err: any) {
+      logger.error('iyzico', 'Browser callback error', {
+        error: err.message,
+        token: (token || '').slice(0, 8) + '***',
+      });
       res.redirect(
-        `${frontendUrl}/checkout?iyzico_status=error&reason=${encodeURIComponent(err.message)}`,
+        `${frontendUrl}/checkout?iyzico_status=error&reason=${encodeURIComponent(err.message || 'unknown')}`,
       );
     }
   });
@@ -611,17 +643,14 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
         const subMerchantKey = result.subMerchantKey as string;
 
         // Persist sub-merchant key + update application status
-        await adminDb
-          .collection('sellers')
-          .doc(sellerId)
-          .set(
-            {
-              iyzicoSubMerchantKey: subMerchantKey,
-              iyzicoOnboardingStatus: 'complete',
-              updatedAt: new Date().toISOString(),
-            },
-            { merge: true },
-          );
+        await adminDb.collection('sellers').doc(sellerId).set(
+          {
+            iyzicoSubMerchantKey: subMerchantKey,
+            iyzicoOnboardingStatus: 'complete',
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true },
+        );
         await adminDb
           .collection('sellerApplications')
           .doc(sellerId)
