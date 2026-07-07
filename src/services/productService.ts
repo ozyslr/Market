@@ -696,7 +696,8 @@ export async function batchUpdateProducts(
 
 async function syncToTypesense(id: string, data: Record<string, any>) {
   try {
-    const secret = import.meta.env.VITE_TYPESENSE_SYNC_SECRET || 'dev-secret';
+    const secret = import.meta.env.VITE_TYPESENSE_SYNC_SECRET;
+    if (!secret) return; // Sync disabled — env var not configured
     const baseUrl = window.location.origin;
     await fetch(`${baseUrl}/api/typesense/sync/product`, {
       method: 'POST',
@@ -726,7 +727,8 @@ async function syncToTypesense(id: string, data: Record<string, any>) {
 
 async function syncDeleteFromTypesense(id: string) {
   try {
-    const secret = import.meta.env.VITE_TYPESENSE_SYNC_SECRET || 'dev-secret';
+    const secret = import.meta.env.VITE_TYPESENSE_SYNC_SECRET;
+    if (!secret) return; // Sync disabled — env var not configured
     const baseUrl = window.location.origin;
     await fetch(`${baseUrl}/api/typesense/sync/product/${encodeURIComponent(id)}`, {
       method: 'DELETE',
