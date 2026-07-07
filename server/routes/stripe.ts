@@ -88,11 +88,40 @@ export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Fir
 
         case 'payment_intent.succeeded': {
           const pi = event.data.object as Stripe.PaymentIntent;
+          const orderId = pi.metadata?.orderId;
           logger.info('stripe', 'PaymentIntent succeeded', {
             piId: pi.id,
             amount: pi.amount,
             currency: pi.currency,
+            orderId: orderId || '(none)',
           });
+
+          // If we have an orderId in metadata, mark it paid.
+          // This is the safety net: the client calls processOrder() synchronously,
+          // but if the client crashes between payment and order creation, this
+          // webhook ensures the order still gets marked paid.
+          if (orderId && adminDb) {
+            const orderRef = adminDb.collection('orders').doc(orderId);
+            const orderSnap = await orderRef.get();
+            if (orderSnap.exists) {
+              const orderData = orderSnap.data() as any;
+              // Only transition if not already in a terminal state
+              if (!['paid', 'refunded', 'cancelled'].includes(orderData.status)) {
+                await orderRef.update({
+                  status: 'paid',
+                  paidAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  stripePaymentIntentId: pi.id,
+                });
+                logger.info('stripe', 'Order marked as paid via webhook', { orderId });
+              }
+            } else {
+              logger.warn('stripe', 'PaymentIntent succeeded but order not found', {
+                orderId,
+                piId: pi.id,
+              });
+            }
+          }
           break;
         }
 
@@ -107,6 +136,147 @@ export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Fir
             logger.info('stripe', 'Order cancelled due to payment failure', {
               orderId: failedOrderId,
             });
+          }
+          break;
+        }
+
+        // ── Refund completed (safety net for admin refund endpoint) ─────────
+        case 'charge.refunded': {
+          const charge = event.data.object as Stripe.Charge;
+          const refundedPiId = charge.payment_intent as string;
+          logger.info('stripe', 'Charge refunded', {
+            chargeId: charge.id,
+            piId: refundedPiId,
+            amount: charge.amount_refunded,
+          });
+
+          if (refundedPiId && adminDb) {
+            // Find order by stripePaymentIntentId
+            const orderQuery = await adminDb
+              .collection('orders')
+              .where('stripePaymentIntentId', '==', refundedPiId)
+              .limit(1)
+              .get();
+
+            if (!orderQuery.empty) {
+              const orderDoc = orderQuery.docs[0];
+              const orderData = orderDoc.data();
+              // Only update if not already marked refunded by admin endpoint
+              if (orderData.status !== 'refunded') {
+                await orderDoc.ref.update({
+                  status: 'refunded',
+                  refundId: charge.refunds?.data?.[0]?.id || null,
+                  refundAmount: (charge.amount_refunded || 0) / 100,
+                  refundedAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                });
+                logger.info('stripe', 'Order marked as refunded via webhook', {
+                  orderId: orderDoc.id,
+                });
+              }
+            }
+          }
+          break;
+        }
+
+        // ── Dispute created (chargeback) ────────────────────────────────────
+        case 'charge.dispute.created': {
+          const dispute = event.data.object as Stripe.Dispute;
+          const disputedPiId = dispute.payment_intent as string;
+          logger.warn('stripe', 'Dispute created (chargeback)', {
+            disputeId: dispute.id,
+            piId: disputedPiId,
+            reason: dispute.reason,
+            status: dispute.status,
+            amount: dispute.amount,
+          });
+
+          if (disputedPiId && adminDb) {
+            const orderQuery = await adminDb
+              .collection('orders')
+              .where('stripePaymentIntentId', '==', disputedPiId)
+              .limit(1)
+              .get();
+
+            if (!orderQuery.empty) {
+              const orderDoc = orderQuery.docs[0];
+              await orderDoc.ref.update({
+                disputeStatus: 'opened',
+                disputeId: dispute.id,
+                disputeReason: dispute.reason,
+                disputeAmount: (dispute.amount || 0) / 100,
+                updatedAt: new Date().toISOString(),
+              });
+
+              // Notify admin
+              await adminDb.collection('notifications').add({
+                userId: 'admin',
+                type: 'admin_alert',
+                title: 'Chargeback Açıldı',
+                message: `Sipariş #${orderDoc.id.slice(0, 8).toUpperCase()} için chargeback açıldı. Sebep: ${dispute.reason}`,
+                link: `/admin?tab=orders`,
+                read: false,
+                createdAt: new Date().toISOString(),
+              });
+
+              logger.warn('stripe', 'Order flagged with dispute', {
+                orderId: orderDoc.id,
+                disputeId: dispute.id,
+              });
+            }
+          }
+          break;
+        }
+
+        // ── Dispute closed ─────────────────────────────────────────────────
+        case 'charge.dispute.closed': {
+          const closedDispute = event.data.object as Stripe.Dispute;
+          const closedPiId = closedDispute.payment_intent as string;
+          logger.info('stripe', 'Dispute closed', {
+            disputeId: closedDispute.id,
+            status: closedDispute.status,
+          });
+
+          if (closedPiId && adminDb) {
+            const orderQuery = await adminDb
+              .collection('orders')
+              .where('stripePaymentIntentId', '==', closedPiId)
+              .limit(1)
+              .get();
+
+            if (!orderQuery.empty) {
+              const orderDoc = orderQuery.docs[0];
+              const orderData = orderDoc.data();
+              const updateData: Record<string, any> = {
+                disputeStatus: closedDispute.status,
+                updatedAt: new Date().toISOString(),
+              };
+
+              // If dispute was lost, mark order as refunded
+              if (closedDispute.status === 'lost' && orderData.status !== 'refunded') {
+                updateData.status = 'refunded';
+                updateData.refundedAt = new Date().toISOString();
+              }
+
+              await orderDoc.ref.update(updateData);
+
+              // Notify admin
+              await adminDb.collection('notifications').add({
+                userId: 'admin',
+                type: 'admin_alert',
+                title:
+                  closedDispute.status === 'won' ? 'Chargeback Kazanıldı' : 'Chargeback Kaybedildi',
+                message: `Sipariş #${orderDoc.id.slice(0, 8).toUpperCase()} chargeback: ${closedDispute.status}`,
+                link: `/admin?tab=orders`,
+                read: false,
+                createdAt: new Date().toISOString(),
+              });
+
+              logger.info('stripe', 'Dispute status updated on order', {
+                orderId: orderDoc.id,
+                disputeStatus: closedDispute.status,
+              });
+            }
           }
           break;
         }
