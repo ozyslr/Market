@@ -70,7 +70,7 @@ service cloud.firestore {
 
     // --- SUBORDERS (Plan 1) ----------------------------------------------
     match /subOrders/{subOrderId} {
-      allow read: if isAdmin();
+      allow read: if isAdmin() || (isSeller() && resource.data.sellerId == request.auth.token.sellerId);
       allow create: if false;
       allow update: if isAdmin();
       allow delete: if false;
