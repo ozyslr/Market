@@ -2,11 +2,19 @@
 // Cron-triggered T+7 batch payout endpoint + admin manual override.
 // All payout amounts are calculated server-side from the immutable ledger
 // (T-02-016). No client-provided amounts accepted.
+//
+// Phase 30 fix: processPayout now creates real Stripe Connect Transfers
+// for sellers with a stripeAccountId on their seller doc. Sellers without
+// Stripe Connect are marked 'manual_payout_required'. Transfer failures
+// are tracked as 'transfer_failed' for operations to resolve.
 
+import crypto from 'crypto';
+import type Stripe from 'stripe';
 import type { Express } from 'express';
 import type { Firestore } from 'firebase-admin/firestore';
 import type { AdminRole } from '../../src/types.js';
 import { getEligiblePayouts, processPayout } from '../services/payoutService.js';
+import type { PayoutReconciliation } from '../services/payoutService.js';
 import { getEntriesBySeller } from '../services/ledgerService.js';
 import { logger } from '../logger.js';
 import { audit } from '../lib/auditLog.js';
@@ -15,6 +23,7 @@ type Middleware = (req: any, res: any, next: any) => any;
 
 export interface PayoutRouteDeps {
   adminDb: Firestore | null;
+  stripe: Stripe;
   verifyAdmin: Middleware;
   verifyCronSecret: Middleware;
   verifyFirebaseToken: Middleware;
@@ -22,12 +31,14 @@ export interface PayoutRouteDeps {
 }
 
 export function registerPayoutRoutes(app: Express, deps: PayoutRouteDeps) {
-  const { adminDb, verifyAdmin, verifyCronSecret, verifyFirebaseToken, requireAdminRole } = deps;
+  const { adminDb, stripe, verifyAdmin, verifyCronSecret, verifyFirebaseToken, requireAdminRole } =
+    deps;
 
   /**
    * POST /api/process-scheduled-payouts
    * Called by external cron (Monday 03:00 UTC).
-   * Scans all 'collected' commission entries older than T+7 and processes payouts.
+   * Scans all 'collected' commission entries older than T+7, marks them 'released',
+   * and creates real Stripe Connect Transfers to send money to sellers.
    * Auth: verifyCronSecret (T-02-015)
    */
   app.post('/api/process-scheduled-payouts', verifyCronSecret, async (_req, res) => {
@@ -37,16 +48,60 @@ export function registerPayoutRoutes(app: Express, deps: PayoutRouteDeps) {
       const eligible = await getEligiblePayouts(adminDb);
 
       if (eligible.length === 0) {
-        return res.json({ processed: 0, totalAmount: 0, errors: [] });
+        return res.json({
+          processed: 0,
+          totalAmount: 0,
+          errors: [],
+          reconciliation: null,
+        });
       }
 
-      let processed = 0;
-      let totalAmount = 0;
-      const errors: string[] = [];
+      // ── Generate a batch run ID for idempotency ──────────────────────────
+      const batchRunId = `payout_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+
+      const reconciliation: PayoutReconciliation = {
+        batchId: batchRunId,
+        processed: 0,
+        stripeTransferred: 0,
+        manualPayoutRequired: 0,
+        transferFailed: 0,
+        skippedZeroAmount: 0,
+        totalAmountTransferred: 0,
+        errors: [],
+      };
 
       for (const batch of eligible) {
         try {
-          await processPayout(adminDb, batch.sellerId, batch.totalAmount, batch.entryIds);
+          const result = await processPayout(
+            adminDb,
+            stripe,
+            batch.sellerId,
+            batch.totalAmount,
+            batch.entryIds,
+            batchRunId,
+          );
+
+          reconciliation.processed++;
+
+          switch (result.transferResult) {
+            case 'stripe_transferred':
+              reconciliation.stripeTransferred++;
+              reconciliation.totalAmountTransferred += batch.totalAmount;
+              break;
+            case 'manual_payout_required':
+              reconciliation.manualPayoutRequired++;
+              break;
+            case 'transfer_failed':
+              reconciliation.transferFailed++;
+              reconciliation.errors.push(
+                `Transfer failed for seller ${batch.sellerId}: ${result.error ?? 'unknown error'}`,
+              );
+              break;
+            case 'skipped_zero_amount':
+              reconciliation.skippedZeroAmount++;
+              break;
+          }
+
           audit(
             'system',
             'system@mercora',
@@ -55,19 +110,33 @@ export function registerPayoutRoutes(app: Express, deps: PayoutRouteDeps) {
             'payout',
             batch.sellerId,
             `Payout to ${batch.sellerId}`,
-            `${batch.totalAmount} TRY (T+7 cron)`,
+            `${batch.totalAmount} kurus (T+7 cron) — ${result.transferResult}`,
           );
-          processed++;
-          totalAmount += batch.totalAmount;
         } catch (err) {
-          const msg = `Failed payout for seller ${batch.sellerId}: ${(err as Error).message}`;
-          errors.push(msg);
+          const msg = `Unexpected error for seller ${batch.sellerId}: ${(err as Error).message}`;
+          reconciliation.errors.push(msg);
           logger.error('payout', msg, { sellerId: batch.sellerId });
         }
       }
 
-      logger.info('payout', 'Scheduled payout run complete', { processed, totalAmount, errors });
-      return res.json({ processed, totalAmount, errors });
+      // ── Reconciliation summary log ──────────────────────────────────────
+      logger.info('payout', 'Scheduled payout batch complete — reconciliation', {
+        batchId: batchRunId,
+        processed: reconciliation.processed,
+        stripeTransferred: reconciliation.stripeTransferred,
+        manualPayoutRequired: reconciliation.manualPayoutRequired,
+        transferFailed: reconciliation.transferFailed,
+        skippedZeroAmount: reconciliation.skippedZeroAmount,
+        totalAmountTransferred: reconciliation.totalAmountTransferred,
+        errorCount: reconciliation.errors.length,
+      });
+
+      return res.json({
+        processed: reconciliation.processed,
+        totalAmount: reconciliation.totalAmountTransferred,
+        errors: reconciliation.errors,
+        reconciliation,
+      });
     } catch (err: any) {
       logger.error('payout', 'Scheduled payout run failed', { error: err.message });
       return res.status(500).json({ error: err.message });
@@ -77,6 +146,7 @@ export function registerPayoutRoutes(app: Express, deps: PayoutRouteDeps) {
   /**
    * POST /api/admin/manual-payout
    * Admin override: manually trigger payout for a specific seller (D-11).
+   * Creates a real Stripe Connect Transfer if the seller has stripeAccountId.
    * Auth: verifyAdmin (T-02-015)
    * Body: { sellerId: string, amount: number, entryIds: string[] }
    */
@@ -99,7 +169,16 @@ export function registerPayoutRoutes(app: Express, deps: PayoutRouteDeps) {
           return res.status(400).json({ error: 'entryIds array is required' });
         }
 
-        const payoutEntry = await processPayout(adminDb, sellerId, amount, entryIds);
+        const manualBatchId = `manual_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+        const result = await processPayout(
+          adminDb,
+          stripe,
+          sellerId,
+          amount,
+          entryIds,
+          manualBatchId,
+        );
+
         audit(
           req.uid,
           req.userEmail ?? '',
@@ -108,14 +187,21 @@ export function registerPayoutRoutes(app: Express, deps: PayoutRouteDeps) {
           'payout',
           sellerId,
           `Manual payout to ${sellerId}`,
-          `${amount} TRY`,
+          `${amount} kurus — ${result.transferResult}${result.transferId ? ` (transfer: ${result.transferId})` : ''}`,
         );
         logger.info('payout', 'Admin manual payout executed', {
           sellerId,
           amount,
+          transferResult: result.transferResult,
+          transferId: result.transferId ?? null,
           adminUid: req.uid,
         });
-        return res.json({ success: true, payout: payoutEntry });
+        return res.json({
+          success: true,
+          payout: result.payoutEntry,
+          transferResult: result.transferResult,
+          transferId: result.transferId ?? null,
+        });
       } catch (err: any) {
         logger.error('payout', 'Admin manual payout failed', { error: err.message });
         return res.status(500).json({ error: err.message });

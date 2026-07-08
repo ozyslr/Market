@@ -472,6 +472,7 @@ async function startServer() {
   // â”€â”€â”€ Payout + Finance Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   registerPayoutRoutes(app, {
     adminDb,
+    stripe,
     verifyAdmin,
     verifyCronSecret,
     verifyFirebaseToken,

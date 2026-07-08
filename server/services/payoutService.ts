@@ -1,7 +1,10 @@
 // ─── Payout Service ───────────────────────────────────────────────────────────
 // Handles T+7 payout eligibility, delivery approval (iyzico escrow release),
-// and seller balance aggregation from the immutable ledger.
+// real Stripe Connect transfers, and seller balance aggregation from the
+// immutable ledger.
 
+import crypto from 'crypto';
+import type Stripe from 'stripe';
 import type { Firestore } from 'firebase-admin/firestore';
 import { getEntriesBySeller, updateEntryStatus, recordEntry } from './ledgerService.js';
 import type { LedgerEntry } from './ledgerService.js';
@@ -15,6 +18,28 @@ export interface EligiblePayout {
   sellerId: string;
   totalAmount: number; // absolute value (kurus)
   entryIds: string[];
+}
+
+export interface PayoutResult {
+  payoutEntry: LedgerEntry;
+  transferResult:
+    | 'stripe_transferred'
+    | 'manual_payout_required'
+    | 'transfer_failed'
+    | 'skipped_zero_amount';
+  transferId?: string;
+  error?: string;
+}
+
+export interface PayoutReconciliation {
+  batchId: string;
+  processed: number;
+  stripeTransferred: number;
+  manualPayoutRequired: number;
+  transferFailed: number;
+  skippedZeroAmount: number;
+  totalAmountTransferred: number;
+  errors: string[];
 }
 
 export interface SellerBalance {
@@ -72,39 +97,146 @@ export async function getEligiblePayouts(adminDb: Firestore): Promise<EligiblePa
 // ─── Process Payout (T+7 batch) ───────────────────────────────────────────────
 
 /**
- * Atomically: mark all eligible commission entries as 'released',
- * record a new 'payout' ledger entry for the seller, return the payout entry.
+ * Process a payout: mark commission entries as 'released', then create a real
+ * Stripe Connect Transfer to send money to the seller's connected account.
+ *
+ * Edge cases handled:
+ * - No stripeAccountId on seller doc → marks payout 'manual_payout_required' (no transfer)
+ * - Zero or negative amount → skips (returns 'skipped_zero_amount')
+ * - Stripe transfer fails → marks payout 'transfer_failed', commission entries stay 'released'
+ *   so the obligation is tracked; operations must retry/resolve the failed transfer manually
+ * - Idempotency via batchRunId + sellerId prevents double-transfers on retry
  */
 export async function processPayout(
   adminDb: Firestore,
+  stripe: Stripe,
   sellerId: string,
   amount: number,
   entryIds: string[],
-): Promise<LedgerEntry> {
-  // Update all eligible entries to 'released'
+  batchRunId: string,
+): Promise<PayoutResult> {
+  // ── Guard: zero or negative amount ──────────────────────────────────────────
+  if (amount <= 0) {
+    logger.warn('payout', `Skipping payout for ${sellerId}: amount=${amount}`, {
+      sellerId,
+      amount,
+    });
+    const skippedEntry = await recordEntry(adminDb, {
+      orderSetId: '',
+      subOrderId: '',
+      sellerId,
+      type: 'payout',
+      amount: 0,
+      currency: 'TRY',
+      status: 'released',
+      reference: '',
+      reason: `Skipped — zero or negative amount (${amount})`,
+      createdBy: 'system',
+    });
+    return { payoutEntry: skippedEntry, transferResult: 'skipped_zero_amount' };
+  }
+
+  // ── Step 1: Mark all eligible commission entries as 'released' ──────────────
   await Promise.all(entryIds.map((id) => updateEntryStatus(adminDb, id, 'released')));
 
-  // Record the payout entry
-  const payoutEntry = await recordEntry(adminDb, {
-    orderSetId: '',
-    subOrderId: '',
-    sellerId,
-    type: 'payout',
-    amount: -amount, // negative: money leaving the platform to the seller
-    currency: 'TRY',
-    status: 'released',
-    reference: '',
-    reason: `T+7 payout — ${entryIds.length} commission(s) released`,
-    createdBy: 'system',
-  });
+  // ── Step 2: Look up seller's Stripe Connect account ─────────────────────────
+  const sellerSnap = await adminDb.collection('sellers').doc(sellerId).get();
+  const sellerData = sellerSnap.data() ?? {};
+  const stripeAccountId = sellerData.stripeAccountId as string | undefined;
 
-  logger.info('payout', `Processed payout for seller ${sellerId}`, {
-    sellerId,
-    amount,
-    entryCount: entryIds.length,
-  });
+  // ── Step 3: No Stripe Connect account → manual payout required ──────────────
+  if (!stripeAccountId) {
+    const payoutEntry = await recordEntry(adminDb, {
+      orderSetId: '',
+      subOrderId: '',
+      sellerId,
+      type: 'payout',
+      amount: -amount,
+      currency: 'TRY',
+      status: 'manual_payout_required',
+      reference: 'manual_payout_required',
+      reason: `T+7 payout — ${entryIds.length} commission(s) released (no Stripe Connect account; manual payout required)`,
+      createdBy: 'system',
+    });
 
-  return payoutEntry;
+    logger.info('payout', `Manual payout required for seller ${sellerId} (no stripeAccountId)`, {
+      sellerId,
+      amount,
+      entryCount: entryIds.length,
+    });
+
+    return { payoutEntry, transferResult: 'manual_payout_required' };
+  }
+
+  // ── Step 4: Create real Stripe Connect Transfer ─────────────────────────────
+  const idempotencyKey = `${batchRunId}_${sellerId}`;
+
+  try {
+    const transfer = await stripe.transfers.create(
+      {
+        amount, // already in kurus (smallest currency unit for TRY)
+        currency: 'try',
+        destination: stripeAccountId,
+        description: `T+7 payout — ${entryIds.length} commission(s)`,
+      },
+      { idempotencyKey },
+    );
+
+    // ── Record successful payout entry ──────────────────────────────────────
+    const payoutEntry = await recordEntry(adminDb, {
+      orderSetId: '',
+      subOrderId: '',
+      sellerId,
+      type: 'payout',
+      amount: -amount,
+      currency: 'TRY',
+      status: 'released',
+      reference: transfer.id,
+      reason: `Stripe Transfer ${transfer.id} — ${entryIds.length} commission(s) released`,
+      createdBy: 'system',
+    });
+
+    logger.info('payout', `Stripe transfer completed for seller ${sellerId}`, {
+      sellerId,
+      amount,
+      transferId: transfer.id,
+      stripeAccountId,
+      idempotencyKey,
+      entryCount: entryIds.length,
+    });
+
+    return { payoutEntry, transferResult: 'stripe_transferred', transferId: transfer.id };
+  } catch (err: unknown) {
+    const errorMessage = (err as Error).message;
+
+    // ── Transfer failed — record payout as 'transfer_failed' ────────────────
+    // Commission entries remain 'released' so the platform's obligation to pay
+    // is tracked; the 'transfer_failed' payout entry signals that operations
+    // must resolve and retry the Stripe transfer.
+    const payoutEntry = await recordEntry(adminDb, {
+      orderSetId: '',
+      subOrderId: '',
+      sellerId,
+      type: 'payout',
+      amount: -amount,
+      currency: 'TRY',
+      status: 'transfer_failed',
+      reference: `failed:${stripeAccountId}`,
+      reason: `Stripe Transfer FAILED — ${entryIds.length} commission(s) released but money NOT sent. Error: ${errorMessage}`,
+      createdBy: 'system',
+    });
+
+    logger.error('payout', `Stripe transfer failed for seller ${sellerId}`, {
+      sellerId,
+      amount,
+      stripeAccountId,
+      idempotencyKey,
+      error: errorMessage,
+      entryCount: entryIds.length,
+    });
+
+    return { payoutEntry, transferResult: 'transfer_failed', error: errorMessage };
+  }
 }
 
 // ─── Delivery Hook (iyzico approval + ledger collection) ─────────────────────

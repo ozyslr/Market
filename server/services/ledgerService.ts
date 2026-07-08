@@ -16,7 +16,13 @@ export interface LedgerEntry {
   type: 'order_charge' | 'commission' | 'payout' | 'refund' | 'adjustment';
   amount: number; // in kurus, positive or negative
   currency: string;
-  status?: 'pending' | 'collected' | 'released' | 'reversed';
+  status?:
+    | 'pending'
+    | 'collected'
+    | 'released'
+    | 'reversed'
+    | 'manual_payout_required'
+    | 'transfer_failed';
   previousHash: string; // SHA-256 of previous entry
   hash: string; // SHA-256 of this entry's data
   reference: string; // optional: Stripe transfer ID, etc.
