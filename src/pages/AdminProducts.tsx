@@ -15,6 +15,7 @@ import {
   XCircle,
   X,
   Brain,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TableRowSkeleton } from '@/components/ui/Skeleton';
@@ -49,6 +50,7 @@ export function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProductStatus | ''>('');
+  const [lowStockFilter, setLowStockFilter] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [toggling, setToggling] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -92,13 +94,19 @@ export function AdminProducts() {
     if (statusFilter) {
       list = list.filter((p) => (p.status ?? 'approved') === statusFilter);
     }
+    if (lowStockFilter) {
+      list = list.filter((p) => {
+        const threshold = p.lowStockThreshold ?? 5;
+        return (p.stock ?? 0) <= threshold;
+      });
+    }
     const q = search.toLowerCase();
     if (q)
       list = list.filter(
         (p) => p.title.toLowerCase().includes(q) || p.brand?.toLowerCase().includes(q),
       );
     return list;
-  }, [products, search, statusFilter]);
+  }, [products, search, statusFilter, lowStockFilter]);
 
   const pendingCount = useMemo(
     () => products.filter((p) => p.status === 'pending').length,
@@ -250,6 +258,17 @@ export function AdminProducts() {
             )}
           </button>
         ))}
+        <button
+          onClick={() => setLowStockFilter(!lowStockFilter)}
+          className={cn(
+            'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5',
+            lowStockFilter
+              ? 'bg-red-500 text-white'
+              : 'bg-[#F8F8FA] text-brand-primary/60 hover:bg-red-50',
+          )}
+        >
+          <AlertTriangle size={12} /> Dusuk Stok
+        </button>
         {aiScanning && (
           <span className="ms-2 inline-flex items-center gap-1.5 text-[10px] font-bold text-accent">
             <Loader2 size={12} className="animate-spin" /> AI tarıyor... %{aiProgress}
@@ -438,8 +457,23 @@ export function AdminProducts() {
                   <td className="py-3 text-end font-bold text-brand-primary text-xs">
                     {product.price.toLocaleString('tr-TR')} ₺
                   </td>
-                  <td className="py-3 text-end text-[10px] font-bold text-brand-primary/60">
-                    {product.stock}
+                  <td className="py-3 text-end">
+                    <span
+                      className={cn(
+                        'text-[10px] font-bold',
+                        (product.stock ?? 0) === 0
+                          ? 'text-red-500'
+                          : (product.stock ?? 0) <= (product.lowStockThreshold ?? 5)
+                            ? 'text-yellow-600'
+                            : 'text-brand-primary/60',
+                      )}
+                    >
+                      {(product.stock ?? 0) === 0
+                        ? '0 (Tukendi)'
+                        : (product.stock ?? 0) <= (product.lowStockThreshold ?? 5)
+                          ? `${product.stock} (Az)`
+                          : product.stock}
+                    </span>
                   </td>
                   {FLAGS.map((f) => {
                     const key = `${product.id}_${f.key}`;

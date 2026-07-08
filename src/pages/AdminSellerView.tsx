@@ -35,6 +35,15 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TIER_ORDER, type SellerTier } from '@/services/sellerTierService';
+
+const TIER_LABELS: Record<string, string> = {
+  starter: 'Baslangic',
+  bronze: 'Bronz',
+  silver: 'Gumus',
+  gold: 'Altin',
+  platinum: 'Platin',
+};
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
@@ -355,6 +364,12 @@ export function AdminSellerView() {
                 <ShoppingBag size={13} /> {orders.length} orders
               </span>
               <span>Commission: %{seller.commissionRate}</span>
+              <span className="flex items-center gap-1.5">
+                Tier:{' '}
+                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400">
+                  {TIER_LABELS[(seller as any).tier || 'starter'] || 'Baslangic'}
+                </span>
+              </span>
               {seller.origin && <span>Origin: {seller.origin}</span>}
             </div>
           </div>

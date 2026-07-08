@@ -36,6 +36,23 @@ import { cn } from '@/lib/utils';
 import { audit } from '@/services/auditLogService';
 import { useAuth } from '@/context/AuthContext';
 import { LoadingState, ErrorState, EmptyState } from '@/components/shared/DataStates';
+import { TIER_ORDER, type SellerTier } from '@/services/sellerTierService';
+
+const TIER_LABELS: Record<string, string> = {
+  starter: 'Baslangic',
+  bronze: 'Bronz',
+  silver: 'Gumus',
+  gold: 'Altin',
+  platinum: 'Platin',
+};
+
+const TIER_CLASSES: Record<string, string> = {
+  starter: 'bg-gray-100 text-gray-600',
+  bronze: 'bg-orange-100 text-orange-700',
+  silver: 'bg-gray-100 text-gray-600',
+  gold: 'bg-yellow-100 text-yellow-700',
+  platinum: 'bg-purple-100 text-purple-700',
+};
 
 const KYC_BADGE: Record<string, { label: string; cls: string }> = {
   pending: { label: 'Bekliyor', cls: 'bg-yellow-100 text-yellow-700' },
@@ -58,6 +75,7 @@ export function AdminSellers() {
   const [kycFilter, setKycFilter] = useState<'all' | 'pending' | 'verified' | 'rejected'>('all');
   const [editingCommission, setEditingCommission] = useState<string | null>(null);
   const [commissionValue, setCommissionValue] = useState('');
+  const [editingTier, setEditingTier] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [sellerProducts, setSellerProducts] = useState<Product[]>([]);
@@ -361,6 +379,9 @@ export function AdminSellers() {
                       Komisyon
                     </th>
                     <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
+                      Kademe
+                    </th>
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Durum
                     </th>
                     <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
@@ -481,6 +502,65 @@ export function AdminSellers() {
                           )}
                         </td>
                         <td className="py-3">
+                          {editingTier === seller.id ? (
+                            <div className="flex items-center gap-1">
+                              <select
+                                value={seller.tier || 'starter'}
+                                onChange={(e) => {
+                                  const newTier = e.target.value;
+                                  setSellers((prev) =>
+                                    prev.map((s) =>
+                                      s.id === seller.id ? { ...s, tier: newTier } : s,
+                                    ),
+                                  );
+                                }}
+                                className="px-2 py-1 border border-accent/30 rounded-lg text-xs font-bold outline-none"
+                              >
+                                {TIER_ORDER.map((t) => (
+                                  <option key={t} value={t}>
+                                    {TIER_LABELS[t]}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                onClick={() => {
+                                  update(seller.id, { tier: seller.tier || 'starter' });
+                                  setEditingTier(null);
+                                }}
+                                disabled={isSaving}
+                                className="p-1 rounded bg-green-50 text-green-600 hover:bg-green-100 transition-all"
+                              >
+                                <Check size={12} />
+                              </button>
+                              <button
+                                onClick={() => setEditingTier(null)}
+                                className="p-1 rounded bg-[#F8F8FA] text-brand-primary/40 hover:bg-brand-primary/10 transition-all"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setEditingTier(seller.id)}
+                              className="flex items-center gap-1 group"
+                            >
+                              <span
+                                className={cn(
+                                  'px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest',
+                                  TIER_CLASSES[seller.tier || 'starter'] ||
+                                    'bg-gray-100 text-gray-500',
+                                )}
+                              >
+                                {TIER_LABELS[seller.tier || 'starter'] || 'Baslangic'}
+                              </span>
+                              <Edit2
+                                size={11}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-brand-primary/40"
+                              />
+                            </button>
+                          )}
+                        </td>
+                        <td className="py-3">
                           <span
                             className={cn(
                               'px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest',
@@ -572,7 +652,7 @@ export function AdminSellers() {
                   {filtered.length === 0 && (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={8}
                         className="py-10 text-center text-brand-primary/30 text-sm font-bold"
                       >
                         Satıcı bulunamadı
@@ -599,6 +679,16 @@ export function AdminSellers() {
                     </h4>
                     <p className="text-[10px] text-brand-primary/40">
                       %{selectedSeller.commissionRate} komisyon · {selectedSeller.origin}
+                      {' · '}
+                      <span
+                        className={cn(
+                          'px-1.5 py-0.5 rounded text-[9px] font-black uppercase',
+                          TIER_CLASSES[selectedSeller.tier || 'starter'] ||
+                            'bg-gray-100 text-gray-500',
+                        )}
+                      >
+                        {TIER_LABELS[selectedSeller.tier || 'starter'] || 'Baslangic'}
+                      </span>
                     </p>
                   </div>
                   <button

@@ -14,12 +14,23 @@ import {
   Youtube,
   Link2,
   RotateCcw,
+  Shield,
+  TrendingUp,
+  Package,
+  ArrowUpCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../lib/firebase';
 import { getStoreConfig, saveStoreConfig, type StoreConfig } from '../services/sellerStoreService';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
+import {
+  getSellerTierStatus,
+  getTierConfig,
+  type SellerTierStatus,
+} from '../services/sellerTierService';
+import { getProducts } from '../services/productService';
 
 const DEFAULT_COLORS = [
   '#6418E5',
@@ -43,12 +54,33 @@ export function SellerStoreSettings() {
   const [saved, setSaved] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [bannerUploading, setBannerUploading] = useState(false);
+  const [tierStatus, setTierStatus] = useState<SellerTierStatus | null>(null);
+  const [tierLoading, setTierLoading] = useState(true);
 
   useEffect(() => {
     getStoreConfig(sellerId).then((c) => {
       setConfig(c);
       setLoading(false);
     });
+  }, [sellerId]);
+
+  useEffect(() => {
+    if (!sellerId) return;
+    (async () => {
+      try {
+        const [products, tierConfig] = await Promise.all([
+          getProducts({ sellerId }),
+          getTierConfig('starter'),
+        ]);
+        const productCount = products.length;
+        const status = await getSellerTierStatus(sellerId, productCount, 0, 0);
+        setTierStatus(status);
+      } catch {
+        /* tier fetch is non-critical */
+      } finally {
+        setTierLoading(false);
+      }
+    })();
   }, [sellerId]);
 
   function update<K extends keyof StoreConfig>(key: K, val: StoreConfig[K]) {
@@ -263,6 +295,159 @@ export function SellerStoreSettings() {
             className="w-10 h-10 rounded-xl cursor-pointer border-0 p-0"
           />
         </div>
+      </section>
+
+      {/* Low Stock Alert Threshold */}
+      <section className="bg-white rounded-2xl p-6 shadow-sm border border-brand-primary/5 space-y-4">
+        <h2 className="text-sm font-black uppercase tracking-widest text-brand-primary/30">
+          Dusuk Stok Uyarisi
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+          <div>
+            <label className="block text-xs font-bold text-brand-primary/40 mb-1">
+              Stok Esik Degeri
+            </label>
+            <p className="text-[10px] text-brand-primary/30 mb-2">
+              Stok bu sayinin altina dustugunde size bildirim gonderilir.
+            </p>
+            <input
+              type="number"
+              min={1}
+              max={999}
+              value={config.lowStockThreshold ?? 5}
+              onChange={(e) => update('lowStockThreshold', parseInt(e.target.value) || 5)}
+              className="w-28 px-4 py-3 bg-brand-secondary/30 rounded-xl border border-brand-primary/5 text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20"
+            />
+          </div>
+          <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
+            <AlertTriangle size={20} className="text-amber-500 shrink-0" />
+            <div className="text-xs text-amber-700 font-medium">
+              Her urun icin ayrica urun detay sayfasindan ozel esik degeri tanimlayabilirsiniz.
+              Urune ozel esik, bu genel ayari gecersiz kilar.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Tier / Paketim */}
+      <section className="bg-white rounded-2xl p-6 shadow-sm border border-brand-primary/5 space-y-4">
+        <h2 className="text-sm font-black uppercase tracking-widest text-brand-primary/30">
+          Paketim
+        </h2>
+        {tierLoading ? (
+          <div className="flex items-center gap-2 text-brand-primary/40">
+            <Loader2 size={16} className="animate-spin" />
+            <span className="text-xs font-medium">Paket bilgisi yukleniyor...</span>
+          </div>
+        ) : tierStatus ? (
+          <div className="space-y-4">
+            {/* Tier badge + stats row */}
+            <div className="flex flex-wrap items-center gap-4">
+              <span
+                className={cn(
+                  'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest',
+                  tierStatus.currentTier === 'platinum'
+                    ? 'bg-purple-100 text-purple-700'
+                    : tierStatus.currentTier === 'gold'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : tierStatus.currentTier === 'silver'
+                        ? 'bg-gray-100 text-gray-600'
+                        : tierStatus.currentTier === 'bronze'
+                          ? 'bg-orange-100 text-orange-700'
+                          : 'bg-brand-secondary text-brand-primary/60',
+                )}
+              >
+                <Shield size={12} className="inline me-1" />
+                {tierStatus.tierConfig.label} Paketi
+              </span>
+              <div className="flex items-center gap-6 text-xs text-brand-primary/50">
+                <span className="flex items-center gap-1.5">
+                  <Package size={13} />
+                  <strong className="text-brand-primary">{tierStatus.productCount}</strong>/{' '}
+                  {tierStatus.tierConfig.maxProducts} urun
+                  {tierStatus.remainingSlots > 0 && (
+                    <span className="text-green-600 font-bold">
+                      ({tierStatus.remainingSlots} kaldi)
+                    </span>
+                  )}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <TrendingUp size={13} />
+                  Komisyon:{' '}
+                  <strong className="text-brand-primary">
+                    %{tierStatus.tierConfig.commissionRate}
+                  </strong>
+                </span>
+                {tierStatus.tierConfig.monthlyFee > 0 && (
+                  <span className="font-bold text-amber-600">
+                    Aylik: {tierStatus.tierConfig.monthlyFee.toLocaleString('tr-TR')} TL
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Features / Benefits */}
+            <div>
+              <p className="text-xs font-bold text-brand-primary/40 mb-2">Paket Ozellikleri</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {tierStatus.tierConfig.benefits.map((b, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-2 bg-brand-secondary/20 rounded-xl px-3 py-2"
+                  >
+                    <Check size={12} className="text-green-500 mt-0.5 shrink-0" />
+                    <span className="text-xs text-brand-primary/70">{b}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Cap warning + upgrade CTA */}
+            {tierStatus.atCap && tierStatus.nextTier && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                <AlertTriangle size={18} className="text-red-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-red-700">Urun limitine ulastiniz!</p>
+                  <p className="text-xs text-red-600 mt-0.5">{tierStatus.recommendation}</p>
+                  <a
+                    href="/seller/subscription"
+                    className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-brand-primary text-white rounded-lg text-xs font-bold hover:bg-accent transition-all"
+                  >
+                    <ArrowUpCircle size={12} />
+                    {tierStatus.nextTier} Paketine Yuksel
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Near-cap warning */}
+            {!tierStatus.atCap &&
+              tierStatus.remainingSlots < 10 &&
+              tierStatus.remainingSlots > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                  <p className="text-xs text-amber-700 font-medium">
+                    Sadece {tierStatus.remainingSlots} urun hakkiniz kaldi. Limitinize
+                    yaklasiyorsunuz.
+                    {tierStatus.nextTier && (
+                      <a
+                        href="/seller/subscription"
+                        className="ms-2 underline underline-offset-2 text-amber-800 font-bold"
+                      >
+                        Yukselt
+                      </a>
+                    )}
+                  </p>
+                </div>
+              )}
+
+            {/* Recommendation footer */}
+            {tierStatus.recommendation && !tierStatus.atCap && (
+              <p className="text-xs text-brand-primary/40 italic">{tierStatus.recommendation}</p>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-brand-primary/30">Paket bilgisi alinamadi.</p>
+        )}
       </section>
 
       {/* Social Links */}

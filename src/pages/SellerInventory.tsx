@@ -23,6 +23,7 @@ import {
   Loader2,
   Save,
   Edit3,
+  History,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -41,19 +42,35 @@ import type { ProductFormData } from '../components/seller/ProductForm';
 import { CSVImportPanel } from '../components/seller/CSVImportPanel';
 import { BulkEditBar } from '../components/seller/BulkEditBar';
 import { recordEvent } from '@/services/sellerOnboardingService';
+import { getSellerTierStatus, type SellerTierStatus } from '@/services/sellerTierService';
+import {
+  getStockMovements,
+  getReasonLabel,
+  type StockMovement,
+} from '@/services/stockMovementService';
 
 export function SellerInventoryPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'bulk' | 'analytics'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'lowStock' | 'bulk' | 'analytics'>(
+    'inventory',
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [stockHistoryProduct, setStockHistoryProduct] = useState<Product | null>(null);
+  const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);
+  const [loadingMovements, setLoadingMovements] = useState(false);
+  const [lowStockThreshold, setLowStockThreshold] = useState(5);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [tierStatus, setTierStatus] = useState<SellerTierStatus | null>(null);
+  const [tierWarning, setTierWarning] = useState<{ atCap: boolean; remaining: number } | null>(
+    null,
+  );
 
   // CSV import state (legacy)
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -68,6 +85,12 @@ export function SellerInventoryPage() {
   const filteredProducts = products.filter((p) =>
     p.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  const getProductThreshold = (p: Product): number => p.lowStockThreshold ?? lowStockThreshold;
+
+  const lowStockProducts = filteredProducts.filter((p) => (p.stock ?? 0) <= getProductThreshold(p));
+
+  const displayProducts = activeTab === 'lowStock' ? lowStockProducts : filteredProducts;
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [editValues, setEditValues] = useState<Record<string, { price?: number; stock?: number }>>(
     {},
@@ -138,11 +161,37 @@ export function SellerInventoryPage() {
       if (user) {
         const data = await getProducts({ sellerId: user.id, includeNonApproved: true });
         setProducts(data);
+        // Load seller's low stock threshold from store config
+        try {
+          const { getStoreConfig } = await import('@/services/sellerStoreService');
+          const cfg = await getStoreConfig(user.id);
+          setLowStockThreshold(cfg.lowStockThreshold ?? 5);
+        } catch {
+          /* keep default */
+        }
       }
       setIsLoading(false);
     };
     fetchProducts();
   }, [user]);
+
+  // Fetch tier status for enforcement
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const status = await getSellerTierStatus(user.uid || user.id, products.length, 0, 0);
+        setTierStatus(status);
+        setTierWarning(
+          status.atCap
+            ? { atCap: true, remaining: 0 }
+            : { atCap: false, remaining: status.remainingSlots },
+        );
+      } catch {
+        /* non-critical */
+      }
+    })();
+  }, [user, products.length]);
 
   const handleBulkDelete = async () => {
     if (confirm(`Are you sure you want to delete ${selectedProducts.length} items?`)) {
@@ -190,6 +239,20 @@ export function SellerInventoryPage() {
     }
   };
 
+  const handleShowStockHistory = async (product: Product) => {
+    setStockHistoryProduct(product);
+    setLoadingMovements(true);
+    setStockMovements([]);
+    try {
+      const movements = await getStockMovements(product.id);
+      setStockMovements(movements);
+    } catch {
+      setStockMovements([]);
+    } finally {
+      setLoadingMovements(false);
+    }
+  };
+
   const handleImportComplete = (refreshedProducts: Product[]) => {
     setProducts(refreshedProducts);
   };
@@ -200,6 +263,15 @@ export function SellerInventoryPage() {
   };
 
   const handleProductSubmit = async (data: ProductFormData, action: 'draft' | 'publish') => {
+    // Tier limit enforcement for new products (not editing)
+    if (!editingProduct && tierStatus?.atCap) {
+      alert(
+        `Urun limitine ulastiniz! Mevcut paketiniz ${tierStatus.tierConfig.maxProducts} urunle sinirli.\n\n` +
+          `Daha fazla urun eklemek icin ${tierStatus.nextTier ? tierStatus.nextTier + ' paketine yukseltin.' : 'yoneticiyle iletisime gecin.'}`,
+      );
+      return;
+    }
+
     const slug = data.title
       .toLowerCase()
       .replace(/\s+/g, '-')
@@ -352,6 +424,7 @@ export function SellerInventoryPage() {
         <nav className="flex flex-col gap-6">
           {[
             { icon: Database, id: 'inventory' },
+            { icon: AlertTriangle, id: 'lowStock' },
             { icon: Upload, id: 'bulk' },
             { icon: BarChart3, id: 'analytics' },
           ].map((item) => (
@@ -387,9 +460,11 @@ export function SellerInventoryPage() {
               <h1 className="text-4xl font-display font-black tracking-tighter text-brand-primary uppercase italic">
                 {activeTab === 'inventory'
                   ? 'Global Artifact Inventory'
-                  : activeTab === 'bulk'
-                    ? 'Mass Ingestion'
-                    : 'Demand Dynamics'}
+                  : activeTab === 'lowStock'
+                    ? 'Dusuk Stok Urunleri'
+                    : activeTab === 'bulk'
+                      ? 'Mass Ingestion'
+                      : 'Demand Dynamics'}
               </h1>
             </div>
 
@@ -410,7 +485,7 @@ export function SellerInventoryPage() {
           </div>
 
           <AnimatePresence mode="wait">
-            {activeTab === 'inventory' ? (
+            {activeTab === 'inventory' || activeTab === 'lowStock' ? (
               <motion.div
                 key="inventory"
                 initial={{ opacity: 0, y: 20 }}
@@ -537,12 +612,12 @@ export function SellerInventoryPage() {
                               type="checkbox"
                               className="w-4 h-4 rounded border-brand-primary/10 text-accent focus:ring-accent"
                               checked={
-                                selectedProducts.length === filteredProducts.length &&
-                                filteredProducts.length > 0
+                                selectedProducts.length === displayProducts.length &&
+                                displayProducts.length > 0
                               }
                               onChange={(e) =>
                                 setSelectedProducts(
-                                  e.target.checked ? filteredProducts.map((p) => p.id) : [],
+                                  e.target.checked ? displayProducts.map((p) => p.id) : [],
                                 )
                               }
                             />
@@ -567,7 +642,7 @@ export function SellerInventoryPage() {
                               </p>
                             </td>
                           </tr>
-                        ) : filteredProducts.length === 0 ? (
+                        ) : displayProducts.length === 0 ? (
                           <tr>
                             <td colSpan={6} className="px-8 py-8">
                               <div className="bg-gray-100 rounded-xl h-40 flex flex-col items-center justify-center gap-2 text-center">
@@ -589,7 +664,7 @@ export function SellerInventoryPage() {
                             </td>
                           </tr>
                         ) : (
-                          filteredProducts.slice(0, 10).map((product) => (
+                          displayProducts.slice(0, 10).map((product) => (
                             <tr
                               key={product.id}
                               onClick={() => setViewingProduct(product)}
@@ -705,15 +780,26 @@ export function SellerInventoryPage() {
                                   />
                                 ) : (
                                   <div className="flex items-center gap-3">
+                                    {(product.stock ?? 0) === 0 ? (
+                                      <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-red-200">
+                                        Tukendi
+                                      </span>
+                                    ) : (product.stock ?? 0) <= getProductThreshold(product) ? (
+                                      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-yellow-200">
+                                        Az
+                                      </span>
+                                    ) : null}
                                     <div className="flex-1 w-24 h-2 bg-brand-secondary rounded-full overflow-hidden">
                                       <div
                                         className={cn(
                                           'h-full rounded-full bg-accent transition-all duration-1000',
-                                          (product.stock ?? 0) < 20
+                                          (product.stock ?? 0) === 0
                                             ? 'bg-red-500'
-                                            : (product.stock ?? 0) < 50
-                                              ? 'bg-orange-500'
-                                              : 'bg-green-500',
+                                            : (product.stock ?? 0) <= getProductThreshold(product)
+                                              ? 'bg-yellow-500'
+                                              : (product.stock ?? 0) < 50
+                                                ? 'bg-orange-500'
+                                                : 'bg-green-500',
                                         )}
                                         style={{ width: `${Math.min(100, product.stock || 45)}%` }}
                                       />
@@ -764,6 +850,16 @@ export function SellerInventoryPage() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      handleShowStockHistory(product);
+                                    }}
+                                    className="p-2 hover:bg-white rounded-lg text-brand-primary/40 hover:text-blue-500 transition-all shadow-sm"
+                                    title="Stok Geçmişi"
+                                  >
+                                    <History size={16} />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       handleCopyProduct(product);
                                     }}
                                     className="p-2 hover:bg-white rounded-lg text-brand-primary/40 hover:text-green-500 transition-all shadow-sm"
@@ -793,7 +889,7 @@ export function SellerInventoryPage() {
                   </div>
                   <div className="px-8 py-6 bg-brand-secondary/10 flex items-center justify-between border-t border-brand-primary/5">
                     <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
-                      Showing {Math.min(10, filteredProducts.length)} of {filteredProducts.length}{' '}
+                      Showing {Math.min(10, displayProducts.length)} of {displayProducts.length}{' '}
                       Inventory Items
                     </p>
                     <div className="flex items-center gap-2">
@@ -1017,6 +1113,159 @@ export function SellerInventoryPage() {
                     </button>
                   </div>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Stock History Modal */}
+      <AnimatePresence>
+        {stockHistoryProduct && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setStockHistoryProduct(null);
+                setStockMovements([]);
+              }}
+              className="absolute inset-0 bg-brand-primary/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-lg bg-white rounded-[3rem] overflow-hidden shadow-2xl max-h-[80vh] flex flex-col"
+            >
+              {/* Header */}
+              <div className="p-8 pb-4 flex items-center justify-between border-b border-brand-primary/5">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">
+                    Stok Geçmişi
+                  </p>
+                  <h2 className="text-lg font-display font-black text-brand-primary truncate max-w-[280px]">
+                    {stockHistoryProduct.title}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => {
+                    setStockHistoryProduct(null);
+                    setStockMovements([]);
+                  }}
+                  className="w-10 h-10 bg-brand-secondary rounded-full flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-8">
+                {loadingMovements ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
+                      Geçmiş yükleniyor...
+                    </p>
+                  </div>
+                ) : stockMovements.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
+                    <History size={40} className="text-brand-primary/20" />
+                    <p className="text-sm font-bold text-brand-primary/40">
+                      Henüz stok hareketi kaydı bulunmuyor.
+                    </p>
+                    <p className="text-[10px] text-brand-primary/30">
+                      Stok değişiklikleri burada listelenecek.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {stockMovements.map((m, i) => {
+                      const isIncrease = m.delta > 0;
+                      const isDecrease = m.delta < 0;
+                      const dateStr = m.createdAt?.toDate
+                        ? m.createdAt.toDate().toLocaleString('tr-TR', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : m.createdAt || '—';
+
+                      return (
+                        <div key={m.id || i} className="relative pl-8 pb-6 last:pb-0">
+                          {/* Timeline line */}
+                          {i < stockMovements.length - 1 && (
+                            <div className="absolute left-[11px] top-8 bottom-0 w-0.5 bg-brand-secondary" />
+                          )}
+                          {/* Timeline dot */}
+                          <div
+                            className={cn(
+                              'absolute left-1 top-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center',
+                              isIncrease
+                                ? 'bg-green-50 border-green-400'
+                                : isDecrease
+                                  ? 'bg-red-50 border-red-400'
+                                  : 'bg-gray-50 border-gray-300',
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                'w-1.5 h-1.5 rounded-full',
+                                isIncrease
+                                  ? 'bg-green-500'
+                                  : isDecrease
+                                    ? 'bg-red-500'
+                                    : 'bg-gray-400',
+                              )}
+                            />
+                          </div>
+
+                          {/* Content card */}
+                          <div className="bg-brand-secondary/30 rounded-2xl p-4 border border-brand-primary/5">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40">
+                                {dateStr}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest bg-white border border-brand-primary/5 text-brand-primary/60">
+                                {getReasonLabel(m.reason)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-sm">
+                              <span className="font-mono font-bold text-brand-primary/60">
+                                {m.oldStock}
+                              </span>
+                              <ArrowRight size={14} className="text-brand-primary/30" />
+                              <span className="font-mono font-black text-brand-primary">
+                                {m.newStock}
+                              </span>
+                              <span
+                                className={cn(
+                                  'ml-auto text-xs font-black font-mono px-2 py-0.5 rounded-lg',
+                                  isIncrease
+                                    ? 'text-green-600 bg-green-50'
+                                    : isDecrease
+                                      ? 'text-red-500 bg-red-50'
+                                      : 'text-gray-400 bg-gray-50',
+                                )}
+                              >
+                                {isIncrease ? '+' : ''}
+                                {m.delta}
+                              </span>
+                            </div>
+                            {m.userId && m.userId !== 'system' && (
+                              <p className="text-[9px] text-brand-primary/30 mt-1.5 font-mono truncate">
+                                Kullanıcı: {m.userId}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

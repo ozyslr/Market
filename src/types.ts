@@ -108,6 +108,8 @@ export interface Seller {
   /** Iyzico sub-merchant (TR sellers) */
   iyzicoSubMerchantKey?: string;
   iyzicoOnboardingStatus?: 'pending' | 'complete';
+  /** Seller tier assigned by admin (overrides performance-based tier) */
+  tier?: string;
 }
 
 export interface Order {
@@ -264,6 +266,7 @@ export interface Product {
   favoriteCount?: number;
   cartAddCount?: number;
   reviews?: Review[];
+  lowStockThreshold?: number;
   createdAt?: string;
 }
 

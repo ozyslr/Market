@@ -18,6 +18,7 @@ export interface StoreConfig {
   contactPhone: string;
   returnPolicy: string;
   shippingNote: string;
+  lowStockThreshold: number;
   updatedAt: string;
 }
 
@@ -32,6 +33,7 @@ const DEFAULT_CONFIG: StoreConfig = {
   contactPhone: '',
   returnPolicy: '14 gün iade hakkı',
   shippingNote: '3-5 iş günü içinde kargo',
+  lowStockThreshold: 5,
   updatedAt: '',
 };
 

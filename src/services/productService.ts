@@ -21,6 +21,7 @@ import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Product, Category } from '../types';
 import { MOCK_PRODUCTS, CATEGORIES } from '../mockData';
 import { recordPrice } from './priceHistoryService';
+import { recordStockChange } from './stockMovementService';
 
 export interface GetProductsOptions {
   categoryId?: string;
@@ -271,9 +272,32 @@ export async function createProduct(data: Omit<Product, 'id'>) {
   }
 }
 
-export async function updateProduct(id: string, data: Partial<Product>) {
+export interface UpdateProductMeta {
+  userId?: string;
+  sellerId?: string;
+  reason?: string;
+}
+
+export async function updateProduct(id: string, data: Partial<Product>, meta?: UpdateProductMeta) {
   try {
     const productRef = doc(db, 'products', id);
+
+    // If stock is changing, snapshot old value first for audit trail
+    let oldStock: number | undefined;
+    let oldSellerId: string | undefined;
+    if (data.stock !== undefined) {
+      try {
+        const snap = await getDoc(productRef);
+        if (snap.exists()) {
+          const prev = snap.data() as Product;
+          oldStock = prev.stock ?? 0;
+          oldSellerId = prev.sellerId;
+        }
+      } catch {
+        /* non-blocking — proceed without recording */
+      }
+    }
+
     await updateDoc(productRef, {
       ...data,
       updatedAt: serverTimestamp(),
@@ -281,6 +305,19 @@ export async function updateProduct(id: string, data: Partial<Product>) {
     if (data.price !== undefined) {
       recordPrice(id, data.price);
     }
+
+    // Record stock movement (fire-and-forget)
+    if (data.stock !== undefined && oldStock !== undefined) {
+      recordStockChange(
+        id,
+        meta?.sellerId || oldSellerId || '',
+        oldStock,
+        data.stock,
+        meta?.reason || 'manual_update',
+        meta?.userId || 'system',
+      ).catch(() => {});
+    }
+
     // Fire-and-forget Typesense sync
     syncToTypesense(id, data);
   } catch (error) {
@@ -341,8 +378,24 @@ export async function validateCartStock(items: StockCheckItem[]): Promise<StockC
  * Throws with detailed error if any item has insufficient stock.
  * Supports both product-level and variant-level stock.
  */
-export async function decreaseProductStock(items: StockCheckItem[]): Promise<void> {
+export interface StockChangeMeta {
+  userId?: string;
+  reason?: string;
+}
+
+export async function decreaseProductStock(
+  items: StockCheckItem[],
+  meta?: StockChangeMeta,
+): Promise<void> {
   if (items.length === 0) return;
+
+  // Capture movement data inside the transaction, record after
+  const movements: Array<{
+    productId: string;
+    sellerId: string;
+    oldStock: number;
+    newStock: number;
+  }> = [];
 
   try {
     await runTransaction(db, async (tx) => {
@@ -377,10 +430,17 @@ export async function decreaseProductStock(items: StockCheckItem[]): Promise<voi
           };
           // Also decrement total stock
           const totalStock = (product.stock ?? 0) - quantity;
+          const newTotal = Math.max(0, totalStock);
           tx.update(ref, {
-            stock: Math.max(0, totalStock),
+            stock: newTotal,
             variants: updatedVariants,
             updatedAt: new Date().toISOString(),
+          });
+          movements.push({
+            productId,
+            sellerId: product.sellerId || '',
+            oldStock: product.stock ?? 0,
+            newStock: newTotal,
           });
         } else {
           // Decrement product-level stock
@@ -391,13 +451,32 @@ export async function decreaseProductStock(items: StockCheckItem[]): Promise<voi
                 `mevcut: ${available}, istenen: ${quantity}`,
             );
           }
+          const newStock = available - quantity;
           tx.update(ref, {
-            stock: available - quantity,
+            stock: newStock,
             updatedAt: new Date().toISOString(),
+          });
+          movements.push({
+            productId,
+            sellerId: product.sellerId || '',
+            oldStock: available,
+            newStock,
           });
         }
       }
     });
+
+    // Record stock movements after successful transaction (fire-and-forget)
+    for (const m of movements) {
+      recordStockChange(
+        m.productId,
+        m.sellerId,
+        m.oldStock,
+        m.newStock,
+        meta?.reason || 'order_placed',
+        meta?.userId || 'system',
+      ).catch(() => {});
+    }
   } catch (error: any) {
     if (error?.message?.startsWith('STOCK_ERROR:')) {
       throw error; // Re-throw our custom errors
@@ -411,8 +490,18 @@ export async function decreaseProductStock(items: StockCheckItem[]): Promise<voi
  * Atomically restore stock when an order is cancelled or refunded.
  * Supports both product-level and variant-level stock.
  */
-export async function restoreProductStock(items: StockCheckItem[]): Promise<void> {
+export async function restoreProductStock(
+  items: StockCheckItem[],
+  meta?: StockChangeMeta,
+): Promise<void> {
   if (items.length === 0) return;
+
+  const movements: Array<{
+    productId: string;
+    sellerId: string;
+    oldStock: number;
+    newStock: number;
+  }> = [];
 
   try {
     await runTransaction(db, async (tx) => {
@@ -432,19 +521,45 @@ export async function restoreProductStock(items: StockCheckItem[]): Promise<void
             ...updatedVariants[variantIndex],
             stock: (updatedVariants[variantIndex].stock ?? 0) + quantity,
           };
+          const newTotal = (product.stock ?? 0) + quantity;
           tx.update(ref, {
-            stock: (product.stock ?? 0) + quantity,
+            stock: newTotal,
             variants: updatedVariants,
             updatedAt: new Date().toISOString(),
           });
+          movements.push({
+            productId,
+            sellerId: product.sellerId || '',
+            oldStock: product.stock ?? 0,
+            newStock: newTotal,
+          });
         } else {
+          const newStock = (product.stock ?? 0) + quantity;
           tx.update(ref, {
-            stock: (product.stock ?? 0) + quantity,
+            stock: newStock,
             updatedAt: new Date().toISOString(),
+          });
+          movements.push({
+            productId,
+            sellerId: product.sellerId || '',
+            oldStock: product.stock ?? 0,
+            newStock,
           });
         }
       }
     });
+
+    // Record stock movements after successful transaction (fire-and-forget)
+    for (const m of movements) {
+      recordStockChange(
+        m.productId,
+        m.sellerId,
+        m.oldStock,
+        m.newStock,
+        meta?.reason || 'order_cancelled',
+        meta?.userId || 'system',
+      ).catch(() => {});
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, 'products/stock');
     throw error;
@@ -646,17 +761,49 @@ export interface BatchProductResult {
   errors: { productId: string; error: string }[];
 }
 
+export interface BatchUpdateMeta {
+  userId?: string;
+}
+
 /**
  * Atomically update price and/or stock for multiple products in a single batch write.
  * Supports up to 500 products per batch (Firestore limit).
  */
 export async function batchUpdateProducts(
   updates: ProductBulkUpdate[],
+  meta?: BatchUpdateMeta,
 ): Promise<BatchProductResult> {
   if (updates.length === 0) return { successCount: 0, failCount: 0, errors: [] };
   if (updates.length > 500) throw new Error('En fazla 500 ürün aynı anda güncellenebilir.');
 
   const result: BatchProductResult = { successCount: 0, failCount: 0, errors: [] };
+
+  // Read old stock values for products where stock is changing
+  const stockChanges: Array<{
+    productId: string;
+    sellerId: string;
+    oldStock: number;
+    newStock: number;
+  }> = [];
+  for (const { productId, stock } of updates) {
+    if (stock !== undefined) {
+      try {
+        const snap = await getDoc(doc(db, 'products', productId));
+        if (snap.exists()) {
+          const prev = snap.data() as Product;
+          stockChanges.push({
+            productId,
+            sellerId: prev.sellerId || '',
+            oldStock: prev.stock ?? 0,
+            newStock: stock,
+          });
+        }
+      } catch {
+        /* non-blocking */
+      }
+    }
+  }
+
   const batch = writeBatch(db);
   const now = new Date().toISOString();
 
@@ -680,6 +827,18 @@ export async function batchUpdateProducts(
           /* non-blocking */
         }
       }
+    }
+
+    // Record stock movements (fire-and-forget)
+    for (const sc of stockChanges) {
+      recordStockChange(
+        sc.productId,
+        sc.sellerId,
+        sc.oldStock,
+        sc.newStock,
+        'bulk_update',
+        meta?.userId || 'system',
+      ).catch(() => {});
     }
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, 'products/batch');

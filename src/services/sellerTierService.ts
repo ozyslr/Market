@@ -167,7 +167,7 @@ const DEFAULT_TIERS: Record<SellerTier, Omit<TierConfig, 'tier'>> = {
   },
 };
 
-const TIER_ORDER: SellerTier[] = ['starter', 'bronze', 'silver', 'gold', 'platinum'];
+export const TIER_ORDER: SellerTier[] = ['starter', 'bronze', 'silver', 'gold', 'platinum'];
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
