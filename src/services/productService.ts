@@ -469,7 +469,8 @@ export async function getCategories() {
     const cats = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Category[];
     return cats.sort((a, b) => (a.menuOrder ?? 999) - (b.menuOrder ?? 999));
   } catch (error) {
-    return CATEGORIES;
+    handleFirestoreError(error, OperationType.LIST, 'categories');
+    throw error;
   }
 }
 

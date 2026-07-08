@@ -103,7 +103,9 @@ import { AdminWebhooks } from './AdminWebhooks';
 import { AdminAuditLog } from './AdminAuditLog';
 import { AdminIntegrations } from './AdminIntegrations';
 
-// --- MOCK DATA ---
+// --- TEMPLATE / PLACEHOLDER CHART DATA ---
+// TODO: Replace these hardcoded arrays with real Firestore-derived data.
+// SALES_PERFORMANCE: query orders grouped by day, compute daily revenue sums.
 const SALES_PERFORMANCE = [
   { day: '01 May', purple: 450000, green: 380000 },
   { day: '05 May', purple: 520000, green: 450000 },
@@ -114,6 +116,7 @@ const SALES_PERFORMANCE = [
   { day: '30 May', purple: 820000, green: 720000 },
 ];
 
+// TODO: Replace with Firestore aggregation query (group by status → count).
 const ORDER_STATUS_DISTRIBUTION = [
   { name: 'Teslim Edilen', value: 12458, color: '#10B981' },
   { name: 'Kargoda', value: 3215, color: '#3B82F6' },
@@ -121,6 +124,7 @@ const ORDER_STATUS_DISTRIBUTION = [
   { name: 'İptal/İade', value: 866, color: '#EF4444' },
 ];
 
+// TODO: Replace with real sparkline data computed from recent daily revenue/orders.
 const SPARKLINE_DATA = [
   { v: 10 },
   { v: 25 },
@@ -335,25 +339,32 @@ export function AdminDashboard() {
           query,
           orderBy,
           limit: limitQ,
+          getCountFromServer,
         } = await import('firebase/firestore');
         const { db } = await import('@/lib/firebase');
-        const [uSnap, pSnap, oSnap, sSnap] = await Promise.all([
-          getDocs(collection(db, 'users')),
-          getDocs(collection(db, 'products')),
-          getDocs(collection(db, 'orders')),
-          getDocs(collection(db, 'sellers')),
+        const [uCount, pCount, oCount, sCount] = await Promise.all([
+          getCountFromServer(collection(db, 'users')),
+          getCountFromServer(collection(db, 'products')),
+          getCountFromServer(collection(db, 'orders')),
+          getCountFromServer(collection(db, 'sellers')),
         ]);
 
-        const totalUsers = uSnap.size;
-        const totalProducts = pSnap.size;
-        const totalOrders = oSnap.size;
-        const totalSellers = sSnap.size;
+        const totalUsers = uCount.data().count;
+        const totalProducts = pCount.data().count;
+        const totalOrders = oCount.data().count;
+        const totalSellers = sCount.data().count;
         setRealKpis({ totalUsers, totalProducts, totalOrders, totalSellers });
+
+        // Fetch limited order docs for revenue/trends/sales map
+        // (capped at 1000 for performance; consider moving to Firestore aggregations at scale)
+        const orderSnap = await getDocs(
+          query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limitQ(1000)),
+        );
 
         // Revenue & completed orders
         let revenue = 0,
           completedOrders = 0;
-        oSnap.forEach((d) => {
+        orderSnap.forEach((d) => {
           const data = d.data();
           if (data.status === 'delivered' || data.status === 'completed') {
             revenue += data.total || data.totalAmount || 0;
@@ -370,7 +381,7 @@ export function AdminDashboard() {
           prevOrd = 0,
           recentRev = 0,
           prevRev = 0;
-        oSnap.forEach((d) => {
+        orderSnap.forEach((d) => {
           const data = d.data();
           const ca = data.createdAt || '';
           if (ca >= t30) {
@@ -403,7 +414,7 @@ export function AdminDashboard() {
 
         // Build aggregate sales map from all orders
         const salesMap: Record<string, { count: number; revenue: number }> = {};
-        oSnap.forEach((orderDoc) => {
+        orderSnap.forEach((orderDoc) => {
           const data = orderDoc.data();
           (data.items || []).forEach((item: any) => {
             if (!item.productId) return;

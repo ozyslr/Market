@@ -20,6 +20,8 @@ import {
   FolderOpen,
   Folder,
   Tag,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -60,18 +62,30 @@ export function AdminCategories() {
   const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [form, setForm] = useState<CategoryFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (user && (user.role === 'admin' || user.role === 'moderator')) {
-      getCategories().then((cats) => {
+  const fetchCategories = () => {
+    setLoading(true);
+    setError(null);
+    getCategories()
+      .then((cats) => {
         setCategories(cats);
         setLoading(false);
+      })
+      .catch((err: any) => {
+        setError(err?.message ?? 'Kategoriler yüklenemedi.');
+        setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    if (user && (user.role === 'admin' || user.role === 'moderator')) {
+      fetchCategories();
     }
   }, [user]);
 
@@ -300,6 +314,20 @@ export function AdminCategories() {
           {loading ? (
             <div className="flex justify-center py-16">
               <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <AlertTriangle size={32} className="text-red-400 mb-4" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-2">
+                Yükleme Hatasi
+              </p>
+              <p className="text-sm text-[#1A1033]/50 mb-6 max-w-md text-center">{error}</p>
+              <button
+                onClick={fetchCategories}
+                className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-700 transition-all"
+              >
+                <RefreshCw size={14} /> Tekrar Dene
+              </button>
             </div>
           ) : (
             <div className="overflow-x-auto">
