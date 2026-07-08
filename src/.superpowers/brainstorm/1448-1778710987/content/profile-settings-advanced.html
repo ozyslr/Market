@@ -1,0 +1,128 @@
+<h2>Profil Ayarları — Gelişmiş Kart Düzeni</h2>
+<p class="subtitle">Adresler kartı açık halde. Profil fotoğrafı yükleme de dahil.</p>
+
+<div class="mockup">
+  <div class="mockup-header">localhost:3000/profile?tab=settings</div>
+  <div class="mockup-body" style="background:#f4f4f8;padding:20px;font-family:sans-serif;font-size:12px;">
+
+    <!-- Profil Bilgileri Kartı -->
+    <div style="background:white;border-radius:16px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="position:relative;width:48px;height:48px;">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=ozan" style="width:48px;height:48px;border-radius:50%;background:#e5e7eb;" onerror="this.style.background='#e5e7eb'"/>
+            <div style="position:absolute;bottom:0;right:0;width:16px;height:16px;background:#1a1033;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;font-size:8px;color:white;">✏️</div>
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:13px;">ozan sular</div>
+            <div style="color:#9ca3af;font-size:10px;">ozyslr@gmail.com · UK</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;">PRIME</span>
+          <span style="color:#9ca3af;font-size:14px;">›</span>
+        </div>
+      </div>
+      <!-- Collapsed — tıklanınca açılır -->
+    </div>
+
+    <!-- Teslimat Adreslerim — AÇIK -->
+    <div style="background:white;border-radius:16px;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 12px rgba(99,102,241,.12);border:1.5px solid #6366f1;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#f5f3ff;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:12px;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:18px;">📍</div>
+          <div>
+            <div style="font-weight:700;font-size:13px;">Teslimat Adreslerim</div>
+            <div style="color:#7c3aed;font-size:10px;font-weight:600;">2 adres kayıtlı · İstanbul varsayılan</div>
+          </div>
+        </div>
+        <span style="color:#7c3aed;font-size:14px;">∨</span>
+      </div>
+
+      <div style="padding:16px 20px;">
+        <!-- Varsayılan Adres -->
+        <div style="background:#f5f3ff;border-radius:12px;padding:14px 16px;margin-bottom:8px;border:1.5px solid #c4b5fd;position:relative;">
+          <div style="position:absolute;top:10px;right:12px;background:#7c3aed;color:white;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;">VARSAYILAN</div>
+          <div style="font-weight:700;margin-bottom:2px;">Ev — İstanbul</div>
+          <div style="color:#6b7280;line-height:1.5;">Kadıköy, Moda Cad. No:42 D:3<br/>Kadıköy, İstanbul 34710, TR<br/>+90 555 123 4567</div>
+          <div style="display:flex;gap:6px;margin-top:10px;">
+            <button style="padding:4px 12px;background:white;border:1px solid #c4b5fd;border-radius:8px;font-size:10px;color:#7c3aed;cursor:pointer;">Düzenle</button>
+            <button style="padding:4px 12px;background:white;border:1px solid #fee2e2;border-radius:8px;font-size:10px;color:#ef4444;cursor:pointer;">Sil</button>
+          </div>
+        </div>
+
+        <!-- İkinci Adres -->
+        <div style="background:#f9fafb;border-radius:12px;padding:14px 16px;margin-bottom:8px;border:1px solid #e5e7eb;">
+          <div style="font-weight:700;margin-bottom:2px;">İş — Beşiktaş</div>
+          <div style="color:#6b7280;line-height:1.5;">Dikilitaş Mah. Emirhan Cad. 109<br/>Beşiktaş, İstanbul 34349, TR</div>
+          <div style="display:flex;gap:6px;margin-top:10px;">
+            <button style="padding:4px 12px;background:white;border:1px solid #e5e7eb;border-radius:8px;font-size:10px;color:#374151;cursor:pointer;">Varsayılan Yap</button>
+            <button style="padding:4px 12px;background:white;border:1px solid #e5e7eb;border-radius:8px;font-size:10px;cursor:pointer;">Düzenle</button>
+            <button style="padding:4px 12px;background:white;border:1px solid #fee2e2;border-radius:8px;font-size:10px;color:#ef4444;cursor:pointer;">Sil</button>
+          </div>
+        </div>
+
+        <!-- Yeni Adres Ekle -->
+        <button style="width:100%;padding:12px;border:2px dashed #c4b5fd;border-radius:12px;background:transparent;color:#7c3aed;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <span style="font-size:16px;">+</span> Yeni Adres Ekle
+        </button>
+      </div>
+    </div>
+
+    <!-- Güvenlik & Şifre -->
+    <div style="background:white;border-radius:16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:12px;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:18px;">🔒</div>
+          <div>
+            <div style="font-weight:700;font-size:13px;">Güvenlik</div>
+            <div style="color:#9ca3af;font-size:10px;">Şifre değiştir, 2FA</div>
+          </div>
+        </div>
+        <span style="color:#9ca3af;font-size:14px;">›</span>
+      </div>
+    </div>
+
+    <!-- Bildirim Tercihleri -->
+    <div style="background:white;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:12px;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-size:18px;">🔔</div>
+          <div>
+            <div style="font-weight:700;font-size:13px;">Bildirimler</div>
+            <div style="color:#9ca3af;font-size:10px;">E-posta, push bildirimleri</div>
+          </div>
+        </div>
+        <span style="color:#9ca3af;font-size:14px;">›</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="margin-top:16px;">
+  <h3>Profil Fotoğrafı için hangi yöntem?</h3>
+  <div class="options">
+    <div class="option" data-choice="firebase-storage" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Firebase Storage</h3>
+        <p>Dosya Firebase'e yüklenir, URL Firestore'a kaydedilir. Kalıcı, güvenli. Storage kurulumu gerektirir.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="base64-firestore" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Base64 → Firestore</h3>
+        <p>Resim küçültülüp base64 olarak Firestore'a kaydedilir. Kurulum gerektirmez ama 1MB limit, daha yavaş.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="dicebear-custom" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Avatar Seçici (DiceBear)</h3>
+        <p>Fotoğraf yükleme yok, kullanıcı hazır avatar setinden seçer. En hızlı geliştirme, sıfır storage.</p>
+      </div>
+    </div>
+  </div>
+</div>

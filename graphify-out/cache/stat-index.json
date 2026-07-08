@@ -1,0 +1,362 @@
+{
+  "O:\\AI\\E-tic 2026\\.claude\\hooks\\check-gstack.sh": {
+    "size": 573,
+    "mtime_ns": 1780352330639924400,
+    "hash": "3b84998918554222e3794dc68051042b86b4aa35ed610439682530100a35bc54"
+  },
+  "O:\\AI\\E-tic 2026\\.claude\\settings.json": {
+    "size": 254,
+    "mtime_ns": 1780352330856893300,
+    "hash": "66fd793b5a0535512c23a53901e7fda20f2bfbe575a554c18fbe0aca5569993d"
+  },
+  "O:\\AI\\E-tic 2026\\.claude\\settings.local.json": {
+    "size": 12028,
+    "mtime_ns": 1780791608353395400,
+    "hash": "9305e808a877c8b69345aa98c393f917990b3e1bba7f2a7e630881fa5691292d"
+  },
+  "O:\\AI\\E-tic 2026\\.eslintrc.json": {
+    "size": 1132,
+    "mtime_ns": 1780348956977739700,
+    "hash": "c9298ff61001a532dfe3820ae6c6491cb6e7e516187024406f118e75fa8d8694"
+  },
+  "O:\\AI\\E-tic 2026\\.husky\\_\\husky.sh": {
+    "size": 160,
+    "mtime_ns": 1780356070229082000,
+    "hash": "6db0aa99aece6ebd17bbc27c5e5287a462fb39cc4a2ca3a82a6277c166bdb3a0"
+  },
+  "O:\\AI\\E-tic 2026\\.planning\\config.json": {
+    "size": 2123,
+    "mtime_ns": 1780611051414956400,
+    "hash": "bdf38f1df7872628888479a9205014ca47ffc4e42d38bd53d17c9c7282ef9754"
+  },
+  "O:\\AI\\E-tic 2026\\.prettierrc.json": {
+    "size": 180,
+    "mtime_ns": 1780348952468102800,
+    "hash": "59c5d5ce67f2416ee4636d49d1bacc80d81f272979c9b09bc782c0e84f5c862c"
+  },
+  "O:\\AI\\E-tic 2026\\firebase-applet-config.json": {
+    "size": 311,
+    "mtime_ns": 1779623125210126800,
+    "hash": "bb189cb503c5f16e3a31cd06794c08fe798276cc4fd719ffb007e7f710930add"
+  },
+  "O:\\AI\\E-tic 2026\\firebase-blueprint.json": {
+    "size": 4817,
+    "mtime_ns": 1778605774000000000,
+    "hash": "8200712839640cb6631e4fabcfa35e2a33b49cdea82711a9db3457830bf6cebe"
+  },
+  "O:\\AI\\E-tic 2026\\firebase.json": {
+    "size": 932,
+    "mtime_ns": 1780790643599816400,
+    "hash": "91037501397c59635c955cf2c7498f4824f3103986a6ca92f14ecd3b172c8ea5"
+  },
+  "O:\\AI\\E-tic 2026\\firestore.indexes.json": {
+    "size": 2341,
+    "mtime_ns": 1780675676552089300,
+    "hash": "31ca1d9bbc782c3a7086eebb5d3ff219a8e5a7861e8849e846c3cfbe7840f2c0"
+  },
+  "O:\\AI\\E-tic 2026\\lighthouserc.json": {
+    "size": 1080,
+    "mtime_ns": 1780676298537111000,
+    "hash": "44320e01896a2c4b2fc6e7908c2845d4d94840fa348be8708d6453dc7b5d442c"
+  },
+  "O:\\AI\\E-tic 2026\\package.json": {
+    "size": 3772,
+    "mtime_ns": 1780831803488049000,
+    "hash": "fb85d63d02ab27c648d787ffe81d3087ddce2fc28b57d570a90e935d7e300477"
+  },
+  "O:\\AI\\E-tic 2026\\public\\manifest.json": {
+    "size": 1352,
+    "mtime_ns": 1780152042133534900,
+    "hash": "cc683fbf2acb85d3ebf08b9e117b9b3ec90e3e350bb59ae6bc97dba015af6d82"
+  },
+  "O:\\AI\\E-tic 2026\\scripts\\pre-commit.sh": {
+    "size": 1290,
+    "mtime_ns": 1780419150453456800,
+    "hash": "7ac3d2c23976feed08e77d3190449b6d3135eed83d68e5ec942e8eaf209bcb51"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\settings.local.json": {
+    "size": 421,
+    "mtime_ns": 1779143246343998000,
+    "hash": "bb77b43f9fae4f3ba5686985dcbaee01c60d3c1a3ec7e87f7c044ab32bc91b0d"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecom-cfo-skill\\.skillfish.json": {
+    "size": 212,
+    "mtime_ns": 1776552973078736200,
+    "hash": "89127329ccc470fc6a5ea1e7b55f8f0cb612c8aa377d5b0fc42d5b547997ffb1"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-budgeting-forecasting\\.skillfish.json": {
+    "size": 287,
+    "mtime_ns": 1776553323907579600,
+    "hash": "10aa6a593d3e3480d1a2e27df4979144fab611c187c7040de93ea7d564c3ba2e"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-budgeting-forecasting\\evals\\marketing-budget-computation-rules\\criteria.json": {
+    "size": 2667,
+    "mtime_ns": 1773402615000000000,
+    "hash": "9fc8bde4a68b5d5507fe750a5ffe68cced42c93a08eede8f990e769ebecdca8c"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-budgeting-forecasting\\evals\\revenue-budget-and-rolling-forecast-vers\\criteria.json": {
+    "size": 2809,
+    "mtime_ns": 1773402615000000000,
+    "hash": "9c7fcb6ca928106dbff4427948107f95b64a981df591c38656e17e130a476d24"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-budgeting-forecasting\\evals\\variance-classification-and-budget-alert\\criteria.json": {
+    "size": 2668,
+    "mtime_ns": 1773402615000000000,
+    "hash": "ec91b195eb27cf43a69fe16e6ca97b4a919ef4113e03f43751f1d7f499bdcc16"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-budgeting-forecasting\\tile.json": {
+    "size": 345,
+    "mtime_ns": 1773402615000000000,
+    "hash": "0ce07cbad3504aee6761a56eb19d1dfcd9a5ae6538ef380436d4787458a67917"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-caching\\.skillfish.json": {
+    "size": 271,
+    "mtime_ns": 1776553356801003400,
+    "hash": "ded1c50f8873ff7effb90b3ee7b98ca391fd2295d97b27eaa37a3b2ced8a03ed"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-caching\\evals\\cache-control-headers-and-cdn-surrogate-\\criteria.json": {
+    "size": 3077,
+    "mtime_ns": 1773402615000000000,
+    "hash": "9528b884bed66a562c45900bfc141c1c4522c88ead68bcca79f4e21f87e512ea"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-caching\\evals\\event-driven-cache-invalidation-and-pers\\criteria.json": {
+    "size": 3535,
+    "mtime_ns": 1773402615000000000,
+    "hash": "a5be3b23aa45afced93c0dfd911e915d4a99592d42a1c7090047a5c0bd5cfbc4"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-caching\\evals\\redis-application-caching-with-ioredis\\criteria.json": {
+    "size": 2720,
+    "mtime_ns": 1773402615000000000,
+    "hash": "f23450cb3f6b97d8a55c1d8b4a2c68cc8c519257f4b83f6eddbcf861e04e74e1"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-caching\\tile.json": {
+    "size": 241,
+    "mtime_ns": 1773402615000000000,
+    "hash": "696dfce23189d86463cbc374128a06f6466c68262d963a12e3a2a43a2cb81b6f"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-data-warehouse\\.skillfish.json": {
+    "size": 273,
+    "mtime_ns": 1776553325052866700,
+    "hash": "139aca71b345f6bed1a8fc26ea36bbd1f80b30f1d971b41c4ded1838735dcb13"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-data-warehouse\\evals\\customer-ltv-segmentation-and-kpi-calcul\\criteria.json": {
+    "size": 2843,
+    "mtime_ns": 1773402615000000000,
+    "hash": "09783d3dbf474704a4a7c496912c29300a017fa422ceee61b32cf907297db62a"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-data-warehouse\\evals\\dbt-project-layering-and-transformation-\\criteria.json": {
+    "size": 2945,
+    "mtime_ns": 1773402615000000000,
+    "hash": "2d058a0ae5fe02104b8f87e91f8e6183e756a53296439066aea18c438dfa7cf6"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-data-warehouse\\evals\\star-schema-dimensional-model-design\\criteria.json": {
+    "size": 2976,
+    "mtime_ns": 1773402615000000000,
+    "hash": "7b4704192436974f6311dd348428d7b544f7edaa87b56c964d3764614f94dd00"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-data-warehouse\\tile.json": {
+    "size": 247,
+    "mtime_ns": 1773402615000000000,
+    "hash": "defd6573c48009328d9cee60ef318ff74cd9bf667bea18e8fabac7340b215593"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-seo\\.skillfish.json": {
+    "size": 253,
+    "mtime_ns": 1776553381309134700,
+    "hash": "3331bcad8274813bcd496673089a78a2058fa3a573063e3dba6ff19177ef8df4"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-seo\\evals\\canonical-urls-and-crawl-directives\\criteria.json": {
+    "size": 3165,
+    "mtime_ns": 1773402615000000000,
+    "hash": "8f8b59833229d4d80e8fb5538c5a9dc14864b1fa04e4da4a8be5518911e969f5"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-seo\\evals\\product-json-ld-structured-data\\criteria.json": {
+    "size": 3253,
+    "mtime_ns": 1773402615000000000,
+    "hash": "ee02e90c1ecf530005c67cded0eccdd50a4f54980dd908602065c90e22e8753b"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-seo\\evals\\xml-sitemap-generation\\criteria.json": {
+    "size": 3053,
+    "mtime_ns": 1773402615000000000,
+    "hash": "5f4ae0319cb7a884a5b3031ecbeff2e5095b9001589141f0cbca8a239188e313"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\ecommerce-seo\\tile.json": {
+    "size": 231,
+    "mtime_ns": 1773402615000000000,
+    "hash": "f5bfc0721f34b7c0ce5661185ee0d4b0260e4b2ba1f23e4b0efa60344a96b2eb"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\edge-commerce\\.skillfish.json": {
+    "size": 263,
+    "mtime_ns": 1776553357969225700,
+    "hash": "3079dd376c0a3a794749fe169e8e9cd50114aa04c6fc179cc0e82dfdb32d479f"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\edge-commerce\\evals\\cloudflare-workers-kv-caching-regional-p\\criteria.json": {
+    "size": 2762,
+    "mtime_ns": 1773402615000000000,
+    "hash": "78244177184e534261bc1a70c9294876c5658282a3634c137c53dc0090960667"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\edge-commerce\\evals\\edge-personalization-with-shell-caching-\\criteria.json": {
+    "size": 2842,
+    "mtime_ns": 1773402615000000000,
+    "hash": "aee183a8bb069d882278c9934f4a81f596e55ed6ff4de45c19f3abcf2778f1f6"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\edge-commerce\\evals\\vercel-edge-middleware-geo-routing-and-a\\criteria.json": {
+    "size": 2558,
+    "mtime_ns": 1773402615000000000,
+    "hash": "6762c0dd27f62e662b85c31d70c5c9e9b3c9fd6a2cc1cdb301d52ac0869b1842"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\edge-commerce\\tile.json": {
+    "size": 229,
+    "mtime_ns": 1773402615000000000,
+    "hash": "269529c718751f61c7173c1b746402deb69d2c577b950c36b6e3ba4f4b4edc1d"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-blocks\\.skillfish.json": {
+    "size": 267,
+    "mtime_ns": 1776553449669745500,
+    "hash": "21c8c38080bb263d3858a558e26e945d53ae8302401f4a1e86a9a7f59f43c3d5"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-blocks\\evals\\build-configuration-and-client-side-chec\\criteria.json": {
+    "size": 2814,
+    "mtime_ns": 1773402615000000000,
+    "hash": "51c61e9420025a6d024ba1ec5656c4d810bd834da03a5a5dae715324d16bafab"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-blocks\\evals\\inner-block-registration-and-store-api-p\\criteria.json": {
+    "size": 3655,
+    "mtime_ns": 1773402615000000000,
+    "hash": "5bbd36a8942cb3694da21f920b96ead407845c8923ebc19046aa10acc11e1060"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-blocks\\evals\\slotfill-ui-injection-and-cart-data-acce\\criteria.json": {
+    "size": 2657,
+    "mtime_ns": 1773402615000000000,
+    "hash": "2d8e7e91c02e6a19c3a788e13af2435766f86dec2a46f78490bfe7e3a7ca5c45"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-blocks\\tile.json": {
+    "size": 211,
+    "mtime_ns": 1773402615000000000,
+    "hash": "cf525f87489bf8fc5812ce6a75ae0ebc1aa0d3077e6701f14b433e7c886d291b"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-performance\\.skillfish.json": {
+    "size": 277,
+    "mtime_ns": 1776553450785381300,
+    "hash": "be8c6ad26d8e00ebf55182bac9fa12fb5f1b25d0fdc23455bf0622be7f7623aa"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-performance\\evals\\database-cleanup-and-session-maintenance\\criteria.json": {
+    "size": 2572,
+    "mtime_ns": 1773402615000000000,
+    "hash": "21bbc65349fe20a38b503649a7cb655fcf91bd6adbebf501e661ead8823354c5"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-performance\\evals\\query-optimization-and-n-1-prevention\\criteria.json": {
+    "size": 2315,
+    "mtime_ns": 1773402615000000000,
+    "hash": "f301af6b340d187e81f40338b88e6ccb59dfb369ee573c087d313a70a36bca9e"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-performance\\evals\\redis-object-cache-configuration\\criteria.json": {
+    "size": 2319,
+    "mtime_ns": 1773402615000000000,
+    "hash": "7d7ffeb856af3562a485d009234f2c54a370f98ee783776834dbebc6812bb626"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-performance\\tile.json": {
+    "size": 240,
+    "mtime_ns": 1773402615000000000,
+    "hash": "05e5c90ddccc03650e1b1075879228a1fc0f0304aa19068d05cf30f0a5499182"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-plugin-development\\.skillfish.json": {
+    "size": 291,
+    "mtime_ns": 1776553451909447400,
+    "hash": "9952ff6bd4b3ef6f162a2a16955e920246a9b12841e85f162ebf2451fe49722c"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-plugin-development\\evals\\custom-shipping-method-and-rest-api-endp\\criteria.json": {
+    "size": 2596,
+    "mtime_ns": 1773402615000000000,
+    "hash": "f2c07f54c9c983d7f1e545218e4556a415a625714cf68bda937d9c262e6b9048"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-plugin-development\\evals\\plugin-boilerplate-hpos-compatibility-or\\criteria.json": {
+    "size": 2877,
+    "mtime_ns": 1773402615000000000,
+    "hash": "4b2407be1364538c23a8cef80e1872d2a4a0f125d97e2d9ab76f3eab9712f0c8"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-plugin-development\\evals\\woocommerce-settings-api-and-product-cus\\criteria.json": {
+    "size": 2649,
+    "mtime_ns": 1773402615000000000,
+    "hash": "f34bca4a89f1f429a80c8443237c6e57b485b0a10ec5e540b4e942bb24be4d3a"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-plugin-development\\tile.json": {
+    "size": 246,
+    "mtime_ns": 1773402615000000000,
+    "hash": "0f9a4285c59bddbc6727f504b4a4b0f748233878322178bac616a16cef43bedf"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-rest-api\\.skillfish.json": {
+    "size": 271,
+    "mtime_ns": 1776553453048094200,
+    "hash": "5144372bc30183f7bd81c9d3eb6acf2f2ee317529689acd31aac2ea04135fb94"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-rest-api\\evals\\bulk-product-sync-with-concurrency-contr\\criteria.json": {
+    "size": 2717,
+    "mtime_ns": 1773402615000000000,
+    "hash": "aad76d69cc8732bd61d456d6555e099075ebdeb8b3879dea9431205383a4364c"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-rest-api\\evals\\order-creation-and-status-management-wit\\criteria.json": {
+    "size": 2743,
+    "mtime_ns": 1773402615000000000,
+    "hash": "d59698ac58c9732adc68b7f12247ddf0f49254d1282c8857c87ee546bce474c1"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-rest-api\\evals\\paginated-product-catalog-with-increment\\criteria.json": {
+    "size": 2807,
+    "mtime_ns": 1773402615000000000,
+    "hash": "93fa431fe66c5d6421f76fdcd59069a35a3d71cf3ef2680e456bf8f614101184"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-rest-api\\tile.json": {
+    "size": 221,
+    "mtime_ns": 1773402615000000000,
+    "hash": "a0147750f153e97f85e3a62af208bbf6bb186a9bab2eb378f42369147ad01b20"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-subscriptions\\.skillfish.json": {
+    "size": 281,
+    "mtime_ns": 1776553454186711200,
+    "hash": "2027212d0c343f3190b56ed64caf2c1bdd30c148e5c916d1584ad344a8a32560"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-subscriptions\\evals\\failed-payment-retry-suspension-and-rein\\criteria.json": {
+    "size": 3133,
+    "mtime_ns": 1773402615000000000,
+    "hash": "a1d3a1807805712e80fec8929d7ef9d887fa1362146f146de9ce7612f58f3ad0"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-subscriptions\\evals\\plan-switching-with-proration-and-safe-c\\criteria.json": {
+    "size": 2729,
+    "mtime_ns": 1773402615000000000,
+    "hash": "7d6785c236459aa3232c967504a02789c1ddc787d929d3fb01595a5c0d053bf3"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-subscriptions\\evals\\subscription-product-creation-and-lifecy\\criteria.json": {
+    "size": 2726,
+    "mtime_ns": 1773402615000000000,
+    "hash": "cc4116f894473533af063bfabdc08adfc6716092cf525739f5d616e5b8cba80b"
+  },
+  "O:\\AI\\E-tic 2026\\src\\.claude\\skills\\woocommerce-subscriptions\\tile.json": {
+    "size": 236,
+    "mtime_ns": 1773402615000000000,
+    "hash": "1a290825cb0ca2c3e3154b084f40afd4f24f2380f76b248f1191a97a5852a2b0"
+  },
+  "O:\\AI\\E-tic 2026\\src\\i18n\\ar.json": {
+    "size": 20047,
+    "mtime_ns": 1780388809951538800,
+    "hash": "e1ced84f75dc431d7895f8f2c2e878a0cd7ebea9bb290e6de95f0e46c87a3d94"
+  },
+  "O:\\AI\\E-tic 2026\\src\\i18n\\de.json": {
+    "size": 16670,
+    "mtime_ns": 1780388807975799700,
+    "hash": "be046ea769c93f39a38863e937e3e72e9f4317990d3778fe162df844ae1592b4"
+  },
+  "O:\\AI\\E-tic 2026\\src\\i18n\\en.json": {
+    "size": 15774,
+    "mtime_ns": 1780388791017880800,
+    "hash": "0d5adeef6267711382c50173fb5e70566015ed9fd7eb45a7ed8eba411d033345"
+  },
+  "O:\\AI\\E-tic 2026\\src\\i18n\\tr.json": {
+    "size": 16662,
+    "mtime_ns": 1780388789464420100,
+    "hash": "e2fd756d73c6181620e040b58b7cf6f94898ac74d66463981c1c43c73dc61993"
+  },
+  "O:\\AI\\E-tic 2026\\tsconfig.json": {
+    "size": 632,
+    "mtime_ns": 1780350715855312300,
+    "hash": "9e1bbe0b667462f7d5ac444b0538804865c4d70234f689daf189b92bc27e783b"
+  }
+}

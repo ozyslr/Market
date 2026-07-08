@@ -1,4 +1,6 @@
 node_modules/
+mobile/node_modules/
+mobile/.expo/
 build/
 dist/
 coverage/
@@ -6,3 +8,21 @@ coverage/
 *.log
 .env*
 !.env.example
+.firebase/
+*.local
+
+.vercel
+.worktrees/
+
+# Firebase service account keys — never commit these
+*adminsdk*.json
+*service-account*.json
+*serviceAccount*.json
+
+# Claude AI worktrees — ephemeral agent isolation
+.claude/worktrees/
+
+# Design source files (not for web deployment)
+design/
+public/*.cdr
+public/*.zip

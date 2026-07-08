@@ -1,6 +1,8 @@
 import { writeBatch, doc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { MOCK_PRODUCTS, MOCK_SELLERS, CATEGORIES } from '../mockData';
+import { DEFAULT_SECTIONS } from './cmsService';
+import { Coupon } from '../types';
 
 export async function seedMarketplace() {
   const batch = writeBatch(db);
@@ -22,6 +24,28 @@ export async function seedMarketplace() {
     MOCK_PRODUCTS.forEach(product => {
       const prodRef = doc(db, 'products', product.id);
       batch.set(prodRef, product);
+    });
+
+    // Seed Homepage Sections
+    DEFAULT_SECTIONS.forEach(section => {
+      batch.set(doc(db, 'homepage_sections', section.id), section);
+    });
+
+    // Seed Demo Coupons
+    const demoCoupons: Omit<Coupon, 'id'>[] = [
+      { code: 'MERCORA10', discountType: 'percentage', discountValue: 10, usedCount: 0, isActive: true, createdAt: new Date().toISOString(), description: '%10 indirim kuponu' },
+      { code: 'ILKALIS50', discountType: 'fixed', discountValue: 50, minOrderAmount: 500, usedCount: 0, isActive: true, createdAt: new Date().toISOString(), description: '500₺ üzeri 50₺ indirim' },
+    ];
+    demoCoupons.forEach((coupon, i) => {
+      batch.set(doc(db, 'coupons', `demo-coupon-${i + 1}`), coupon);
+    });
+
+    // Seed Site Settings
+    batch.set(doc(db, 'settings', 'global'), {
+      id: 'global',
+      siteName: 'Benim Olan',
+      maintenanceMode: false,
+      contactEmail: 'destek@benimolan.com',
     });
 
     await batch.commit();

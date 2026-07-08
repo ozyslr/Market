@@ -1,0 +1,10 @@
+﻿---
+phase: 26-seller-panel-ui
+plan: 01
+requirements_addressed: [DUI-01, DUI-02, DUI-03]
+---
+# Plan 26-01 Summary: Seller Panel UI
+- StoreBlocksEditor: drag-drop block reorder, enable/disable, save
+- SellerMenuEditor: add/edit/remove/reorder menu items with image URLs
+- SellerCouponManager: create/toggle percentage or fixed coupons
+

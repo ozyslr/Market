@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  checks:
+    name: Build, Test & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      - run: npm install --legacy-peer-deps
+      - name: Type Check
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+      - name: Unit Tests + Coverage
+        run: npm run test:coverage
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+      - name: Build
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+      - name: Check Bundle Size
+        run: |
+          MAX_SIZE=800
+          SIZE=$(du -sk dist | cut -f1)
+          echo "Bundle size: ${SIZE}KB (limit: ${MAX_SIZE}KB)"
+          if [ "$SIZE" -gt "$MAX_SIZE" ]; then
+            echo "::warning::Bundle size ${SIZE}KB exceeds ${MAX_SIZE}KB threshold"
+          fi

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "ecommerce-data-warehouse",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/data-analytics/ecommerce-data-warehouse",
+  "branch": "main",
+  "sha": "5c56cb857af1f415fe82d70d7454fbd5dec265bd",
+  "source": "manual"
+}

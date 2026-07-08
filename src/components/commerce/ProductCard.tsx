@@ -1,116 +1,162 @@
-import React, { useState } from 'react';
-import { Star, Truck, ShieldCheck, ChevronRight, ShoppingCart, Globe, TrendingUp, Eye, X, Heart } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  Star,
+  ShieldCheck,
+  ShoppingCart,
+  Eye,
+  X,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Product } from '@/types';
+import { useCurrency } from '@/context/CurrencyContext';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { useLanguage } from '@/context/LanguageContext';
-import { useCartStore } from '@/store/useCartStore';
-import { useWishlistStore } from '@/store/useWishlistStore';
+import { useWishlist } from '@/context/WishlistContext';
+import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { trackEvent } from '@/services/analyticsService';
 
 interface ProductCardProps {
   product: Product;
+  openInNewTab?: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab = false }) => {
   const { t } = useLanguage();
+  const { toggleWishlist, isWishlisted } = useWishlist();
+  const { addItem } = useCart();
+  const { currency, convertPrice } = useCurrency();
+  const { user } = useAuth();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          trackEvent('view', product.id, user?.id);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [product.id, user?.id]);
   const [showQuickView, setShowQuickView] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+  const [imgIdx, setImgIdx] = useState(0);
+  const [quickViewImgIdx, setQuickViewImgIdx] = useState(0);
+  const images =
+    product.images && product.images.length > 0
+      ? product.images
+      : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'];
+  const imgCount = Math.min(images.length, 4);
+
+  const handleImageMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (imgCount <= 1) return;
+    const { left, width } = e.currentTarget.getBoundingClientRect();
+    const zone = Math.floor(((e.clientX - left) / width) * imgCount);
+    setImgIdx(Math.min(zone, imgCount - 1));
+  };
   const currentMarket = MARKETS['UK']; // Default for demo
   const tax = calculateTotal(product.price, 12, currentMarket, product.originCountry === 'UK');
 
-  const cartItems = useCartStore((state) => state.items);
-  const addItem = useCartStore((state) => state.addItem);
-  const updateQuantity = useCartStore((state) => state.updateQuantity);
-  const removeItem = useCartStore((state) => state.removeItem);
-  const setIsOpen = useCartStore((state) => state.setIsOpen);
-
-  const cartItem = cartItems.find((item) => item.product.id === product.id);
-  const quantityInCart = cartItem ? cartItem.quantity : 0;
-
-  const wishlistItems = useWishlistStore((state) => state.items);
-  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
-  const isWishlisted = wishlistItems.some((p) => p.id === product.id);
-
-  const handleToggleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleWishlist(product);
-  };
-
-  const handleIncrement = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addItem(product);
-  };
-
-  const handleDecrement = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (quantityInCart > 1) {
-      updateQuantity(product.id, quantityInCart - 1);
-    } else {
-      removeItem(product.id);
-    }
-  };
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addItem(product);
-    setIsOpen(true);
+  const handleAddToCart = () => {
+    addItem(product.id);
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 1500);
   };
 
   return (
     <>
       <motion.div
+        ref={cardRef}
+        data-testid="product-card"
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          setImgIdx(0);
+        }}
         className="group bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border border-brand-primary/5 dark:border-white/5 hover:border-brand-primary/20 dark:hover:border-white/20 transition-all duration-300 shadow-sm hover:shadow-lg flex flex-col h-full relative"
       >
         {/* Image Section */}
-        <div className="relative aspect-[3/4] overflow-hidden bg-brand-secondary/30 dark:bg-zinc-800">
-          <Link to={`/product/${product.slug}`} className="block w-full h-full relative">
-            <img 
-              src={product.images[0]} 
+        <div
+          className="relative aspect-3/4 overflow-hidden bg-brand-secondary/30 dark:bg-zinc-800"
+          onMouseMove={handleImageMouseMove}
+        >
+          <Link
+            to={`/product/${product.slug}`}
+            {...(openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            className="block w-full h-full relative"
+          >
+            {product.promotionStatus === 'active' && (
+              <div className="absolute top-0 start-0 z-30 px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold rounded-ee-md shadow-xs">
+                REKLAM
+              </div>
+            )}
+            <OptimizedImage
+              src={images[imgIdx]}
               alt={product.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover"
+              containerClassName="w-full h-full"
               referrerPolicy="no-referrer"
             />
-          </Link>
-          
-          <div className="absolute inset-x-0 bottom-0 p-3 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10 hidden md:block">
-            {quantityInCart > 0 ? (
-              <div 
-                className="w-full h-9 bg-white dark:bg-zinc-800 rounded-lg shadow-lg flex items-center justify-between px-2 border border-brand-primary/10"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              >
-                <button 
-                  onClick={handleDecrement}
-                  className="w-7 h-7 flex items-center justify-center rounded-md bg-brand-secondary dark:bg-zinc-700 text-brand-primary dark:text-white hover:bg-accent hover:text-white transition-colors"
-                >
-                  -
-                </button>
-                <span className="text-xs font-bold text-brand-primary dark:text-white">{quantityInCart}</span>
-                <button 
-                  onClick={handleIncrement}
-                  className="w-7 h-7 flex items-center justify-center rounded-md bg-brand-secondary dark:bg-zinc-700 text-brand-primary dark:text-white hover:bg-accent hover:text-white transition-colors"
-                >
-                  +
-                </button>
-              </div>
-            ) : (
-              <button 
-                onClick={handleAddToCart}
-                className="w-full py-2.5 bg-brand-primary dark:bg-white text-white dark:text-brand-primary text-xs font-bold rounded-lg shadow-lg hover:bg-accent hover:text-white dark:hover:bg-accent dark:hover:text-white transition-colors"
+            {/* Quick Add overlay button (Desktop mostly) */}
+            <div className="absolute inset-x-0 bottom-0 p-3 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10 hidden md:block">
+              <button
+                data-testid="add-to-cart"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAddToCart();
+                }}
+                className="w-full py-2.5 bg-violet-600 text-white text-xs font-bold rounded-lg shadow-lg hover:bg-black hover:text-white transition-colors"
                 style={{ fontFamily: 'Inter, sans-serif' }}
               >
-                {t('product.add_cart')}
+                {t('product.addToCart')}
               </button>
-            )}
-          </div>
-          
+            </div>
+          </Link>
+          {/* Dot indicators — outside Link, above cart overlay */}
+          {imgCount > 1 && (
+            <div className="absolute bottom-12 start-0 end-0 flex justify-center gap-1 z-20 pointer-events-none">
+              {[...Array(imgCount)].map((_, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    'w-1.5 h-1.5 rounded-full transition-colors duration-150',
+                    i === imgIdx ? 'bg-white' : 'bg-white/40',
+                  )}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Wishlist toggle */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              toggleWishlist(product.id);
+            }}
+            className="absolute top-3 start-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm border border-brand-primary/5 transition-all duration-200 hover:scale-110 z-10"
+          >
+            <Heart
+              size={14}
+              className={
+                isWishlisted(product.id) ? 'fill-red-500 text-red-500' : 'text-[#1A1033]/40'
+              }
+            />
+          </button>
+
           {/* Quick View Trigger - Only shown on hover on desktop */}
           <button
             onClick={(e) => {
@@ -118,91 +164,89 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               setShowQuickView(true);
             }}
             className={cn(
-              "absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-brand-primary shadow-sm border border-brand-primary/5 transition-all duration-300 hover:bg-accent hover:text-white group/view",
-              isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 hidden md:flex"
+              'absolute top-3 end-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-brand-primary shadow-sm border border-brand-primary/5 transition-all duration-300 hover:bg-accent hover:text-white group/view',
+              isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 hidden md:flex',
             )}
           >
             <Eye size={16} />
-          </button>
-
-          {/* Wishlist Toggle - top-left, always visible */}
-          <button
-            onClick={handleToggleWishlist}
-            aria-label={isWishlisted ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-            className={cn(
-              "absolute top-3 left-3 w-8 h-8 backdrop-blur rounded-full flex items-center justify-center shadow-sm border transition-all duration-300 active:scale-90",
-              isWishlisted
-                ? "bg-[#F9423A] text-white border-[#F9423A]"
-                : "bg-white/90 text-brand-primary/50 border-brand-primary/5 hover:text-[#F9423A]"
-            )}
-          >
-            <Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} />
           </button>
         </div>
 
         {/* Info Section */}
         <div className="p-3 flex flex-col flex-1">
-          <Link to={`/product/${product.slug}`} className="flex flex-col mb-1 flex-1">
+          <Link
+            to={`/product/${product.slug}`}
+            {...(openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            className="flex flex-col mb-1 flex-1"
+          >
             <span className="text-xs font-bold text-brand-primary dark:text-zinc-100 leading-tight uppercase line-clamp-1 mb-0.5">
-              {product.sellerId || "MERCORA"} 
+              {product.sellerId || 'BENIM OLAN'}
             </span>
             <span className="text-xs text-brand-primary/70 dark:text-zinc-400 line-clamp-2 leading-snug">
               {product.title}
             </span>
           </Link>
-          
+
           <div className="flex items-center gap-1 mb-2">
-             <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={10} fill={i < Math.floor(product.rating) ? "#FFC000" : "none"} className={i < Math.floor(product.rating) ? "text-[#FFC000]" : "text-gray-300"} />
-                ))}
-             </div>
-             <span className="text-[10px] text-gray-500">({product.reviewsCount || 42})</span>
+            <div className="flex items-center">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  size={10}
+                  fill={i < Math.floor(product.rating) ? '#FFC000' : 'none'}
+                  className={i < Math.floor(product.rating) ? 'text-[#FFC000]' : 'text-gray-300'}
+                />
+              ))}
+            </div>
+            <span className="text-[10px] text-gray-500">({product.reviewsCount || 42})</span>
           </div>
 
           <div className="mt-auto space-y-1">
             <div className="flex flex-col">
-               {product.oldPrice && <span className="text-[10px] text-gray-400 line-through leading-none mb-0.5">{product.oldPrice.toFixed(2)} TL</span>}
-               <div className="flex items-start text-brand-primary dark:text-white">
-                  <span className="text-lg font-bold leading-none tracking-tight">{Math.floor(product.price)}</span>
-                  <span className="text-[10px] font-bold mt-0.5 ml-0.5 leading-none">,{Math.floor((product.price % 1) * 100).toString().padStart(2, '0')} TL</span>
-               </div>
+              {(() => {
+                const { display, currency: cur, formatted } = convertPrice(product.price);
+                return (
+                  <>
+                    {product.oldPrice && (
+                      <span className="text-[10px] text-gray-400 line-through leading-none mb-0.5">
+                        {product.oldPrice.toFixed(2)} TL
+                      </span>
+                    )}
+                    <div className="flex items-start text-brand-primary dark:text-white">
+                      <span className="text-lg font-bold leading-none tracking-tight">
+                        {cur === 'TRY' ? Math.floor(display) : formatted.replace('€', '')}
+                      </span>
+                      <span className="text-[10px] font-bold mt-0.5 ms-0.5 leading-none">
+                        {cur === 'TRY'
+                          ? `,${Math.floor((display % 1) * 100)
+                              .toString()
+                              .padStart(2, '0')} TL`
+                          : '€'}
+                      </span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
-            <div className="flex flex-wrap gap-1 mt-2">
-               <div className="px-1.5 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[9px] font-bold rounded">
-                  Ücretsiz Kargo
-               </div>
-            </div>
+            {product.freeShipping && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                <div className="px-1.5 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[9px] font-bold rounded">
+                  {t('product.freeShipping')}
+                </div>
+              </div>
+            )}
             {/* Mobile quick add (visible unconditionally on mobile, hidden on desktop ) */}
             <div className="mt-3 md:hidden">
-              {quantityInCart > 0 ? (
-                <div 
-                  className="w-full h-9 bg-brand-secondary/50 dark:bg-zinc-800 rounded-lg flex items-center justify-between px-2 border border-brand-primary/10"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                >
-                  <button 
-                    onClick={handleDecrement}
-                    className="w-7 h-7 flex items-center justify-center rounded-md bg-white dark:bg-zinc-700 text-brand-primary dark:text-white hover:bg-accent hover:text-white transition-colors shadow-sm"
-                  >
-                    -
-                  </button>
-                  <span className="text-xs font-bold text-brand-primary dark:text-white">{quantityInCart}</span>
-                  <button 
-                    onClick={handleIncrement}
-                    className="w-7 h-7 flex items-center justify-center rounded-md bg-white dark:bg-zinc-700 text-brand-primary dark:text-white hover:bg-accent hover:text-white transition-colors shadow-sm"
-                  >
-                    +
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={handleAddToCart}
-                  className="w-full py-2 border border-brand-primary/20 dark:border-white/20 text-brand-primary dark:text-white text-xs font-bold rounded-lg hover:bg-brand-primary hover:text-white transition-colors"
-                >
-                  {t('product.add_cart')}
-                </button>
-              )}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAddToCart();
+                }}
+                className="w-full py-2 border border-brand-primary/20 dark:border-white/20 text-brand-primary dark:text-white text-xs font-bold rounded-lg hover:bg-brand-primary hover:text-white transition-colors"
+              >
+                {t('product.addToCart')}
+              </button>
             </div>
           </div>
         </div>
@@ -216,83 +260,252 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-brand-primary/40 backdrop-blur-sm"
-              onClick={() => setShowQuickView(false)}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => {
+                setShowQuickView(false);
+                setQuickViewImgIdx(0);
+              }}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-zinc-900 w-full max-w-4xl rounded-[2.5rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] relative z-10 flex flex-col md:flex-row border border-white/20"
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{ duration: 0.18 }}
+              className="bg-white dark:bg-zinc-900 w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl relative z-10 flex flex-col md:flex-row"
+              style={{ maxHeight: '90vh' }}
             >
-              <button 
-                onClick={() => setShowQuickView(false)}
-                className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:bg-accent hover:text-white transition-all z-20"
+              {/* Close */}
+              <button
+                onClick={() => {
+                  setShowQuickView(false);
+                  setQuickViewImgIdx(0);
+                }}
+                className="absolute top-3 end-3 w-8 h-8 flex items-center justify-center bg-white/90 dark:bg-zinc-700 rounded-full text-gray-400 hover:text-accent shadow z-20 transition-colors"
               >
-                <X size={20} />
+                <X size={15} />
               </button>
 
-              {/* Product Gallery */}
-              <div className="w-full md:w-1/2 bg-brand-secondary/30 p-8 flex items-center justify-center relative">
-                <img 
-                  src={product.images[0]} 
-                  alt={product.title} 
-                  className="max-w-full max-h-[400px] object-contain mix-blend-multiply drop-shadow-2xl" 
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute bottom-8 left-8 flex gap-2">
-                  {product.images.slice(0, 3).map((img, i) => (
-                    <div key={i} className="w-12 h-12 bg-white rounded-xl p-1 border border-brand-primary/5 shadow-sm">
-                      <img src={img} alt="" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                    </div>
-                  ))}
+              {/* LEFT: Image Gallery — 58% */}
+              <div
+                className="w-full md:w-[58%] relative bg-[#F8F8FA] dark:bg-zinc-800 flex flex-col"
+                style={{ minHeight: 380 }}
+              >
+                {/* Free shipping badge */}
+                {product.estimatedDeliveryDays != null && product.estimatedDeliveryDays <= 3 && (
+                  <div className="absolute top-3 start-3 z-10 px-2 py-0.5 bg-[#26A541] text-white text-[9px] font-black uppercase rounded tracking-widest shadow-sm">
+                    KARGO BEDAVA
+                  </div>
+                )}
+
+                {/* Main image */}
+                <div className="flex-1 relative flex items-center justify-center px-8 py-6">
+                  <img
+                    src={product.images[quickViewImgIdx]}
+                    alt={product.title}
+                    className="max-w-full max-h-[300px] md:max-h-[360px] object-contain transition-opacity duration-100"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                  />
+                  {/* Prev / Next arrows */}
+                  {product.images.length > 1 && (
+                    <>
+                      <button
+                        onClick={() =>
+                          setQuickViewImgIdx(
+                            (i) => (i - 1 + product.images.length) % product.images.length,
+                          )
+                        }
+                        className="absolute start-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white dark:bg-zinc-700 rounded-full shadow flex items-center justify-center text-gray-400 hover:text-accent transition-colors"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <button
+                        onClick={() => setQuickViewImgIdx((i) => (i + 1) % product.images.length)}
+                        className="absolute end-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white dark:bg-zinc-700 rounded-full shadow flex items-center justify-center text-gray-400 hover:text-accent transition-colors"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </>
+                  )}
                 </div>
+
+                {/* Thumbnails */}
+                {product.images.length > 1 && (
+                  <div className="flex gap-2 px-4 pb-4 justify-center">
+                    {product.images.slice(0, 6).map((img, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setQuickViewImgIdx(i)}
+                        className={cn(
+                          'w-11 h-11 rounded-lg border-2 overflow-hidden bg-white shrink-0 transition-all',
+                          i === quickViewImgIdx
+                            ? 'border-accent'
+                            : 'border-transparent hover:border-gray-300',
+                        )}
+                      >
+                        <OptimizedImage
+                          src={img}
+                          alt={product.title}
+                          className="w-full h-full object-cover"
+                          containerClassName="w-full h-full"
+                          referrerPolicy="no-referrer"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Product Details */}
-              <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col">
-                <div className="mb-8">
-                  <span className="px-3 py-1 bg-brand-secondary text-brand-primary text-[10px] font-black uppercase tracking-widest rounded-full mb-4 inline-block">
+              {/* RIGHT: Product Details — 42% */}
+              <div
+                className="w-full md:w-[42%] flex flex-col overflow-y-auto border-s border-gray-100 dark:border-zinc-700"
+                style={{ maxHeight: '90vh' }}
+              >
+                <div className="flex flex-col flex-1 p-5">
+                  {/* Category · Seller */}
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-2">
                     {product.categoryId}
-                  </span>
-                  <h3 className="text-2xl md:text-3xl font-display font-black text-brand-primary leading-tight uppercase italic mb-4">
+                    {product.sellerId && (
+                      <>
+                        {' '}
+                        ·{' '}
+                        <Link
+                          to={`/seller/${product.sellerId}`}
+                          onClick={() => setShowQuickView(false)}
+                          className="text-accent hover:underline"
+                        >
+                          {product.sellerId}
+                        </Link>
+                      </>
+                    )}
+                  </p>
+
+                  {/* Title */}
+                  <h3 className="text-sm font-bold text-[#1A1033] dark:text-white leading-snug mb-3">
                     {product.title}
                   </h3>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1">
+
+                  {/* Rating */}
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <div className="flex items-center">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={14} fill={i < Math.floor(product.rating) ? "currentColor" : "none"} className={i < Math.floor(product.rating) ? "text-accent" : "text-gray-300"} />
+                        <Star
+                          key={i}
+                          size={10}
+                          fill={i < Math.floor(product.rating) ? '#FFC000' : 'none'}
+                          className={
+                            i < Math.floor(product.rating) ? 'text-[#FFC000]' : 'text-gray-200'
+                          }
+                        />
                       ))}
-                      <span className="text-xs font-bold text-gray-400 ml-1">({product.rating})</span>
                     </div>
-                    <div className="w-px h-4 bg-gray-200" />
-                    <span className="text-xs font-bold text-green-600 uppercase flex items-center gap-1">
-                      <ShieldCheck size={14} /> In Stock
+                    <span className="text-[10px] font-bold text-gray-500">{product.rating}</span>
+                    <span className="text-[9px] text-gray-300">·</span>
+                    <span className="text-[10px] text-gray-400">
+                      {product.reviewsCount || 42} Değerlendirme
                     </span>
                   </div>
-                </div>
 
-                <p className="text-gray-500 text-sm leading-relaxed mb-8 line-clamp-4">
-                  {product.description || "Premium quality product with exceptional design and durability. Perfect for modern lifestyles, this item combines functionality with aesthetic appeal."}
-                </p>
+                  {/* Discount badge */}
+                  {product.discountPercentage && (
+                    <div className="inline-flex items-center px-2 py-1 bg-orange-50 border border-orange-200 rounded-lg mb-3 self-start">
+                      <span className="text-[10px] font-black text-orange-500">
+                        Sepette %{product.discountPercentage} İndirim
+                      </span>
+                    </div>
+                  )}
 
-                <div className="mt-auto pt-8 border-t border-gray-100 flex items-center justify-between">
-                  <div>
+                  {/* Price */}
+                  <div className="mb-4">
                     {product.oldPrice && (
-                      <span className="block text-sm text-gray-400 line-through mb-1">
-                        £{product.oldPrice.toFixed(2)}
+                      <span className="block text-xs text-gray-400 line-through mb-0.5">
+                        {product.oldPrice.toFixed(2)} TL
                       </span>
                     )}
-                    <span className="text-3xl font-black text-accent tracking-tighter">
-                      £{product.price.toFixed(2)}
-                    </span>
+                    <div className="flex items-start text-[#E53935]">
+                      <span className="text-2xl font-black leading-none tracking-tight">
+                        {Math.floor(product.price)}
+                      </span>
+                      <span className="text-xs font-black mt-0.5 ms-0.5">
+                        ,
+                        {Math.floor((product.price % 1) * 100)
+                          .toString()
+                          .padStart(2, '0')}{' '}
+                        TL
+                      </span>
+                    </div>
                   </div>
-                  <Link 
-                    to={`/product/${product.slug}`}
-                    className="px-8 py-4 bg-brand-primary text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-accent hover:shadow-xl hover:shadow-accent/30 transition-all active:scale-95"
-                  >
-                    View Details
-                  </Link>
+
+                  {/* Variant selectors */}
+                  {product.attributes &&
+                    Object.entries(product.attributes)
+                      .slice(0, 2)
+                      .map(([key, value]) => (
+                        <div key={key} className="mb-3">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1.5">
+                            {key}:{' '}
+                            <span className="text-[#1A1033] dark:text-white normal-case font-bold">
+                              {selectedVariants[key] || value}
+                            </span>
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[value as string].map((v) => (
+                              <button
+                                key={v}
+                                onClick={() =>
+                                  setSelectedVariants((prev) => ({ ...prev, [key]: v }))
+                                }
+                                className={cn(
+                                  'px-3 py-1.5 text-xs font-bold rounded-lg border transition-all',
+                                  selectedVariants[key] === v || !selectedVariants[key]
+                                    ? 'border-accent text-accent bg-accent/10'
+                                    : 'border-gray-200 text-gray-500 hover:border-accent/40',
+                                )}
+                              >
+                                {v as string}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+
+                  <div className="flex-1" />
+
+                  {/* CTA */}
+                  <div className="pt-4 border-t border-gray-100 dark:border-zinc-800 space-y-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleAddToCart}
+                        className="flex-1 py-3 bg-[#FF6000] text-white font-black text-sm rounded-xl hover:bg-[#E55500] active:scale-95 transition-all flex items-center justify-center gap-2"
+                      >
+                        <ShoppingCart size={15} />
+                        {addedToCart ? 'Eklendi ✓' : 'Sepete Ekle'}
+                      </button>
+                      <button
+                        onClick={() => toggleWishlist(product.id)}
+                        className={cn(
+                          'w-12 flex items-center justify-center rounded-xl border-2 transition-all',
+                          isWishlisted(product.id)
+                            ? 'border-red-400 bg-red-50 text-red-500'
+                            : 'border-gray-200 text-gray-400 hover:border-red-300',
+                        )}
+                      >
+                        <Heart
+                          size={17}
+                          className={isWishlisted(product.id) ? 'fill-red-500' : ''}
+                        />
+                      </button>
+                    </div>
+                    <Link
+                      to={`/product/${product.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setShowQuickView(false)}
+                      className="flex items-center justify-center w-full py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-accent transition-colors"
+                    >
+                      Ürün Detayına Git →
+                    </Link>
+                  </div>
                 </div>
               </div>
             </motion.div>

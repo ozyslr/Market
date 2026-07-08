@@ -1,7 +1,7 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/context/LanguageContext';
-import { CATEGORIES } from '@/mockData';
+import { CATEGORIES } from '@/data/mockCategories';
 import { cn } from '@/lib/utils';
 import { 
   Smartphone, Shirt, Home, ShoppingBasket, 
@@ -34,7 +34,7 @@ export function StoryBar() {
                     <Zap size={20} fill="currentColor" className="text-accent" />
                  </div>
               </div>
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase">Live</span>
+              <span className="absolute -top-1 -end-1 bg-red-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase">Live</span>
             </div>
             <span className="text-[9px] font-black uppercase text-brand-primary dark:text-white tracking-widest">{t('nav.deals')}</span>
           </Link>
@@ -42,7 +42,7 @@ export function StoryBar() {
           {CATEGORIES.map((cat) => {
             const IconComponent = {
               Smartphone, Shirt, Home, ShoppingBasket, Sparkles, Baby, Dog, Mountain
-            }[cat.icon] || Zap;
+            }[cat.icon as string] || Zap;
 
             return (
               <Link 
@@ -53,16 +53,17 @@ export function StoryBar() {
                 <div className="relative">
                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-full p-1 border-2 border-brand-primary/10 group-hover:border-accent transition-all duration-500">
                     <div className="w-full h-full rounded-full overflow-hidden bg-brand-secondary">
-                      <img 
-                        src={storyImages[cat.id] || `https://picsum.photos/seed/${cat.id}/150/150`} 
+                      <img
+                        src={storyImages[cat.id] || `https://picsum.photos/seed/${cat.id}/150/150`}
                         alt={cat.name}
+                        loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         referrerPolicy="no-referrer"
                       />
                       <div className="absolute inset-0 bg-brand-primary/10 group-hover:bg-transparent transition-colors" />
                     </div>
                   </div>
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-brand-primary/5 flex items-center justify-center text-brand-primary/40 group-hover:text-accent group-hover:scale-110 transition-all">
+                  <div className="absolute -bottom-1 start-1/2 -translate-x-1/2 w-5 h-5 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-brand-primary/5 flex items-center justify-center text-brand-primary/40 group-hover:text-accent group-hover:scale-110 transition-all">
                     <IconComponent size={10} />
                   </div>
                 </div>

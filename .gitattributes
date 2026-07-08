@@ -1,0 +1,17 @@
+# Normalize line endings: store LF in the repo, auto-handle on checkout.
+* text=auto eol=lf
+
+# Explicitly treat common binary assets as binary (no EOL conversion).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
+*.glb binary
+*.gltf binary

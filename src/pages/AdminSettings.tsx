@@ -1,69 +1,138 @@
-import React, { useState } from 'react';
-import { Settings, Save, CheckCircle2 } from 'lucide-react';
-import { useSettingsStore } from '@/store/useSettingsStore';
+import React, { useState, useEffect } from 'react';
+import { getSiteSettings, saveSiteSettings } from '@/services/settingsService';
+import { SiteSettings } from '@/types';
+import { Save, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { audit } from '@/services/auditLogService';
+import { useAuth } from '@/context/AuthContext';
 
 export function AdminSettings() {
-  const { siteName, supportEmail, commissionRate, currency, maintenanceMode, updateSettings } = useSettingsStore();
-  const [form, setForm] = useState({ siteName, supportEmail, commissionRate: String(commissionRate), currency, maintenanceMode });
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<SiteSettings>({
+    id: 'global',
+    siteName: 'Benim Olan',
+    maintenanceMode: false,
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateSettings({
-      siteName: form.siteName.trim(),
-      supportEmail: form.supportEmail.trim(),
-      commissionRate: parseFloat(form.commissionRate) || 0,
-      currency: form.currency,
-      maintenanceMode: form.maintenanceMode,
+  useEffect(() => {
+    getSiteSettings().then((data) => {
+      setSettings(data);
+      setLoading(false);
     });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await saveSiteSettings(settings);
+      audit(
+        user?.uid ?? '',
+        user?.email ?? '',
+        user?.role ?? 'admin',
+        'settings.update',
+        'settings',
+        'global',
+      );
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  return (
-    <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm max-w-3xl">
-      <div className="flex items-center gap-4 mb-10">
-        <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center"><Settings size={24} /></div>
-        <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">Site Ayarları</h3>
+  if (loading)
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
       </div>
+    );
+
+  return (
+    <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm max-w-2xl">
+      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-8">
+        Site Ayarları
+      </h3>
 
       <form onSubmit={handleSave} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-[10px] font-black text-[#1A1033] uppercase tracking-widest mb-2">Site Adı</label>
-            <input value={form.siteName} onChange={(e) => setForm({ ...form, siteName: e.target.value })} className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none" />
+        {[
+          { label: 'Site Adı', key: 'siteName' as const, placeholder: 'Benim Olan' },
+          { label: 'Logo URL', key: 'logoUrl' as const, placeholder: 'https://...' },
+          {
+            label: 'İletişim E-postası',
+            key: 'contactEmail' as const,
+            placeholder: 'info@benimolan.com',
+          },
+        ].map(({ label, key, placeholder }) => (
+          <div key={key}>
+            <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">
+              {label}
+            </label>
+            <input
+              value={(settings[key] as string) || ''}
+              onChange={(e) => setSettings((s) => ({ ...s, [key]: e.target.value }))}
+              placeholder={placeholder}
+              className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none"
+            />
           </div>
-          <div>
-            <label className="block text-[10px] font-black text-[#1A1033] uppercase tracking-widest mb-2">Destek E-postası</label>
-            <input value={form.supportEmail} onChange={(e) => setForm({ ...form, supportEmail: e.target.value })} type="email" className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none" />
-          </div>
-          <div>
-            <label className="block text-[10px] font-black text-[#1A1033] uppercase tracking-widest mb-2">Komisyon Oranı (%)</label>
-            <input value={form.commissionRate} onChange={(e) => setForm({ ...form, commissionRate: e.target.value })} type="number" min={0} max={100} className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none" />
-          </div>
-          <div>
-            <label className="block text-[10px] font-black text-[#1A1033] uppercase tracking-widest mb-2">Para Birimi</label>
-            <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none">
-              <option value="TRY">TRY (₺)</option>
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
-            </select>
-          </div>
-        </div>
+        ))}
 
-        <div className="flex items-center justify-between bg-[#F8F8FA] rounded-2xl px-6 py-5">
+        {settings.logoUrl && (
+          <div className="p-3 bg-[#F8F8FA] rounded-xl inline-block">
+            <img
+              src={settings.logoUrl}
+              alt="Logo önizleme"
+              className="h-10 object-contain"
+              referrerPolicy="no-referrer"
+              loading="lazy"
+            />
+          </div>
+        )}
+
+        <div className="flex items-center justify-between p-4 bg-[#F8F8FA] rounded-2xl">
           <div>
             <p className="text-sm font-black text-[#1A1033]">Bakım Modu</p>
-            <p className="text-[11px] font-bold text-[#1A1033]/40 italic">Açıkken site ziyaretçilere kapalı görünür.</p>
+            <p className="text-[10px] text-[#1A1033]/40">
+              Aktifken site ziyaretçilere bakım sayfası gösterir
+            </p>
           </div>
-          <button type="button" onClick={() => setForm({ ...form, maintenanceMode: !form.maintenanceMode })} className={`w-14 h-8 rounded-full transition-colors relative ${form.maintenanceMode ? 'bg-accent' : 'bg-[#1A1033]/15'}`}>
-            <span className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${form.maintenanceMode ? 'translate-x-7' : 'translate-x-1'}`} />
+          <button
+            type="button"
+            onClick={() => setSettings((s) => ({ ...s, maintenanceMode: !s.maintenanceMode }))}
+            className="transition-colors"
+          >
+            {settings.maintenanceMode ? (
+              <ToggleRight size={28} className="text-accent" />
+            ) : (
+              <ToggleLeft size={28} className="text-[#1A1033]/30" />
+            )}
           </button>
         </div>
 
-        <button type="submit" className="w-full py-4 bg-[#1A1033] text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] hover:scale-[1.01] transition-transform flex items-center justify-center gap-2">
-          {saved ? <><CheckCircle2 size={18} /> Kaydedildi</> : <><Save size={18} /> Ayarları Kaydet</>}
+        {settings.maintenanceMode && (
+          <div>
+            <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">
+              Bakım Mesajı
+            </label>
+            <textarea
+              value={settings.maintenanceMessage || ''}
+              onChange={(e) => setSettings((s) => ({ ...s, maintenanceMessage: e.target.value }))}
+              rows={3}
+              placeholder="Sitemiz bakım çalışmaları nedeniyle geçici olarak kapalıdır."
+              className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none resize-none"
+            />
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={saving}
+          className="flex items-center gap-2 px-8 py-4 bg-[#1A1033] text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 hover:bg-accent transition-all"
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          {saved ? 'Kaydedildi ✓' : 'Kaydet'}
         </button>
       </form>
     </div>

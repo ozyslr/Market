@@ -1,0 +1,76 @@
+<h2>Yeni Adres Ekle — Form Tasarımı</h2>
+<p class="subtitle">Adres kartındaki "+ Yeni Adres Ekle" butonuna tıklanınca ne açılsın?</p>
+
+<div class="options">
+  <div class="option" data-choice="inline-expand" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Kart İçinde Açılır (Inline)</h3>
+      <p>Aynı kart aşağı doğru genişler, form satır satır açılır. Sayfa kaymaz, hızlı.</p>
+      <div style="margin-top:10px;background:#f5f3ff;border-radius:10px;padding:12px;font-size:11px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+          <div style="background:white;border:1px solid #c4b5fd;border-radius:6px;padding:6px 8px;color:#6b7280;">Ad Soyad</div>
+          <div style="background:white;border:1px solid #c4b5fd;border-radius:6px;padding:6px 8px;color:#6b7280;">Telefon</div>
+        </div>
+        <div style="background:white;border:1px solid #c4b5fd;border-radius:6px;padding:6px 8px;color:#6b7280;margin-bottom:6px;">Adres Satırı 1</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">
+          <div style="background:white;border:1px solid #c4b5fd;border-radius:6px;padding:6px 8px;color:#6b7280;">Şehir</div>
+          <div style="background:white;border:1px solid #c4b5fd;border-radius:6px;padding:6px 8px;color:#6b7280;">Posta Kodu</div>
+          <div style="background:white;border:1px solid #c4b5fd;border-radius:6px;padding:6px 8px;color:#6b7280;">Ülke</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+          <div style="width:14px;height:14px;border:1px solid #c4b5fd;border-radius:3px;background:white;"></div>
+          <span style="color:#6b7280;">Bu adresi varsayılan yap</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <div style="background:#7c3aed;color:white;border-radius:8px;padding:5px 14px;">Kaydet</div>
+          <div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:5px 14px;color:#6b7280;">İptal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="modal" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Modal Popup</h3>
+      <p>Overlay modal açılır. Daha temiz, sayfa içeriğini karartır, odaklanmayı kolaylaştırır.</p>
+      <div style="margin-top:10px;background:#f9fafb;border-radius:10px;padding:12px;font-size:11px;position:relative;">
+        <div style="background:rgba(0,0,0,.3);position:absolute;inset:0;border-radius:10px;"></div>
+        <div style="background:white;border-radius:10px;padding:12px;position:relative;z-index:1;box-shadow:0 8px 24px rgba(0,0,0,.15);">
+          <div style="font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;">
+            Yeni Adres <span style="color:#9ca3af;">✕</span>
+          </div>
+          <div style="background:#f3f4f6;border-radius:6px;height:16px;margin-bottom:4px;"></div>
+          <div style="background:#f3f4f6;border-radius:6px;height:16px;margin-bottom:4px;"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;">
+            <div style="background:#f3f4f6;border-radius:6px;height:16px;"></div>
+            <div style="background:#f3f4f6;border-radius:6px;height:16px;"></div>
+          </div>
+          <div style="background:#7c3aed;color:white;border-radius:6px;padding:5px 12px;display:inline-block;">Kaydet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:20px;">
+  <h3>Adres Etiketi (label) zorunlu mu?</h3>
+  <p class="subtitle">Kullanıcı adresine isim verseydi? ("Ev", "İş", "Anne Evi")</p>
+  <div class="options">
+    <div class="option" data-choice="label-required" onclick="toggleSelect(this)">
+      <div class="letter">✓</div>
+      <div class="content">
+        <h3>Evet, etiket zorunlu</h3>
+        <p>"Ev", "İş" gibi bir isim girmek zorunda. Adres listesinde tanımayı kolaylaştırır.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="label-optional" onclick="toggleSelect(this)">
+      <div class="letter">—</div>
+      <div class="content">
+        <h3>Hayır, opsiyonel</h3>
+        <p>İstersem isim veririm. Şehir + ilk satır otomatik gösterilir.</p>
+      </div>
+    </div>
+  </div>
+</div>

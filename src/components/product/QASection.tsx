@@ -1,0 +1,253 @@
+import React, { useEffect, useState } from 'react';
+import { MessageCircle, Search, ChevronDown, HelpCircle, ThumbsUp, BadgeCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ProductQuestion } from '@/types';
+import { getQuestions, askQuestion, answerQuestion } from '@/services/productQuestionService';
+import { QuestionCard } from './QuestionCard';
+import { cn } from '@/lib/utils';
+
+const QA_PAGE_SIZE = 5;
+
+interface Props {
+  productId: string;
+  currentUserId?: string;
+  currentUserName?: string;
+  isSeller: boolean;
+  isLoggedIn: boolean;
+}
+
+const CATEGORY_LABELS = {
+  size: 'Beden / Ölçü',
+  shipping: 'Kargo / Teslimat',
+  stock: 'Stok Bilgisi',
+  other: 'Diğer',
+} as const;
+
+export function QASection({ productId, currentUserId, currentUserName, isSeller, isLoggedIn }: Props) {
+  const [questions, setQuestions] = useState<ProductQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [questionText, setQuestionText] = useState('');
+  const [category, setCategory] = useState<'size' | 'shipping' | 'stock' | 'other'>('other');
+  const [submitting, setSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    getQuestions(productId)
+      .then(setQuestions)
+      .finally(() => setLoading(false));
+  }, [productId]);
+
+  async function handleAskQuestion() {
+    if (!questionText.trim() || !currentUserId || !currentUserName) return;
+    setSubmitting(true);
+    try {
+      const newQ = await askQuestion(productId, currentUserId, currentUserName, questionText.trim(), category);
+      setQuestions(prev => [newQ, ...prev]);
+      setQuestionText('');
+      setCategory('other');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleAnswer(questionId: string, answer: string) {
+    await answerQuestion(questionId, answer, currentUserName || 'Satıcı');
+    setQuestions(prev =>
+      prev.map(q =>
+        q.id === questionId
+          ? { ...q, answer, answeredBy: currentUserName || 'Satıcı', answeredAt: new Date().toISOString() }
+          : q,
+      ),
+    );
+  }
+
+  const filtered = questions.filter(q => {
+    if (!search.trim()) return true;
+    const s = search.toLowerCase();
+    return q.text.toLowerCase().includes(s) || (q.answer || '').toLowerCase().includes(s);
+  });
+
+  const topQuestions = [...questions]
+    .filter(q => (q.helpfulCount || 0) > 0)
+    .sort((a, b) => (b.helpfulCount || 0) - (a.helpfulCount || 0))
+    .slice(0, 3);
+
+  const [expandedAccordion, setExpandedAccordion] = useState<string | null>(null);
+
+  const paginated = filtered.slice(0, page * QA_PAGE_SIZE);
+
+  return (
+    <div className="space-y-6">
+
+      {/* En Çok Sorulan Sorular */}
+      {topQuestions.length > 1 && (
+        <div className="bg-[#F8F8FA] dark:bg-zinc-900/60 rounded-2xl border border-brand-primary/5 dark:border-white/5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-brand-primary/5 dark:border-white/5 flex items-center gap-2">
+            <HelpCircle size={14} className="text-accent" />
+            <span className="text-[11px] font-black uppercase tracking-widest text-brand-primary dark:text-white">
+              En Çok Sorulan Sorular
+            </span>
+          </div>
+          <div className="divide-y divide-brand-primary/5 dark:divide-white/5">
+            {topQuestions.map(q => (
+              <div key={q.id}>
+                <button
+                  onClick={() => setExpandedAccordion(expandedAccordion === q.id ? null : q.id)}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-start hover:bg-brand-secondary/30 dark:hover:bg-zinc-800/30 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-brand-primary dark:text-white leading-relaxed line-clamp-1">{q.text}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {q.answer ? (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-bold text-green-600">
+                          <BadgeCheck size={10} />
+                          Yanıtlandı
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold text-brand-primary/30 dark:text-zinc-500">Yanıt Bekliyor</span>
+                      )}
+                      {(q.helpfulCount || 0) > 0 && (
+                        <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-accent">
+                          <ThumbsUp size={9} />
+                          {q.helpfulCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronDown
+                    size={14}
+                    className={cn(
+                      'text-brand-primary/30 dark:text-zinc-500 shrink-0 transition-transform duration-200',
+                      expandedAccordion === q.id && 'rotate-180',
+                    )}
+                  />
+                </button>
+                {expandedAccordion === q.id && (
+                  <div className="px-4 pb-3 pt-0">
+                    <div className="ps-3 border-s-2 border-accent/30 bg-white/50 dark:bg-zinc-800/30 rounded-r-lg py-2 px-3 mt-1">
+                      {q.answer ? (
+                        <>
+                          <p className="text-xs font-medium text-brand-primary/70 dark:text-zinc-300 leading-relaxed">{q.answer}</p>
+                          <p className="text-[9px] text-accent font-bold mt-1">{q.answeredBy || 'Satıcı'}</p>
+                        </>
+                      ) : (
+                        <p className="text-[10px] text-brand-primary/30 dark:text-zinc-500 italic">Henüz cevaplanmadı</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Soru sor */}
+      {isLoggedIn ? (
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <input
+              value={questionText}
+              onChange={e => setQuestionText(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && !submitting && handleAskQuestion()}
+              placeholder="Ürün hakkında bir soru sorun..."
+              className="flex-1 px-4 py-3 bg-[#F8F8FA] dark:bg-zinc-800 rounded-xl text-sm outline-none focus:ring-2 ring-accent/20 border border-transparent focus:border-accent/30 text-brand-primary dark:text-white"
+            />
+            <button
+              onClick={handleAskQuestion}
+              disabled={submitting || !questionText.trim()}
+              className="px-6 py-3 bg-accent text-white rounded-xl text-xs font-black disabled:opacity-50 hover:bg-accent/90 transition-colors whitespace-nowrap"
+            >
+              {submitting ? '...' : 'Soru Sor'}
+            </button>
+          </div>
+          {/* Kategori Seçici */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-wider text-brand-primary/40 dark:text-zinc-500">Konu:</span>
+            <div className="flex gap-2 flex-wrap">
+              {(Object.keys(CATEGORY_LABELS) as Array<keyof typeof CATEGORY_LABELS>).map(cat => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(cat)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${
+                    category === cat
+                      ? 'bg-accent/15 text-accent border border-accent/35'
+                      : 'bg-brand-secondary/50 dark:bg-zinc-800 text-brand-primary/50 dark:text-zinc-400 hover:bg-brand-secondary'
+                  }`}
+                >
+                  {CATEGORY_LABELS[cat]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <p className="text-xs text-brand-primary/40 font-bold py-2">
+          Soru sormak için <Link to="/auth" className="text-accent underline">giriş yapın</Link>.
+        </p>
+      )}
+
+      {/* Arama */}
+      {questions.length > 3 && (
+        <div className="relative">
+          <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-primary/30 dark:text-zinc-500" />
+          <input
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Sorular içinde ara..."
+            className="w-full ps-9 pe-4 py-2.5 bg-[#F8F8FA] dark:bg-zinc-800 rounded-xl text-sm outline-none focus:ring-2 ring-accent/20 text-brand-primary dark:text-white"
+          />
+        </div>
+      )}
+
+      {/* Sayaç */}
+      {filtered.length > 0 && (
+        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 dark:text-zinc-500">
+          {filtered.length} Soru-Cevap
+        </p>
+      )}
+
+      {/* Liste */}
+      {loading ? (
+        <div className="animate-pulse space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-16 bg-brand-secondary/50 dark:bg-zinc-800/50 rounded-2xl" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-8">
+          <MessageCircle size={32} className="mx-auto text-brand-primary/10 mb-2" />
+          <p className="text-xs font-bold text-brand-primary/30 dark:text-zinc-500">
+            {search
+              ? 'Aramanıza uygun soru bulunamadı.'
+              : 'Henüz soru sorulmamış. İlk soran sen ol!'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {paginated.map(q => (
+            <QuestionCard
+              key={q.id}
+              question={q}
+              currentUserId={currentUserId}
+              isSeller={isSeller}
+              onAnswer={isSeller ? handleAnswer : undefined}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Daha fazla */}
+      {paginated.length < filtered.length && (
+        <button
+          onClick={() => setPage(p => p + 1)}
+          className="w-full py-3 border border-brand-primary/10 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors text-brand-primary dark:text-white"
+        >
+          Daha Fazla Göster ({filtered.length - paginated.length} soru)
+        </button>
+      )}
+    </div>
+  );
+}

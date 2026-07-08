@@ -10,11 +10,11 @@ export class BotService {
    */
   static async simulateBotAddition(categoryId: string) {
     try {
-      const category = CATEGORIES.find(c => c.id === categoryId);
+      const category = CATEGORIES.find((c) => c.id === categoryId);
       if (!category) throw new Error('Invalid category for bot deployment');
 
       // Pick a random template from mock data that matches category
-      const templates = MOCK_PRODUCTS.filter(p => p.categoryId === categoryId);
+      const templates = MOCK_PRODUCTS.filter((p) => p.categoryId === categoryId);
       const template = templates[Math.floor(Math.random() * templates.length)];
 
       if (!template) {
@@ -25,22 +25,22 @@ export class BotService {
 
       return this.addBotProduct(template);
     } catch (error) {
-       console.error('Bot Error:', error);
-       throw error;
+      console.error('Bot Error:', error);
+      throw error;
     }
   }
 
   private static async addBotProduct(template: Product) {
-    const botId = `BOT-${Math.floor(Math.random() * 1000)}`;
-    const newId = `product-${Date.now()}-${botId}`;
-    
+    const botId = `BOT-${crypto.randomUUID().slice(0, 8)}`;
+    const newId = crypto.randomUUID();
+
     const newProduct: Product = {
       ...template,
       id: newId,
       title: `[BOT-${botId}] ${template.title}`,
       sellerId: 'mcr-global-bot', // Specialized bot seller
       stock: Math.floor(Math.random() * 100) + 10,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     const batch = writeBatch(db);
@@ -54,7 +54,7 @@ export class BotService {
       botId: botId,
       productId: newProduct.id,
       category: newProduct.categoryId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     await batch.commit();
@@ -65,7 +65,7 @@ export class BotService {
    * Deploys bots across all categories
    */
   static async deployGlobalBots() {
-    const results = [];
+    const results: Product[] = [];
     for (const cat of CATEGORIES) {
       const prod = await this.simulateBotAddition(cat.id);
       results.push(prod);

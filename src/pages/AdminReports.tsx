@@ -1,103 +1,150 @@
-import React, { useEffect, useMemo } from 'react';
-import { BarChart3, TrendingUp, ShoppingBasket, Receipt } from 'lucide-react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
-import { useOrderStore, ExtendedOrder } from '@/store/useOrderStore';
-
-const STATUS_LABELS: Record<ExtendedOrder['status'], string> = {
-  pending: 'Beklemede',
-  processing: 'Hazırlanıyor',
-  shipped: 'Kargoda',
-  delivered: 'Teslim Edildi',
-  cancelled: 'İptal',
-};
-
-const STATUS_COLORS: Record<ExtendedOrder['status'], string> = {
-  pending: '#F59E0B',
-  processing: '#FB923C',
-  shipped: '#3B82F6',
-  delivered: '#10B981',
-  cancelled: '#EF4444',
-};
+import React, { useState, useEffect } from 'react';
+import { Loader2, Download, TrendingUp, ShoppingBag, DollarSign, CheckCircle, XCircle } from 'lucide-react';
+import { getAllOrders as getOrders } from '@/services/orderService';
+import { Order } from '@/types/order';
 
 export function AdminReports() {
-  const { orders, fetchOrders } = useOrderStore();
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
-  const { gmv, aov, byMarket, byStatus } = useMemo(() => {
-    const gmv = orders.reduce((s, o) => s + o.total, 0);
-    const aov = orders.length > 0 ? gmv / orders.length : 0;
+  useEffect(() => {
+    getOrders().then(setOrders).finally(() => setLoading(false));
+  }, []);
 
-    const marketMap = new Map<string, number>();
-    orders.forEach((o) => marketMap.set(o.market, (marketMap.get(o.market) || 0) + o.total));
-    const byMarket = Array.from(marketMap.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  const filtered = orders.filter(o => {
+    if (period === 'all') return true;
+    const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+    return new Date(o.createdAt) >= new Date(Date.now() - days * 86400000);
+  });
 
-    const statusMap = new Map<ExtendedOrder['status'], number>();
-    orders.forEach((o) => statusMap.set(o.status, (statusMap.get(o.status) || 0) + 1));
-    const byStatus = Array.from(statusMap.entries()).map(([key, value]) => ({ name: STATUS_LABELS[key], value, color: STATUS_COLORS[key] }));
+  const gmv = filtered.reduce((s, o) => s + (o.totalAmount || 0), 0);
+  const avg = filtered.length ? gmv / filtered.length : 0;
+  const deliveredRate = filtered.length
+    ? (filtered.filter(o => o.status === 'delivered').length / filtered.length) * 100
+    : 0;
+  const cancelRate = filtered.length
+    ? (filtered.filter(o => o.status === 'cancelled').length / filtered.length) * 100
+    : 0;
 
-    return { gmv, aov, byMarket, byStatus };
-  }, [orders]);
+  function exportCSV() {
+    const rows = [
+      ['Sipariş ID', 'Tarih', 'Alıcı ID', 'Tutar', 'Durum'],
+      ...filtered.map(o => [
+        o.id,
+        new Date(o.createdAt).toLocaleDateString('tr-TR'),
+        o.buyerId,
+        (o.totalAmount || 0).toFixed(2),
+        o.status,
+      ]),
+    ];
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rapor-${period}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
-  const fmt = (n: number) => `₺${n.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`;
+  if (loading) {
+    return (
+      <div className="flex justify-center py-24">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  const KPIS = [
+    { label: 'Toplam Sipariş', value: String(filtered.length), icon: ShoppingBag, color: 'text-blue-600' },
+    { label: 'Toplam GMV', value: `${gmv.toLocaleString('tr-TR')} ₺`, icon: DollarSign, color: 'text-accent' },
+    { label: 'Ort. Sipariş Değeri', value: `${avg.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺`, icon: TrendingUp, color: 'text-purple-600' },
+    { label: 'Teslim Oranı', value: `${deliveredRate.toFixed(1)}%`, icon: CheckCircle, color: 'text-green-600' },
+    { label: 'İptal Oranı', value: `${cancelRate.toFixed(1)}%`, icon: XCircle, color: 'text-red-500' },
+  ];
+
+  const statusColor = (status: string) => {
+    if (status === 'delivered') return 'bg-green-100 text-green-700';
+    if (status === 'cancelled') return 'bg-red-100 text-red-600';
+    if (status === 'shipped') return 'bg-blue-100 text-blue-700';
+    return 'bg-yellow-100 text-yellow-700';
+  };
 
   return (
-    <div className="space-y-10">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-accent rounded-[3rem] p-10 text-white shadow-2xl shadow-accent/20 relative overflow-hidden group">
-          <TrendingUp size={120} className="absolute -bottom-8 -right-8 text-white/10 group-hover:scale-110 transition-transform duration-700" />
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-4 italic">Toplam GMV</p>
-          <h4 className="text-3xl font-display font-black tracking-tighter">{fmt(gmv)}</h4>
-        </div>
-        <div className="bg-white rounded-[3rem] p-10 border border-[#F8F8FA] shadow-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1A1033]/30 mb-4 italic">Sipariş Sayısı</p>
-          <h4 className="text-3xl font-display font-black tracking-tighter text-[#1A1033] flex items-center gap-3">{orders.length} <ShoppingBasket size={26} className="text-[#1A1033]/20" /></h4>
-        </div>
-        <div className="bg-white rounded-[3rem] p-10 border border-[#F8F8FA] shadow-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1A1033]/30 mb-4 italic">Ortalama Sepet (AOV)</p>
-          <h4 className="text-3xl font-display font-black tracking-tighter text-[#1A1033] flex items-center gap-3">{fmt(aov)} <Receipt size={26} className="text-[#1A1033]/20" /></h4>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-lg font-display font-black uppercase italic tracking-tight text-[#1A1033]">Satış Raporları</h2>
+        <div className="flex flex-wrap gap-2">
+          {(['7d', '30d', '90d', 'all'] as const).map(p => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-colors ${
+                period === p ? 'bg-accent text-white' : 'bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-accent/10'
+              }`}
+            >
+              {p === '7d' ? '7 Gün' : p === '30d' ? '30 Gün' : p === '90d' ? '90 Gün' : 'Tümü'}
+            </button>
+          ))}
+          <button
+            onClick={exportCSV}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1A1033] text-white rounded-xl text-xs font-black hover:bg-accent transition-colors"
+          >
+            <Download size={12} /> CSV İndir
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm">
-          <div className="flex items-center gap-4 mb-10">
-            <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center"><BarChart3 size={24} /></div>
-            <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">Pazara Göre Ciro</h3>
+      {/* KPI Kartları */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {KPIS.map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="bg-white rounded-2xl p-4 border border-[#F8F8FA] shadow-sm">
+            <Icon size={16} className={`${color} mb-2`} />
+            <p className="text-[10px] font-black uppercase text-[#1A1033]/40 mb-1">{label}</p>
+            <p className="text-lg font-black text-[#1A1033]">{value}</p>
           </div>
-          <div className="h-[320px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={byMarket}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1A1033" strokeOpacity={0.05} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#1A1033', opacity: 0.4, fontWeight: 800 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#1A1033', opacity: 0.3, fontWeight: 800 }} tickFormatter={(v) => `₺${v}`} />
-                <Tooltip contentStyle={{ backgroundColor: '#1A1033', borderRadius: '16px', border: 'none' }} itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }} formatter={(v: number) => fmt(v)} />
-                <Bar dataKey="value" fill="#6D28D9" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        ))}
+      </div>
 
-        <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm">
-          <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-10">Sipariş Durumu Dağılımı</h3>
-          <div className="h-[320px] w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={byStatus} innerRadius={70} outerRadius={110} paddingAngle={6} dataKey="value" stroke="none">
-                  {byStatus.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#1A1033', borderRadius: '16px', border: 'none' }} itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex flex-wrap gap-x-8 gap-y-3 mt-4 justify-center">
-            {byStatus.map((s, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40">{s.name} ({s.value})</span>
-              </div>
-            ))}
-          </div>
+      {/* Sipariş Tablosu */}
+      <div className="bg-white rounded-3xl border border-[#F8F8FA] shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-[#F8F8FA]">
+          <p className="text-xs font-black uppercase text-[#1A1033]/40">
+            Son Siparişler ({filtered.length} toplam)
+          </p>
         </div>
+        {filtered.length === 0 ? (
+          <div className="py-16 text-center text-[#1A1033]/30 font-bold text-sm">Bu dönemde sipariş bulunamadı.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-[#F8F8FA]">
+                  {['Sipariş ID', 'Tarih', 'Alıcı', 'Tutar', 'Durum'].map(h => (
+                    <th key={h} className="text-start p-3 font-black text-[#1A1033]/40 uppercase text-[10px]">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.slice(0, 20).map(o => (
+                  <tr key={o.id} className="border-b border-[#F8F8FA] hover:bg-[#F8F8FA]/50">
+                    <td className="p-3 font-mono text-[10px] text-accent">#{o.id.slice(-8).toUpperCase()}</td>
+                    <td className="p-3 text-[#1A1033]/60">{new Date(o.createdAt).toLocaleDateString('tr-TR')}</td>
+                    <td className="p-3 text-[#1A1033]/60 max-w-[120px] truncate">{o.buyerId}</td>
+                    <td className="p-3 font-bold text-[#1A1033]">{(o.totalAmount || 0).toLocaleString('tr-TR')} ₺</td>
+                    <td className="p-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${statusColor(o.status)}`}>
+                        {o.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

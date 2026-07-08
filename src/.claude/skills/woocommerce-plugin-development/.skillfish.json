@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "woocommerce-plugin-development",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/platform-woocommerce/woocommerce-plugin-development",
+  "branch": "main",
+  "sha": "6211bc5c432bf96e4bebcf5018263842352649a9",
+  "source": "manual"
+}

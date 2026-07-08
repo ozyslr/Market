@@ -1,82 +1,249 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+﻿import React, { useState, useEffect, Suspense } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Star, Truck, ShieldCheck, ChevronRight, ShoppingCart, 
-  Globe, Heart, Share2, Info, ChevronLeft, Award, 
-  Clock, Sparkles, Zap, Shield, MapPin, 
-  Undo2, CheckCircle2, AlertCircle, MessageCircle,
-  ThumbsUp, BarChart, ExternalLink, Package, ArrowRight,
-  Facebook, Twitter, Navigation
+import {
+  Truck,
+  ChevronRight,
+  ShoppingCart,
+  Globe,
+  Heart,
+  Share2,
+  Info,
+  Award,
+  Sparkles,
+  Zap,
+  Shield,
+  AlertCircle,
+  MessageSquare,
+  TrendingUp,
+  Tag,
+  Copy,
+  BellRing,
+  Smartphone,
+  Zap as ZapIcon,
+  Facebook,
+  Twitter,
 } from 'lucide-react';
-import { MOCK_PRODUCTS } from '@/mockData';
+import { MOCK_PRODUCTS } from '@/data/mockProducts';
+import { isGpsrCompliant, getHsCodeLabel, getHsCode } from '@/services/complianceService';
+import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { useLocationStore } from '@/context/LocationContext';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { SEO } from '@/components/common/SEO';
+import { ShieldCheck, AlertTriangle } from 'lucide-react';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { getProductBySlug } from '@/services/productService';
-import { Product, Review } from '@/types';
-import { useCartStore } from '@/store/useCartStore';
-import { useWishlistStore } from '@/store/useWishlistStore';
-import { useReviewStore } from '@/store/useReviewStore';
+import { Product, Campaign, Coupon, ProductVariant } from '@/types';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
+import { ReviewSection } from '@/components/product/ReviewSection';
+import { CompactRating } from '@/components/product/RatingSummary';
+import { ProductGallery } from '@/components/product/ProductGallery';
+import { SellerCard } from '@/components/product/SellerCard';
+import { OtherSellers } from '@/components/product/OtherSellers';
+import { DeliveryBox } from '@/components/product/DeliveryBox';
+import { InstallmentTable } from '@/components/product/InstallmentTable';
+import { StickyBuyBar } from '@/components/product/StickyBuyBar';
+import { TrustBadges } from '@/components/product/TrustBadges';
+import { QASection } from '@/components/product/QASection';
+import { VariantSelector } from '@/components/product/VariantSelector';
+import { FrequentlyBoughtTogether } from '@/components/product/FrequentlyBoughtTogether';
+import { SocialProofBar } from '@/components/product/SocialProofBar';
+import { UnitPrice } from '@/components/product/UnitPrice';
+import { StockAlertButton } from '@/components/product/StockAlertButton';
+import { PriceTrackButton } from '@/components/product/PriceTrackButton';
+import { getActiveCampaigns, calcCampaignDiscount } from '@/services/campaignService';
+import { getCoupons } from '@/services/couponService';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
+import { trackPrice, untrackPrice, isTracking } from '@/services/priceTrackService';
+import { useOneClickCheckout } from '@/hooks/useOneClickCheckout';
+import { OneClickSuccessModal } from '@/components/checkout/OneClickSuccessModal';
+import { trackEvent, getRecentViewedIds } from '@/services/behaviorService';
+import { productSchema, breadcrumbSchema } from '@/components/seo/schemas';
+import {
+  getContentBasedRecommendations,
+  getCollaborativeRecommendations,
+} from '@/services/recommendationService';
+import { ARViewer } from '@/components/commerce/ARViewer';
+import { AuthenticityBadge } from '@/components/commerce/AuthenticityBadge';
+import { ProductDetailSkeleton } from '@/components/ui/Skeleton';
+import { PriceHistoryChart } from '@/components/product/PriceHistoryChart';
+import { ComparisonBar } from '@/components/commerce/ComparisonBar';
+import { ComparisonModal } from '@/components/commerce/ComparisonModal';
+import { useComparison } from '@/hooks/useComparison';
 
-// Mock data for the chart
-const MARKET_DATA = [
-  { day: 'Mon', demand: 65, price: 230 },
-  { day: 'Tue', demand: 72, price: 245 },
-  { day: 'Wed', demand: 68, price: 240 },
-  { day: 'Thu', demand: 85, price: 260 },
-  { day: 'Fri', demand: 92, price: 280 },
-  { day: 'Sat', demand: 88, price: 275 },
-  { day: 'Sun', demand: 95, price: 299 },
-];
+const AIProductInsights = React.lazy(() =>
+  import('@/components/product/AIProductInsights').then((m) => ({ default: m.AIProductInsights })),
+);
+
+const POPULAR_SEARCHES_BY_LANG: Record<string, string[]> = {
+  tr: [
+    'Akıllı Saat',
+    'Kablosuz Kulaklık',
+    'Robot Süpürge',
+    'Oyuncu Bilgisayarı',
+    'Deri Ceket',
+    'Kahve Makinesi',
+    'Güneş Gözlüğü',
+    'Bluetooth Hoparlör',
+  ],
+  en: [
+    'Smart Watch',
+    'Wireless Earbuds',
+    'Robot Vacuum',
+    'Gaming Laptop',
+    'Leather Jacket',
+    'Coffee Maker',
+    'Sunglasses',
+    'Bluetooth Speaker',
+  ],
+  de: [
+    'Smartwatch',
+    'Kabellose Kopfhörer',
+    'Saugroboter',
+    'Gaming-Laptop',
+    'Lederjacke',
+    'Kaffeemaschine',
+    'Sonnenbrille',
+    'Bluetooth-Lautsprecher',
+  ],
+  ar: [
+    'ساعة ذكية',
+    'سماعات لاسلكية',
+    'مكنسة روبوت',
+    'كمبيوتر ألعاب',
+    'سترة جلدية',
+    'آلة صنع القهوة',
+    'نظارات شمسية',
+    'مكبر صوت بلوتوث',
+  ],
+};
 
 export function ProductDetail() {
-  const { t } = useLanguage();
-  const { user, login } = useAuth();
-  const { selectedLocation, setIsLocationModalOpen } = useLocationStore();
+  const { t, lang } = useLanguage();
+  const { selectedLocation, setIsLocationModalOpen, location } = useLocationStore();
+  const { user, firebaseUser } = useAuth();
+  const { addItem } = useCart();
+  const { toggleWishlist, isWishlisted } = useWishlist();
+  const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<Product | null>(null);
+  const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+
   const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews' | 'qa'>('details');
+  const [viewers, setViewers] = useState(0);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [activeCoupons, setActiveCoupons] = useState<Coupon[]>([]);
+  const [tracking, setTracking] = useState(false);
+  const [trackLoading, setTrackLoading] = useState(false);
+  const {
+    canOneClick,
+    runOneClick,
+    loading: oneClickLoading,
+    error: oneClickError,
+    successOrder,
+    clearSuccess,
+  } = useOneClickCheckout();
+  const [recSimilar, setRecSimilar] = useState<Product[]>([]);
+  const [recAlsoBought, setRecAlsoBought] = useState<Product[]>([]);
+  const [arOpen, setArOpen] = useState(false);
+  const [recentViewed, setRecentViewed] = useState<Product[]>([]);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+  const [isFollowingSeller, setIsFollowingSeller] = useState(false);
+  const {
+    addItem: addToComparison,
+    removeItem: removeFromComparison,
+    isAdded: isAddedToComparison,
+  } = useComparison();
 
-  // Wishlist
-  const wishlistItems = useWishlistStore((state) => state.items);
-  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
-  const isWishlisted = product ? wishlistItems.some((p) => p.id === product.id) : false;
+  useEffect(() => {
+    const STICKY_THRESHOLD = 600;
+    const onScroll = () => setShowStickyBar(window.scrollY > STICKY_THRESHOLD);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-  // Reviews
-  const storedReviews = useReviewStore((state) => state.reviews);
-  const addReview = useReviewStore((state) => state.addReview);
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
-  const [hoverRating, setHoverRating] = useState(0);
+  useEffect(() => {
+    if (!product?.id) return;
+    // Initial random viewer count + periodic refresh every 15s
+    setViewers(Math.floor(Math.random() * 14) + 2);
+    const interval = setInterval(() => {
+      setViewers(Math.floor(Math.random() * 14) + 2);
+    }, 15_000);
+    return () => clearInterval(interval);
+  }, [product?.id]);
 
-  const userReviews: Review[] = product
-    ? storedReviews.filter((r) => r.productId === product.id)
-    : [];
-  const allReviews: Review[] = [...userReviews, ...(product?.reviews || [])];
+  useEffect(() => {
+    if (!product?.id) return;
 
-  const handleSubmitReview = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!product || !reviewComment.trim()) return;
-    addReview({
-      productId: product.id,
-      userId: user?.id || 'guest',
-      userName: user?.name || 'Misafir Kullanıcı',
-      rating: reviewRating,
-      comment: reviewComment.trim(),
-    });
-    setReviewComment('');
-    setReviewRating(5);
-  };
+    // 1. Firebase tracking (authenticated user)
+    if (firebaseUser?.uid) {
+      trackEvent(firebaseUser.uid, {
+        type: 'view',
+        productId: product.id,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // 2. localStorage tracking (both guest & logged-in user fallback)
+    try {
+      const localKey = 'mercora_recently_viewed_local';
+      const existing = localStorage.getItem(localKey);
+      let list: string[] = existing ? JSON.parse(existing) : [];
+      list = [product.id, ...list.filter((id) => id !== product.id)].slice(0, 10);
+      localStorage.setItem(localKey, JSON.stringify(list));
+    } catch (err) {
+      console.error('Error tracking recently viewed locally:', err);
+    }
+  }, [firebaseUser?.uid, product?.id]);
+
+  useEffect(() => {
+    async function loadRecentViewed() {
+      if (!product?.id) return;
+      let viewedIds: string[] = [];
+
+      if (firebaseUser?.uid) {
+        viewedIds = await getRecentViewedIds(firebaseUser.uid, 12);
+      }
+
+      // Fallback or guest user: read from localStorage
+      if (viewedIds.length === 0) {
+        try {
+          const localKey = 'mercora_recently_viewed_local';
+          const existing = localStorage.getItem(localKey);
+          viewedIds = existing ? JSON.parse(existing) : [];
+        } catch {
+          viewedIds = [];
+        }
+      }
+
+      // Filter out current product id
+      const filteredIds = viewedIds.filter((id) => id !== product.id);
+
+      // Map to MOCK_PRODUCTS
+      const products = filteredIds
+        .map((id) => MOCK_PRODUCTS.find((p) => p.id === id))
+        .filter((p): p is Product => !!p);
+
+      setRecentViewed(products.slice(0, 8));
+    }
+
+    loadRecentViewed();
+  }, [product?.id, firebaseUser?.uid]);
+
+  useEffect(() => {
+    if (!firebaseUser || !product?.id) return;
+    isTracking(firebaseUser.uid, product.id)
+      .then(setTracking)
+      .catch(() => {});
+  }, [firebaseUser, product]);
 
   useEffect(() => {
     async function loadProduct() {
@@ -89,615 +256,934 @@ export function ProductDetail() {
     loadProduct();
   }, [slug]);
 
+  useEffect(() => {
+    if (!product) return;
+    getActiveCampaigns().then((all) => {
+      const relevant = all.filter(
+        (c) =>
+          c.targetType === 'all_products' ||
+          (c.targetType === 'category' && c.targetValue === product.categoryId) ||
+          (c.targetType === 'brand' && c.targetValue === product.brand),
+      );
+      setCampaigns(relevant);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.categoryId, product?.brand]);
+
+  useEffect(() => {
+    getCoupons().then((all) => {
+      const valid = all.filter(
+        (c) =>
+          c.isActive &&
+          (!c.expiresAt || new Date(c.expiresAt) > new Date()) &&
+          (!c.maxUses || c.usedCount < c.maxUses),
+      );
+      setActiveCoupons(valid.slice(0, 3));
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    getContentBasedRecommendations(product, 10).then(setRecSimilar);
+    getCollaborativeRecommendations(product.id, 6).then(setRecAlsoBought);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
+
+  async function handleTrackPrice() {
+    if (!firebaseUser || !product) return; // silently ignore — UI should guide user to login
+    setTrackLoading(true);
+    try {
+      if (tracking) {
+        await untrackPrice(firebaseUser.uid, product.id);
+        setTracking(false);
+      } else {
+        await trackPrice(firebaseUser.uid, product.id, product.price);
+        setTracking(true);
+      }
+    } finally {
+      setTrackLoading(false);
+    }
+  }
+
+  const handleBuyNow = () => {
+    if (!product || !canOneClick) return;
+    const hasVariants =
+      (product.variantAttributes?.length ?? 0) > 0 && (product.variants?.length ?? 0) > 0;
+    const selectedVariant: ProductVariant | undefined = hasVariants
+      ? product.variants!.find((v) =>
+          product.variantAttributes!.every((attr) => v.attributes[attr] === selectedAttrs[attr]),
+        )
+      : undefined;
+    runOneClick(
+      [{ productId: product.id, variantId: selectedVariant?.id, quantity }],
+      product.currency ?? user?.currency ?? 'gbp',
+    );
+  };
+
+  const memoizedSpecs = React.useMemo(
+    () => product?.specifications ?? {},
+    [product?.specifications],
+  );
+
   if (loading) {
     return (
-       <div className="min-h-screen bg-brand-secondary flex flex-col items-center justify-center gap-6">
-          <Sparkles size={48} className="text-accent animate-pulse" />
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-primary/20">Syncing Artifact Data...</p>
-       </div>
+      <div className="min-h-screen bg-[#f2f4f7] dark:bg-zinc-950 transition-colors duration-300">
+        <ProductDetailSkeleton />
+      </div>
     );
   }
 
-  if (!product) return (
-    <div className="min-h-screen bg-brand-secondary flex flex-col items-center justify-center p-12 text-center">
-       <AlertCircle size={48} className="text-red-500 mb-6" />
-       <h2 className="text-2xl font-black uppercase italic tracking-tighter text-brand-primary">Artifact Not Found</h2>
-       <p className="text-brand-primary/40 text-xs font-bold uppercase tracking-widest mt-4">The requested data node does not exist in the master matrix.</p>
-       <Link to="/" className="mt-10 px-8 py-3 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Master Feed</Link>
-    </div>
-  );
+  if (!product)
+    return (
+      <div className="min-h-screen bg-brand-secondary flex flex-col items-center justify-center p-12 text-center">
+        <AlertCircle size={48} className="text-red-500 mb-6" />
+        <h2 className="text-2xl font-black uppercase italic tracking-tighter text-brand-primary">
+          Artifact Not Found
+        </h2>
+        <p className="text-brand-primary/40 text-xs font-bold uppercase tracking-widest mt-4">
+          The requested data node does not exist in the master matrix.
+        </p>
+        <Link
+          to="/"
+          className="mt-10 px-8 py-3 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
+        >
+          Master Feed
+        </Link>
+      </div>
+    );
+
+  const cartDiscount = product
+    ? calcCampaignDiscount(campaigns, product.price, product.categoryId, product.brand)
+    : 0;
+  const cartPrice = product ? product.price - cartDiscount : 0;
 
   // Recommendations logic
-  const relatedProducts = MOCK_PRODUCTS.filter(p => product.relatedProductIds?.includes(p.id));
-  const boughtTogether = MOCK_PRODUCTS.filter(p => product.frequentlyBoughtTogetherIds?.includes(p.id));
-  const sellerProducts = MOCK_PRODUCTS.filter(p => p.sellerId === product.sellerId && p.id !== product.id);
-  const categoriesProducts = MOCK_PRODUCTS.filter(p => p.categoryId === product.categoryId && p.id !== product.id).slice(0, 10);
+  const relatedProducts = MOCK_PRODUCTS.filter((p) => product.relatedProductIds?.includes(p.id));
+  const boughtTogether = MOCK_PRODUCTS.filter((p) =>
+    product.frequentlyBoughtTogetherIds?.includes(p.id),
+  );
+  const sellerProducts = MOCK_PRODUCTS.filter(
+    (p) => p.sellerId === product.sellerId && p.id !== product.id,
+  );
+  const categoriesProducts = MOCK_PRODUCTS.filter(
+    (p) => p.categoryId === product.categoryId && p.id !== product.id,
+  ).slice(0, 10);
 
-  const currentMarket = MARKETS['UK'];
+  const currentMarket = MARKETS[location.market] ?? MARKETS['UK'];
   const tax = calculateTotal(product.price, 12, currentMarket, product.originCountry === 'UK');
 
+  const scrollToReviews = () => {
+    setActiveTab('reviews');
+    document.querySelector('[data-tab-panel]')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <div className="bg-[#f2f4f7] dark:bg-zinc-950 min-h-screen pb-20 transition-colors duration-300">
-      <SEO 
-        title={product.title} 
+    <div className="bg-white dark:bg-zinc-950 min-h-screen pb-20 transition-colors duration-300">
+      <SEO
+        title={product.title}
         description={product.description}
         image={product.images[0]}
         type="product"
+        lang={lang}
+        jsonLd={[
+          productSchema({
+            name: product.title,
+            description: product.description,
+            image: product.images,
+            sku: product.id,
+            brand: product.brand || undefined,
+            price: product.price,
+            currency: product.currency ?? 'TRY',
+            availability: product.stock > 0 ? 'InStock' : 'OutOfStock',
+            ratingValue: product.rating || undefined,
+            reviewCount: product.reviewsCount || undefined,
+            url: `/product/${product.slug}`,
+          }),
+          breadcrumbSchema([
+            { name: 'Ana Sayfa', url: '/' },
+            { name: product.categoryId, url: `/search?category=${product.categoryId}` },
+            { name: product.title, url: `/product/${product.slug}` },
+          ]),
+        ]}
       />
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6">
-        
+      <div className="max-w-[1440px] mx-auto px-4 md:px-8">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-1 text-[11px] font-bold text-brand-primary/40 uppercase tracking-wider py-6 overflow-hidden whitespace-nowrap">
-          <Link to="/" className="hover:text-accent transition-colors">Ana Sayfa</Link>
+          <Link to="/" className="hover:text-accent transition-colors">
+            Ana Sayfa
+          </Link>
           <ChevronRight size={10} />
-          <Link to={`/search?category=${product.categoryId}`} className="hover:text-accent transition-colors uppercase">{product.categoryId}</Link>
+          <Link
+            to={`/search?category=${product.categoryId}`}
+            className="hover:text-accent transition-colors uppercase"
+          >
+            {product.categoryId}
+          </Link>
           <ChevronRight size={10} />
           <span className="text-brand-primary truncate">{product.title}</span>
         </nav>
 
-        {/* Main Product Table/Stage */}
-        <div className="grid lg:grid-cols-12 gap-8 mb-12">
-          
-          {/* Left: Gallery & Main Info */}
-          <div className="lg:col-span-9 space-y-8">
-            <div className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm overflow-hidden p-6 md:p-8">
-              <div className="grid md:grid-cols-2 gap-12">
-                {/* Gallery */}
-                <div className="space-y-6">
-                  <div className="aspect-square bg-white rounded-3xl overflow-hidden border border-brand-primary/5 p-8 relative flex items-center justify-center">
-                    <motion.img 
-                      key={activeImage}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      src={product.images[activeImage]} 
-                      className="w-full h-full object-contain mix-blend-multiply" 
-                      alt="" 
-                      referrerPolicy="no-referrer" 
-                    />
-                    <div className="absolute top-6 right-6 flex flex-col gap-3">
+        {/* Main Product Stage: 2-Column Layout (60% Gallery / 40% Sidebar) */}
+        <div className="max-w-[1060px]">
+          <div className="grid lg:grid-cols-[460px_1fr] gap-6 mb-8 items-start overflow-hidden">
+            {/* LEFT: Gallery */}
+            <div>
+              <ProductGallery
+                images={product.images}
+                title={product.title}
+                extraActions={
+                  <>
+                    {product.model3dUrl && (
                       <button
-                        onClick={() => toggleWishlist(product)}
-                        aria-label={isWishlisted ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-                        className={cn(
-                          "p-3 backdrop-blur shadow-xl rounded-full transition-all border active:scale-90",
-                          isWishlisted
-                            ? "bg-[#F9423A] text-white border-[#F9423A]"
-                            : "bg-white/80 text-brand-primary/40 border-brand-primary/5 hover:text-[#F9423A] hover:bg-white"
-                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setArOpen(true);
+                        }}
+                        className="p-3 bg-gradient-to-br from-purple-500 to-blue-500 shadow-xl rounded-full text-white hover:from-purple-400 hover:to-blue-400 transition-all border border-white/20"
+                        title="3D / AR ile görüntüle"
+                        aria-label="3D/AR ile görüntüle"
                       >
-                        <Heart size={20} fill={isWishlisted ? 'currentColor' : 'none'} />
+                        <Smartphone size={20} />
                       </button>
-                      <div className="relative group">
-                         <button className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5">
-                           <Share2 size={20} />
-                         </button>
-                         <div className="absolute right-full top-0 mr-3 flex items-center gap-2 opacity-0 -translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-300">
-                           <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1877F2] hover:scale-110 transition-transform">
-                              <Facebook size={18} />
-                           </a>
-                           <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1DA1F2] hover:scale-110 transition-transform">
-                              <Twitter size={18} />
-                           </a>
-                           <a href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(window.location.href)}&media=${encodeURIComponent(product.images[0])}&description=${encodeURIComponent(product.title)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#E60023] hover:scale-110 transition-transform">
-                              <span className="font-extrabold text-sm" style={{ fontFamily: 'serif' }}>P</span>
-                           </a>
-                         </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-                    {product.images.map((img, i) => (
-                      <button
-                        key={i}
-                        onMouseEnter={() => setActiveImage(i)}
-                        className={cn(
-                          "w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all p-1 bg-white shrink-0",
-                          activeImage === i ? "border-accent shadow-lg" : "border-transparent opacity-60 hover:opacity-100"
-                        )}
-                      >
-                        <img src={img} alt="" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Info & Price */}
-                <div className="flex flex-col">
-                  <div className="mb-6">
-                     <Link to={`/seller/${product.sellerId}`} className="text-accent text-sm font-black uppercase tracking-widest hover:underline decoration-2">{product.brand}</Link>
-                     <h1 className="text-2xl md:text-3xl font-display font-black tracking-tight text-brand-primary mt-2 leading-[1.2]">{product.title}</h1>
-                     <div className="flex items-center gap-4 mt-4">
-                        <div className="flex items-center gap-1">
-                           <Star size={18} fill="#FF5200" className="text-accent" />
-                           <span className="text-sm font-black text-brand-primary">{product.rating}</span>
-                        </div>
-                        <div className="h-4 w-[1px] bg-brand-primary/10" />
-                        <span className="text-sm font-bold text-brand-primary/40 underline decoration-dotted">{product.reviewsCount + userReviews.length} {t('product.reviews')}</span>
-                        <div className="h-4 w-[1px] bg-brand-primary/10" />
-                        <span className="text-sm font-bold text-green-600">661 {t('product.questions_answers')}</span>
-                     </div>
-                  </div>
-
-                  <div className="p-8 bg-brand-secondary/30 rounded-[2rem] border border-brand-primary/5 mb-8">
-                     <div className="flex items-baseline gap-4 mb-2">
-                       <span className="text-4xl font-display font-black text-brand-primary italic">£{product.price.toFixed(2)}</span>
-                       {product.oldPrice && <span className="text-lg text-brand-primary/30 line-through">£{product.oldPrice.toFixed(2)}</span>}
-                     </div>
-                     <p className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest flex items-center gap-2">
-                        <Truck size={12} className="text-green-500" /> {t('badge.free_shipping')} • {t('badge.tomorrow_at_door')}
-                     </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                       <div className="w-24 h-12 bg-white border border-brand-primary/5 rounded-xl flex items-center px-1">
-                          <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="flex-1 text-brand-primary/40 hover:text-brand-primary">-</button>
-                          <span className="w-8 text-center font-black text-sm">{quantity}</span>
-                          <button onClick={() => setQuantity(quantity + 1)} className="flex-1 text-brand-primary/40 hover:text-brand-primary">+</button>
-                       </div>
-                       <button 
-                         onClick={() => {
-                           useCartStore.getState().addItem(product, quantity);
-                           useCartStore.getState().setIsOpen(true);
-                         }}
-                         className="flex-1 h-12 bg-accent text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-brand-primary transition-all shadow-lg shadow-accent/20 flex items-center justify-center gap-3"
-                       >
-                         <ShoppingCart size={18} /> {t('product.add_cart')}
-                       </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-8 pt-6 border-t border-brand-primary/5">
-                     <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-3">Bu Ürünü Paylaş</p>
-                     <div className="flex items-center gap-2">
-                        <button className="w-10 h-10 rounded-xl bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white transition-all flex items-center justify-center">
-                           <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 320 512" height="18px" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z"></path></svg>
-                        </button>
-                        <button className="w-10 h-10 rounded-xl bg-[#000000]/5 text-[#000000] hover:bg-[#000000] hover:text-white transition-all flex items-center justify-center">
-                           <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" height="18px" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path></svg>
-                        </button>
-                        <button className="w-10 h-10 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all flex items-center justify-center">
-                           <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" height="18px" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zM223.9 413.2c-32.9 0-65.1-8.8-93.5-25.5l-6.7-4-69.5 18.2L72 334l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.5-186.6 184.5zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"></path></svg>
-                        </button>
-                     </div>
-                  </div>
-
-                  <div className="mt-12 space-y-4">
-                     {/* Location Based Delivery Widget */}
-                     <div className="p-5 border border-brand-primary/10 bg-brand-secondary/30 dark:bg-zinc-900/40 rounded-2xl flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between group hover:border-accent/40 transition-colors cursor-pointer" onClick={() => setIsLocationModalOpen(true)}>
-                        <div className="flex gap-4 items-start sm:items-center">
-                           <div className="w-12 h-12 bg-white dark:bg-zinc-800 shadow-sm rounded-[1rem] flex items-center justify-center text-accent group-hover:scale-110 transition-transform shrink-0">
-                              <Navigation size={22} className="fill-accent/20" />
-                           </div>
-                           <div className="flex flex-col">
-                             <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-white/40">Teslimat Adresi</span>
-                                <div className="h-1 w-1 rounded-full bg-brand-primary/20" />
-                                <span className="text-[10px] font-bold text-accent truncate max-w-[150px]">{selectedLocation}</span>
-                             </div>
-                             <p className="text-sm font-bold text-brand-primary dark:text-white">
-                                {selectedLocation.includes("İstanbul") || selectedLocation.toLowerCase().includes("istanbul") ? "Yarın Kapında (" : "En geç 2 gün içinde ("}
-                                <span className="text-green-600">Ücretsiz Teslimat</span>)
-                             </p>
-                           </div>
-                        </div>
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 rounded-lg shadow-sm sm:ml-auto">
-                           <span className="text-[10px] font-bold text-brand-primary/60 dark:text-white/60">Değiştir</span>
-                           <ChevronRight size={14} className="text-brand-primary/40" />
-                        </div>
-                     </div>
-
-                     {/* Additional Delivery Perks */}
-                     <div className="grid grid-cols-2 gap-3">
-                        <div className="p-4 rounded-xl border border-brand-primary/5 bg-white dark:bg-zinc-900 flex flex-col justify-center">
-                           <div className="flex items-center gap-2 mb-2">
-                             <Package size={16} className="text-[#F9423A]" />
-                             <span className="text-[10px] font-black uppercase tracking-widest">Kolay İade</span>
-                           </div>
-                           <p className="text-xs font-bold opacity-60">15 gün içinde koşulsuz ücretsiz iade hakkı.</p>
-                        </div>
-                        <div className="p-4 rounded-xl border border-brand-primary/5 bg-white dark:bg-zinc-900 flex flex-col justify-center">
-                           <div className="flex items-center gap-2 mb-2">
-                             <ShieldCheck size={16} className="text-green-500" />
-                             <span className="text-[10px] font-black uppercase tracking-widest">Garantili</span>
-                           </div>
-                           <p className="text-xs font-bold opacity-60">2 Yıl distribütör garantisi altındadır.</p>
-                        </div>
-                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Frequently Bought Together */}
-            {boughtTogether.length > 0 && (
-              <div className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm p-6 md:p-8">
-                <h3 className="text-xl font-black text-brand-primary uppercase italic mb-8 border-b border-brand-primary/5 pb-4">{t('product.bought_together')}</h3>
-                <div className="flex flex-col xl:flex-row items-center gap-8">
-                  <div className="flex flex-wrap items-center justify-center gap-4">
-                    <div className="w-24 h-24 md:w-32 md:h-32 p-2 border border-brand-primary/5 rounded-2xl bg-white shrink-0">
-                      <img src={product.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt="" />
-                    </div>
-                    <span className="text-xl md:text-2xl font-black text-brand-primary/20">+</span>
-                    {boughtTogether.map((p, i) => (
-                      <React.Fragment key={p.id}>
-                        <div className="w-24 h-24 md:w-32 md:h-32 p-2 border border-brand-primary/5 rounded-2xl bg-white shrink-0 group relative cursor-pointer">
-                          <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt="" />
-                          <div className="absolute inset-0 bg-accent/90 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center text-white text-[9px] md:text-[10px] font-black uppercase text-center p-2">
-                             {p.title}
-                          </div>
-                        </div>
-                        {i < boughtTogether.length - 1 && <span className="text-xl md:text-2xl font-black text-brand-primary/20">+</span>}
-                      </React.Fragment>
-                    ))}
-                  </div>
-                  <div className="w-full xl:w-auto flex-1 xl:border-l xl:border-brand-primary/5 xl:pl-8 text-center xl:text-left">
-                     <p className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest mb-1">Toplam Fiyat</p>
-                     <p className="text-2xl md:text-3xl font-display font-black text-accent italic">£{(product.price + boughtTogether.reduce((acc, curr) => acc + curr.price, 0)).toFixed(2)}</p>
-                     <button 
-                       onClick={() => {
-                         useCartStore.getState().addItem(product, 1);
-                         boughtTogether.forEach(p => useCartStore.getState().addItem(p, 1));
-                         useCartStore.getState().setIsOpen(true);
-                       }}
-                       className="mt-4 w-full xl:w-auto px-8 lg:px-12 py-4 lg:py-3 bg-brand-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-black transition-all"
-                     >
-                       Listeyi Sepete Ekle
-                     </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tabbed Detailed View */}
-            <div className="bg-white rounded-[2rem] border border-brand-primary/5 shadow-sm overflow-hidden">
-               <div className="flex border-b border-brand-primary/5 overflow-x-auto no-scrollbar">
-                  {[
-                    { id: 'details', label: t('product.description') },
-                    { id: 'specs', label: t('product.specifications') },
-                    { id: 'reviews', label: t('product.reviews') },
-                    { id: 'qa', label: t('product.questions_answers') }
-                  ].map(tab => (
-                    <button 
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleWishlist(product.id);
+                      }}
+                      aria-label={
+                        isWishlisted(product.id) ? 'Favorilerden çıkar' : 'Favorilere ekle'
+                      }
                       className={cn(
-                        "px-8 py-6 text-xs font-black uppercase tracking-widest transition-all relative shrink-0",
-                        activeTab === tab.id ? "text-accent" : "text-brand-primary/30 hover:text-brand-primary"
+                        'p-3 bg-white/80 backdrop-blur shadow-xl rounded-full transition-all border border-brand-primary/5',
+                        isWishlisted(product.id)
+                          ? 'text-red-500 bg-white'
+                          : 'text-brand-primary/40 hover:text-accent hover:bg-white',
                       )}
                     >
-                      {tab.label}
-                      {activeTab === tab.id && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1 bg-accent" />}
+                      <Heart size={20} fill={isWishlisted(product.id) ? 'currentColor' : 'none'} />
                     </button>
-                  ))}
-               </div>
-               
-               <div className="p-8 md:p-12">
-                  <AnimatePresence mode="wait">
-                    {activeTab === 'details' && (
-                      <motion.div 
-                        key="details"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="prose prose-zinc dark:prose-invert max-w-none"
+                    <div className="relative group" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        aria-label="Paylaş"
+                        className="p-3 bg-white/80 backdrop-blur shadow-xl rounded-full text-brand-primary/40 hover:text-accent hover:bg-white transition-all border border-brand-primary/5"
                       >
-                         <h2 className="text-2xl font-display font-black text-brand-primary uppercase italic mb-6">Artifact Intelligence</h2>
-                         <div className="text-brand-primary/70 leading-relaxed font-medium whitespace-pre-wrap">
-                            {product.longDescription || product.description}
-                         </div>
-                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
-                            {[
-                              { label: 'Origin', value: product.originCountry, icon: Globe },
-                              { label: 'Merchant', value: product.brand, icon: Award },
-                              { label: 'Protection', value: 'Escrow', icon: Shield },
-                              { label: 'Express', value: 'Priority', icon: Zap },
-                            ].map((f, i) => (
-                              <div key={i} className="p-6 bg-brand-secondary/30 rounded-3xl border border-brand-primary/5 text-center group hover:bg-white hover:shadow-xl transition-all">
-                                 <f.icon size={24} className="text-accent mx-auto mb-4" />
-                                 <p className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest">{f.label}</p>
-                                 <p className="text-xs font-black text-brand-primary uppercase mt-1">{f.value}</p>
-                              </div>
-                            ))}
-                         </div>
-                      </motion.div>
-                    )}
-
-                    {activeTab === 'specs' && (
-                      <motion.div 
-                        key="specs"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                      >
-                        <h2 className="text-2xl font-display font-black text-brand-primary uppercase italic mb-8">Technical Mapping</h2>
-                        <div className="grid grid-cols-1 border border-brand-primary/5 rounded-3xl overflow-hidden shadow-sm">
-                           {product.specifications ? Object.entries(product.specifications).map(([key, val], i) => (
-                             <div key={key} className={cn("grid grid-cols-2 p-6 transition-colors", i % 2 === 0 ? "bg-brand-secondary/20" : "bg-white")}>
-                               <span className="text-[10px] font-black uppercase tracking-wider text-brand-primary/40">{key}</span>
-                               <span className="text-sm font-black text-brand-primary uppercase italic">{val}</span>
-                             </div>
-                           )) : (
-                             <div className="p-12 text-center text-brand-primary/20 italic">No structured data for this artifact.</div>
-                           )}
-                           <div className="grid grid-cols-2 p-6 bg-brand-primary text-white">
-                             <span className="text-[10px] font-black uppercase tracking-wider opacity-60">Global HS-CODE</span>
-                             <span className="text-sm font-black uppercase italic">{product.hsCode || '85.43.00.00'}</span>
-                           </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {activeTab === 'reviews' && (
-                      <motion.div 
-                        key="reviews"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="space-y-12"
-                      >
-                         <div className="grid md:grid-cols-3 gap-12 border-b border-brand-primary/5 pb-12">
-                            <div className="text-center md:text-left space-y-4">
-                               <h4 className="text-6xl font-display font-black text-brand-primary uppercase italic">{product.rating}</h4>
-                               <div className="flex items-center justify-center md:justify-start gap-1">
-                                 {Array.from({ length: 5 }).map((_, i) => (
-                                   <Star key={i} size={24} fill={i < Math.floor(product.rating) ? "#FF5200" : "none"} className={i < Math.floor(product.rating) ? "text-accent" : "text-brand-primary/10"} />
-                                 ))}
-                               </div>
-                               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary/40">Verified Artifact Balance</p>
-                            </div>
-                            <div className="md:col-span-2 space-y-4">
-                               {[5, 4, 3, 2, 1].map(star => {
-                                 const count = [85, 10, 3, 1, 1][5-star];
-                                 return (
-                                   <div key={star} className="flex items-center gap-4">
-                                      <span className="text-[10px] font-black w-8 text-brand-primary/60">{star} ★</span>
-                                      <div className="flex-1 h-3 bg-brand-secondary rounded-full overflow-hidden border border-brand-primary/5">
-                                         <div className="h-full bg-accent shadow-[0_0_10px_rgba(255,82,0,0.4)]" style={{ width: `${count}%` }} />
-                                      </div>
-                                      <span className="text-[10px] font-black w-8 text-brand-primary/40 text-right">{count}%</span>
-                                   </div>
-                                 );
-                               })}
-                            </div>
-                         </div>
-                         
-                         {/* Write a Review */}
-                         <div className="bg-brand-secondary/30 rounded-[2rem] border border-brand-primary/5 p-6 md:p-8">
-                            <h4 className="text-sm font-black uppercase tracking-widest text-brand-primary mb-6 flex items-center gap-2">
-                               <MessageCircle size={16} className="text-accent" /> Değerlendirme Yaz
-                            </h4>
-                            <form onSubmit={handleSubmitReview} className="space-y-5">
-                               <div className="flex items-center gap-3">
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">Puanın</span>
-                                  <div className="flex items-center gap-1">
-                                     {Array.from({ length: 5 }).map((_, i) => {
-                                       const value = i + 1;
-                                       return (
-                                         <button
-                                           key={i}
-                                           type="button"
-                                           onClick={() => setReviewRating(value)}
-                                           onMouseEnter={() => setHoverRating(value)}
-                                           onMouseLeave={() => setHoverRating(0)}
-                                           className="p-0.5 transition-transform hover:scale-110"
-                                         >
-                                            <Star
-                                              size={22}
-                                              fill={value <= (hoverRating || reviewRating) ? '#FF5200' : 'none'}
-                                              className={value <= (hoverRating || reviewRating) ? 'text-accent' : 'text-brand-primary/20'}
-                                            />
-                                         </button>
-                                       );
-                                     })}
-                                  </div>
-                               </div>
-                               <textarea
-                                 value={reviewComment}
-                                 onChange={(e) => setReviewComment(e.target.value)}
-                                 placeholder="Bu ürün hakkındaki deneyimini paylaş..."
-                                 rows={4}
-                                 className="w-full p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-brand-primary/10 text-sm font-medium text-brand-primary dark:text-white placeholder:text-brand-primary/30 focus:border-accent outline-none transition-all resize-none"
-                               />
-                               <div className="flex items-center justify-between gap-4">
-                                  <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
-                                     {user ? `${user.name} olarak yazıyorsun` : 'Misafir olarak yazıyorsun'}
-                                  </p>
-                                  <button
-                                    type="submit"
-                                    disabled={!reviewComment.trim()}
-                                    className="px-8 py-3 bg-accent text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-accent/20 hover:bg-brand-primary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                                  >
-                                     Gönder
-                                  </button>
-                               </div>
-                            </form>
-                         </div>
-
-                         <div className="space-y-12">
-                            {allReviews.length === 0 && (
-                              <div className="py-12 text-center text-brand-primary/30 text-sm font-bold uppercase tracking-widest">
-                                 Henüz değerlendirme yok. İlk yorumu sen yaz!
-                              </div>
-                            )}
-                            {allReviews.map((review) => (
-                              <div key={review.id} className="group pb-12 border-b border-brand-primary/5">
-                                 <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-3">
-                                       <div className="w-12 h-12 bg-accent/10 border border-accent/20 rounded-2xl flex items-center justify-center font-black text-accent uppercase">
-                                          {review.userName.charAt(0)}
-                                       </div>
-                                       <div>
-                                          <p className="text-xs font-black uppercase tracking-wider text-brand-primary">{review.userName}</p>
-                                          <div className="flex items-center gap-1 text-accent mt-1">
-                                            {Array.from({length: 5}).map((_, i) => (
-                                              <Star key={i} size={10} fill={i < review.rating ? "currentColor" : "none"} />
-                                            ))}
-                                            <span className="text-[10px] font-black ml-2 text-brand-primary/40">{review.createdAt.split('T')[0]}</span>
-                                          </div>
-                                       </div>
-                                    </div>
-                                    {review.verified && (
-                                       <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-600 rounded-full border border-green-500/20">
-                                          <CheckCircle2 size={12} />
-                                          <span className="text-[8px] font-black uppercase tracking-widest">{t('product.verified_purchase')}</span>
-                                       </div>
-                                    )}
-                                 </div>
-                                 <p className="text-sm text-brand-primary/70 leading-relaxed font-medium mb-6">{review.comment}</p>
-                                 <div className="flex items-center gap-6">
-                                    <button className="flex items-center gap-2 text-[10px] font-black uppercase text-brand-primary/40 hover:text-accent transition-colors"><ThumbsUp size={14} /> {t('product.useful')} (12)</button>
-                                    <button className="flex items-center gap-2 text-[10px] font-black uppercase text-brand-primary/40 hover:text-accent transition-colors"><MessageCircle size={14} /> Yanıtla</button>
-                                 </div>
-                              </div>
-                            ))}
-                         </div>
-                      </motion.div>
-                    )}
-
-                    {activeTab === 'qa' && (
-                       <motion.div key="qa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-12 text-center space-y-4">
-                          <MessageCircle size={48} className="mx-auto text-brand-primary/10" />
-                          <h3 className="text-xl font-display font-black text-brand-primary uppercase italic">Community Intelligence Pool</h3>
-                          <p className="text-sm text-brand-primary/40 max-w-sm mx-auto uppercase font-bold tracking-widest tracking-tight">Ask a question to verified buyers or the artisan directly.</p>
-                          <button className="px-8 py-3 bg-accent text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-xl shadow-accent/20">Soru Sor</button>
-                       </motion.div>
-                    )}
-                  </AnimatePresence>
-               </div>
+                        <Share2 size={20} />
+                      </button>
+                      <div className="absolute end-full top-0 me-3 flex items-center gap-2 opacity-0 -translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-300">
+                        <a
+                          href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Facebook'ta paylaş"
+                          className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1877F2] hover:scale-110 transition-transform"
+                        >
+                          <Facebook size={18} />
+                        </a>
+                        <a
+                          href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(product.title)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Twitter'da paylaş"
+                          className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#1DA1F2] hover:scale-110 transition-transform"
+                        >
+                          <Twitter size={18} />
+                        </a>
+                        <a
+                          href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(window.location.href)}&media=${encodeURIComponent(product.images[0])}&description=${encodeURIComponent(product.title)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Pinterest'te paylaş"
+                          className="p-3 bg-white/90 backdrop-blur shadow-lg rounded-full text-[#E60023] hover:scale-110 transition-transform"
+                        >
+                          <span className="font-extrabold text-sm" style={{ fontFamily: 'serif' }}>
+                            P
+                          </span>
+                        </a>
+                      </div>
+                    </div>
+                  </>
+                }
+              />
             </div>
 
-            {/* Recommendations Blocks */}
-            <ProductCarousel title={t('product.you_might_also_like')} products={categoriesProducts} />
-            <ProductCarousel title={t('product.everyone_looking')} products={MOCK_PRODUCTS.filter(p => p.featured).slice(0, 10)} />
+            {/* RIGHT: Product Info Sidebar */}
+            <div className="divide-y divide-gray-100">
+              {/* Product Info */}
+              <div className="pb-4 space-y-3.5">
+                {/* Brand & Badges */}
+                <div className="space-y-3">
+                  <Link
+                    to={`/seller/${product.sellerId}`}
+                    className="text-accent text-xs font-black uppercase tracking-widest hover:underline decoration-2"
+                  >
+                    {product.brand}
+                  </Link>
+                  {(product.bestSeller ||
+                    product.isFlashDeal ||
+                    product.promoBadge ||
+                    product.newArrival ||
+                    (product.discountPercentage ?? 0) > 0) && (
+                    <div className="flex flex-wrap gap-2">
+                      {product.isFlashDeal && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-500 text-white text-[9px] font-black uppercase rounded-lg">
+                          <Zap size={9} /> Flaş İndirim
+                        </span>
+                      )}
+                      {product.bestSeller && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-500 text-white text-[9px] font-black uppercase rounded-lg">
+                          <TrendingUp size={9} /> En Çok Satan
+                        </span>
+                      )}
+                      {product.newArrival && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500 text-white text-[9px] font-black uppercase rounded-lg">
+                          <Sparkles size={9} /> Yeni
+                        </span>
+                      )}
+                      {product.promoBadge && (
+                        <span className="px-2 py-1 bg-purple-500 text-white text-[9px] font-black uppercase rounded-lg">
+                          {product.promoBadge}
+                        </span>
+                      )}
+                      {(product.discountPercentage ?? 0) > 0 && (
+                        <span className="px-2 py-1 bg-[#1A1033] text-white text-[9px] font-black rounded-lg">
+                          %{product.discountPercentage}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Title */}
+                <h1 className="text-xl md:text-2xl font-display font-black tracking-tight text-brand-primary leading-[1.2]">
+                  {product.title}
+                </h1>
+
+                {/* Rating & Reviews */}
+                <div className="flex items-center gap-4 pb-4 border-b border-brand-primary/5">
+                  <CompactRating
+                    rating={product.rating}
+                    reviewsCount={product.reviewsCount || 0}
+                    onScrollToReviews={scrollToReviews}
+                  />
+                </div>
+
+                {/* Price Section */}
+                <div className="space-y-2">
+                  <div>
+                    {product.oldPrice && (
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-base text-gray-400 line-through">
+                          £{product.oldPrice.toFixed(2)}
+                        </span>
+                        {product.discountPercentage && product.discountPercentage > 0 && (
+                          <span className="px-1.5 py-0.5 bg-[#FF6000] text-white text-[10px] font-bold rounded">
+                            %{product.discountPercentage}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-[28px] font-bold text-[#1A1033] tracking-tight">
+                        £{Math.floor(product.price)}
+                      </span>
+                      <span className="text-lg font-bold text-[#1A1033]">
+                        ,
+                        {Math.floor((product.price % 1) * 100)
+                          .toString()
+                          .padStart(2, '0')}
+                      </span>
+                    </div>
+                    {product.unitLabel && product.unitAmount && (
+                      <UnitPrice
+                        price={cartPrice}
+                        unitAmount={product.unitAmount}
+                        unitLabel={product.unitLabel}
+                        currency={product.currency ?? 'gbp'}
+                      />
+                    )}
+                    <p className="text-[10px] font-black uppercase text-green-600 tracking-widest flex items-center gap-1.5 mt-2">
+                      <Truck size={11} className="text-green-500" /> {t('badge.free_shipping')}
+                    </p>
+                    <SocialProofBar
+                      favoriteCount={product.favoriteCount}
+                      cartAddCount={product.cartAddCount}
+                      viewerCount={viewers}
+                      bestSellerRank={product.bestSeller ? 1 : undefined}
+                      reviewCount={product.reviewsCount}
+                    />
+                  </div>
+
+                  {/* Stock Status */}
+                  {product.stock !== undefined && product.stock > 0 && product.stock <= 10 && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-xl border border-red-100">
+                      <AlertCircle size={12} className="text-red-500 flex-shrink-0" />
+                      <p className="text-xs font-black text-red-600">
+                        Son <span className="text-red-700">{product.stock}</span> adet kaldı!
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Price Tracking */}
+                <PriceTrackButton
+                  productId={product.id}
+                  currentPrice={cartPrice}
+                  userId={firebaseUser?.uid}
+                />
+
+                {/* Authent Badge */}
+                <div className="pt-2 border-t border-brand-primary/5">
+                  <AuthenticityBadge
+                    productId={product.id}
+                    productTitle={product.title}
+                    productImage={product.images[0]}
+                    sellerId={product.sellerId}
+                    brand={product.brand}
+                    originCountry={product.originCountry}
+                    compact
+                  />
+                </div>
+              </div>
+
+              {/* Price History Chart */}
+              <PriceHistoryChart
+                productId={product.id}
+                currentPrice={cartPrice}
+                currency={product.currency ?? 'try'}
+              />
+
+              {/* Seller Card */}
+              <SellerCard
+                sellerId={product.sellerId}
+                sellerName={
+                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.storeName ||
+                  product.brand ||
+                  'Mağaza'
+                }
+                sellerRating={
+                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.rating ?? product.rating
+                }
+                sellerReviewCount={
+                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.reviewsCount ??
+                  product.reviewsCount
+                }
+                sellerFollowersCount={
+                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.followersCount
+                }
+                isFollowing={isFollowingSeller}
+                onToggleFollow={() => setIsFollowingSeller((f) => !f)}
+                onAskQuestion={() => {
+                  setActiveTab('qa');
+                  document
+                    .querySelector('[data-tab-panel]')
+                    ?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              />
+
+              {/* Satıcıya Sor — Messaging entry point */}
+              {firebaseUser && user?.id !== product.sellerId && (
+                <div className="py-3">
+                  <button
+                    onClick={() =>
+                      navigate(
+                        `/messages?sellerId=${product.sellerId}&productId=${product.id}&productTitle=${encodeURIComponent(product.title)}`,
+                      )
+                    }
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-accent/20 text-accent hover:bg-accent hover:text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                  >
+                    <MessageSquare size={16} />
+                    Satıcıya Sor
+                  </button>
+                </div>
+              )}
+
+              {/* Other Sellers */}
+              <OtherSellers sellers={[]} />
+
+              {/* Installment Table */}
+              <InstallmentTable price={cartPrice} currency={product.currency ?? 'gbp'} />
+
+              {/* Promotions Card */}
+              {(campaigns.length > 0 || cartDiscount > 0 || activeCoupons.length > 0) && (
+                <div className="py-3 space-y-3">
+                  {campaigns.length > 0 && (
+                    <div className="space-y-2">
+                      {campaigns.slice(0, 2).map((c) => (
+                        <div
+                          key={c.id}
+                          className="flex items-start gap-2 p-2 bg-white/60 rounded-xl"
+                        >
+                          <Tag size={12} className="text-orange-500 mt-0.5 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-black text-orange-700">{c.name}</p>
+                            <p className="text-[9px] text-orange-600 font-bold">
+                              {c.discountType === 'percentage'
+                                ? `%${c.discountValue}`
+                                : `${c.discountValue} TL`}{' '}
+                              indirim
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {cartDiscount > 0 && (
+                    <div className="p-2 bg-white/60 rounded-xl border border-green-100">
+                      <p className="text-[9px] font-black text-green-700 uppercase">
+                        £{cartDiscount.toFixed(2)} tasarruf
+                      </p>
+                    </div>
+                  )}
+                  {activeCoupons.length > 0 && (
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-orange-600 mb-2">
+                        Kupon Kodu
+                      </p>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(activeCoupons[0].code)}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 border-2 border-dashed border-orange-300 rounded-lg hover:border-accent hover:bg-accent/5 transition-all group text-start"
+                      >
+                        <span className="text-xs font-black text-orange-700">
+                          {activeCoupons[0].code}
+                        </span>
+                        <Copy
+                          size={10}
+                          className="text-orange-400 ms-auto group-hover:text-accent transition-colors"
+                        />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Variants Card */}
+              {product.variantAttributes &&
+                product.variantAttributes.length > 0 &&
+                product.variants &&
+                product.variants.length > 0 && (
+                  <VariantSelector
+                    variants={product.variants}
+                    variantAttributes={product.variantAttributes}
+                    selectedAttrs={selectedAttrs}
+                    onVariantChange={(attr, value) =>
+                      setSelectedAttrs((prev) => ({ ...prev, [attr]: value }))
+                    }
+                  />
+                )}
+
+              {/* Add to Cart & CTAs */}
+              <div className="space-y-4">
+                {/* Quantity & CTAs */}
+                {(() => {
+                  const hasVariants =
+                    (product.variantAttributes?.length ?? 0) > 0 &&
+                    (product.variants?.length ?? 0) > 0;
+                  const selectedVariant: ProductVariant | undefined = hasVariants
+                    ? product.variants!.find((v) =>
+                        product.variantAttributes!.every(
+                          (attr) => v.attributes[attr] === selectedAttrs[attr],
+                        ),
+                      )
+                    : undefined;
+                  const allSelected =
+                    !hasVariants || product.variantAttributes!.every((attr) => selectedAttrs[attr]);
+                  const canAdd = allSelected && (!hasVariants || !!selectedVariant);
+                  return (
+                    <div className="space-y-2.5">
+                      <div className="py-4 space-y-2.5">
+                        {/* Quantity selector — inline, compact */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase text-gray-400">
+                            Adet
+                          </span>
+                          <div className="flex items-center gap-0 border border-gray-200 rounded-lg overflow-hidden">
+                            <button
+                              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                              className="w-9 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 font-bold text-sm"
+                            >
+                              −
+                            </button>
+                            <span className="w-8 text-center font-bold text-sm text-gray-700">
+                              {quantity}
+                            </span>
+                            <button
+                              onClick={() => setQuantity(quantity + 1)}
+                              className="w-9 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 font-bold text-sm"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                        {/* Sepete Ekle — full width, orange like Trendyol */}
+                        <button
+                          onClick={() =>
+                            canAdd && addItem(product.id, quantity, selectedVariant?.id)
+                          }
+                          disabled={!canAdd}
+                          className={cn(
+                            'w-full h-12 text-white rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2',
+                            canAdd
+                              ? 'bg-[#FF6000] hover:bg-[#E55500] active:scale-[0.98]'
+                              : 'bg-gray-300 cursor-not-allowed',
+                          )}
+                        >
+                          <ShoppingCart size={18} />
+                          {hasVariants && !allSelected ? 'Seçenek Seçin' : 'Sepete Ekle'}
+                        </button>
+
+                        {/* Hemen Al — full width yellow */}
+                        {user && (
+                          <>
+                            {canOneClick ? (
+                              <button
+                                onClick={handleBuyNow}
+                                disabled={oneClickLoading || !canAdd}
+                                className="w-full flex items-center justify-center gap-2 py-3 bg-[#FFD814] hover:bg-[#F7CA00] disabled:opacity-50 text-black font-bold text-sm rounded-lg transition-colors active:scale-[0.98]"
+                              >
+                                <ZapIcon size={16} />
+                                {oneClickLoading ? 'İşleniyor...' : 'Hemen Al'}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => navigate('/profile?tab=payment')}
+                                className="w-full text-[10px] text-gray-400 underline py-2 hover:text-[#FF6000] font-bold"
+                              >
+                                Tek tıkla ödeme ayarı →
+                              </button>
+                            )}
+                            {oneClickError && (
+                              <p className="text-xs text-red-500 text-center">{oneClickError}</p>
+                            )}
+                          </>
+                        )}
+
+                        {/* Price Tracking */}
+                        {firebaseUser && (
+                          <button
+                            onClick={handleTrackPrice}
+                            disabled={trackLoading}
+                            className={cn(
+                              'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50',
+                              tracking
+                                ? 'bg-accent/10 text-accent border border-accent/30'
+                                : 'bg-brand-secondary/30 text-brand-primary/40 hover:text-accent border border-transparent',
+                            )}
+                          >
+                            <BellRing size={13} fill={tracking ? 'currentColor' : 'none'} />
+                            {tracking ? 'Fiyat Takibinde' : 'Fiyat Takibi'}
+                          </button>
+                        )}
+
+                        {/* Stock Alert */}
+                        <StockAlertButton
+                          productId={product.id}
+                          stock={product.stock ?? 0}
+                          userId={firebaseUser?.uid}
+                        />
+                      </div>
+
+                      {successOrder && (
+                        <OneClickSuccessModal
+                          orderId={successOrder.orderId}
+                          total={successOrder.total}
+                          currency={successOrder.currency}
+                          onClose={clearSuccess}
+                        />
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Trust Badges */}
+                <TrustBadges />
+
+                {/* Delivery & Trust */}
+                <DeliveryBox
+                  locationLabel={selectedLocation}
+                  onChangeLocation={() => setIsLocationModalOpen(true)}
+                  hasExpressShipping={product.isFlashDeal}
+                  freeShipping={product.freeShipping}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* end max-w-[1060px] */}
+
+        {/* Frequently Bought Together */}
+        <FrequentlyBoughtTogether product={product} boughtTogether={boughtTogether} />
+
+        {/* Tabbed Detailed View */}
+        <div data-tab-panel className="border-t border-gray-100 mb-8">
+          <div className="flex border-b border-brand-primary/5 overflow-x-auto no-scrollbar">
+            {[
+              { id: 'details', label: t('product.description') },
+              { id: 'specs', label: t('product.specifications') },
+              { id: 'reviews', label: t('product.reviews') },
+              { id: 'qa', label: t('product.questions_answers') },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={cn(
+                  'px-4 md:px-8 py-4 md:py-6 text-[10px] md:text-xs font-black uppercase tracking-widest transition-all relative shrink-0',
+                  activeTab === tab.id
+                    ? 'text-accent'
+                    : 'text-brand-primary/30 hover:text-brand-primary',
+                )}
+              >
+                {tab.label}
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="tab-underline"
+                    className="absolute bottom-0 start-0 end-0 h-1 bg-accent"
+                  />
+                )}
+              </button>
+            ))}
           </div>
 
-          {/* Right: Seller & Delivery Control */}
-          <div className="lg:col-span-3 space-y-6">
-             {/* Seller Card */}
-             <div className="bg-brand-primary rounded-[2.5rem] p-8 text-white relative overflow-hidden group shadow-2xl">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-accent/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-700" />
-                <div className="relative z-10">
-                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">Artisan Entity</p>
-                   <h4 className="text-2xl font-display font-black mt-2 mb-6 uppercase italic text-white leading-none">{product.brand}</h4>
-                   <div className="flex items-center gap-4 mb-8">
-                      <div className="w-14 h-14 bg-white/10 rounded-2xl p-1 border border-white/20 backdrop-blur">
-                         <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${product.brand}`} className="w-full h-full object-cover rounded-xl" alt="" />
-                      </div>
-                      <div>
-                         <div className="flex items-center gap-1">
-                            <span className="text-sm font-black italic">9.8</span>
-                            <Star size={12} fill="#FF5200" className="text-accent" />
-                         </div>
-                         <p className="text-[9px] font-black uppercase text-white/40 tracking-widest">Mağaza Puanı</p>
-                      </div>
-                   </div>
-                   <div className="grid grid-cols-2 gap-4 mb-8">
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                         <p className="text-[8px] font-black uppercase text-white/40 mb-1">Followers</p>
-                         <p className="text-xs font-black">12.4K</p>
-                      </div>
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                         <p className="text-[8px] font-black uppercase text-white/40 mb-1">Items</p>
-                         <p className="text-xs font-black">450+</p>
-                      </div>
-                   </div>
-                   <button className="w-full py-4 bg-accent text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-white hover:text-brand-primary transition-all shadow-xl shadow-accent/20">
-                      Mağazayı Takip Et
-                   </button>
-                   <Link 
-                     to={`/seller/${product.sellerId}`}
-                     className="w-full mt-3 py-4 border border-white/10 rounded-xl font-black uppercase tracking-widest text-[9px] hover:bg-white/10 transition-all flex items-center justify-center gap-2"
-                   >
-                     Mağazaya Git <ChevronRight size={14} />
-                   </Link>
-                </div>
-             </div>
-
-             {/* Seller Other Products (Brief Version) */}
-             {sellerProducts.length > 0 && (
-               <div className="bg-white rounded-[2.5rem] p-6 border border-brand-primary/5 shadow-sm">
-                  <h4 className="text-[10px] font-black uppercase text-brand-primary/40 tracking-[0.2em] mb-6 border-b border-brand-primary/5 pb-4">
-                     Satıcının Diğer Ürünleri
-                  </h4>
-                  <div className="space-y-4">
-                     {sellerProducts.slice(0, 3).map(p => (
-                       <Link key={p.id} to={`/product/${p.slug}`} className="flex gap-4 group">
-                          <div className="w-16 h-16 bg-brand-secondary/50 rounded-xl p-2 shrink-0 group-hover:bg-accent/5 transition-all">
-                             <img src={p.images[0]} className="w-full h-full object-contain mix-blend-multiply" alt="" />
-                          </div>
-                          <div className="min-w-0">
-                             <h5 className="text-[11px] font-bold text-brand-primary line-clamp-1 group-hover:text-accent transition-colors">{p.title}</h5>
-                             <p className="text-sm font-black text-brand-primary mt-1 italic">£{p.price}</p>
-                          </div>
-                       </Link>
-                     ))}
+          <div className="p-4 md:p-8 lg:p-12">
+            <AnimatePresence mode="wait">
+              {activeTab === 'details' && (
+                <motion.div
+                  key="details"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="prose prose-zinc dark:prose-invert max-w-none"
+                >
+                  <h2 className="text-2xl font-display font-black text-brand-primary uppercase italic mb-6">
+                    Artifact Intelligence
+                  </h2>
+                  <div className="text-brand-primary/70 leading-relaxed font-medium whitespace-pre-wrap">
+                    {product.longDescription || product.description}
                   </div>
-                  <Link to={`/seller/${product.sellerId}`} className="block w-full mt-6 py-3 border border-brand-primary/5 rounded-xl text-center text-[9px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-all">
-                     Tümünü Gör
-                  </Link>
-               </div>
-             )}
-
-             {/* Market Logistics Trust */}
-             <div className="bg-white rounded-[2.5rem] p-8 border border-brand-primary/5 shadow-sm space-y-6">
-                {[
-                  { title: t('trust.easy_return'), desc: t('trust.easy_return_desc'), icon: Undo2 },
-                  { title: t('trust.safe_payment'), desc: t('trust.safe_payment_desc'), icon: ShieldCheck },
-                  { title: t('trust.original'), desc: t('trust.original_desc'), icon: Award }
-                ].map((item, i) => (
-                  <div key={i} className="flex gap-4">
-                     <div className="w-10 h-10 bg-brand-secondary/50 rounded-xl flex items-center justify-center text-accent shrink-0">
-                        <item.icon size={20} />
-                     </div>
-                     <div>
-                        <p className="text-xs font-black uppercase text-brand-primary">{item.title}</p>
-                        <p className="text-[10px] font-bold text-brand-primary/40 uppercase mt-1 tracking-widest">{item.desc}</p>
-                     </div>
+                  <Suspense
+                    fallback={
+                      <div className="h-32 bg-brand-secondary/50 dark:bg-zinc-800/50 rounded-2xl animate-pulse" />
+                    }
+                  >
+                    <AIProductInsights
+                      productTitle={product.title}
+                      description={product.description ?? ''}
+                      specs={memoizedSpecs}
+                    />
+                  </Suspense>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
+                    {[
+                      { label: 'Origin', value: product.originCountry, icon: Globe },
+                      { label: 'Merchant', value: product.brand, icon: Award },
+                      { label: 'Protection', value: 'Escrow', icon: Shield },
+                      { label: 'Express', value: 'Priority', icon: Zap },
+                    ].map((f, i) => (
+                      <div
+                        key={i}
+                        className="p-6 bg-brand-secondary/30 rounded-3xl border border-brand-primary/5 text-center group hover:bg-white hover:shadow-xl transition-all"
+                      >
+                        <f.icon size={24} className="text-accent mx-auto mb-4" />
+                        <p className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest">
+                          {f.label}
+                        </p>
+                        <p className="text-xs font-black text-brand-primary uppercase mt-1">
+                          {f.value}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-             </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'specs' && (
+                <motion.div
+                  key="specs"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <h2 className="text-2xl font-display font-black text-brand-primary uppercase italic mb-8">
+                    Technical Mapping
+                  </h2>
+                  <div className="grid grid-cols-1 border border-brand-primary/5 rounded-3xl overflow-hidden shadow-sm">
+                    {product.specifications ? (
+                      Object.entries(product.specifications).map(([key, val], i) => (
+                        <div
+                          key={key}
+                          className={cn(
+                            'grid grid-cols-2 p-6 transition-colors',
+                            i % 2 === 0 ? 'bg-brand-secondary/20' : 'bg-white',
+                          )}
+                        >
+                          <span className="text-[10px] font-black uppercase tracking-wider text-brand-primary/40">
+                            {key}
+                          </span>
+                          <span className="text-sm font-black text-brand-primary uppercase italic">
+                            {val as string}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-12 text-center text-brand-primary/20 italic">
+                        No structured data for this artifact.
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 p-6 bg-brand-primary text-white">
+                      <span className="text-[10px] font-black uppercase tracking-wider opacity-60">
+                        Global HS-CODE
+                      </span>
+                      <span className="text-sm font-black uppercase italic">
+                        {product.hsCode || '85.43.00.00'}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'reviews' && (
+                <motion.div
+                  key="reviews"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <ReviewSection
+                    productId={product.id}
+                    sellerId={product.sellerId}
+                    productRating={product.rating}
+                    currentUserId={firebaseUser?.uid}
+                    currentUserName={user?.name || firebaseUser?.displayName || undefined}
+                    isSeller={user?.id === product.sellerId || user?.role === 'admin'}
+                    isLoggedIn={!!firebaseUser}
+                  />
+                </motion.div>
+              )}
+
+              {activeTab === 'qa' && (
+                <motion.div
+                  key="qa"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <QASection
+                    productId={product.id}
+                    currentUserId={firebaseUser?.uid}
+                    currentUserName={user?.name || firebaseUser?.displayName || undefined}
+                    isSeller={user?.id === product.sellerId || user?.role === 'admin'}
+                    isLoggedIn={!!firebaseUser}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
-        {/* Global Commercial Intelligence Pulse (Full-width Visual Support) */}
-        <section className="bg-brand-primary rounded-[4rem] p-12 mb-20 relative overflow-hidden group shadow-3xl">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-125 transition-transform duration-1000" />
-            <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
-               <div className="flex-1 space-y-6">
-                  <div className="inline-flex items-center gap-3 px-4 py-2 bg-accent text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-xl shadow-accent/20">
-                     <BarChart size={14} /> Pazar Verisi
-                  </div>
-                  <h2 className="text-4xl md:text-5xl font-display font-black text-white uppercase italic leading-[1.1]">Küresel Talep Analizi</h2>
-                  <p className="text-sm font-bold text-white/40 uppercase tracking-[0.2em] leading-relaxed max-w-xl">
-                     Artifact {product.id} için gerçek zamanlı küresel talep endeksi. Hub London ve Mercora Istanbul çıkışlı verilerle hazırlanmıştır.
-                  </p>
-               </div>
-               <div className="w-full md:w-[400px] h-64 bg-white/5 backdrop-blur-xl rounded-[2.5rem] border border-white/10 p-8 shadow-2xl">
-                  <div className="flex justify-between items-start mb-6">
-                     <p className="text-[10px] font-black uppercase text-white/40 tracking-widest italic">{product.brand} Market Cap</p>
-                     <Zap size={20} className="text-accent animate-pulse" />
-                  </div>
-                  <ResponsiveContainer width="100%" height="70%">
-                    <AreaChart data={MARKET_DATA}>
-                      <defs>
-                        <linearGradient id="colorWave" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#FF5200" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#FF5200" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <Area type="monotone" dataKey="price" stroke="#FF5200" strokeWidth={4} fill="url(#colorWave)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                  <div className="flex justify-between mt-4">
-                     <span className="text-[9px] font-black text-accent uppercase tracking-widest">Bullish Indicator</span>
-                     <span className="text-[9px] font-black text-white uppercase tracking-widest">+12.4% Momentum</span>
-                  </div>
-               </div>
+        {/* Recommendations Blocks */}
+        <div className="divide-y divide-brand-primary/5 dark:divide-white/5 mb-12">
+          {/* Row 1: Bunlar da İlgini Çekebilir */}
+          {(recSimilar.length > 0 || relatedProducts.length > 0) && (
+            <div className="py-5">
+              <ProductCarousel
+                title={t('product.rec.interest.title')}
+                subtext={t('product.rec.interest.sub')}
+                products={recSimilar.length > 0 ? recSimilar : relatedProducts}
+              />
             </div>
-        </section>
+          )}
 
+          {/* Row 2: Buna Bakanların Aldıkları */}
+          {recAlsoBought.length > 0 && (
+            <div className="py-5">
+              <ProductCarousel
+                title={t('product.rec.bakanAldi.title')}
+                subtext={t('product.rec.bakanAldi.sub')}
+                products={recAlsoBought}
+              />
+            </div>
+          )}
+
+          {/* Row 3: Birlikte Alınanlar */}
+          {boughtTogether.length > 0 && (
+            <div className="py-5">
+              <ProductCarousel
+                title={t('product.rec.birlikte.title')}
+                subtext={t('product.rec.birlikte.sub')}
+                products={boughtTogether}
+              />
+            </div>
+          )}
+
+          {/* Row 4: Herkes Bunlara Bakıyor */}
+          {categoriesProducts.length > 0 && (
+            <div className="py-5">
+              <ProductCarousel
+                title={t('product.rec.populer.title')}
+                subtext={t('product.rec.populer.sub')}
+                products={categoriesProducts}
+              />
+            </div>
+          )}
+
+          {/* Row 5: Popüler Ürünlerden Seçtik */}
+          <div className="py-5">
+            <ProductCarousel
+              title={t('product.rec.secilmis.title')}
+              subtext={t('product.rec.secilmis.sub')}
+              products={MOCK_PRODUCTS.filter((p) => p.featured && p.id !== product.id).slice(0, 10)}
+            />
+          </div>
+
+          {/* Popular Searches badge grid */}
+          <div className="py-6">
+            <h4 className="text-sm font-black uppercase tracking-wider text-brand-primary dark:text-white mb-4">
+              {t('product.rec.searches.title')}
+            </h4>
+            <div className="flex flex-wrap gap-2.5">
+              {(POPULAR_SEARCHES_BY_LANG[lang] || POPULAR_SEARCHES_BY_LANG['en']).map((tag) => (
+                <Link
+                  key={tag}
+                  to={`/search?q=${encodeURIComponent(tag)}`}
+                  className="px-4 py-2 bg-brand-secondary/50 dark:bg-zinc-800 text-brand-primary/80 dark:text-zinc-300 hover:text-white hover:bg-accent rounded-xl text-xs font-black transition-all border border-brand-primary/5 dark:border-white/5 shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
+                >
+                  {tag}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Mobile Sticky Buy Bar */}
+      <StickyBuyBar
+        product={product}
+        selectedAttrs={selectedAttrs}
+        onVariantChange={(attr, value) => setSelectedAttrs((prev) => ({ ...prev, [attr]: value }))}
+        visible={showStickyBar}
+        quantity={quantity}
+        price={cartPrice}
+        currency={product.currency ?? 'gbp'}
+        onAddToCart={(variantId) => addItem(product.id, quantity, variantId)}
+        onBuyNow={canOneClick ? handleBuyNow : undefined}
+        oneClickLoading={oneClickLoading}
+        onQuantityChange={setQuantity}
+        isFavorited={isWishlisted(product.id)}
+        onToggleFavorite={() => toggleWishlist(product.id)}
+      />
+
+      {/* AR Viewer Modal */}
+      {product.model3dUrl && (
+        <ARViewer
+          modelUrl={product.model3dUrl}
+          productTitle={product.title}
+          open={arOpen}
+          onClose={() => setArOpen(false)}
+        />
+      )}
+
+      {/* Comparison */}
+      <ComparisonBar onOpen={() => setComparisonOpen(true)} />
+      <ComparisonModal isOpen={comparisonOpen} onClose={() => setComparisonOpen(false)} />
     </div>
   );
 }

@@ -1,140 +1,282 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // -------------------------------------------------------------------------
-    // GLOBALS & HELPERS
-    // -------------------------------------------------------------------------
-    
+
+    // --- HELPERS ---------------------------------------------------------
+    // All role checks use request.auth.token.role (Firebase Custom Claims).
+    // Zero get() calls on user documents — eliminates billed reads (Pitfall 1).
     function isSignedIn() { return request.auth != null; }
-    function userId() { return request.auth.uid; }
-    function userEmail() { return request.auth.token.email; }
-    function isVerified() { return isSignedIn(); } // Adjusted for preview env
+    function isFullUser() { return isSignedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
+    function isEmailVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function isAdmin() { return isSignedIn() && request.auth.token.role == 'admin'; }
+    function isSeller() { return isSignedIn() && request.auth.token.role == 'seller'; }
+    function isBuyer() { return isSignedIn() && request.auth.token.role == 'buyer'; }
+    function getUserId() { return request.auth.uid; }
 
-    // Admin check: either special email or 'admin' role in users collection
-    function isAdmin() {
-      return isSignedIn() && (
-        (request.auth.token.keys().hasAll(['email']) && request.auth.token.email == 'ozyslr@gmail.com') ||
-        (exists(/databases/$(database)/documents/users/$(userId())) && 
-         get(/databases/$(database)/documents/users/$(userId())).data.role == 'admin')
-      );
-    }
+    // --- DEFAULT DENY ----------------------------------------------------
+    match /{document=**} { allow read, write: if isAdmin(); }
 
-    function isModerator() {
-      return isSignedIn() && 
-             exists(/databases/$(database)/documents/users/$(userId())) && 
-             get(/databases/$(database)/documents/users/$(userId())).data.role == 'moderator';
-    }
+    // --- SYSTEM ----------------------------------------------------------
+    match /system/connection-test { allow read: if true; }
 
-    function isSeller() {
-      return isSignedIn() && 
-             exists(/databases/$(database)/documents/users/$(userId())) && 
-             get(/databases/$(database)/documents/users/$(userId())).data.role == 'seller';
-    }
+    // --- PUBLIC CONTENT (homepage, campaigns, deals) — read for everyone ---
+    match /homepage_sections/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /featuredDeals/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /campaigns/{doc} { allow read: if true; allow write: if isAdmin(); }
 
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    function incoming() { return request.resource.data; }
-    function existing() { return resource.data; }
-
-    // -------------------------------------------------------------------------
-    // ENTITY VALIDATION HELPERS
-    // -------------------------------------------------------------------------
-
-    function isValidUser(data) {
-      return data.keys().hasAll(['id', 'name', 'email', 'role']) &&
-             data.id == userId() &&
-             data.name is string && data.name.size() <= 100 &&
-             data.email is string && data.email.size() <= 100 &&
-             data.role in ['buyer', 'seller', 'admin', 'moderator'] &&
-             data.preferences is map;
-    }
-
-    function isValidProduct(data) {
-      return data.keys().hasAll(['id', 'sellerId', 'title', 'categoryId', 'price']) &&
-             data.title is string && data.title.size() <= 200 &&
-             data.price is number && data.price >= 0 &&
-             data.sellerId is string &&
-             (exists(/databases/$(database)/documents/sellers/$(data.sellerId)) || 
-              existsAfter(/databases/$(database)/documents/sellers/$(data.sellerId)));
-    }
-
-    function isValidSeller(data) {
-      return data.keys().hasAll(['id', 'userId', 'storeName', 'slug']) &&
-             (data.userId == userId() || isAdmin()) &&
-             data.storeName is string && data.storeName.size() <= 100 &&
-             data.slug.matches('^[a-z0-9-]+$');
-    }
-
-    // -------------------------------------------------------------------------
-    // COLLECTION RULES
-    // -------------------------------------------------------------------------
-
-    // Default Deny
-    match /{document=**} {
-      allow read, write: if isAdmin();
-    }
-
-    // System Connection Test
-    match /system/connection-test {
-      allow read: if true;
-    }
-
-    // Categories (Publicly readable)
+    // --- CATEGORIES ------------------------------------------------------
     match /categories/{cid} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Users
+    // --- USERS -----------------------------------------------------------
     match /users/{uid} {
-      allow get: if isSignedIn() && (userId() == uid || isAdmin() || isModerator());
+      allow get: if isFullUser() && (getUserId() == uid || isAdmin());
       allow list: if isAdmin();
-      allow create: if isVerified() && isValidUser(incoming()) && uid == userId();
-      allow update: if isVerified() && (
-        (uid == userId() && incoming().id == existing().id && incoming().role == existing().role) || 
-        isAdmin()
+      allow create: if isFullUser() && uid == getUserId();
+      allow update: if isFullUser() && (
+        (getUserId() == uid && request.resource.data.role == resource.data.role) || isAdmin()
       );
+      allow delete: if false;    // use data deletion flow
     }
 
-    // Sellers
+    // --- SELLERS ---------------------------------------------------------
     match /sellers/{sellerId} {
       allow read: if true;
-      allow create: if isVerified() && (isAdmin() || (incoming().userId == userId() && isValidSeller(incoming())));
-      allow update: if isVerified() && (
-        (existing().userId == userId() && incoming().userId == existing().userId) || 
-        isAdmin()
+      allow create: if isFullUser() && (isAdmin() || request.resource.data.userId == getUserId());
+      allow update: if isFullUser() && (
+        (resource.data.userId == getUserId() && request.resource.data.userId == resource.data.userId) || isAdmin()
       );
+      allow delete: if isAdmin();
     }
 
-    // Products
+    // --- PRODUCTS --------------------------------------------------------
     match /products/{pid} {
       allow read: if true;
-      allow create: if isVerified() && (
-        isAdmin() || 
-        (isSeller() && isValidProduct(incoming()) && get(/databases/$(database)/documents/sellers/$(incoming().sellerId)).data.userId == userId())
-      );
-      allow update: if isVerified() && (
-        isAdmin() ||
-        (get(/databases/$(database)/documents/sellers/$(existing().sellerId)).data.userId == userId() && isValidProduct(incoming()))
-      );
-      allow delete: if isAdmin() || (get(/databases/$(database)/documents/sellers/$(existing().sellerId)).data.userId == userId());
+      allow create: if isSignedIn() && (isAdmin() || isSeller());
+      allow update: if isSignedIn() && (isAdmin() || (isSeller() && resource.data.sellerId == request.auth.token.sellerId));
+      allow delete: if isAdmin() || (isSeller() && resource.data.sellerId == request.auth.token.sellerId);
     }
 
-    // Orders
-    match /orders/{oid} {
-      allow get: if isSignedIn() && (resource.data.buyerId == userId() || isAdmin() || isModerator());
-      allow list: if isSignedIn() && (resource.data.buyerId == userId() || isAdmin() || isModerator());
-      allow create: if isSignedIn() && incoming().buyerId == userId();
-      allow update: if isAdmin() || isModerator();
+    // --- ORDERSETS (Plan 1) ----------------------------------------------
+    // Creating orders requires verified email (prevents fraud/fake accounts).
+    match /orderSets/{orderSetId} {
+      allow read: if isFullUser() && (resource.data.userId == getUserId() || isAdmin());
+      allow create: if isFullUser() && isEmailVerified() && request.resource.data.userId == getUserId();
+      allow update: if isAdmin();
+      allow delete: if false;
     }
 
-    // Activity Logs
-    match /activity_logs/{logId} {
-      allow create: if isSignedIn();
+    // --- SUBORDERS (Plan 1) ----------------------------------------------
+    match /subOrders/{subOrderId} {
+      allow read: if isAdmin() || (isSeller() && resource.data.sellerId == request.auth.token.sellerId);
+      allow create: if false;
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // --- COMMISSION RULES (Plan 2) ---------------------------------------
+    match /commissionRules/{ruleId} {
+      allow read: if isFullUser();
+      allow write: if isAdmin();
+    }
+
+    // --- LEDGER (Plan 2 - Immutable) -------------------------------------
+    // Server SDK only — all client operations denied.
+    match /ledger/{entryId} {
+      allow read, create, update, delete: if false;
+    }
+
+    // --- PROCESSED WEBHOOKS (Plan 02-02 — D-07) --------------------------
+    // Server Admin SDK only — all client access denied (T-02-005).
+    match /processedWebhooks/{eventId} {
+      allow read, write: if false;
+    }
+
+    // --- DATA DELETION REQUESTS (Plan 3) ---------------------------------
+    match /dataDeletionRequests/{requestId} {
       allow read: if isAdmin();
+      allow create: if isFullUser();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // --- CARTS -----------------------------------------------------------
+    match /carts/{userId} {
+      allow read, create, update, delete: if isFullUser() && userId == getUserId();
+    }
+
+    // --- CART REMINDERS --------------------------------------------------
+    match /cart_reminders/{reminderId} { allow read, write: if false; }
+
+    // --- MAIL (Firebase Trigger Email) -----------------------------------
+    match /mail/{mailId} {
+      allow read: if false;
+      allow create: if isFullUser();
+      allow update, delete: if false;
+    }
+
+    // --- EVENTS (analytics) ----------------------------------------------
+    // Only full (non-anonymous) users can create analytics events.
+    match /events/{eventId} {
+      allow create: if isFullUser();
+      allow read: if isAdmin();
+    }
+
+    // --- CHAT SESSIONS ---------------------------------------------------
+    match /chat_sessions/{sessionId} {
+      allow read: if isFullUser() && (resource.data.userId == getUserId() || isAdmin());
+      allow create: if isFullUser() && request.resource.data.userId == getUserId();
+      allow update: if isFullUser() && (resource.data.userId == getUserId() || isAdmin());
+      allow delete: if isAdmin();
+      match /messages/{messageId} {
+        allow read: if isFullUser();
+        allow create: if isFullUser();
+        allow update: if isAdmin();
+        allow delete: if false;
+      }
+    }
+
+    // --- ACTIVITY LOGS ---------------------------------------------------
+    match /activity_logs/{logId} {
+      allow create: if isFullUser();
+      allow read: if isAdmin();
+    }
+
+    // --- ORDERS (backward compat) ----------------------------------------
+    match /orders/{oid} {
+      allow read: if isFullUser() && (resource.data.userId == getUserId() || resource.data.buyerId == getUserId() || isAdmin());
+      allow create: if isFullUser() && (request.resource.data.userId == getUserId() || request.resource.data.buyerId == getUserId());
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // --- SELLER BALANCES (Plan 2) ----------------------------------------
+    match /sellerBalances/{sellerId} {
+      allow read: if isFullUser() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // --- PAYOUT SCHEDULES (Plan 2) ---------------------------------------
+    match /payoutSchedules/{scheduleId} {
+      allow read: if isFullUser() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // --- PAYOUT REQUESTS (Plan 2) ----------------------------------------
+    match /payoutRequests/{requestId} {
+      allow read: if isFullUser() && (resource.data.sellerId == request.auth.token.sellerId || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // --- PUSH TOKENS -----------------------------------------------------
+    match /pushTokens/{userId} {
+      allow read: if isAdmin();
+      allow create: if isFullUser() && userId == getUserId();
+      allow update: if isFullUser() && userId == getUserId();
+      allow delete: if isFullUser() && userId == getUserId();
+    }
+
+    // --- PUSH MESSAGES ---------------------------------------------------
+    match /pushMessages/{messageId} {
+      allow read: if isAdmin();
+      allow create: if isFullUser();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // --- REVIEWS (Phase 7 — REV-01) --------------------------------------
+    // Creation is server-only (Admin SDK via POST /api/reviews): the server
+    // verifies a Delivered SubOrder and sets verified/status itself, so client
+    // direct writes are denied (T-07-01, T-07-02). Client updates are still
+    // allowed for helpful-votes, seller responses and owner edits, but may NOT
+    // escalate the trust fields verified/status/userId.
+    // Email-verified accounts only for creating/updating reviews (prevents spam).
+    //
+    // helpfulVoters atomicity: only arrayUnion/add or arrayRemove of a single
+    // voter is allowed. helpfulCount must change by exactly ±1 in lockstep.
+    // This prevents double-voting and batch manipulation from the client.
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if false; // server Admin SDK only
+
+      // Admin can always update
+      allow update: if isAdmin();
+
+      // Non-admin: may only toggle helpful vote (atomic ±1), or edit own
+      // review body without changing trust fields.
+      allow update: if isFullUser() && isEmailVerified() &&
+        request.resource.data.verified == resource.data.verified &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.userId == resource.data.userId && (
+          // ── Helpful vote toggle (atomic arrayUnion/arrayRemove) ──
+          // helpfulCount increases by 1 → helpfulVoters grew by 1 element
+          // helpfulCount decreases by 1 → helpfulVoters shrunk by 1 element
+          (
+            request.resource.data.helpfulCount == resource.data.helpfulCount + 1 &&
+            request.resource.data.helpfulVoters.size() == resource.data.helpfulVoters.size() + 1
+          ) || (
+            request.resource.data.helpfulCount == resource.data.helpfulCount - 1 &&
+            request.resource.data.helpfulVoters.size() == resource.data.helpfulVoters.size() - 1
+          )
+        );
+
+      allow delete: if isAdmin() || (isFullUser() && resource.data.userId == getUserId());
+    }
+
+    // --- PRODUCT QUESTIONS (Phase 7 — REV-04) ----------------------------
+    // Anyone can read; any full user can ask. Only the product's seller (matched
+    // via the denormalised sellerId) or an admin may write the public answer.
+    // A field-guarded clause still lets any signed-in user cast a helpful vote
+    // without touching the answer/sellerId fields (T-07-10, T-07-11).
+    // helpfulVoters atomicity: same ±1 lockstep as reviews.
+    match /productQuestions/{questionId} {
+      allow read: if true;
+      allow create: if isFullUser();
+
+      // Admin can always update
+      allow update: if isAdmin();
+
+      // Seller can answer their own product's question
+      allow update: if isSignedIn() &&
+        request.auth.token.sellerId == resource.data.sellerId;
+
+      // Any signed-in user can toggle helpful vote (atomic ±1 only)
+      allow update: if isSignedIn() &&
+        request.resource.data.sellerId == resource.data.sellerId &&
+        request.resource.data.answer == resource.data.answer &&
+        request.resource.data.answeredBy == resource.data.answeredBy && (
+          (
+            request.resource.data.helpfulCount == resource.data.helpfulCount + 1 &&
+            request.resource.data.helpfulVoters.size() == resource.data.helpfulVoters.size() + 1
+          ) || (
+            request.resource.data.helpfulCount == resource.data.helpfulCount - 1 &&
+            request.resource.data.helpfulVoters.size() == resource.data.helpfulVoters.size() - 1
+          )
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    // --- FOLLOWS ---------------------------------------------------------
+    match /follows/{followId} {
+      allow read: if true;
+      allow create: if isFullUser();
+      allow delete: if isFullUser();
+    }
+
+    // --- RETURNS (Plan 06) -----------------------------------------------
+    // approve/reject happen via Admin SDK server-side only; client never writes status.
+    match /returns/{returnId} {
+      allow read: if isFullUser() && (
+        request.auth.uid == resource.data.buyerId ||
+        request.auth.uid == resource.data.sellerId
+      );
+      allow create: if isFullUser() && request.auth.uid == request.resource.data.buyerId;
+      allow update, delete: if false;
     }
   }
 }

@@ -1,9 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* Benim Olan brand/logo font */
+@font-face {
+  font-family: "Modulus Pro";
+  src: url("/modulus-pro-medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", sans-serif;
+  --font-brand: "Modulus Pro", "Inter", ui-sans-serif, sans-serif;
   
   --color-brand-primary: var(--brand-primary);
   --color-brand-secondary: var(--brand-secondary);
@@ -11,6 +21,7 @@
   --color-accent-dark: var(--accent-dark);
   --color-accent-soft: var(--accent-soft);
   --color-accent-hover: var(--accent-hover);
+  --color-mercora-red: #F9423A;
 }
 
 :root {
@@ -35,6 +46,46 @@
   html, body {
     @apply font-sans bg-brand-secondary text-brand-primary antialiased transition-colors duration-300;
   }
+
+  /* WCAG 2.4.7: Visible focus indicator — global */
+  /* Uses !important to override Tailwind's outline-none utility throughout the codebase */
+  *:focus-visible {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Remove focus outline for pointer interactions only — matches Tailwind's outline-none */
+  *:focus:not(:focus-visible) {
+    outline: none !important;
+  }
+
+  /* WCAG 2.3.1: Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* WCAG 1.4.4: Ensure text can be resized — prevent zoom blocking */
+  input, select, textarea, button {
+    font-size: inherit;
+  }
+
+  /* Screen-reader only utility */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
 }
 
 @layer components {
@@ -58,10 +109,6 @@
   .dark body, .dark html {
     @apply bg-brand-secondary text-brand-primary;
   }
-  
-  .dark .bg-white {
-    @apply bg-zinc-900/95 border-zinc-800/50 shadow-none backdrop-blur-md!;
-  }
 
   .dark {
     @apply transition-colors duration-500 ease-in-out;
@@ -76,25 +123,85 @@
     animation: marquee 30s linear infinite;
   }
 
+  /* RTL: marquee should scroll toward the start (right) so it reads naturally */
+  [dir="rtl"] .animate-marquee {
+    animation-direction: reverse;
+  }
+
+  /* RTL: mirror horizontal directional icons (chevrons/arrows) so "next/back"
+     point the correct way. Vertical (up/down) icons are intentionally excluded.
+     Add the `rtl-keep` class to any directional icon that must NOT flip. */
+  [dir="rtl"] .lucide-chevron-left,
+  [dir="rtl"] .lucide-chevron-right,
+  [dir="rtl"] .lucide-chevrons-left,
+  [dir="rtl"] .lucide-chevrons-right,
+  [dir="rtl"] .lucide-arrow-left,
+  [dir="rtl"] .lucide-arrow-right,
+  [dir="rtl"] .lucide-move-left,
+  [dir="rtl"] .lucide-move-right {
+    transform: scaleX(-1);
+  }
+  [dir="rtl"] .lucide-chevron-left.rtl-keep,
+  [dir="rtl"] .lucide-chevron-right.rtl-keep,
+  [dir="rtl"] .lucide-arrow-left.rtl-keep,
+  [dir="rtl"] .lucide-arrow-right.rtl-keep {
+    transform: none;
+  }
+
   .dark input, .dark select, .dark textarea {
     @apply bg-zinc-900 border-zinc-800 text-white focus:border-accent/50!;
   }
 
-  .dark .border-brand-primary\/5 {
-    @apply border-zinc-800/50;
-  }
+  /* Brand color opacity variants — mapped to white in dark mode */
+  .dark .text-brand-primary\/5  { @apply text-white/5; }
+  .dark .text-brand-primary\/10 { @apply text-white/10; }
+  .dark .text-brand-primary\/20 { @apply text-white/20; }
+  .dark .text-brand-primary\/30 { @apply text-white/30; }
+  .dark .text-brand-primary\/40 { @apply text-white/40; }
+  .dark .text-brand-primary\/50 { @apply text-white/50; }
+  .dark .text-brand-primary\/60 { @apply text-white/60; }
+  .dark .text-brand-primary\/70 { @apply text-white/70; }
+  .dark .text-brand-primary\/80 { @apply text-white/80; }
+  .dark .text-brand-primary { @apply text-white; }
 
-  .dark .text-brand-primary\/40 {
-    @apply text-zinc-500;
-  }
+  .dark .border-brand-primary\/5  { @apply border-white/5; }
+  .dark .border-brand-primary\/10 { @apply border-white/10; }
+  .dark .border-brand-primary\/20 { @apply border-white/20; }
 
-  .dark .text-brand-primary\/60 {
-    @apply text-zinc-400;
-  }
+  .dark .bg-brand-primary { @apply bg-zinc-800; }
+  .dark .bg-brand-secondary { @apply bg-zinc-900; }
+  .dark .bg-brand-secondary\/30 { @apply bg-zinc-800/30; }
+  .dark .bg-brand-secondary\/50 { @apply bg-zinc-800/50; }
 
-  .dark .shadow-sm {
-    @apply shadow-none;
-  }
+  /* Shadows don't work on dark backgrounds — remove them */
+  .dark .shadow-sm { @apply shadow-none; }
+  .dark .shadow-md { @apply shadow-none; }
+  .dark .shadow-lg { @apply shadow-none; }
+  .dark .shadow-xl { @apply shadow-none; }
+  .dark .shadow-2xl { @apply shadow-none; }
+
+  /* Concrete color overrides for the most common patterns */
+  .dark .bg-white { @apply bg-zinc-900; }
+  .dark .bg-zinc-50 { @apply bg-zinc-900/80; }
+  .dark .bg-gray-50 { @apply bg-zinc-900/80; }
+  .dark .bg-gray-100 { @apply bg-zinc-800/80; }
+
+  .dark .text-gray-900 { @apply text-zinc-100; }
+  .dark .text-gray-700 { @apply text-zinc-300; }
+  .dark .text-gray-500 { @apply text-zinc-400; }
+  .dark .text-gray-400 { @apply text-zinc-500; }
+
+  .dark .border-gray-200 { @apply border-zinc-700; }
+  .dark .border-gray-100 { @apply border-zinc-800; }
+  .dark .border-zinc-200 { @apply border-zinc-700; }
+
+  /* Fix hardcoded #1A1033 (brand dark purple) — invisible on dark bg */
+  .dark .text-\[\#1A1033\] { @apply text-white; }
+  .dark .text-\[\#1A1033\]\/40 { @apply text-white/40; }
+  .dark .text-\[\#1A1033\]\/60 { @apply text-white/60; }
+  .dark .text-\[\#1A1033\]\/80 { @apply text-white/80; }
+  .dark .bg-\[\#F8F8FA\] { @apply bg-zinc-900; }
+  .dark .border-\[\#F8F8FA\] { @apply border-zinc-800; }
 
 .perspective-1000 {
   perspective: 1000px;

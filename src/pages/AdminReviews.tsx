@@ -1,65 +1,150 @@
-import React from 'react';
-import { Star, Trash2, MessageSquare, BadgeCheck } from 'lucide-react';
-import { useReviewStore } from '@/store/useReviewStore';
+import React, { useState, useEffect } from 'react';
+import { getAllReviews, approveReview, rejectReview } from '@/services/reviewService';
+import { Review } from '@/types';
+import { Star, CheckCircle, Trash2, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { audit } from '@/services/auditLogService';
+import { useAuth } from '@/context/AuthContext';
 
 export function AdminReviews() {
-  const reviews = useReviewStore((s) => s.reviews);
-  const removeReview = useReviewStore((s) => s.removeReview);
+  const { user } = useAuth();
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [acting, setActing] = useState<string | null>(null);
 
-  const avgRating = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : '0.0';
+  useEffect(() => {
+    getAllReviews().then((data) => {
+      setReviews(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    setActing(id);
+    try {
+      await approveReview(id);
+      audit(
+        user?.uid ?? '',
+        user?.email ?? '',
+        user?.role ?? 'admin',
+        'review.approve',
+        'review',
+        id,
+      );
+      setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, verified: true } : r)));
+    } finally {
+      setActing(null);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    if (!confirm('Bu yorumu silmek istiyor musunuz?')) return;
+    setActing(id);
+    try {
+      await rejectReview(id);
+      audit(
+        user?.uid ?? '',
+        user?.email ?? '',
+        user?.role ?? 'admin',
+        'review.delete',
+        'review',
+        id,
+      );
+      setReviews((prev) => prev.filter((r) => r.id !== id));
+    } finally {
+      setActing(null);
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    );
 
   return (
-    <div className="space-y-10">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-white rounded-[3rem] p-10 border border-[#F8F8FA] shadow-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1A1033]/30 mb-4 italic">Toplam Yorum</p>
-          <h4 className="text-4xl font-display font-black tracking-tighter text-[#1A1033]">{reviews.length}</h4>
-        </div>
-        <div className="bg-white rounded-[3rem] p-10 border border-[#F8F8FA] shadow-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1A1033]/30 mb-4 italic">Ortalama Puan</p>
-          <h4 className="text-4xl font-display font-black tracking-tighter text-[#FF5200] flex items-center gap-2">{avgRating} <Star size={28} className="fill-[#FF5200] text-[#FF5200]" /></h4>
-        </div>
-        <div className="bg-white rounded-[3rem] p-10 border border-[#F8F8FA] shadow-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1A1033]/30 mb-4 italic">Onaylı Yorum</p>
-          <h4 className="text-4xl font-display font-black tracking-tighter text-green-600">{reviews.filter((r) => r.verified).length}</h4>
-        </div>
-      </div>
+    <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm">
+      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-8">
+        Ürün Değerlendirmeleri
+      </h3>
 
-      <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm">
-        <div className="flex items-center gap-4 mb-10">
-          <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center"><MessageSquare size={24} /></div>
-          <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">Yorum Moderasyonu</h3>
-        </div>
-
-        {reviews.length === 0 ? (
-          <div className="text-center py-16">
-            <MessageSquare size={40} className="mx-auto text-[#1A1033]/10 mb-4" />
-            <p className="text-sm font-bold text-[#1A1033]/30 italic">Henüz değerlendirme yok.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {reviews.map((r) => (
-              <div key={r.id} className="flex items-start justify-between gap-6 bg-[#F8F8FA] rounded-2xl p-6">
+      {reviews.length === 0 ? (
+        <p className="text-center py-16 text-[#1A1033]/30 font-bold">Henüz yorum yok</p>
+      ) : (
+        <div className="space-y-4">
+          {reviews.map((review) => (
+            <div
+              key={review.id}
+              className={cn(
+                'p-5 rounded-2xl border transition-colors',
+                review.verified
+                  ? 'bg-green-50 border-green-100'
+                  : 'bg-[#F8F8FA] border-transparent',
+              )}
+            >
+              <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <span className="font-black text-sm text-[#1A1033]">{r.userName}</span>
-                    {r.verified && <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-green-600"><BadgeCheck size={12} /> Onaylı</span>}
-                    <div className="flex items-center gap-0.5">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} size={13} className={i <= r.rating ? 'fill-[#FF5200] text-[#FF5200]' : 'text-[#1A1033]/15'} />
-                      ))}
+                  <div className="flex items-center gap-3 mb-2">
+                    {review.userAvatar && (
+                      <img
+                        src={review.userAvatar}
+                        className="w-8 h-8 rounded-full object-cover"
+                        referrerPolicy="no-referrer"
+                        alt={review.userName}
+                        loading="lazy"
+                      />
+                    )}
+                    <div>
+                      <p className="text-xs font-black text-[#1A1033]">{review.userName}</p>
+                      <div className="flex items-center gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            size={10}
+                            className={
+                              i < review.rating
+                                ? 'text-yellow-400 fill-yellow-400'
+                                : 'text-[#1A1033]/20'
+                            }
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <span className="text-[10px] font-bold text-[#1A1033]/30 uppercase tracking-widest">{new Date(r.createdAt).toLocaleDateString('tr-TR')}</span>
+                    {review.verified && (
+                      <span className="text-[9px] font-black uppercase bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                        Onaylı
+                      </span>
+                    )}
                   </div>
-                  <p className="text-sm text-[#1A1033]/60 italic leading-relaxed">{r.comment}</p>
-                  {r.productId && <p className="text-[10px] font-bold text-[#1A1033]/20 uppercase tracking-widest mt-2">Ürün: {r.productId}</p>}
+                  <p className="text-sm text-[#1A1033]/70 leading-relaxed">{review.comment}</p>
+                  <p className="text-[10px] text-[#1A1033]/30 mt-1">
+                    {new Date(review.createdAt).toLocaleDateString('tr-TR')}
+                  </p>
                 </div>
-                <button onClick={() => removeReview(r.id)} className="p-2.5 text-[#1A1033]/40 hover:text-red-500 transition-colors shrink-0"><Trash2 size={16} /></button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {!review.verified && (
+                    <button
+                      onClick={() => handleApprove(review.id)}
+                      disabled={acting === review.id}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-xl text-[10px] font-black uppercase disabled:opacity-40 hover:bg-green-600 transition-colors"
+                    >
+                      <CheckCircle size={11} /> Onayla
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleReject(review.id)}
+                    disabled={acting === review.id}
+                    className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

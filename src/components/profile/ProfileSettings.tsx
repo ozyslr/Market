@@ -1,0 +1,1013 @@
+import React, { useState, useRef } from 'react';
+import {
+  Camera,
+  MapPin,
+  Lock,
+  Bell,
+  Plus,
+  Trash2,
+  Edit2,
+  ChevronDown,
+  ChevronUp,
+  Phone,
+  ShoppingBag,
+  Heart,
+  CheckCircle2,
+  ShieldCheck,
+  Calendar,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
+import { useWishlist } from '@/context/WishlistContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { Address } from '@/types';
+import {
+  updateUser,
+  addAddress,
+  replaceAddress,
+  deleteAddress,
+  setDefaultAddress,
+  updateProfilePhoto,
+  MAX_ADDRESSES,
+} from '@/services/userService';
+import { uploadProfilePhoto } from '@/services/storageService';
+import {
+  sendPasswordResetEmail,
+  updateProfile,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+
+type CardKey = 'profile' | 'addresses' | 'security' | 'notifications';
+
+const EMPTY_ADDRESS: Omit<Address, 'id'> = {
+  label: '',
+  fullName: '',
+  line1: '',
+  line2: '',
+  city: '',
+  state: '',
+  postalCode: '',
+  country: '',
+  phone: '',
+};
+
+interface AddressFormState extends Omit<Address, 'id'> {
+  setAsDefault: boolean;
+}
+
+export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {}) {
+  const { user, firebaseUser, refreshUser } = useAuth();
+  const { wishlist } = useWishlist();
+  const { t } = useLanguage();
+  const [openCard, setOpenCard] = useState<CardKey | null>(defaultOpen ?? null);
+
+  const [displayName, setDisplayName] = useState(user?.name ?? '');
+  const [surname, setSurname] = useState(user?.surname ?? '');
+  const [country, setCountry] = useState(user?.country ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
+  const [birthDate, setBirthDate] = useState(user?.birthDate ?? '');
+  const [bio, setBio] = useState(user?.bio ?? '');
+  const [gender, setGender] = useState(user?.gender ?? '');
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const addresses: Address[] = user?.addresses ?? [];
+  const defaultId: string = user?.defaultAddressId ?? '';
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [addressForm, setAddressForm] = useState<AddressFormState>({
+    ...EMPTY_ADDRESS,
+    setAsDefault: false,
+  });
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [addressError, setAddressError] = useState<string | null>(null);
+  const atAddressLimit = addresses.length >= MAX_ADDRESSES;
+
+  const [resetSent, setResetSent] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  const prefs = user?.preferences ?? {
+    newsletter: false,
+    personalizedDeals: false,
+    pushNotifications: false,
+  };
+
+  function toggleCard(key: CardKey) {
+    setOpenCard((prev) => (prev === key ? null : key));
+  }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  async function handleSaveProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!firebaseUser) return;
+    setSavingProfile(true);
+    try {
+      if (photoFile) {
+        const photoURL = await uploadProfilePhoto(firebaseUser.uid, photoFile);
+        await updateProfilePhoto(firebaseUser.uid, photoURL); // Firestore
+        await updateProfile(firebaseUser, { photoURL }); // Firebase Auth
+        setPhotoFile(null);
+        setPhotoPreview(null);
+      }
+      await updateUser(firebaseUser.uid, {
+        name: displayName,
+        surname,
+        country,
+        phone,
+        birthDate,
+        bio,
+        gender: gender || undefined,
+      } as any);
+      await refreshUser();
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
+  function startAddAddress() {
+    if (atAddressLimit) {
+      setAddressError(
+        t('profile.address.limitReached', `En fazla ${MAX_ADDRESSES} adres kaydedebilirsiniz.`),
+      );
+      return;
+    }
+    setAddressError(null);
+    setEditingAddress(null);
+    setAddressForm({ ...EMPTY_ADDRESS, setAsDefault: addresses.length === 0 });
+    setShowAddForm(true);
+  }
+
+  function startEditAddress(addr: Address) {
+    setEditingAddress(addr);
+    setAddressForm({ ...addr, setAsDefault: addr.id === defaultId });
+    setShowAddForm(true);
+  }
+
+  function cancelAddressForm() {
+    setShowAddForm(false);
+    setEditingAddress(null);
+    setAddressForm({ ...EMPTY_ADDRESS, setAsDefault: false });
+  }
+
+  async function handleSaveAddress(e: React.FormEvent) {
+    e.preventDefault();
+    if (!firebaseUser) return;
+    setSavingAddress(true);
+    setAddressError(null);
+    try {
+      const { setAsDefault, ...addrData } = addressForm;
+      if (editingAddress) {
+        const updated: Address = { ...addrData, id: editingAddress.id };
+        await replaceAddress(firebaseUser.uid, editingAddress, updated);
+        if (setAsDefault) await setDefaultAddress(firebaseUser.uid, updated.id);
+      } else {
+        const created = await addAddress(firebaseUser.uid, addrData);
+        if (setAsDefault) await setDefaultAddress(firebaseUser.uid, created.id);
+      }
+      await refreshUser();
+      cancelAddressForm();
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('MAX_ADDRESSES_REACHED')) {
+        setAddressError(
+          t('profile.address.limitReached', `En fazla ${MAX_ADDRESSES} adres kaydedebilirsiniz.`),
+        );
+      } else {
+        setAddressError(
+          t('profile.address.saveFailed', 'Adres kaydedilemedi. Lütfen tekrar deneyin.'),
+        );
+      }
+    } finally {
+      setSavingAddress(false);
+    }
+  }
+
+  async function handleDeleteAddress(addr: Address) {
+    if (!firebaseUser || !confirm(t('profile.address.confirmDelete'))) return;
+    setDeletingId(addr.id);
+    try {
+      await deleteAddress(firebaseUser.uid, addr);
+      await refreshUser();
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleSetDefault(addressId: string) {
+    if (!firebaseUser) return;
+    await setDefaultAddress(firebaseUser.uid, addressId);
+    await refreshUser();
+  }
+
+  async function handleSendReset() {
+    if (!firebaseUser?.email) return;
+    setSendingReset(true);
+    try {
+      await sendPasswordResetEmail(auth, firebaseUser.email);
+      setResetSent(true);
+    } finally {
+      setSendingReset(false);
+    }
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(false);
+    if (!firebaseUser || !firebaseUser.email) return;
+    if (newPassword !== confirmPassword) {
+      setPasswordError(t('profile.passwordMismatch', 'Yeni şifreler eşleşmiyor.'));
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError(t('profile.passwordRequirements', 'En az 6 karakter'));
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+      await reauthenticateWithCredential(firebaseUser, credential);
+      await updatePassword(firebaseUser, newPassword);
+      setPasswordSuccess(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setPasswordError('Mevcut şifreniz yanlış.');
+      } else if (err.code === 'auth/requires-recent-login') {
+        setPasswordError('Lütfen tekrar giriş yapın ve tekrar deneyin.');
+      } else {
+        setPasswordError(err.message || 'Şifre değiştirilemedi.');
+      }
+    } finally {
+      setChangingPassword(false);
+    }
+  }
+
+  async function handleTogglePref(key: keyof typeof prefs) {
+    if (!firebaseUser) return;
+    await updateUser(firebaseUser.uid, {
+      preferences: { ...prefs, [key]: !prefs[key] } as any,
+    });
+    await refreshUser();
+  }
+
+  const avatarSrc =
+    photoPreview ??
+    user?.photoURL ??
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.name ?? 'user')}`;
+
+  // Profil tamamlanma oranı — kullanıcıyı eksik alanları doldurmaya teşvik eder.
+  const completionChecks = [
+    { label: 'Ad', done: !!user?.name },
+    { label: 'Soyad', done: !!user?.surname },
+    { label: 'E-posta', done: !!user?.email },
+    { label: 'Fotoğraf', done: !!user?.photoURL },
+    { label: 'Ülke', done: !!user?.country },
+    { label: 'Telefon', done: !!user?.phone },
+    { label: 'Doğum Tarihi', done: !!user?.birthDate },
+    { label: 'Adres', done: addresses.length > 0 },
+  ];
+  const completion = Math.round(
+    (completionChecks.filter((c) => c.done).length / completionChecks.length) * 100,
+  );
+  const missing = completionChecks.filter((c) => !c.done).map((c) => c.label);
+
+  const stats = [
+    { icon: ShoppingBag, label: 'Sipariş', value: user?.orders?.length ?? 0, color: 'text-accent' },
+    { icon: MapPin, label: 'Adres', value: addresses.length, color: 'text-violet-600' },
+    { icon: Heart, label: 'Favori', value: wishlist.length, color: 'text-rose-500' },
+  ];
+
+  return (
+    <div className="space-y-3 max-w-xl">
+      {/* Profil tamamlanma + istatistik özeti */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="relative shrink-0">
+            <img
+              src={avatarSrc}
+              className="w-14 h-14 rounded-2xl object-cover"
+              alt={user?.name || 'Profil fotoğrafı'}
+              loading="lazy"
+            />
+            {completion === 100 && (
+              <CheckCircle2
+                size={18}
+                className="absolute -bottom-1 -end-1 text-green-500 fill-white dark:fill-zinc-900"
+              />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm text-[#1A1033] dark:text-white truncate">
+              {user?.name}
+            </p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <div className="flex-1 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-accent to-yellow-500 rounded-full transition-all"
+                  style={{ width: `${completion}%` }}
+                />
+              </div>
+              <span className="text-[11px] font-black text-[#1A1033] dark:text-white shrink-0">
+                %{completion}
+              </span>
+            </div>
+            {missing.length > 0 && (
+              <p className="text-[10px] text-zinc-400 mt-1 truncate">Eksik: {missing.join(', ')}</p>
+            )}
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {stats.map((s) => (
+            <div key={s.label} className="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-3 text-center">
+              <s.icon size={16} className={cn('mx-auto mb-1', s.color)} />
+              <p className="text-base font-black text-[#1A1033] dark:text-white leading-none">
+                {s.value}
+              </p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mt-1">
+                {s.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Profil Bilgileri */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileSelect}
+        />
+        <button
+          onClick={() => toggleCard('profile')}
+          className="w-full flex items-center justify-between p-5 text-start"
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="relative group cursor-pointer shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
+              aria-label="Profil fotoğrafını değiştir"
+            >
+              <img
+                src={avatarSrc}
+                className="w-11 h-11 rounded-full object-cover"
+                alt={user?.name || 'Profil fotoğrafı'}
+                loading="lazy"
+              />
+              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera size={12} className="text-white" />
+              </div>
+            </div>
+            <div>
+              <p className="font-bold text-sm text-[#1A1033] dark:text-white">{user?.name}</p>
+              <p className="text-[10px] text-zinc-400">{user?.email}</p>
+            </div>
+          </div>
+          {openCard === 'profile' ? (
+            <ChevronUp size={16} className="text-zinc-400" />
+          ) : (
+            <ChevronDown size={16} className="text-zinc-400" />
+          )}
+        </button>
+        <AnimatePresence>
+          {openCard === 'profile' && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <form onSubmit={handleSaveProfile} className="px-5 pb-5 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                      Ad
+                    </label>
+                    <input
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                      {t('profile.surname')}
+                    </label>
+                    <input
+                      value={surname}
+                      onChange={(e) => setSurname(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                    {t('profile.birthDate')}
+                  </label>
+                  <input
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    type="date"
+                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                    {t('profile.gender')}
+                  </label>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white"
+                  >
+                    <option value="">{t('profile.gender.preferNot')}</option>
+                    <option value="male">{t('profile.gender.male')}</option>
+                    <option value="female">{t('profile.gender.female')}</option>
+                    <option value="other">{t('profile.gender.other')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                    {t('profile.bio')}
+                  </label>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={3}
+                    placeholder="Kendinizden kısaca bahsedin..."
+                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                    Ülke
+                  </label>
+                  <input
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                    Telefon
+                  </label>
+                  <div className="relative">
+                    <Phone
+                      size={14}
+                      className="absolute start-4 top-1/2 -translate-y-1/2 text-zinc-400"
+                    />
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      type="tel"
+                      inputMode="tel"
+                      placeholder="+90 5xx xxx xx xx"
+                      className="w-full ps-10 pe-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#1A1033] dark:bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                >
+                  {savingProfile && (
+                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {t('profile.saveChanges')}
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Teslimat Adreslerim */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
+        <button
+          onClick={() => toggleCard('addresses')}
+          className="w-full flex items-center justify-between p-5 text-start"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center">
+              <MapPin size={18} className="text-violet-600" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-[#1A1033] dark:text-white">
+                {t('profile.addresses')}
+              </p>
+              <p className="text-[10px] text-zinc-400">
+                {addresses.length} {t('profile.address.saved')}
+              </p>
+            </div>
+          </div>
+          {openCard === 'addresses' ? (
+            <ChevronUp size={16} className="text-zinc-400" />
+          ) : (
+            <ChevronDown size={16} className="text-zinc-400" />
+          )}
+        </button>
+        <AnimatePresence>
+          {openCard === 'addresses' && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="px-5 pb-5 space-y-3">
+                {addresses.map((addr) => (
+                  <div
+                    key={addr.id}
+                    className={cn(
+                      'rounded-xl p-4 border transition-all',
+                      addr.id === defaultId
+                        ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-700'
+                        : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700',
+                    )}
+                  >
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="font-bold text-sm text-[#1A1033] dark:text-white">
+                        {addr.label}
+                      </p>
+                      {addr.id === defaultId && (
+                        <span className="text-[9px] font-black uppercase tracking-widest bg-violet-600 text-white px-2 py-0.5 rounded-full">
+                          {t('profile.address.default')}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                      {addr.fullName}
+                      <br />
+                      {addr.line1}
+                      {addr.line2 ? `, ${addr.line2}` : ''}
+                      <br />
+                      {addr.city}, {addr.state} {addr.postalCode}, {addr.country}
+                      <br />
+                      {addr.phone}
+                    </p>
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {addr.id !== defaultId && (
+                        <button
+                          onClick={() => handleSetDefault(addr.id)}
+                          className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:border-violet-400 transition-all"
+                        >
+                          {t('profile.address.makeDefault')}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => startEditAddress(addr)}
+                        className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:border-zinc-400 transition-all flex items-center gap-1"
+                      >
+                        <Edit2 size={10} /> {t('profile.address.edit')}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAddress(addr)}
+                        disabled={deletingId === addr.id}
+                        className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-700 border border-red-100 dark:border-red-900/40 text-red-400 hover:bg-red-50 transition-all flex items-center gap-1 disabled:opacity-40"
+                      >
+                        <Trash2 size={10} /> {t('profile.address.delete')}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                <AnimatePresence>
+                  {showAddForm && (
+                    <motion.form
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                      onSubmit={handleSaveAddress}
+                    >
+                      <div className="bg-violet-50 dark:bg-violet-900/10 rounded-xl p-4 border border-violet-100 dark:border-violet-800 space-y-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-violet-600">
+                          {editingAddress ? t('profile.address.edit') : t('profile.address.add')}
+                        </p>
+                        <div>
+                          <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                            {t('profile.address.label')} *
+                          </label>
+                          <input
+                            required
+                            value={addressForm.label}
+                            placeholder="Ev, İş, Anne Evi..."
+                            onChange={(e) =>
+                              setAddressForm((f) => ({ ...f, label: e.target.value }))
+                            }
+                            className="w-full px-3 py-2 bg-white dark:bg-zinc-800 rounded-lg text-xs border border-violet-100 dark:border-zinc-700 focus:border-violet-400 outline-none dark:text-white"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                              {t('profile.address.fullName')} *
+                            </label>
+                            <input
+                              required
+                              value={addressForm.fullName}
+                              onChange={(e) =>
+                                setAddressForm((f) => ({ ...f, fullName: e.target.value }))
+                              }
+                              className="w-full px-3 py-2 bg-white dark:bg-zinc-800 rounded-lg text-xs border border-violet-100 dark:border-zinc-700 focus:border-violet-400 outline-none dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                              {t('profile.address.phone')} *
+                            </label>
+                            <input
+                              required
+                              value={addressForm.phone}
+                              onChange={(e) =>
+                                setAddressForm((f) => ({ ...f, phone: e.target.value }))
+                              }
+                              className="w-full px-3 py-2 bg-white dark:bg-zinc-800 rounded-lg text-xs border border-violet-100 dark:border-zinc-700 focus:border-violet-400 outline-none dark:text-white"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                            {t('profile.address.line1')} *
+                          </label>
+                          <input
+                            required
+                            value={addressForm.line1}
+                            onChange={(e) =>
+                              setAddressForm((f) => ({ ...f, line1: e.target.value }))
+                            }
+                            className="w-full px-3 py-2 bg-white dark:bg-zinc-800 rounded-lg text-xs border border-violet-100 dark:border-zinc-700 focus:border-violet-400 outline-none dark:text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                            {t('profile.address.line2')}
+                          </label>
+                          <input
+                            value={addressForm.line2 ?? ''}
+                            onChange={(e) =>
+                              setAddressForm((f) => ({ ...f, line2: e.target.value }))
+                            }
+                            className="w-full px-3 py-2 bg-white dark:bg-zinc-800 rounded-lg text-xs border border-violet-100 dark:border-zinc-700 focus:border-violet-400 outline-none dark:text-white"
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                              {t('profile.address.city')} *
+                            </label>
+                            <input
+                              required
+                              value={addressForm.city}
+                              onChange={(e) =>
+                                setAddressForm((f) => ({ ...f, city: e.target.value }))
+                              }
+                              className="w-full px-3 py-2 bg-white dark:bg-zinc-800 rounded-lg text-xs border border-violet-100 dark:border-zinc-700 focus:border-violet-400 outline-none dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                              {t('profile.address.postalCode')} *
+                            </label>
+                            <input
+                              required
+                              value={addressForm.postalCode}
+                              onChange={(e) =>
+                                setAddressForm((f) => ({ ...f, postalCode: e.target.value }))
+                              }
+                              className="w-full px-3 py-2 bg-white dark:bg-zinc-800 rounded-lg text-xs border border-violet-100 dark:border-zinc-700 focus:border-violet-400 outline-none dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                              {t('profile.address.country')} *
+                            </label>
+                            <input
+                              required
+                              value={addressForm.country}
+                              onChange={(e) =>
+                                setAddressForm((f) => ({ ...f, country: e.target.value }))
+                              }
+                              className="w-full px-3 py-2 bg-white dark:bg-zinc-800 rounded-lg text-xs border border-violet-100 dark:border-zinc-700 focus:border-violet-400 outline-none dark:text-white"
+                            />
+                          </div>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={addressForm.setAsDefault}
+                            onChange={(e) =>
+                              setAddressForm((f) => ({ ...f, setAsDefault: e.target.checked }))
+                            }
+                            className="accent-violet-600"
+                          />
+                          <span className="text-[10px] font-bold text-zinc-500">
+                            {t('profile.address.setDefault')}
+                          </span>
+                        </label>
+                        <div className="flex gap-2">
+                          <button
+                            type="submit"
+                            disabled={savingAddress}
+                            className="flex items-center gap-1.5 px-5 py-2 bg-[#1A1033] dark:bg-violet-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40"
+                          >
+                            {savingAddress && (
+                              <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                            )}
+                            {t('profile.saveChanges')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelAddressForm}
+                            className="px-4 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-zinc-500"
+                          >
+                            İptal
+                          </button>
+                        </div>
+                      </div>
+                    </motion.form>
+                  )}
+                </AnimatePresence>
+
+                {addressError && (
+                  <p className="text-[11px] font-bold text-red-500" role="alert">
+                    {addressError}
+                  </p>
+                )}
+
+                {!showAddForm &&
+                  (atAddressLimit ? (
+                    <p className="text-[10px] font-bold text-zinc-400 text-center py-2">
+                      {t(
+                        'profile.address.limitReached',
+                        `En fazla ${MAX_ADDRESSES} adres kaydedebilirsiniz.`,
+                      )}
+                    </p>
+                  ) : (
+                    <button
+                      onClick={startAddAddress}
+                      className="w-full py-3 border-2 border-dashed border-violet-200 dark:border-violet-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-violet-500 flex items-center justify-center gap-2 hover:border-violet-400 transition-all"
+                    >
+                      <Plus size={14} /> {t('profile.address.add')}
+                    </button>
+                  ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Güvenlik */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
+        <button
+          onClick={() => toggleCard('security')}
+          className="w-full flex items-center justify-between p-5 text-start"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+              <Lock size={18} className="text-amber-500" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-[#1A1033] dark:text-white">
+                {t('profile.security')}
+              </p>
+              <p className="text-[10px] text-zinc-400">{user?.email}</p>
+            </div>
+          </div>
+          {openCard === 'security' ? (
+            <ChevronUp size={16} className="text-zinc-400" />
+          ) : (
+            <ChevronDown size={16} className="text-zinc-400" />
+          )}
+        </button>
+        <AnimatePresence>
+          {openCard === 'security' && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="px-5 pb-5 space-y-5">
+                {/* E-posta durumu */}
+                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4 space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                    E-posta
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300">{user?.email}</span>
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest',
+                        firebaseUser?.emailVerified
+                          ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                          : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+                      )}
+                    >
+                      <ShieldCheck size={12} />
+                      {firebaseUser?.emailVerified
+                        ? t('profile.emailVerified')
+                        : t('profile.emailNotVerified')}
+                    </span>
+                  </div>
+
+                  {firebaseUser?.metadata?.creationTime && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <Calendar size={13} />
+                      {t('profile.memberSince')}:{' '}
+                      {new Date(firebaseUser.metadata.creationTime).toLocaleDateString('tr-TR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Şifre Sıfırlama E-postası */}
+                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4 space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                    {t('profile.sendResetEmail')}
+                  </p>
+                  {resetSent ? (
+                    <p className="text-sm text-green-600 font-medium">
+                      {t('profile.resetEmailSent')}
+                    </p>
+                  ) : (
+                    <button
+                      onClick={handleSendReset}
+                      disabled={sendingReset}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1033] dark:bg-zinc-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40"
+                    >
+                      {sendingReset && (
+                        <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                      )}
+                      {t('profile.sendResetEmail')}
+                    </button>
+                  )}
+                </div>
+
+                {/* Şifre Değiştir */}
+                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4 space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                    {t('profile.changePassword')}
+                  </p>
+                  <form onSubmit={handleChangePassword} className="space-y-3">
+                    <div>
+                      <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                        {t('profile.currentPassword')}
+                      </label>
+                      <input
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        type="password"
+                        required
+                        className="w-full px-4 py-2.5 bg-white dark:bg-zinc-700 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                          {t('profile.newPassword')}
+                        </label>
+                        <input
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          type="password"
+                          required
+                          minLength={6}
+                          className="w-full px-4 py-2.5 bg-white dark:bg-zinc-700 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                          {t('profile.confirmPassword')}
+                        </label>
+                        <input
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          type="password"
+                          required
+                          minLength={6}
+                          className="w-full px-4 py-2.5 bg-white dark:bg-zinc-700 rounded-xl text-sm border border-transparent focus:border-accent/30 outline-none dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    {passwordError && (
+                      <p className="text-[11px] font-bold text-red-500">{passwordError}</p>
+                    )}
+                    {passwordSuccess && (
+                      <p className="text-[11px] font-bold text-green-600">
+                        {t('profile.passwordChanged')}
+                      </p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={changingPassword}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1033] dark:bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40"
+                    >
+                      {changingPassword && (
+                        <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                      )}
+                      {t('profile.changePassword')}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Bildirimler */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
+        <button
+          onClick={() => toggleCard('notifications')}
+          className="w-full flex items-center justify-between p-5 text-start"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+              <Bell size={18} className="text-green-500" />
+            </div>
+            <p className="font-bold text-sm text-[#1A1033] dark:text-white">
+              {t('profile.notifications')}
+            </p>
+          </div>
+          {openCard === 'notifications' ? (
+            <ChevronUp size={16} className="text-zinc-400" />
+          ) : (
+            <ChevronDown size={16} className="text-zinc-400" />
+          )}
+        </button>
+        <AnimatePresence>
+          {openCard === 'notifications' && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="px-5 pb-5 space-y-4">
+                {(
+                  [
+                    ['newsletter', 'E-posta bülteni'],
+                    ['personalizedDeals', 'Kişisel fırsatlar'],
+                    ['pushNotifications', 'Push bildirimleri'],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label key={key} className="flex items-center justify-between cursor-pointer">
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
+                    <div
+                      onClick={() => handleTogglePref(key)}
+                      className={cn(
+                        'w-10 h-5 rounded-full transition-colors relative cursor-pointer',
+                        prefs[key] ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700',
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform',
+                          prefs[key] ? 'translate-x-5' : 'translate-x-0.5',
+                        )}
+                      />
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}

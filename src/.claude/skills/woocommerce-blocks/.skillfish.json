@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "woocommerce-blocks",
+  "owner": "finsilabs",
+  "repo": "awesome-ecommerce-skills",
+  "path": "skills/platform-woocommerce/woocommerce-blocks",
+  "branch": "main",
+  "sha": "2db6241948c538f1568218af874c121cf8122e53",
+  "source": "manual"
+}

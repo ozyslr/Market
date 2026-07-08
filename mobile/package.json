@@ -1,0 +1,28 @@
+{
+  "name": "benim-olan-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "test": "jest"
+  },
+  "dependencies": {
+    "react": "19.0.0",
+    "react-native": "0.78.0",
+    "@react-navigation/native": "^7.x",
+    "@react-navigation/bottom-tabs": "^7.x",
+    "@react-navigation/native-stack": "^7.x",
+    "react-native-screens": "^4.x",
+    "react-native-safe-area-context": "^5.x",
+    "firebase": "^12.x",
+    "@stripe/stripe-react-native": "^0.40.x",
+    "zustand": "^5.x",
+    "react-native-encrypted-storage": "^4.x"
+  },
+  "devDependencies": {
+    "@types/react": "^19.x",
+    "typescript": "~5.8"
+  }
+}

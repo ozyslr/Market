@@ -1,95 +1,255 @@
-import React, { useState } from 'react';
-import { Tag, Trash2, Plus, Percent, Banknote, Truck } from 'lucide-react';
-import { useCouponStore, CouponType } from '@/store/useCouponStore';
+import React, { useState, useEffect } from 'react';
+import { getCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/services/couponService';
+import { Coupon } from '@/types';
+import { Plus, Trash2, ToggleLeft, ToggleRight, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { audit } from '@/services/auditLogService';
+import { useAuth } from '@/context/AuthContext';
 
-const TYPE_META: Record<CouponType, { label: string; icon: any; cls: string }> = {
-  percentage: { label: 'Yüzde', icon: Percent, cls: 'bg-purple-100 text-purple-700' },
-  fixed: { label: 'Sabit Tutar', icon: Banknote, cls: 'bg-green-100 text-green-700' },
-  freeshipping: { label: 'Ücretsiz Kargo', icon: Truck, cls: 'bg-blue-100 text-blue-700' },
+const EMPTY: Omit<Coupon, 'id' | 'usedCount' | 'createdAt'> = {
+  code: '',
+  discountType: 'percentage',
+  discountValue: 10,
+  isActive: true,
+  description: '',
 };
 
 export function AdminCoupons() {
-  const { catalog, error, addCoupon, deleteCoupon } = useCouponStore();
-  const [form, setForm] = useState<{ code: string; type: CouponType; value: string; minOrder: string; description: string }>({
-    code: '',
-    type: 'percentage',
-    value: '',
-    minOrder: '',
-    description: '',
-  });
+  const { user } = useAuth();
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ ...EMPTY });
+  const [saving, setSaving] = useState(false);
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    const ok = addCoupon({
-      code: form.code,
-      type: form.type,
-      value: parseFloat(form.value) || 0,
-      minOrder: parseFloat(form.minOrder) || 0,
-      description: form.description.trim() || form.code.trim().toUpperCase(),
+  useEffect(() => {
+    getCoupons().then((data) => {
+      setCoupons(data);
+      setLoading(false);
     });
-    if (ok) setForm({ code: '', type: 'percentage', value: '', minOrder: '', description: '' });
+  }, []);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.code.trim()) return;
+    setSaving(true);
+    try {
+      const newCoupon = await createCoupon({ ...form, code: form.code.toUpperCase() });
+      audit(
+        user?.uid ?? '',
+        user?.email ?? '',
+        user?.role ?? 'admin',
+        'coupon.create',
+        'coupon',
+        newCoupon.id,
+        newCoupon.code,
+      );
+      setCoupons((prev) => [newCoupon, ...prev]);
+      setForm({ ...EMPTY });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  return (
-    <div className="space-y-10">
-      <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm">
-        <div className="flex items-center gap-4 mb-10">
-          <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center"><Tag size={24} /></div>
-          <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">Yeni Kupon Oluştur</h3>
-        </div>
-        <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="KOD" className="px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-black uppercase tracking-wider border border-transparent focus:border-accent/20 outline-none" />
-          <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as CouponType })} className="px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none">
-            <option value="percentage">Yüzde (%)</option>
-            <option value="fixed">Sabit Tutar (₺)</option>
-            <option value="freeshipping">Ücretsiz Kargo</option>
-          </select>
-          <input value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} type="number" min={0} placeholder={form.type === 'percentage' ? 'Oran %' : 'Tutar ₺'} disabled={form.type === 'freeshipping'} className="px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none disabled:opacity-40" />
-          <input value={form.minOrder} onChange={(e) => setForm({ ...form, minOrder: e.target.value })} type="number" min={0} placeholder="Min Sepet ₺" className="px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none" />
-          <button type="submit" className="py-3 bg-[#1A1033] text-white rounded-xl font-black uppercase text-[10px] tracking-[0.2em] hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"><Plus size={16} /> Ekle</button>
-          <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Açıklama (opsiyonel)" className="lg:col-span-5 px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none" />
-        </form>
-        {error && <p className="text-[12px] font-bold text-red-500 mt-4">{error}</p>}
-      </div>
+  const handleToggle = async (coupon: Coupon) => {
+    await updateCoupon(coupon.id, { isActive: !coupon.isActive });
+    audit(
+      user?.uid ?? '',
+      user?.email ?? '',
+      user?.role ?? 'admin',
+      'coupon.update',
+      'coupon',
+      coupon.id,
+      coupon.code,
+      `isActive: ${!coupon.isActive}`,
+    );
+    setCoupons((prev) =>
+      prev.map((c) => (c.id === coupon.id ? { ...c, isActive: !c.isActive } : c)),
+    );
+  };
 
-      <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm">
-        <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-10">Aktif Kuponlar ({catalog.length})</h3>
-        <div className="overflow-x-auto no-scrollbar">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-brand-primary/5 text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40">
-                <th className="px-6 py-5">Kod</th>
-                <th className="px-6 py-5">Tür</th>
-                <th className="px-6 py-5">Değer</th>
-                <th className="px-6 py-5">Min Sepet</th>
-                <th className="px-6 py-5">Açıklama</th>
-                <th className="px-6 py-5 text-right">İşlem</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-brand-primary/5">
-              {catalog.map((c) => {
-                const meta = TYPE_META[c.type];
-                return (
-                  <tr key={c.code} className="group hover:bg-brand-secondary/30 transition-colors">
-                    <td className="px-6 py-6"><span className="font-mono font-black text-accent">{c.code}</span></td>
-                    <td className="px-6 py-6">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${meta.cls}`}><meta.icon size={12} /> {meta.label}</span>
-                    </td>
-                    <td className="px-6 py-6 font-black text-[#1A1033]">{c.type === 'percentage' ? `%${c.value}` : c.type === 'fixed' ? `${c.value}₺` : '—'}</td>
-                    <td className="px-6 py-6 text-sm font-bold text-[#1A1033]/60">{c.minOrder > 0 ? `${c.minOrder}₺` : 'Yok'}</td>
-                    <td className="px-6 py-6 text-sm text-[#1A1033]/40 italic max-w-[260px] truncate">{c.description}</td>
-                    <td className="px-6 py-6 text-right">
-                      <button onClick={() => deleteCoupon(c.code)} className="p-2 text-[#1A1033]/40 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {catalog.length === 0 && (
-                <tr><td colSpan={6} className="px-6 py-12 text-center text-[#1A1033]/40 text-sm font-bold">Henüz kupon yok.</td></tr>
-              )}
-            </tbody>
-          </table>
+  const handleDelete = async (id: string) => {
+    if (!confirm('Bu kuponu silmek istiyor musunuz?')) return;
+    await deleteCoupon(id);
+    audit(user?.uid ?? '', user?.email ?? '', user?.role ?? 'admin', 'coupon.delete', 'coupon', id);
+    setCoupons((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  if (loading)
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    );
+
+  return (
+    <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm space-y-8">
+      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+        Kupon & İndirim
+      </h3>
+
+      {/* Create Form */}
+      <form onSubmit={handleCreate} className="bg-[#F8F8FA] rounded-3xl p-6 space-y-4">
+        <h4 className="text-sm font-black uppercase text-[#1A1033]/40 tracking-widest">
+          Yeni Kupon Oluştur
+        </h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+              Kupon Kodu
+            </label>
+            <input
+              value={form.code}
+              onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))}
+              required
+              placeholder="MERCORA10"
+              className="w-full px-3 py-2.5 bg-white rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/20 uppercase"
+            />
+          </div>
+          <div>
+            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+              İndirim Tipi
+            </label>
+            <select
+              value={form.discountType}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, discountType: e.target.value as 'percentage' | 'fixed' }))
+              }
+              className="w-full px-3 py-2.5 bg-white rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/20"
+            >
+              <option value="percentage">Yüzde (%)</option>
+              <option value="fixed">Sabit (₺)</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+              İndirim Değeri
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={form.discountValue}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, discountValue: parseFloat(e.target.value) }))
+              }
+              className="w-full px-3 py-2.5 bg-white rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/20"
+            />
+          </div>
+          <div>
+            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+              Min. Sipariş (₺)
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={form.minOrderAmount || ''}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  minOrderAmount: e.target.value ? parseFloat(e.target.value) : undefined,
+                }))
+              }
+              placeholder="İsteğe bağlı"
+              className="w-full px-3 py-2.5 bg-white rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/20"
+            />
+          </div>
+          <div>
+            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+              Maks. Kullanım
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={form.maxUses || ''}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  maxUses: e.target.value ? parseInt(e.target.value) : undefined,
+                }))
+              }
+              placeholder="Sınırsız"
+              className="w-full px-3 py-2.5 bg-white rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/20"
+            />
+          </div>
+          <div>
+            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+              Son Geçerlilik
+            </label>
+            <input
+              type="datetime-local"
+              value={form.expiresAt ? form.expiresAt.slice(0, 16) : ''}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  expiresAt: e.target.value ? new Date(e.target.value).toISOString() : undefined,
+                }))
+              }
+              className="w-full px-3 py-2.5 bg-white rounded-xl text-sm font-bold outline-none border border-transparent focus:border-accent/20"
+            />
+          </div>
         </div>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-6 py-3 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 disabled:opacity-50 hover:scale-105 transition-all"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Oluştur
+          </button>
+        </div>
+      </form>
+
+      {/* Coupons List */}
+      <div className="space-y-3">
+        {coupons.length === 0 && (
+          <p className="text-center py-8 text-[#1A1033]/30 font-bold text-sm">Henüz kupon yok</p>
+        )}
+        {coupons.map((coupon) => (
+          <div
+            key={coupon.id}
+            className={cn(
+              'flex items-center justify-between p-4 rounded-2xl border transition-colors',
+              coupon.isActive
+                ? 'bg-[#F8F8FA] border-transparent'
+                : 'bg-white border-[#F8F8FA] opacity-60',
+            )}
+          >
+            <div className="flex items-center gap-4">
+              <span className="font-black text-[#1A1033] tracking-widest text-sm bg-white px-3 py-1.5 rounded-xl border border-[#1A1033]/10">
+                {coupon.code}
+              </span>
+              <div>
+                <p className="text-xs font-bold text-[#1A1033]">
+                  {coupon.discountType === 'percentage'
+                    ? `%${coupon.discountValue}`
+                    : `${coupon.discountValue} ₺`}{' '}
+                  indirim
+                  {coupon.minOrderAmount ? ` · Min. ${coupon.minOrderAmount} ₺` : ''}
+                </p>
+                <p className="text-[10px] text-[#1A1033]/40">
+                  {coupon.usedCount} kullanım{coupon.maxUses ? ` / ${coupon.maxUses}` : ''}
+                  {coupon.expiresAt
+                    ? ` · ${new Date(coupon.expiresAt).toLocaleDateString('tr-TR')}`
+                    : ''}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => handleToggle(coupon)} className="transition-colors">
+                {coupon.isActive ? (
+                  <ToggleRight size={24} className="text-accent" />
+                ) : (
+                  <ToggleLeft size={24} className="text-[#1A1033]/30" />
+                )}
+              </button>
+              <button
+                onClick={() => handleDelete(coupon.id)}
+                className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

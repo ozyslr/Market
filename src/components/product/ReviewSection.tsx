@@ -1,0 +1,269 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Review } from '@/types';
+import {
+  subscribeToProductReviews,
+  computeReviewStats,
+  ReviewStats,
+  submitReview,
+  checkUserReview,
+  updateReview,
+  deleteReview,
+} from '@/services/reviewService';
+import { RatingSummary } from './RatingSummary';
+import { ReviewFilters, SortOption, FilterOption } from './ReviewFilters';
+import { ReviewCard } from './ReviewCard';
+import { ReviewForm, ReviewFormData } from './ReviewForm';
+
+const PAGE_SIZE = 5;
+
+const EMPTY_STATS: ReviewStats = {
+  total: 0,
+  distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+  avgCategoryRatings: { quality: 0, shipping: 0, description: 0 },
+};
+
+interface Props {
+  productId: string;
+  sellerId?: string;
+  productRating: number;
+  currentUserId?: string;
+  currentUserName?: string;
+  isSeller: boolean;
+  isLoggedIn: boolean;
+}
+
+export function ReviewSection({
+  productId,
+  productRating,
+  currentUserId,
+  currentUserName,
+  isSeller,
+  isLoggedIn,
+}: Props) {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [stats, setStats] = useState<ReviewStats>(EMPTY_STATS);
+  const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState<SortOption>('newest');
+  const [filter, setFilter] = useState<FilterOption>('all');
+  const [starFilter, setStarFilter] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const reviewsRef = useRef<HTMLDivElement>(null);
+
+  const handleScrollToReviews = () => {
+    reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    const unsubscribe = subscribeToProductReviews(productId, (r) => {
+      setReviews(r);
+      setStats(computeReviewStats(r));
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, [productId]);
+
+  useEffect(() => {
+    if (currentUserId) checkUserReview(productId, currentUserId).then(setHasReviewed);
+  }, [productId, currentUserId]);
+
+  async function handleSubmitReview(data: ReviewFormData) {
+    if (!currentUserId || !currentUserName) return;
+    setSubmitError('');
+
+    try {
+      // Photos are already uploaded to Storage by ReviewForm; data.photos holds the URLs.
+      // The server requires each category rating to be 1-5; omit the block entirely
+      // when the buyer left categories unrated (form defaults them to 0).
+      const cr = data.categoryRatings;
+      const hasCategoryRatings = !!cr && cr.quality >= 1 && cr.shipping >= 1 && cr.description >= 1;
+
+      // verified/status are intentionally NOT sent — the server sets them (D-01).
+      await submitReview({
+        productId,
+        rating: data.rating,
+        comment: data.comment,
+        userName: currentUserName,
+        photos: data.photos,
+        categoryRatings: hasCategoryRatings ? cr : undefined,
+      });
+      setReviewSubmitted(true);
+      setHasReviewed(true);
+      setShowReviewForm(false);
+    } catch (err) {
+      setSubmitError((err as Error).message || 'Yorum gönderilemedi.');
+    }
+  }
+
+  async function handleDeleteReview(reviewId: string) {
+    await deleteReview(reviewId);
+    setHasReviewed(false);
+    setReviewSubmitted(false);
+  }
+
+  async function handleEditReview(reviewId: string, data: { rating: number; comment: string }) {
+    await updateReview(reviewId, data);
+  }
+
+  const filtered = reviews
+    .filter((r) => {
+      if (filter === 'photos') return (r.photos?.length ?? 0) > 0;
+      if (filter === 'verified') return r.verified;
+      return true;
+    })
+    .filter((r) => starFilter === null || r.rating === starFilter)
+    .filter((r) => {
+      if (!search.trim()) return true;
+      return r.comment.toLowerCase().includes(search.toLowerCase());
+    })
+    .sort((a, b) => {
+      if (sort === 'newest') return b.createdAt.localeCompare(a.createdAt);
+      if (sort === 'helpful') return (b.helpfulCount || 0) - (a.helpfulCount || 0);
+      if (sort === 'highest') return b.rating - a.rating;
+      if (sort === 'lowest') return a.rating - b.rating;
+      return 0;
+    });
+
+  const paginated = filtered.slice(0, page * PAGE_SIZE);
+
+  if (loading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-24 bg-brand-secondary/50 dark:bg-zinc-800/50 rounded-2xl" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <RatingSummary
+        rating={productRating}
+        stats={stats}
+        activeStarFilter={starFilter}
+        onStarFilter={(star) => {
+          setStarFilter(star);
+          setPage(1);
+        }}
+        reviews={reviews}
+        onScrollToReviews={handleScrollToReviews}
+      />
+
+      {/* Yorum yaz */}
+      <div>
+        {reviewSubmitted && (
+          <div className="mb-4 px-5 py-4 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3">
+            <CheckCircle2 size={16} className="text-green-500 shrink-0" />
+            <p className="text-xs font-bold text-green-700">
+              Yorumunuz yayınlandı. Katkınız için teşekkürler!
+            </p>
+          </div>
+        )}
+        {!isLoggedIn ? (
+          <p className="text-xs font-bold text-brand-primary/40 px-4 py-3 bg-brand-secondary/50 dark:bg-zinc-900 rounded-xl">
+            Yorum yazmak için{' '}
+            <Link to="/auth" className="text-accent underline">
+              giriş yapın
+            </Link>
+            .
+          </p>
+        ) : hasReviewed ? (
+          <div className="flex items-center gap-2 px-4 py-3 bg-accent/5 border border-accent/20 rounded-xl w-fit">
+            <CheckCircle2 size={14} className="text-accent" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-accent">
+              Bu ürüne zaten yorum yaptınız
+            </span>
+          </div>
+        ) : !showReviewForm ? (
+          <button
+            onClick={() => setShowReviewForm(true)}
+            className="px-8 py-3 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent/20 hover:bg-brand-primary transition-all"
+          >
+            Yorum Yaz
+          </button>
+        ) : (
+          <>
+            {submitError && (
+              <div className="mb-3 px-5 py-3 bg-red-50 border border-red-200 rounded-2xl">
+                <p className="text-xs font-bold text-red-600">{submitError}</p>
+              </div>
+            )}
+            <ReviewForm
+              productId={productId}
+              userId={currentUserId || ''}
+              onSubmit={handleSubmitReview}
+              onCancel={() => setShowReviewForm(false)}
+            />
+          </>
+        )}
+      </div>
+
+      {/* Filtreler */}
+      {reviews.length > 0 && (
+        <ReviewFilters
+          sort={sort}
+          filter={filter}
+          starFilter={starFilter}
+          onSort={(s) => {
+            setSort(s);
+            setPage(1);
+          }}
+          onFilter={(f) => {
+            setFilter(f);
+            setPage(1);
+          }}
+          onStarFilter={(s) => {
+            setStarFilter(s);
+            setPage(1);
+          }}
+          total={reviews.length}
+          filtered={filtered.length}
+          search={search}
+          onSearch={(s) => {
+            setSearch(s);
+            setPage(1);
+          }}
+        />
+      )}
+
+      {/* Yorum listesi */}
+      <div ref={reviewsRef} className="space-y-0">
+        {filtered.length === 0 ? (
+          <p className="text-center py-8 text-sm text-brand-primary/30 dark:text-zinc-500 font-bold">
+            Bu filtreye uygun yorum bulunamadı.
+          </p>
+        ) : (
+          paginated.map((review) => (
+            <ReviewCard
+              key={review.id}
+              review={review}
+              currentUserId={currentUserId}
+              currentUserName={currentUserName}
+              isSeller={isSeller}
+              onDelete={() => handleDeleteReview(review.id)}
+              onEdit={(data) => handleEditReview(review.id, data)}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Daha fazla */}
+      {paginated.length < filtered.length && (
+        <button
+          onClick={() => setPage((p) => p + 1)}
+          className="w-full py-4 border border-brand-primary/10 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-brand-secondary/50 dark:hover:bg-zinc-800 transition-colors text-brand-primary dark:text-white"
+        >
+          Daha Fazla Göster ({filtered.length - paginated.length} yorum)
+        </button>
+      )}
+    </div>
+  );
+}
