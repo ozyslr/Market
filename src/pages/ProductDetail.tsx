@@ -584,10 +584,10 @@ export function ProductDetail() {
                       </div>
                     )}
                     <div className="flex items-baseline gap-1">
-                      <span className="text-[28px] font-bold text-[#1A1033] tracking-tight">
+                      <span className="text-[28px] font-bold text-[#1A1033] dark:text-white tracking-tight">
                         £{Math.floor(product.price)}
                       </span>
-                      <span className="text-lg font-bold text-[#1A1033]">
+                      <span className="text-lg font-bold text-[#1A1033] dark:text-white">
                         ,
                         {Math.floor((product.price % 1) * 100)
                           .toString()
