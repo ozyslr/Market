@@ -157,7 +157,7 @@ export function AdminCampaigns() {
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <Megaphone className="w-6 h-6 text-accent" />
-          <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+          <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
             Kampanyalar
           </h3>
         </div>
@@ -170,13 +170,13 @@ export function AdminCampaigns() {
       </div>
 
       {showForm && (
-        <div className="mb-8 p-6 bg-[#F8F8FA] rounded-3xl border border-[#1A1033]/10">
-          <h4 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/50 mb-5">
+        <div className="mb-8 p-6 bg-[#F8F8FA] rounded-3xl border border-brand-primary/10">
+          <h4 className="text-sm font-black uppercase tracking-widest text-brand-primary/50 mb-5">
             {editing ? 'Kampanyayı Düzenle' : 'Yeni Kampanya'}
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Kampanya Adı *
               </label>
               <input
@@ -187,7 +187,7 @@ export function AdminCampaigns() {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Açıklama
               </label>
               <textarea
@@ -198,7 +198,7 @@ export function AdminCampaigns() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 İndirim Tipi
               </label>
               <select
@@ -211,7 +211,7 @@ export function AdminCampaigns() {
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 İndirim Değeri
               </label>
               <input
@@ -223,7 +223,7 @@ export function AdminCampaigns() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Hedef
               </label>
               <select
@@ -240,7 +240,7 @@ export function AdminCampaigns() {
             </div>
             {form.targetType !== 'all_products' && (
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+                <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                   {form.targetType === 'category'
                     ? 'Kategori ID'
                     : form.targetType === 'brand'
@@ -255,7 +255,7 @@ export function AdminCampaigns() {
               </div>
             )}
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Min. Sipariş Tutarı (₺)
               </label>
               <input
@@ -272,10 +272,10 @@ export function AdminCampaigns() {
             {/* Cart Campaign Toggle */}
             <div className="col-span-2 bg-[#F8F8FA] rounded-2xl p-4 flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60">
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60">
                   Sepet Kampanyası
                 </p>
-                <p className="text-[9px] text-[#1A1033]/40">
+                <p className="text-[9px] text-brand-primary/40">
                   Kupon kodu gerektirmeden sepette otomatik uygulanır
                 </p>
               </div>
@@ -286,14 +286,14 @@ export function AdminCampaigns() {
                 {(form as any).isCartCampaign ? (
                   <ToggleRight size={28} />
                 ) : (
-                  <ToggleLeft size={28} className="text-[#1A1033]/30" />
+                  <ToggleLeft size={28} className="text-brand-primary/30" />
                 )}
               </button>
             </div>
             {(form as any).isCartCampaign && (
               <>
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                     Maks. İndirim (₺)
                   </label>
                   <input
@@ -311,7 +311,7 @@ export function AdminCampaigns() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                     Hediye Ürün ID
                   </label>
                   <input
@@ -324,7 +324,7 @@ export function AdminCampaigns() {
               </>
             )}
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Başlangıç
               </label>
               <input
@@ -335,7 +335,7 @@ export function AdminCampaigns() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Bitiş
               </label>
               <input
@@ -350,10 +350,10 @@ export function AdminCampaigns() {
                 {form.isActive ? (
                   <ToggleRight size={28} />
                 ) : (
-                  <ToggleLeft size={28} className="text-[#1A1033]/30" />
+                  <ToggleLeft size={28} className="text-brand-primary/30" />
                 )}
               </button>
-              <span className="text-sm font-bold text-[#1A1033]/60">
+              <span className="text-sm font-bold text-brand-primary/60">
                 {form.isActive ? 'Aktif' : 'Pasif'}
               </span>
             </div>
@@ -374,7 +374,7 @@ export function AdminCampaigns() {
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="px-5 py-2.5 bg-[#1A1033]/10 text-[#1A1033] rounded-2xl text-xs font-black uppercase hover:bg-[#1A1033]/20 transition-colors"
+              className="px-5 py-2.5 bg-brand-primary/10 text-brand-primary rounded-2xl text-xs font-black uppercase hover:bg-brand-primary/20 transition-colors"
             >
               İptal
             </button>
@@ -386,22 +386,22 @@ export function AdminCampaigns() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#F8F8FA]">
-              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Kampanya
               </th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 İndirim
               </th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Hedef
               </th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Tarih Aralığı
               </th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Durum
               </th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 İşlem
               </th>
             </tr>
@@ -415,23 +415,25 @@ export function AdminCampaigns() {
                   className="border-b border-[#F8F8FA] hover:bg-[#F8F8FA]/50 transition-colors"
                 >
                   <td className="py-3">
-                    <p className="font-bold text-[#1A1033] text-xs">{c.name}</p>
+                    <p className="font-bold text-brand-primary text-xs">{c.name}</p>
                     {c.description && (
-                      <p className="text-[10px] text-[#1A1033]/40 line-clamp-1">{c.description}</p>
+                      <p className="text-[10px] text-brand-primary/40 line-clamp-1">
+                        {c.description}
+                      </p>
                     )}
                   </td>
-                  <td className="py-3 text-center font-bold text-[#1A1033] text-xs">
+                  <td className="py-3 text-center font-bold text-brand-primary text-xs">
                     {c.discountType === 'percentage'
                       ? `%${c.discountValue}`
                       : `${c.discountValue} ₺`}
                   </td>
-                  <td className="py-3 text-center text-[10px] font-bold text-[#1A1033]/60">
+                  <td className="py-3 text-center text-[10px] font-bold text-brand-primary/60">
                     {TARGET_LABELS[c.targetType]}
                     {c.targetValue && (
-                      <span className="block text-[#1A1033]/30">{c.targetValue}</span>
+                      <span className="block text-brand-primary/30">{c.targetValue}</span>
                     )}
                   </td>
-                  <td className="py-3 text-center text-[10px] text-[#1A1033]/50">
+                  <td className="py-3 text-center text-[10px] text-brand-primary/50">
                     <span>{c.startDate.slice(0, 10)}</span>
                     <span className="block">→ {c.endDate.slice(0, 10)}</span>
                   </td>
@@ -449,7 +451,7 @@ export function AdminCampaigns() {
                     <div className="flex items-center justify-center gap-1">
                       <button
                         onClick={() => handleToggle(c)}
-                        className="p-1.5 rounded-lg hover:bg-[#F8F8FA] text-[#1A1033]/40 hover:text-accent transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-[#F8F8FA] text-brand-primary/40 hover:text-accent transition-colors"
                       >
                         {c.isActive ? (
                           <ToggleRight size={16} className="text-accent" />
@@ -459,13 +461,13 @@ export function AdminCampaigns() {
                       </button>
                       <button
                         onClick={() => openEdit(c)}
-                        className="p-1.5 rounded-lg hover:bg-[#F8F8FA] text-[#1A1033]/40 hover:text-blue-500 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-[#F8F8FA] text-brand-primary/40 hover:text-blue-500 transition-colors"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button
                         onClick={() => handleDelete(c.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-[#1A1033]/40 hover:text-red-500 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-brand-primary/40 hover:text-red-500 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -478,8 +480,8 @@ export function AdminCampaigns() {
         </table>
         {campaigns.length === 0 && (
           <div className="text-center py-12">
-            <Megaphone className="w-10 h-10 text-[#1A1033]/10 mx-auto mb-3" />
-            <p className="text-[#1A1033]/30 text-sm font-bold">Henüz kampanya yok</p>
+            <Megaphone className="w-10 h-10 text-brand-primary/10 mx-auto mb-3" />
+            <p className="text-brand-primary/30 text-sm font-bold">Henüz kampanya yok</p>
           </div>
         )}
       </div>

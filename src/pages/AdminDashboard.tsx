@@ -502,15 +502,15 @@ export function AdminDashboard() {
           <div className="w-24 h-24 bg-accent/10 rounded-[2.5rem] flex items-center justify-center text-accent mx-auto mb-10 shadow-xl shadow-accent/10">
             <ShieldCheck size={48} strokeWidth={1.5} />
           </div>
-          <h1 className="text-3xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-4">
+          <h1 className="text-3xl font-display font-black uppercase italic tracking-tighter text-brand-primary mb-4">
             Yönetim Paneli
           </h1>
-          <p className="text-[11px] font-bold text-[#1A1033]/30 uppercase tracking-[0.2em] mb-12 leading-relaxed">
+          <p className="text-[11px] font-bold text-brand-primary/30 uppercase tracking-[0.2em] mb-12 leading-relaxed">
             Benim Olan yönetim sistemine erişmek için kimlik doğrulaması gereklidir.
           </p>
           <button
             onClick={login}
-            className="w-full py-5 bg-[#1A1033] text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl shadow-black/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+            className="w-full py-5 bg-brand-primary text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl shadow-black/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
           >
             Giriş Yap <Zap size={18} fill="currentColor" />
           </button>
@@ -524,13 +524,13 @@ export function AdminDashboard() {
     return (
       <div className="min-h-screen bg-[#F8F8FA] flex flex-col items-center justify-center p-6 text-center">
         <AlertCircle size={64} className="text-red-500 mb-6" />
-        <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#1A1033]">
+        <h2 className="text-2xl font-black uppercase italic tracking-tighter text-brand-primary">
           Access Denied
         </h2>
-        <p className="text-[#1A1033]/40 text-xs font-bold uppercase tracking-widest mt-4">
+        <p className="text-brand-primary/40 text-xs font-bold uppercase tracking-widest mt-4">
           Your account does not have administrative clearance for this node.
         </p>
-        <button className="mt-10 px-8 py-3 bg-[#1A1033] text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
+        <button className="mt-10 px-8 py-3 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
           Request Authorization
         </button>
       </div>
@@ -538,7 +538,7 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="flex h-screen bg-[#F8F8FA] overflow-hidden text-[#1A1033] relative">
+    <div className="flex h-screen bg-[#F8F8FA] overflow-hidden text-brand-primary relative">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -928,7 +928,7 @@ export function AdminDashboard() {
           ) : activeTab === 'integrations' ? (
             <AdminIntegrations />
           ) : activeTab === 'ai' ? (
-            <div className="p-8 text-center text-[#1A1033]/40">
+            <div className="p-8 text-center text-brand-primary/40">
               AI analiz paneli yapım aşamasında
             </div>
           ) : (
@@ -994,7 +994,7 @@ export function AdminDashboard() {
                 <div className="lg:col-span-8 bg-white rounded-[2rem] lg:rounded-[3.5rem] p-6 lg:p-12 border border-[#F8F8FA] shadow-sm relative overflow-hidden group">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 lg:mb-12 gap-4">
                     <div>
-                      <h3 className="text-xl lg:text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+                      <h3 className="text-xl lg:text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
                         Satış Performansı
                       </h3>
                     </div>
@@ -1002,13 +1002,13 @@ export function AdminDashboard() {
                       <div className="flex items-center gap-4 lg:gap-6">
                         <div className="flex items-center gap-2">
                           <div className="w-2.5 h-2.5 rounded-full bg-[#6D28D9]" />
-                          <span className="text-[10px] font-black uppercase text-[#1A1033]/40 tracking-widest leading-none">
+                          <span className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest leading-none">
                             Toplam Satış
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
-                          <span className="text-[10px] font-black uppercase text-[#1A1033]/40 tracking-widest leading-none">
+                          <span className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest leading-none">
                             Komisyon Geliri
                           </span>
                         </div>
@@ -1085,7 +1085,7 @@ export function AdminDashboard() {
                 {/* Order Status Donut Chart */}
                 <div className="lg:col-span-4 bg-white rounded-[2rem] lg:rounded-[3.5rem] p-6 lg:p-12 border border-[#F8F8FA] shadow-sm flex flex-col">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl lg:text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+                    <h3 className="text-xl lg:text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
                       Sipariş Durumu
                     </h3>
                     <select className="bg-[#F8F8FA] px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none">
@@ -1095,10 +1095,10 @@ export function AdminDashboard() {
 
                   <div className="flex-1 flex flex-col justify-center items-center py-6 lg:py-10 relative">
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <p className="text-3xl lg:text-5xl font-display font-black text-[#1A1033] tracking-tighter">
+                      <p className="text-3xl lg:text-5xl font-display font-black text-brand-primary tracking-tighter">
                         18,392
                       </p>
-                      <p className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.2em] text-[#1A1033]/30 mt-1 lg:mt-2">
+                      <p className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/30 mt-1 lg:mt-2">
                         Toplam
                       </p>
                     </div>
@@ -1128,13 +1128,13 @@ export function AdminDashboard() {
                             className="w-2.5 h-2.5 rounded-full"
                             style={{ backgroundColor: item.color }}
                           />
-                          <span className="text-[10px] font-black uppercase text-[#1A1033]/40 tracking-widest leading-none">
+                          <span className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest leading-none">
                             {item.name}
                           </span>
                         </div>
-                        <p className="text-sm font-black text-[#1A1033] ms-4.5">
+                        <p className="text-sm font-black text-brand-primary ms-4.5">
                           {item.value.toLocaleString()}{' '}
-                          <span className="text-[10px] text-[#1A1033]/30 font-bold">
+                          <span className="text-[10px] text-brand-primary/30 font-bold">
                             ({Math.round((item.value / 18392) * 100)}%)
                           </span>
                         </p>
@@ -1198,16 +1198,16 @@ export function AdminDashboard() {
                         >
                           <stat.icon
                             size={22}
-                            className="text-[#1A1033]/20 group-hover:text-accent transition-colors"
+                            className="text-brand-primary/20 group-hover:text-accent transition-colors"
                           />
                         </div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/30 mb-2 leading-tight">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/30 mb-2 leading-tight">
                           {stat.label}
                         </p>
-                        <h4 className="text-2xl font-display font-black text-[#1A1033] tracking-tighter mb-1">
+                        <h4 className="text-2xl font-display font-black text-brand-primary tracking-tighter mb-1">
                           {stat.value}
                         </h4>
-                        <p className="text-[8px] font-bold text-[#1A1033]/20 uppercase tracking-widest">
+                        <p className="text-[8px] font-bold text-brand-primary/20 uppercase tracking-widest">
                           {stat.sub}
                         </p>
                         {/* Mini Chart Mock for metrics */}
@@ -1226,7 +1226,7 @@ export function AdminDashboard() {
                 {/* Son Aktiviteler - Premium Feed */}
                 <div className="lg:col-span-4 bg-white rounded-[2rem] lg:rounded-[3.5rem] p-6 lg:p-12 border border-[#F8F8FA] shadow-sm flex flex-col h-full">
                   <div className="flex items-center justify-between mb-8 lg:mb-10">
-                    <h3 className="text-xl lg:text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+                    <h3 className="text-xl lg:text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
                       Son Aktiviteler
                     </h3>
                     <button className="text-[10px] font-black uppercase text-accent hover:underline">
@@ -1278,21 +1278,21 @@ export function AdminDashboard() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start mb-1">
-                            <h5 className="text-[13px] font-black text-[#1A1033] leading-none tracking-tight">
+                            <h5 className="text-[13px] font-black text-brand-primary leading-none tracking-tight">
                               {activity.title}
                             </h5>
-                            <span className="text-[9px] font-bold text-[#1A1033]/20 uppercase whitespace-nowrap ms-4">
+                            <span className="text-[9px] font-bold text-brand-primary/20 uppercase whitespace-nowrap ms-4">
                               {activity.time}
                             </span>
                           </div>
-                          <p className="text-[11px] font-medium text-[#1A1033]/40 leading-relaxed italic">
+                          <p className="text-[11px] font-medium text-brand-primary/40 leading-relaxed italic">
                             {activity.desc}
                           </p>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <button className="w-full mt-12 py-5 bg-[#F8F8FA] text-[#1A1033]/40 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#1A1033] hover:text-white transition-all shadow-sm">
+                  <button className="w-full mt-12 py-5 bg-[#F8F8FA] text-brand-primary/40 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-brand-primary hover:text-white transition-all shadow-sm">
                     Tüm Aktiviteleri Görüntüle
                   </button>
                 </div>
@@ -1303,7 +1303,7 @@ export function AdminDashboard() {
                 {/* Son Siparişler Table */}
                 <div className="lg:col-span-8 bg-white rounded-[2rem] lg:rounded-[4rem] border border-[#F8F8FA] shadow-sm overflow-hidden flex flex-col">
                   <div className="p-6 lg:p-12 lg:pb-8 border-b border-[#F8F8FA] flex items-center justify-between">
-                    <h3 className="text-xl lg:text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+                    <h3 className="text-xl lg:text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
                       Son Siparişler
                     </h3>
                     <button className="text-[10px] font-black uppercase text-accent hover:underline">
@@ -1313,7 +1313,7 @@ export function AdminDashboard() {
                   <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-start">
                       <thead>
-                        <tr className="bg-[#F8F8FA] text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                        <tr className="bg-[#F8F8FA] text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                           <th className="px-12 py-6">Sipariş ID</th>
                           <th className="px-10 py-6">Müşteri</th>
                           <th className="px-10 py-6">Ürün</th>
@@ -1336,14 +1336,14 @@ export function AdminDashboard() {
                                 </span>
                               </td>
                               <td className="px-10 py-8">
-                                <p className="font-black text-[#1A1033]">{order.customer}</p>
+                                <p className="font-black text-brand-primary">{order.customer}</p>
                               </td>
                               <td className="px-10 py-8">
-                                <p className="font-medium text-[#1A1033]/40 italic truncate max-w-[200px]">
+                                <p className="font-medium text-brand-primary/40 italic truncate max-w-[200px]">
                                   {order.product}
                                 </p>
                               </td>
-                              <td className="px-10 py-8 font-black text-[#1A1033]">
+                              <td className="px-10 py-8 font-black text-brand-primary">
                                 {order.amountFormatted || order.amount}
                               </td>
                               <td className="px-10 py-8 text-center">
@@ -1377,7 +1377,7 @@ export function AdminDashboard() {
                                               : 'Hazırlanıyor'}
                                 </span>
                               </td>
-                              <td className="px-12 py-8 text-end font-black text-[#1A1033]/20">
+                              <td className="px-12 py-8 text-end font-black text-brand-primary/20">
                                 {order.date}
                               </td>
                             </tr>
@@ -1393,7 +1393,7 @@ export function AdminDashboard() {
                   {/* Top Products */}
                   <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm flex flex-col">
                     <div className="flex items-center justify-between mb-10">
-                      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+                      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
                         En Çok Satan Ürünler
                       </h3>
                       <button className="text-[10px] font-black uppercase text-accent hover:underline">
@@ -1416,22 +1416,24 @@ export function AdminDashboard() {
                                   referrerPolicy="no-referrer"
                                   loading="lazy"
                                 />
-                                <div className="absolute top-0 end-0 w-6 h-6 bg-[#1A1033] rotate-45 translate-x-3 -translate-y-3" />
-                                <span className="absolute top-1 start-2 text-[10px] font-black text-[#1A1033]">
+                                <div className="absolute top-0 end-0 w-6 h-6 bg-brand-primary rotate-45 translate-x-3 -translate-y-3" />
+                                <span className="absolute top-1 start-2 text-[10px] font-black text-brand-primary">
                                   {product.id}
                                 </span>
                               </div>
                               <div>
-                                <h4 className="text-sm font-black text-[#1A1033] leading-none mb-2">
+                                <h4 className="text-sm font-black text-brand-primary leading-none mb-2">
                                   {product.name}
                                 </h4>
-                                <p className="text-[10px] font-bold text-[#1A1033]/20 uppercase tracking-widest">
+                                <p className="text-[10px] font-bold text-brand-primary/20 uppercase tracking-widest">
                                   {product.sales}
                                 </p>
                               </div>
                             </div>
                             <div className="text-end">
-                              <p className="text-sm font-black text-[#1A1033]">{product.price}</p>
+                              <p className="text-sm font-black text-brand-primary">
+                                {product.price}
+                              </p>
                             </div>
                           </div>
                         ),
@@ -1441,7 +1443,7 @@ export function AdminDashboard() {
 
                   {/* Hızlı İşlemler - Modern Minimal Grid */}
                   <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm flex-1">
-                    <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-10">
+                    <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary mb-10">
                       Hızlı İşlemler
                     </h3>
                     <div className="grid grid-cols-2 gap-6">
@@ -1469,7 +1471,7 @@ export function AdminDashboard() {
                           onClick={action.onClick}
                           disabled={action.id === 'seed' && seeding}
                           className={cn(
-                            'group bg-[#F8F8FA] p-8 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 hover:bg-[#1A1033] transition-all duration-500 shadow-sm border border-[#1A1033]/5',
+                            'group bg-[#F8F8FA] p-8 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 hover:bg-brand-primary transition-all duration-500 shadow-sm border border-brand-primary/5',
                             action.id === 'seed' && seeding && 'opacity-50 cursor-not-allowed',
                           )}
                         >
@@ -1481,7 +1483,7 @@ export function AdminDashboard() {
                           >
                             <action.icon size={26} strokeWidth={2} />
                           </div>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 group-hover:text-white transition-colors">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 group-hover:text-white transition-colors">
                             {action.label}
                           </span>
                         </button>
@@ -1498,7 +1500,7 @@ export function AdminDashboard() {
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 50 }}
-                    className="fixed bottom-12 end-12 z-50 bg-[#1A1033] text-white p-6 rounded-[2rem] shadow-2xl flex items-center gap-4 min-w-[300px]"
+                    className="fixed bottom-12 end-12 z-50 bg-brand-primary text-white p-6 rounded-[2rem] shadow-2xl flex items-center gap-4 min-w-[300px]"
                   >
                     <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
                       <Database size={20} />

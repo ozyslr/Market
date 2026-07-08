@@ -953,7 +953,7 @@ export function SellerStorePage() {
                       <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                        className="px-4 py-3 bg-[#F8F8FA] rounded-xl text-xs font-bold text-[#1A1033]/60 outline-none cursor-pointer border-0 shrink-0"
+                        className="px-4 py-3 bg-[#F8F8FA] rounded-xl text-xs font-bold text-brand-primary/60 outline-none cursor-pointer border-0 shrink-0"
                       >
                         <option value="default">Varsayılan</option>
                         <option value="price_asc">Fiyat: Düşükten Yükseğe</option>

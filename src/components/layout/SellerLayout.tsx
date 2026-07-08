@@ -1,9 +1,27 @@
 import { useEffect, useState } from 'react';
-import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, Link, useNavigate, Navigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Package, ShoppingBag, BarChart3, Settings, LogOut,
-  Store, Home, FileUp, Loader2, Clock, XCircle, AlertTriangle, TrendingUp, ShieldCheck,
-  Activity, Ticket, Trophy, FileText, Target, Key,
+  LayoutDashboard,
+  Package,
+  ShoppingBag,
+  BarChart3,
+  Settings,
+  LogOut,
+  Store,
+  Home,
+  FileUp,
+  Loader2,
+  Clock,
+  XCircle,
+  AlertTriangle,
+  TrendingUp,
+  ShieldCheck,
+  Activity,
+  Ticket,
+  Trophy,
+  FileText,
+  Target,
+  Key,
   MessageSquare,
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
@@ -14,20 +32,20 @@ import { Seller } from '../../types';
 
 const navItems = [
   { path: '/seller/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/seller/inventory',  icon: Package,         label: 'Ürünlerim' },
-  { path: '/seller/orders',     icon: ShoppingBag,     label: 'Siparişler' },
-  { path: '/seller/messages',   icon: MessageSquare,   label: 'Mesajlar'   },
-  { path: '/seller/analytics',  icon: Activity,        label: 'Analitik'  },
-  { path: '/seller/finance',    icon: BarChart3,       label: 'Finans' },
-  { path: '/seller/settings',   icon: Settings,        label: 'Mağaza Ayarları' },
-  { path: '/seller/import',     icon: FileUp,          label: 'Import Center'   },
-  { path: '/seller/pricing',    icon: TrendingUp,      label: 'Fiyatlandırma'   },
-  { path: '/seller/certificates', icon: ShieldCheck,    label: 'Sertifikalar'    },
-  { path: '/seller/coupons',      icon: Ticket,         label: 'Kuponlarım'      },
-  { path: '/seller/performance',  icon: Trophy,         label: 'Performans'       },
-  { path: '/seller/invoices',     icon: FileText,       label: 'E-Fatura'         },
-  { path: '/seller/price-analysis', icon: Target,       label: 'Fiyat Analizi'    },
-  { path: '/seller/api-keys',        icon: Key,          label: 'API Anahtarları'   },
+  { path: '/seller/inventory', icon: Package, label: 'Ürünlerim' },
+  { path: '/seller/orders', icon: ShoppingBag, label: 'Siparişler' },
+  { path: '/seller/messages', icon: MessageSquare, label: 'Mesajlar' },
+  { path: '/seller/analytics', icon: Activity, label: 'Analitik' },
+  { path: '/seller/finance', icon: BarChart3, label: 'Finans' },
+  { path: '/seller/settings', icon: Settings, label: 'Mağaza Ayarları' },
+  { path: '/seller/import', icon: FileUp, label: 'Import Center' },
+  { path: '/seller/pricing', icon: TrendingUp, label: 'Fiyatlandırma' },
+  { path: '/seller/certificates', icon: ShieldCheck, label: 'Sertifikalar' },
+  { path: '/seller/coupons', icon: Ticket, label: 'Kuponlarım' },
+  { path: '/seller/performance', icon: Trophy, label: 'Performans' },
+  { path: '/seller/invoices', icon: FileText, label: 'E-Fatura' },
+  { path: '/seller/price-analysis', icon: Target, label: 'Fiyat Analizi' },
+  { path: '/seller/api-keys', icon: Key, label: 'API Anahtarları' },
 ];
 
 type KycStatus = 'loading' | 'none' | 'pending' | 'verified' | 'rejected';
@@ -38,10 +56,21 @@ export default function SellerLayout() {
   const { t } = useLanguage();
   const [sellerStatus, setSellerStatus] = useState<KycStatus>('loading');
 
+  // Defense-in-depth: redirect non-seller users away
+  if (user && user.role !== 'seller') {
+    return (
+      <Navigate
+        to="/sell"
+        replace
+        state={{ notice: 'Satıcı paneline erişmek için satıcı olmalısınız.' }}
+      />
+    );
+  }
+
   useEffect(() => {
     if (!user?.id) return;
     getDoc(doc(db, 'sellers', user.id))
-      .then(snap => {
+      .then((snap) => {
         if (!snap.exists()) {
           setSellerStatus('none');
         } else {
@@ -100,9 +129,7 @@ export default function SellerLayout() {
             <Clock size={32} className="text-blue-400" />
           </div>
           <h2 className="text-2xl font-bold text-white">{t('seller.guard.pending')}</h2>
-          <p className="text-zinc-400 text-sm leading-relaxed">
-            {t('seller.guard.pendingDesc')}
-          </p>
+          <p className="text-zinc-400 text-sm leading-relaxed">{t('seller.guard.pendingDesc')}</p>
           <Link
             to="/"
             className="inline-block px-6 py-3 bg-zinc-800 text-zinc-300 rounded-xl font-semibold text-sm hover:bg-zinc-700 transition-colors"
@@ -122,9 +149,7 @@ export default function SellerLayout() {
             <XCircle size={32} className="text-red-400" />
           </div>
           <h2 className="text-2xl font-bold text-white">{t('seller.guard.rejected')}</h2>
-          <p className="text-zinc-400 text-sm leading-relaxed">
-            {t('seller.guard.rejectedDesc')}
-          </p>
+          <p className="text-zinc-400 text-sm leading-relaxed">{t('seller.guard.rejectedDesc')}</p>
           <div className="flex gap-3 justify-center">
             <Link
               to="/sell"
@@ -146,13 +171,21 @@ export default function SellerLayout() {
 
   return (
     <div className="flex h-screen bg-zinc-950 text-white overflow-hidden">
-      <aside role="navigation" aria-label="Satıcı paneli navigasyonu" className="w-[240px] flex-shrink-0 flex flex-col bg-zinc-900 border-e border-zinc-800">
+      <aside
+        role="navigation"
+        aria-label="Satıcı paneli navigasyonu"
+        className="w-[240px] flex-shrink-0 flex flex-col bg-zinc-900 border-e border-zinc-800"
+      >
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
           <div className="flex items-center gap-2">
             <Store size={18} className="text-emerald-400" />
             <span className="font-semibold text-sm">Satıcı Paneli</span>
           </div>
-          <Link to="/" title="Ana Sayfa" className="text-zinc-500 hover:text-white transition-colors">
+          <Link
+            to="/"
+            title="Ana Sayfa"
+            className="text-zinc-500 hover:text-white transition-colors"
+          >
             <Home size={16} />
           </Link>
         </div>
@@ -177,7 +210,10 @@ export default function SellerLayout() {
         <div className="border-t border-zinc-800 px-3 py-3 space-y-1">
           <div className="px-3 py-2 text-xs text-zinc-500 truncate">{user?.email}</div>
           <button
-            onClick={() => { logout(); navigate('/'); }}
+            onClick={() => {
+              logout();
+              navigate('/');
+            }}
             className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
           >
             <LogOut size={16} />

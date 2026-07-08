@@ -36,7 +36,6 @@ const ROLE_FILTER_CHIPS = [
   { label: 'Banlı', value: '__banned__' },
 ];
 
-
 export function AdminUsers() {
   const { user: actor } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
@@ -245,7 +244,7 @@ export function AdminUsers() {
   return (
     <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm flex flex-col min-h-[500px]">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+        <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
           Kullanıcı Yönetimi
         </h3>
         <div className="relative">
@@ -289,14 +288,16 @@ export function AdminUsers() {
           <table className="w-full text-start">
             <thead>
               <tr className="border-b border-brand-primary/5">
-                {['Kullanıcı', 'Email', 'Rol', 'Durum', 'Ülke', 'Kayıt Tarihi', 'İşlemler'].map((h) => (
-                  <th
-                    key={h}
-                    className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40"
-                  >
-                    {h}
-                  </th>
-                ))}
+                {['Kullanıcı', 'Email', 'Rol', 'Durum', 'Ülke', 'Kayıt Tarihi', 'İşlemler'].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-brand-primary/40"
+                    >
+                      {h}
+                    </th>
+                  ),
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-primary/5">
@@ -310,9 +311,9 @@ export function AdminUsers() {
                     <div className="w-9 h-9 rounded-full bg-brand-primary/5 flex items-center justify-center text-brand-primary shrink-0">
                       <UserIcon size={14} />
                     </div>
-                    <span className="font-bold text-sm text-[#1A1033]">{u.name}</span>
+                    <span className="font-bold text-sm text-brand-primary">{u.name}</span>
                   </td>
-                  <td className="px-6 py-5 text-sm text-[#1A1033]/60">{u.email}</td>
+                  <td className="px-6 py-5 text-sm text-brand-primary/60">{u.email}</td>
                   <td className="px-6 py-5">
                     <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
                       <select
@@ -343,10 +344,14 @@ export function AdminUsers() {
                     </div>
                   </td>
                   <td className="px-6 py-5">{statusBadge(u)}</td>
-                  <td className="px-6 py-5 text-sm text-[#1A1033]/60">{u.country || '—'}</td>
-                  <td className="px-6 py-5 text-xs text-[#1A1033]/50 whitespace-nowrap">
+                  <td className="px-6 py-5 text-sm text-brand-primary/60">{u.country || '—'}</td>
+                  <td className="px-6 py-5 text-xs text-brand-primary/50 whitespace-nowrap">
                     {(u as any).createdAt
-                      ? new Date((u as any).createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })
+                      ? new Date((u as any).createdAt).toLocaleDateString('tr-TR', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })
                       : '—'}
                   </td>
                   <td className="px-6 py-5">
@@ -355,7 +360,7 @@ export function AdminUsers() {
                         e.stopPropagation();
                         handleDelete(u.id);
                       }}
-                      className="p-2 text-[#1A1033]/40 hover:text-red-500 transition-colors"
+                      className="p-2 text-brand-primary/40 hover:text-red-500 transition-colors"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -366,7 +371,7 @@ export function AdminUsers() {
                 <tr>
                   <td
                     colSpan={7}
-                    className="px-8 py-12 text-center text-[#1A1033]/40 text-sm font-bold"
+                    className="px-8 py-12 text-center text-brand-primary/40 text-sm font-bold"
                   >
                     Kullanıcı bulunamadı.
                   </td>
@@ -392,7 +397,7 @@ export function AdminUsers() {
               <UserIcon size={20} className="text-brand-primary" />
             </div>
             <div>
-              <p className="font-black text-[#1A1033]">{selectedUser.name}</p>
+              <p className="font-black text-brand-primary">{selectedUser.name}</p>
               <p className="text-xs text-gray-400">{selectedUser.email}</p>
             </div>
           </div>
@@ -407,12 +412,22 @@ export function AdminUsers() {
             </p>
           )}
           <p className="text-[10px] text-gray-400 mt-1">
-            Kayıt: {(selectedUser as any).createdAt
-              ? new Date((selectedUser as any).createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+            Kayıt:{' '}
+            {(selectedUser as any).createdAt
+              ? new Date((selectedUser as any).createdAt).toLocaleDateString('tr-TR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })
               : 'Bilinmiyor'}
             {' · '}
-            Son giriş: {(selectedUser as any).lastLogin
-              ? new Date((selectedUser as any).lastLogin).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+            Son giriş:{' '}
+            {(selectedUser as any).lastLogin
+              ? new Date((selectedUser as any).lastLogin).toLocaleDateString('tr-TR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })
               : 'Bilinmiyor'}
           </p>
 
@@ -463,9 +478,7 @@ export function AdminUsers() {
                         #{o.id.slice(0, 8).toUpperCase()}
                       </p>
                       <p className="text-[9px] text-gray-400">
-                        {o.createdAt
-                          ? new Date(o.createdAt).toLocaleDateString('tr-TR')
-                          : '—'}
+                        {o.createdAt ? new Date(o.createdAt).toLocaleDateString('tr-TR') : '—'}
                       </p>
                     </div>
                     <div className="text-end">
@@ -478,20 +491,32 @@ export function AdminUsers() {
                           'text-red-500': o.status === 'cancelled',
                           'text-yellow-600': o.status === 'refunded' || o.status === 'returned',
                           'text-blue-600': o.status === 'shipped',
-                          'text-amber-600': o.status === 'pending' || o.status === 'processing' || o.status === 'paid',
+                          'text-amber-600':
+                            o.status === 'pending' ||
+                            o.status === 'processing' ||
+                            o.status === 'paid',
                           'text-orange-600': o.status === 'return_requested',
                         })}
                       >
-                        {o.status === 'pending' ? 'Beklemede'
-                          : o.status === 'paid' ? 'Ödendi'
-                          : o.status === 'processing' ? 'Hazırlanıyor'
-                          : o.status === 'shipped' ? 'Kargoda'
-                          : o.status === 'delivered' ? 'Teslim Edildi'
-                          : o.status === 'cancelled' ? 'İptal'
-                          : o.status === 'refunded' ? 'İade'
-                          : o.status === 'returned' ? 'İade Tamamlandı'
-                          : o.status === 'return_requested' ? 'İade Talebi'
-                          : o.status}
+                        {o.status === 'pending'
+                          ? 'Beklemede'
+                          : o.status === 'paid'
+                            ? 'Ödendi'
+                            : o.status === 'processing'
+                              ? 'Hazırlanıyor'
+                              : o.status === 'shipped'
+                                ? 'Kargoda'
+                                : o.status === 'delivered'
+                                  ? 'Teslim Edildi'
+                                  : o.status === 'cancelled'
+                                    ? 'İptal'
+                                    : o.status === 'refunded'
+                                      ? 'İade'
+                                      : o.status === 'returned'
+                                        ? 'İade Tamamlandı'
+                                        : o.status === 'return_requested'
+                                          ? 'İade Talebi'
+                                          : o.status}
                       </span>
                     </div>
                   </div>
@@ -563,7 +588,7 @@ export function AdminUsers() {
       {showSuspendModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-3xl p-8 w-80 shadow-2xl">
-            <h3 className="font-black text-[#1A1033] mb-4">Askıya Alma</h3>
+            <h3 className="font-black text-brand-primary mb-4">Askıya Alma</h3>
             <label className="text-[10px] font-black uppercase text-gray-400 block mb-1">
               Süre
             </label>
@@ -613,7 +638,7 @@ export function AdminUsers() {
       {showBanModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-3xl p-8 w-80 shadow-2xl">
-            <h3 className="font-black text-[#1A1033] mb-4">Kullanıcıyı Engelle</h3>
+            <h3 className="font-black text-brand-primary mb-4">Kullanıcıyı Engelle</h3>
             <p className="text-xs text-gray-400 mb-4">
               Bu işlem geri alınabilir ancak kullanıcı bilgilendirilmeyecektir.
             </p>

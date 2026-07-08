@@ -83,18 +83,18 @@ export function AdminCoupons() {
 
   return (
     <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm space-y-8">
-      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
         Kupon & İndirim
       </h3>
 
       {/* Create Form */}
       <form onSubmit={handleCreate} className="bg-[#F8F8FA] rounded-3xl p-6 space-y-4">
-        <h4 className="text-sm font-black uppercase text-[#1A1033]/40 tracking-widest">
+        <h4 className="text-sm font-black uppercase text-brand-primary/40 tracking-widest">
           Yeni Kupon Oluştur
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+            <label className="text-[9px] font-bold uppercase text-brand-primary/40 mb-1 block">
               Kupon Kodu
             </label>
             <input
@@ -106,7 +106,7 @@ export function AdminCoupons() {
             />
           </div>
           <div>
-            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+            <label className="text-[9px] font-bold uppercase text-brand-primary/40 mb-1 block">
               İndirim Tipi
             </label>
             <select
@@ -121,7 +121,7 @@ export function AdminCoupons() {
             </select>
           </div>
           <div>
-            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+            <label className="text-[9px] font-bold uppercase text-brand-primary/40 mb-1 block">
               İndirim Değeri
             </label>
             <input
@@ -135,7 +135,7 @@ export function AdminCoupons() {
             />
           </div>
           <div>
-            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+            <label className="text-[9px] font-bold uppercase text-brand-primary/40 mb-1 block">
               Min. Sipariş (₺)
             </label>
             <input
@@ -153,7 +153,7 @@ export function AdminCoupons() {
             />
           </div>
           <div>
-            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+            <label className="text-[9px] font-bold uppercase text-brand-primary/40 mb-1 block">
               Maks. Kullanım
             </label>
             <input
@@ -171,7 +171,7 @@ export function AdminCoupons() {
             />
           </div>
           <div>
-            <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+            <label className="text-[9px] font-bold uppercase text-brand-primary/40 mb-1 block">
               Son Geçerlilik
             </label>
             <input
@@ -201,7 +201,9 @@ export function AdminCoupons() {
       {/* Coupons List */}
       <div className="space-y-3">
         {coupons.length === 0 && (
-          <p className="text-center py-8 text-[#1A1033]/30 font-bold text-sm">Henüz kupon yok</p>
+          <p className="text-center py-8 text-brand-primary/30 font-bold text-sm">
+            Henüz kupon yok
+          </p>
         )}
         {coupons.map((coupon) => (
           <div
@@ -214,18 +216,18 @@ export function AdminCoupons() {
             )}
           >
             <div className="flex items-center gap-4">
-              <span className="font-black text-[#1A1033] tracking-widest text-sm bg-white px-3 py-1.5 rounded-xl border border-[#1A1033]/10">
+              <span className="font-black text-brand-primary tracking-widest text-sm bg-white px-3 py-1.5 rounded-xl border border-brand-primary/10">
                 {coupon.code}
               </span>
               <div>
-                <p className="text-xs font-bold text-[#1A1033]">
+                <p className="text-xs font-bold text-brand-primary">
                   {coupon.discountType === 'percentage'
                     ? `%${coupon.discountValue}`
                     : `${coupon.discountValue} ₺`}{' '}
                   indirim
                   {coupon.minOrderAmount ? ` · Min. ${coupon.minOrderAmount} ₺` : ''}
                 </p>
-                <p className="text-[10px] text-[#1A1033]/40">
+                <p className="text-[10px] text-brand-primary/40">
                   {coupon.usedCount} kullanım{coupon.maxUses ? ` / ${coupon.maxUses}` : ''}
                   {coupon.expiresAt
                     ? ` · ${new Date(coupon.expiresAt).toLocaleDateString('tr-TR')}`
@@ -238,7 +240,7 @@ export function AdminCoupons() {
                 {coupon.isActive ? (
                   <ToggleRight size={24} className="text-accent" />
                 ) : (
-                  <ToggleLeft size={24} className="text-[#1A1033]/30" />
+                  <ToggleLeft size={24} className="text-brand-primary/30" />
                 )}
               </button>
               <button

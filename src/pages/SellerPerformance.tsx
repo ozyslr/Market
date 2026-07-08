@@ -84,9 +84,9 @@ function ScoreBar({
           <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', color)}>
             <Icon size={16} className="text-white" />
           </div>
-          <span className="text-xs font-bold text-[#1A1033]">{label}</span>
+          <span className="text-xs font-bold text-brand-primary">{label}</span>
         </div>
-        <span className="text-sm font-black text-[#1A1033]">{score}</span>
+        <span className="text-sm font-black text-brand-primary">{score}</span>
       </div>
       <div className="h-2 bg-[#F8F8FA] rounded-full overflow-hidden">
         <motion.div
@@ -134,8 +134,8 @@ function GaugeRing({ score, size = 180 }: { score: number; size?: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-4xl font-display font-black text-[#1A1033]">{score}</span>
-        <span className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40">
+        <span className="text-4xl font-display font-black text-brand-primary">{score}</span>
+        <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40">
           / 100
         </span>
       </div>
@@ -173,7 +173,7 @@ export function SellerPerformance() {
   if (!perf)
     return (
       <div className="text-center py-24">
-        <p className="text-sm font-bold text-[#1A1033]/30">Henüz performans verisi yok</p>
+        <p className="text-sm font-bold text-brand-primary/30">Henüz performans verisi yok</p>
       </div>
     );
 
@@ -198,10 +198,10 @@ export function SellerPerformance() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+            <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
               Mağaza Performansı
             </h1>
-            <p className="text-[10px] font-bold text-[#1A1033]/40 uppercase tracking-widest mt-1">
+            <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest mt-1">
               Puanınız sipariş, kargo ve müşteri memnuniyetine göre hesaplanır
             </p>
           </div>
@@ -210,15 +210,15 @@ export function SellerPerformance() {
         {/* Top Row: Gauge + Level Badge */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Gauge */}
-          <div className="lg:col-span-1 bg-white rounded-[2.5rem] p-8 border border-[#1A1033]/5 flex flex-col items-center justify-center">
+          <div className="lg:col-span-1 bg-white rounded-[2.5rem] p-8 border border-brand-primary/5 flex flex-col items-center justify-center">
             <GaugeRing score={perf.overall} />
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mt-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mt-4">
               Genel Performans
             </p>
           </div>
 
           {/* Level Badge */}
-          <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 border border-[#1A1033]/5">
+          <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 border border-brand-primary/5">
             <div className="flex items-center gap-6 h-full">
               <div
                 className={cn(
@@ -231,7 +231,7 @@ export function SellerPerformance() {
                 <LevelIcon size={52} />
               </div>
               <div className="flex-1">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-1">
                   Mağaza Seviyesi
                 </p>
                 <p className={cn('text-3xl font-display font-black', levelCfg.color)}>
@@ -274,13 +274,13 @@ export function SellerPerformance() {
                   {['bronze', 'silver', 'gold', 'platinum'].map((level) => (
                     <span
                       key={level}
-                      className="text-[8px] font-black uppercase tracking-widest text-[#1A1033]/30"
+                      className="text-[8px] font-black uppercase tracking-widest text-brand-primary/30"
                     >
                       {level}
                     </span>
                   ))}
                 </div>
-                <p className="text-[11px] font-bold text-[#1A1033]/50 mt-4">
+                <p className="text-[11px] font-bold text-brand-primary/50 mt-4">
                   {perf.level === 'platinum'
                     ? 'En yüksek seviyedesiniz! Tüm avantajlardan yararlanıyorsunuz.'
                     : perf.level === 'gold'
@@ -311,11 +311,11 @@ export function SellerPerformance() {
             )}
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60">
+              <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary/60">
                 Kademe Durumu
               </h3>
               {tierStatus.nextTier && (
-                <div className="flex items-center gap-2 text-[10px] font-bold text-[#1A1033]/40">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-brand-primary/40">
                   <ArrowUp size={12} className="text-accent" />
                   Sonraki: {tierStatus.nextTier}
                 </div>
@@ -323,14 +323,14 @@ export function SellerPerformance() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="bg-[#F8F8FA] rounded-2xl p-4">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-1">
                   Ürün Limiti
                 </p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-display font-black text-[#1A1033]">
+                  <span className="text-xl font-display font-black text-brand-primary">
                     {tierStatus.productCount}
                   </span>
-                  <span className="text-xs text-[#1A1033]/40">
+                  <span className="text-xs text-brand-primary/40">
                     / {tierStatus.tierConfig.maxProducts.toLocaleString()}
                   </span>
                 </div>
@@ -347,7 +347,7 @@ export function SellerPerformance() {
                 </div>
               </div>
               <div className="bg-[#F8F8FA] rounded-2xl p-4">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-1">
                   Komisyon
                 </p>
                 <p className="text-xl font-display font-black text-green-600">
@@ -355,30 +355,30 @@ export function SellerPerformance() {
                 </p>
               </div>
               <div className="bg-[#F8F8FA] rounded-2xl p-4">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-1">
                   Aylık Ücret
                 </p>
-                <p className="text-xl font-display font-black text-[#1A1033]">
+                <p className="text-xl font-display font-black text-brand-primary">
                   {tierStatus.tierConfig.monthlyFee > 0
                     ? `${tierStatus.tierConfig.monthlyFee} ₺`
                     : 'Ücretsiz'}
                 </p>
               </div>
               <div className="bg-[#F8F8FA] rounded-2xl p-4">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-1">
                   Kalan Slot
                 </p>
                 <p
                   className={cn(
                     'text-xl font-display font-black',
-                    tierStatus.remainingSlots < 10 ? 'text-red-500' : 'text-[#1A1033]',
+                    tierStatus.remainingSlots < 10 ? 'text-red-500' : 'text-brand-primary',
                   )}
                 >
                   {tierStatus.remainingSlots}
                 </p>
               </div>
               <div className="bg-[#F8F8FA] rounded-2xl p-4">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-1">
                   Sonraki Seviye
                 </p>
                 {tierStatus.scoreToNextTier != null ? (
@@ -392,15 +392,15 @@ export function SellerPerformance() {
             </div>
             {tierStatus.recommendation && (
               <div className="mt-4 bg-accent/5 border border-accent/10 rounded-2xl p-4">
-                <p className="text-xs font-bold text-[#1A1033]">{tierStatus.recommendation}</p>
+                <p className="text-xs font-bold text-brand-primary">{tierStatus.recommendation}</p>
               </div>
             )}
           </div>
         )}
 
         {/* Score Breakdown */}
-        <div className="bg-white rounded-[2.5rem] p-8 border border-[#1A1033]/5">
-          <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 mb-6">
+        <div className="bg-white rounded-[2.5rem] p-8 border border-brand-primary/5">
+          <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary/60 mb-6">
             Puan Detayı
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -423,7 +423,7 @@ export function SellerPerformance() {
               key={item.label}
               className={cn(
                 'bg-white rounded-[2rem] p-6 border transition-all',
-                item.danger ? 'border-red-200' : 'border-[#1A1033]/5',
+                item.danger ? 'border-red-200' : 'border-brand-primary/5',
               )}
             >
               <div className="flex items-center justify-between">
@@ -431,14 +431,14 @@ export function SellerPerformance() {
                   <div
                     className={cn(
                       'w-12 h-12 rounded-xl flex items-center justify-center',
-                      item.danger ? 'bg-red-50 text-red-500' : 'bg-[#F8F8FA] text-[#1A1033]/40',
+                      item.danger ? 'bg-red-50 text-red-500' : 'bg-[#F8F8FA] text-brand-primary/40',
                     )}
                   >
                     <item.icon size={22} />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-[#1A1033]">{item.label}</p>
-                    <p className="text-[10px] text-[#1A1033]/40">
+                    <p className="text-xs font-black text-brand-primary">{item.label}</p>
+                    <p className="text-[10px] text-brand-primary/40">
                       {item.danger ? 'İyileştirme gerekli' : 'Normal seviyede'}
                     </p>
                   </div>
@@ -452,7 +452,7 @@ export function SellerPerformance() {
                   <span
                     className={cn(
                       'text-2xl font-display font-black',
-                      item.danger ? 'text-red-500' : 'text-[#1A1033]',
+                      item.danger ? 'text-red-500' : 'text-brand-primary',
                     )}
                   >
                     %{item.value}
@@ -464,8 +464,8 @@ export function SellerPerformance() {
         </div>
 
         {/* Improvement Tips */}
-        <div className="bg-white rounded-[2.5rem] p-8 border border-[#1A1033]/5">
-          <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 mb-4 flex items-center gap-2">
+        <div className="bg-white rounded-[2.5rem] p-8 border border-brand-primary/5">
+          <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary/60 mb-4 flex items-center gap-2">
             <Zap size={16} className="text-accent" /> İyileştirme Önerileri
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

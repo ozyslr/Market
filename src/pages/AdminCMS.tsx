@@ -196,7 +196,7 @@ function HomepageSectionsEditor() {
       <div className="flex flex-col items-center justify-center py-16 gap-4">
         <div className="text-center">
           <p className="text-sm font-bold text-red-500 mb-1">Yukleme hatasi</p>
-          <p className="text-xs text-[#1A1033]/40 max-w-xs">{error}</p>
+          <p className="text-xs text-brand-primary/40 max-w-xs">{error}</p>
         </div>
         <button
           onClick={fetchSections}
@@ -223,23 +223,25 @@ function HomepageSectionsEditor() {
                 <button
                   onClick={() => moveSection(section.id, 'up')}
                   disabled={idx === 0}
-                  className="p-0.5 text-[#1A1033]/30 hover:text-accent disabled:opacity-20"
+                  className="p-0.5 text-brand-primary/30 hover:text-accent disabled:opacity-20"
                 >
                   <ChevronUp size={14} />
                 </button>
                 <button
                   onClick={() => moveSection(section.id, 'down')}
                   disabled={idx === sections.length - 1}
-                  className="p-0.5 text-[#1A1033]/30 hover:text-accent disabled:opacity-20"
+                  className="p-0.5 text-brand-primary/30 hover:text-accent disabled:opacity-20"
                 >
                   <ChevronDown size={14} />
                 </button>
               </div>
               <div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary/30">
                   {SECTION_LABELS[section.type] || section.type}
                 </span>
-                <h4 className="text-sm font-black text-[#1A1033]">{section.title || section.id}</h4>
+                <h4 className="text-sm font-black text-brand-primary">
+                  {section.title || section.id}
+                </h4>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -250,7 +252,7 @@ function HomepageSectionsEditor() {
                 {section.enabled ? (
                   <ToggleRight size={26} className="text-accent" />
                 ) : (
-                  <ToggleLeft size={26} className="text-[#1A1033]/30" />
+                  <ToggleLeft size={26} className="text-brand-primary/30" />
                 )}
               </button>
               <button
@@ -271,7 +273,7 @@ function HomepageSectionsEditor() {
           {section.type === 'product_row' && (
             <div className="flex gap-4 flex-wrap">
               <div>
-                <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+                <label className="text-[9px] font-bold uppercase text-brand-primary/40 mb-1 block">
                   Filtre
                 </label>
                 <select
@@ -290,7 +292,7 @@ function HomepageSectionsEditor() {
                 </select>
               </div>
               <div>
-                <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+                <label className="text-[9px] font-bold uppercase text-brand-primary/40 mb-1 block">
                   Limit
                 </label>
                 <input
@@ -303,7 +305,7 @@ function HomepageSectionsEditor() {
                 />
               </div>
               <div className="w-full">
-                <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+                <label className="text-[9px] font-bold uppercase text-brand-primary/40 mb-1 block">
                   Sabitlenmiş Ürün ID&apos;leri{' '}
                   <span className="normal-case font-normal">
                     (virgülle ayır — boşsa filtre kullanılır)
@@ -329,7 +331,7 @@ function HomepageSectionsEditor() {
           {section.type === 'flash_deals' && (
             <div className="flex gap-4 flex-wrap">
               <div>
-                <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+                <label className="text-[9px] font-bold uppercase text-brand-primary/40 mb-1 block">
                   Bitiş Zamanı
                 </label>
                 <input
@@ -350,7 +352,7 @@ function HomepageSectionsEditor() {
                 />
               </div>
               <div>
-                <label className="text-[9px] font-bold uppercase text-[#1A1033]/40 mb-1 block">
+                <label className="text-[9px] font-bold uppercase text-brand-primary/40 mb-1 block">
                   Limit
                 </label>
                 <input
@@ -368,7 +370,7 @@ function HomepageSectionsEditor() {
           {section.type === 'hero' && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] text-[#1A1033]/40 font-bold">
+                <span className="text-[10px] text-brand-primary/40 font-bold">
                   {(section.config.slides || []).length} slayt
                 </span>
                 <button
@@ -394,7 +396,7 @@ function HomepageSectionsEditor() {
                         { label: 'Description (EN)', key: 'descEn', val: slide.descEn || '' },
                       ].map(({ label, key, val }) => (
                         <div key={key}>
-                          <label className="text-[9px] font-bold uppercase text-[#1A1033]/30 mb-1 block">
+                          <label className="text-[9px] font-bold uppercase text-brand-primary/30 mb-1 block">
                             {label}
                           </label>
                           <input
@@ -407,7 +409,7 @@ function HomepageSectionsEditor() {
                         </div>
                       ))}
                       <div className="md:col-span-2">
-                        <label className="text-[9px] font-bold uppercase text-[#1A1033]/30 mb-1 block">
+                        <label className="text-[9px] font-bold uppercase text-brand-primary/30 mb-1 block">
                           Görsel URL
                         </label>
                         <input
@@ -420,7 +422,7 @@ function HomepageSectionsEditor() {
                         />
                       </div>
                       <div>
-                        <label className="text-[9px] font-bold uppercase text-[#1A1033]/30 mb-1 block">
+                        <label className="text-[9px] font-bold uppercase text-brand-primary/30 mb-1 block">
                           Kategori Slug
                         </label>
                         <input
@@ -433,7 +435,7 @@ function HomepageSectionsEditor() {
                         />
                       </div>
                       <div>
-                        <label className="text-[9px] font-bold uppercase text-[#1A1033]/30 mb-1 block">
+                        <label className="text-[9px] font-bold uppercase text-brand-primary/30 mb-1 block">
                           Renk (Tailwind)
                         </label>
                         <input
@@ -451,7 +453,7 @@ function HomepageSectionsEditor() {
                         onClick={() =>
                           updateSlide(section.id, slide.id, { enabled: !slide.enabled })
                         }
-                        className="flex items-center gap-1 text-[10px] font-bold text-[#1A1033]/40 hover:text-accent"
+                        className="flex items-center gap-1 text-[10px] font-bold text-brand-primary/40 hover:text-accent"
                       >
                         {slide.enabled ? (
                           <ToggleRight size={18} className="text-accent" />
@@ -511,7 +513,7 @@ function SortableCategoryCard({
       <div className="relative">
         <div
           {...listeners}
-          className="absolute top-2 start-2 z-10 cursor-grab active:cursor-grabbing p-1.5 rounded-md bg-white/80 text-[#1A1033]/40 hover:text-accent shadow-sm"
+          className="absolute top-2 start-2 z-10 cursor-grab active:cursor-grabbing p-1.5 rounded-md bg-white/80 text-brand-primary/40 hover:text-accent shadow-sm"
           title="Sıralamak için sürükle"
         >
           ⠿
@@ -723,8 +725,8 @@ export function AdminCMS() {
               className={cn(
                 'px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all',
                 activeTab === tab
-                  ? 'bg-[#1A1033] text-white'
-                  : 'bg-[#F8F8FA] text-[#1A1033]/40 hover:text-[#1A1033]',
+                  ? 'bg-brand-primary text-white'
+                  : 'bg-[#F8F8FA] text-brand-primary/40 hover:text-brand-primary',
               )}
             >
               {tab === 'categories' ? 'Kategori Menü' : 'Anasayfa Bölümleri'}
@@ -789,10 +791,10 @@ export function AdminCMS() {
                           </div>
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <h4 className="text-sm font-black text-[#1A1033] uppercase">
+                              <h4 className="text-sm font-black text-brand-primary uppercase">
                                 {cat.name}
                               </h4>
-                              <p className="text-[10px] text-[#1A1033]/40 uppercase tracking-wide mt-1">
+                              <p className="text-[10px] text-brand-primary/40 uppercase tracking-wide mt-1">
                                 Ana Menü{' '}
                                 {subs.length > 0 && (
                                   <span className="ms-1 px-1.5 py-0.5 bg-accent/10 text-accent rounded-md">
@@ -811,7 +813,7 @@ export function AdminCMS() {
                                   setFilterAttributes(cat.filterAttributes ?? []);
                                   setIsFormOpen(true);
                                 }}
-                                className="p-2 bg-white rounded-lg shadow-md text-[#1A1033]/40 hover:text-accent transition-colors"
+                                className="p-2 bg-white rounded-lg shadow-md text-brand-primary/40 hover:text-accent transition-colors"
                               >
                                 <Edit size={14} />
                               </button>
@@ -834,7 +836,7 @@ export function AdminCMS() {
                               ) : (
                                 <button
                                   onClick={() => setDeletingId(cat.id)}
-                                  className="p-2 bg-white rounded-lg shadow-md text-[#1A1033]/40 hover:text-red-500 transition-colors"
+                                  className="p-2 bg-white rounded-lg shadow-md text-brand-primary/40 hover:text-red-500 transition-colors"
                                 >
                                   <Trash2 size={14} />
                                 </button>
@@ -844,10 +846,10 @@ export function AdminCMS() {
                         </div>
 
                         {/* Alt kategoriler bölümü */}
-                        <div className="border-t border-[#1A1033]/5">
+                        <div className="border-t border-brand-primary/5">
                           <button
                             onClick={() => setExpandedId(isOpen ? null : cat.id)}
-                            className="w-full flex items-center justify-between px-6 py-3 text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 hover:text-[#1A1033] hover:bg-white/60 transition-colors"
+                            className="w-full flex items-center justify-between px-6 py-3 text-[10px] font-black uppercase tracking-widest text-brand-primary/40 hover:text-brand-primary hover:bg-white/60 transition-colors"
                           >
                             <span>Alt Kategoriler</span>
                             <ChevronDown
@@ -867,7 +869,7 @@ export function AdminCMS() {
                               >
                                 <div className="px-4 pb-4 space-y-2">
                                   {subs.length === 0 && (
-                                    <p className="text-[10px] text-[#1A1033]/30 font-bold text-center py-2">
+                                    <p className="text-[10px] text-brand-primary/30 font-bold text-center py-2">
                                       Henüz alt kategori yok
                                     </p>
                                   )}
@@ -880,7 +882,7 @@ export function AdminCMS() {
                                         className="bg-white rounded-xl overflow-hidden"
                                       >
                                         <div className="flex items-center justify-between px-4 py-2.5">
-                                          <span className="text-xs font-bold text-[#1A1033]">
+                                          <span className="text-xs font-bold text-brand-primary">
                                             {sub.name}
                                           </span>
                                           <div className="flex gap-1 shrink-0 items-center">
@@ -893,7 +895,7 @@ export function AdminCMS() {
                                                 setFilterAttributes(sub.filterAttributes ?? []);
                                                 setIsFormOpen(true);
                                               }}
-                                              className="p-1.5 text-[#1A1033]/30 hover:text-accent rounded-lg hover:bg-accent/5 transition-colors"
+                                              className="p-1.5 text-brand-primary/30 hover:text-accent rounded-lg hover:bg-accent/5 transition-colors"
                                             >
                                               <Edit size={12} />
                                             </button>
@@ -918,7 +920,7 @@ export function AdminCMS() {
                                             ) : (
                                               <button
                                                 onClick={() => setDeletingId(sub.id)}
-                                                className="p-1.5 text-[#1A1033]/30 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                                                className="p-1.5 text-brand-primary/30 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
                                               >
                                                 <Trash2 size={12} />
                                               </button>
@@ -930,7 +932,7 @@ export function AdminCMS() {
                                             {l3Items.map((item) => (
                                               <span
                                                 key={item.query}
-                                                className="group/tag flex items-center gap-0.5 text-[9px] px-2 py-0.5 bg-[#F8F8FA] rounded-md text-[#1A1033]/50 font-semibold"
+                                                className="group/tag flex items-center gap-0.5 text-[9px] px-2 py-0.5 bg-[#F8F8FA] rounded-md text-brand-primary/50 font-semibold"
                                               >
                                                 {item.name}
                                                 <button
@@ -970,7 +972,7 @@ export function AdminCMS() {
                                               </button>
                                               <button
                                                 onClick={() => setEditingL3(null)}
-                                                className="px-2 py-1 bg-[#F8F8FA] rounded-lg text-[9px] font-black text-[#1A1033]/40"
+                                                className="px-2 py-1 bg-[#F8F8FA] rounded-lg text-[9px] font-black text-brand-primary/40"
                                               >
                                                 <X size={8} />
                                               </button>
@@ -1051,13 +1053,16 @@ export function AdminCMS() {
                     </p>
                   )}
                 </div>
-                <button onClick={closeForm} className="text-[#1A1033]/30 hover:text-[#1A1033]">
+                <button
+                  onClick={closeForm}
+                  className="text-brand-primary/30 hover:text-brand-primary"
+                >
                   <X size={20} />
                 </button>
               </div>
               <form onSubmit={handleFormSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">
+                  <label className="block text-[10px] font-bold text-brand-primary uppercase mb-2">
                     Ad
                   </label>
                   <input
@@ -1069,7 +1074,7 @@ export function AdminCMS() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">
+                  <label className="block text-[10px] font-bold text-brand-primary uppercase mb-2">
                     Görsel
                   </label>
                   <div className="flex gap-3 items-start">
@@ -1077,7 +1082,7 @@ export function AdminCMS() {
                       <img
                         src={imagePreview || imageUrl}
                         alt="Önizleme"
-                        className="w-16 h-16 object-cover rounded-xl border border-[#1A1033]/10 shrink-0"
+                        className="w-16 h-16 object-cover rounded-xl border border-brand-primary/10 shrink-0"
                         referrerPolicy="no-referrer"
                         loading="lazy"
                       />
@@ -1093,7 +1098,7 @@ export function AdminCMS() {
                         placeholder="https://... görsel URL"
                         className="w-full px-3 py-2 bg-[#F8F8FA] rounded-xl text-sm border-0 outline-none"
                       />
-                      <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-[#1A1033]/10 rounded-xl text-[10px] font-black text-[#1A1033] hover:bg-[#1A1033]/20 transition-all w-fit">
+                      <label className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-brand-primary/10 rounded-xl text-[10px] font-black text-brand-primary hover:bg-brand-primary/20 transition-all w-fit">
                         <Upload size={12} />
                         Dosyadan Yükle
                         <input
@@ -1112,7 +1117,7 @@ export function AdminCMS() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">
+                  <label className="block text-[10px] font-bold text-brand-primary uppercase mb-2">
                     Banner Görseli (Sayfa Üst Bandı)
                   </label>
                   <div className="flex gap-3 items-center">
@@ -1120,7 +1125,7 @@ export function AdminCMS() {
                       <img
                         src={bannerUrl}
                         alt="Banner Önizleme"
-                        className="w-20 h-10 object-cover rounded-lg border border-[#1A1033]/10 shrink-0"
+                        className="w-20 h-10 object-cover rounded-lg border border-brand-primary/10 shrink-0"
                         referrerPolicy="no-referrer"
                         loading="lazy"
                       />
@@ -1133,12 +1138,12 @@ export function AdminCMS() {
                       className="flex-1 px-3 py-2 bg-[#F8F8FA] rounded-xl text-sm border-0 outline-none"
                     />
                   </div>
-                  <p className="text-[9px] text-[#1A1033]/30 mt-1 font-bold">
+                  <p className="text-[9px] text-brand-primary/30 mt-1 font-bold">
                     Boş bırakılırsa kategori görseli kullanılır.
                   </p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">
+                  <label className="block text-[10px] font-bold text-brand-primary uppercase mb-2">
                     Açıklama
                   </label>
                   <textarea
@@ -1149,7 +1154,7 @@ export function AdminCMS() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">
+                  <label className="block text-[10px] font-bold text-brand-primary uppercase mb-2">
                     Üst Kategori (İsteğe Bağlı)
                   </label>
                   <select
@@ -1168,8 +1173,8 @@ export function AdminCMS() {
                   </select>
                 </div>
                 {/* Filtre Özellikleri */}
-                <div className="border-t border-[#1A1033]/5 pt-6 space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60 flex items-center gap-2">
+                <div className="border-t border-brand-primary/5 pt-6 space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60 flex items-center gap-2">
                     <SlidersHorizontal size={14} /> Filtre Özellikleri
                   </h4>
                   <div className="space-y-2">
@@ -1179,12 +1184,14 @@ export function AdminCMS() {
                         className="flex items-start justify-between p-3 bg-[#F8F8FA] rounded-xl gap-2"
                       >
                         <div className="flex-1 min-w-0">
-                          <span className="text-xs font-black text-[#1A1033]">{attr.label}</span>
-                          <span className="text-[10px] text-[#1A1033]/40 ms-2">
+                          <span className="text-xs font-black text-brand-primary">
+                            {attr.label}
+                          </span>
+                          <span className="text-[10px] text-brand-primary/40 ms-2">
                             ({attr.key} · {attr.type})
                           </span>
                           {attr.options && attr.options.length > 0 && (
-                            <p className="text-[10px] text-[#1A1033]/40 mt-0.5 truncate">
+                            <p className="text-[10px] text-brand-primary/40 mt-0.5 truncate">
                               {attr.options.map((o) => o.value).join(', ')}
                             </p>
                           )}
@@ -1202,7 +1209,7 @@ export function AdminCMS() {
                     ))}
                   </div>
                   <div className="bg-[#F8F8FA] rounded-xl p-4 space-y-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
                       Yeni Filtre
                     </p>
                     <div className="grid grid-cols-2 gap-2">
@@ -1292,7 +1299,7 @@ export function AdminCMS() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="px-8 py-4 bg-[#1A1033] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                    className="px-8 py-4 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
                   >
                     {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
                   </button>

@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Bell, BellOff, TrendingDown, TrendingUp, ShoppingCart, AlertTriangle,
-} from 'lucide-react';
+import { Bell, BellOff, TrendingDown, TrendingUp, ShoppingCart, AlertTriangle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import {
-  getTrackedProducts, untrackPrice, getPriceAlert,
-} from '@/services/priceTrackingService';
+import { getTrackedProducts, untrackPrice, getPriceAlert } from '@/services/priceTrackingService';
 import type { PriceAlert } from '@/services/priceTrackingService';
 import type { Product } from '@/types';
 
@@ -31,7 +27,10 @@ function SkeletonGrid() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="animate-pulse bg-white dark:bg-zinc-900 rounded-2xl border border-brand-primary/10 p-4">
+        <div
+          key={i}
+          className="animate-pulse bg-white dark:bg-zinc-900 rounded-2xl border border-brand-primary/10 p-4"
+        >
           <div className="aspect-square bg-zinc-200 dark:bg-zinc-800 rounded-xl mb-3" />
           <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-3/4 mb-2" />
           <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-1/2 mb-2" />
@@ -107,11 +106,12 @@ export function PriceAlerts() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <Bell className="w-20 h-20 text-zinc-200 dark:text-zinc-700 mb-6" />
-          <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] dark:text-white mb-3">
+          <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white mb-3">
             Fiyat Alarmlar\u0131
           </h2>
-          <p className="text-[#1A1033]/40 dark:text-white/40 font-bold mb-8 max-w-md">
-            Fiyat alarmlar\u0131n\u0131z\u0131 g\u00F6r\u00FCnt\u00FClemek i\u00E7in giri\u015F yap\u0131n.
+          <p className="text-brand-primary/40 dark:text-white/40 font-bold mb-8 max-w-md">
+            Fiyat alarmlar\u0131n\u0131z\u0131 g\u00F6r\u00FCnt\u00FClemek i\u00E7in giri\u015F
+            yap\u0131n.
           </p>
           <button
             onClick={() => navigate('/?login=1')}
@@ -131,7 +131,7 @@ export function PriceAlerts() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex items-center gap-3 mb-8">
           <Bell className="w-6 h-6 text-accent" />
-          <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] dark:text-white">
+          <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">
             Fiyat Alarmlar\u0131
           </h1>
         </div>
@@ -148,7 +148,7 @@ export function PriceAlerts() {
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <AlertTriangle className="w-16 h-16 text-red-400 mb-4" />
           <p className="text-red-500 font-bold mb-2">Bir hata olu\u015Ftu</p>
-          <p className="text-[#1A1033]/40 dark:text-white/40 font-bold mb-6">{error}</p>
+          <p className="text-brand-primary/40 dark:text-white/40 font-bold mb-6">{error}</p>
           <button
             onClick={() => loadItems()}
             className="px-6 py-2.5 bg-accent text-white rounded-xl font-bold text-sm hover:scale-105 transition-transform shadow-lg"
@@ -167,18 +167,18 @@ export function PriceAlerts() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex items-center gap-3 mb-8">
           <Bell className="w-6 h-6 text-accent" />
-          <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] dark:text-white">
+          <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">
             Fiyat Alarmlar\u0131
           </h1>
         </div>
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <BellOff className="w-16 h-16 text-[#1A1033]/10 dark:text-white/10 mb-4" />
-          <p className="text-[#1A1033] dark:text-white font-bold text-lg mb-2">
+          <BellOff className="w-16 h-16 text-brand-primary/10 dark:text-white/10 mb-4" />
+          <p className="text-brand-primary dark:text-white font-bold text-lg mb-2">
             Fiyat alarm\u0131 takip etmiyorsunuz
           </p>
-          <p className="text-[#1A1033]/40 dark:text-white/40 font-bold mb-8 max-w-md">
-            Bir \u00FCr\u00FCn sayfas\u0131nda fiyat d\u00FC\u015F\u00FCnce haber almak i\u00E7in &quot;Fiyat
-            Alarm\u0131&quot; butonuna t\u0131klay\u0131n.
+          <p className="text-brand-primary/40 dark:text-white/40 font-bold mb-8 max-w-md">
+            Bir \u00FCr\u00FCn sayfas\u0131nda fiyat d\u00FC\u015F\u00FCnce haber almak i\u00E7in
+            &quot;Fiyat Alarm\u0131&quot; butonuna t\u0131klay\u0131n.
           </p>
           <Link
             to="/"
@@ -198,7 +198,7 @@ export function PriceAlerts() {
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="flex items-center gap-3 mb-8">
         <Bell className="w-6 h-6 text-accent" />
-        <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] dark:text-white">
+        <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">
           Fiyat Alarmlar\u0131
         </h1>
         <span className="ms-2 px-2.5 py-0.5 bg-accent/10 text-accent rounded-full text-xs font-black">
@@ -237,9 +237,7 @@ export function PriceAlerts() {
                   <div
                     className={cn(
                       'absolute top-2 start-2 flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-lg',
-                      isTriggered
-                        ? 'bg-green-500 text-white'
-                        : 'bg-red-500 text-white',
+                      isTriggered ? 'bg-green-500 text-white' : 'bg-red-500 text-white',
                     )}
                   >
                     {isTriggered ? <TrendingDown size={10} /> : <TrendingUp size={10} />}
@@ -251,14 +249,14 @@ export function PriceAlerts() {
               {/* Details */}
               <div className="p-3">
                 <Link to={`/product/${product.slug}`} className="block">
-                  <h3 className="text-xs font-bold text-[#1A1033] dark:text-white line-clamp-2 mb-2 leading-relaxed min-h-[2rem]">
+                  <h3 className="text-xs font-bold text-brand-primary dark:text-white line-clamp-2 mb-2 leading-relaxed min-h-[2rem]">
                     {product.title}
                   </h3>
                 </Link>
 
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="text-lg font-display font-black text-[#1A1033] dark:text-white">
+                    <p className="text-lg font-display font-black text-brand-primary dark:text-white">
                       {symbol}
                       {product.price.toFixed(2)}
                     </p>

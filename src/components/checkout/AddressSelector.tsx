@@ -56,7 +56,7 @@ export function AddressSelector({
       {savedAddresses.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50">
+            <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/50">
               Kayıtlı Adreslerim
             </p>
             <button
@@ -77,7 +77,7 @@ export function AddressSelector({
                   'relative text-start px-4 py-3.5 rounded-2xl border-2 transition-all text-xs group',
                   selectedAddressId === addr.id
                     ? 'border-accent bg-accent/5 shadow-sm'
-                    : 'border-[#1A1033]/10 bg-[#F8F8FA] hover:border-accent/40',
+                    : 'border-brand-primary/10 bg-[#F8F8FA] hover:border-accent/40',
                 )}
               >
                 {selectedAddressId === addr.id && (
@@ -87,14 +87,14 @@ export function AddressSelector({
                 )}
                 <div className="flex items-center gap-1.5 mb-1">
                   <MapPin size={10} className="text-accent shrink-0" />
-                  <span className="font-black text-[#1A1033] text-[11px]">{addr.label}</span>
+                  <span className="font-black text-brand-primary text-[11px]">{addr.label}</span>
                   {/* Address type badge */}
                   {(() => {
                     const t = (addr.type || 'home') as AddressType;
                     const cfg = TYPE_CONFIG[t];
                     const Icon = cfg.icon;
                     return (
-                      <span className="text-[9px] bg-[#1A1033]/5 px-1.5 py-0.5 rounded-full flex items-center gap-0.5 font-medium text-[#1A1033]/50">
+                      <span className="text-[9px] bg-brand-primary/5 px-1.5 py-0.5 rounded-full flex items-center gap-0.5 font-medium text-brand-primary/50">
                         <Icon size={9} />
                         {cfg.label}
                       </span>
@@ -106,8 +106,8 @@ export function AddressSelector({
                     </span>
                   )}
                 </div>
-                <p className="text-[#1A1033]/50 font-medium leading-tight">{addr.line1}</p>
-                <p className="text-[#1A1033]/40 font-medium">
+                <p className="text-brand-primary/50 font-medium leading-tight">{addr.line1}</p>
+                <p className="text-brand-primary/40 font-medium">
                   {addr.city}, {addr.postalCode} &middot; {addr.country}
                 </p>
               </button>
@@ -120,7 +120,7 @@ export function AddressSelector({
       {(savedAddresses.length === 0 || showNewAddressForm || !selectedAddressId) && (
         <div className="space-y-4">
           {savedAddresses.length > 0 && showNewAddressForm && (
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 pt-2 border-t border-[#1A1033]/5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 pt-2 border-t border-brand-primary/5">
               Yeni Teslimat Adresi
             </p>
           )}
@@ -140,7 +140,7 @@ export function AddressSelector({
                     'flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors',
                     active
                       ? 'bg-accent text-white'
-                      : 'bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/5',
+                      : 'bg-[#F8F8FA] text-brand-primary/60 hover:bg-brand-primary/5',
                   )}
                 >
                   <Icon size={12} />
@@ -152,7 +152,7 @@ export function AddressSelector({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-bold text-[#1A1033] uppercase tracking-widest mb-2">
+              <label className="block text-[10px] font-bold text-brand-primary uppercase tracking-widest mb-2">
                 Ad Soyad
               </label>
               <input
@@ -165,7 +165,7 @@ export function AddressSelector({
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-[#1A1033] uppercase tracking-widest mb-2">
+              <label className="block text-[10px] font-bold text-brand-primary uppercase tracking-widest mb-2">
                 Telefon
               </label>
               <input
@@ -180,7 +180,7 @@ export function AddressSelector({
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-[#1A1033] uppercase tracking-widest mb-2">
+            <label className="block text-[10px] font-bold text-brand-primary uppercase tracking-widest mb-2">
               Sokak / Cadde
             </label>
             <input
@@ -196,7 +196,7 @@ export function AddressSelector({
 
           {/* Postal Code + Lookup */}
           <div>
-            <label className="block text-[10px] font-bold text-[#1A1033] uppercase tracking-widest mb-2">
+            <label className="block text-[10px] font-bold text-brand-primary uppercase tracking-widest mb-2">
               Posta Kodu
             </label>
             <div className="flex gap-2">
@@ -230,14 +230,14 @@ export function AddressSelector({
             {postcodeLookupError && (
               <p className="text-[10px] text-red-500 font-bold mt-1">{postcodeLookupError}</p>
             )}
-            <p className="text-[9px] text-[#1A1033]/30 font-bold mt-1 uppercase tracking-widest">
+            <p className="text-[9px] text-brand-primary/30 font-bold mt-1 uppercase tracking-widest">
               UK posta kodu &rarr; şehir/bölge otomatik dolar
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-bold text-[#1A1033] uppercase tracking-widest mb-2">
+              <label className="block text-[10px] font-bold text-brand-primary uppercase tracking-widest mb-2">
                 Şehir
               </label>
               <input
@@ -250,7 +250,7 @@ export function AddressSelector({
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-[#1A1033] uppercase tracking-widest mb-2">
+              <label className="block text-[10px] font-bold text-brand-primary uppercase tracking-widest mb-2">
                 Bölge / İlçe
               </label>
               <input
@@ -272,12 +272,12 @@ export function AddressSelector({
                   'w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0',
                   saveAddress
                     ? 'bg-accent border-accent'
-                    : 'border-[#1A1033]/20 group-hover:border-accent/50',
+                    : 'border-brand-primary/20 group-hover:border-accent/50',
                 )}
               >
                 {saveAddress && <Check size={11} className="text-white" />}
               </div>
-              <span className="text-[11px] font-bold text-[#1A1033]/60 group-hover:text-[#1A1033] transition-colors">
+              <span className="text-[11px] font-bold text-brand-primary/60 group-hover:text-brand-primary transition-colors">
                 Bu adresi profilime kaydet
               </span>
             </label>

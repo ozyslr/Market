@@ -97,7 +97,10 @@ export function Hero() {
           transition={{ duration: 0.5, ease: 'easeInOut' }}
           className="absolute inset-0"
         >
-          <div onClick={() => navigate(`/search?category=${SLIDES[current].category}`)} className="block w-full h-full cursor-pointer">
+          <div
+            onClick={() => navigate(`/search?category=${SLIDES[current].category}`)}
+            className="block w-full h-full cursor-pointer"
+          >
             <OptimizedImage
               src={SLIDES[current].image}
               className="absolute inset-0 w-full h-full object-cover md:object-fill"

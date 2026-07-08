@@ -41,13 +41,32 @@ export async function getStoreStats(sellerId: string): Promise<StoreStats> {
       totalRevenue,
       avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
     };
-  } catch { return { dailyVisits: 0, uniqueVisitors: 0, pageViews: 0, addToCartRate: 0, conversionRate: 0, totalOrders: 0, totalRevenue: 0, avgOrderValue: 0 }; }
+  } catch {
+    return {
+      dailyVisits: 0,
+      uniqueVisitors: 0,
+      pageViews: 0,
+      addToCartRate: 0,
+      conversionRate: 0,
+      totalOrders: 0,
+      totalRevenue: 0,
+      avgOrderValue: 0,
+    };
+  }
 }
 
-export async function getTopProducts(sellerId: string, limitCount = 10): Promise<ProductPerformance[]> {
+export async function getTopProducts(
+  sellerId: string,
+  limitCount = 10,
+): Promise<ProductPerformance[]> {
   try {
     const productsRef = collection(db, 'products');
-    const q = query(productsRef, where('storeId', '==', sellerId), orderBy('createdAt', 'desc'), limit(limitCount));
+    const q = query(
+      productsRef,
+      where('storeId', '==', sellerId),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount),
+    );
     const snap = await getDocs(q);
     return snap.docs.map((d) => {
       const data = d.data();
@@ -64,5 +83,7 @@ export async function getTopProducts(sellerId: string, limitCount = 10): Promise
         conversionRate: views > 0 ? purchases / views : 0,
       };
     });
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }

@@ -34,21 +34,26 @@ export function Wishlist() {
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     getProducts()
-      .then(async all => {
-        const filtered = all.filter(p => wishlist.includes(p.id));
+      .then(async (all) => {
+        const filtered = all.filter((p) => wishlist.includes(p.id));
         setProducts(filtered);
 
         const drops: Record<string, { from: number; to: number }> = {};
-        await Promise.all(filtered.map(async p => {
-          const history = await getPriceHistory(p.id, 10);
-          if (history.length >= 2) {
-            const latest = history[0].price;
-            const previous = history[1].price;
-            if (latest < previous) drops[p.id] = { from: previous, to: latest };
-          }
-        }));
+        await Promise.all(
+          filtered.map(async (p) => {
+            const history = await getPriceHistory(p.id, 10);
+            if (history.length >= 2) {
+              const latest = history[0].price;
+              const previous = history[1].price;
+              if (latest < previous) drops[p.id] = { from: previous, to: latest };
+            }
+          }),
+        );
         setPriceDrops(drops);
       })
       .finally(() => setLoading(false));
@@ -58,7 +63,7 @@ export function Wishlist() {
     e.preventDefault();
     e.stopPropagation();
     await toggleWishlist(productId);
-    setProducts(prev => prev.filter(p => p.id !== productId));
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
   };
 
   const handleShare = async (product: Product, e: React.MouseEvent) => {
@@ -94,10 +99,10 @@ export function Wishlist() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <Heart className="w-20 h-20 text-zinc-200 dark:text-zinc-700 mb-6" />
-          <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] dark:text-white mb-3">
+          <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white mb-3">
             {t('wishlist.login_title') || 'Favori Ürünleriniz'}
           </h2>
-          <p className="text-[#1A1033]/40 dark:text-white/40 font-bold mb-8 max-w-md">
+          <p className="text-brand-primary/40 dark:text-white/40 font-bold mb-8 max-w-md">
             {t('wishlist.login_prompt') || 'İstek listenizi görüntülemek için giriş yapın.'}
           </p>
           <button
@@ -116,7 +121,7 @@ export function Wishlist() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex items-center gap-3 mb-8">
           <Heart className="w-6 h-6 text-red-500 fill-red-500" />
-          <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] dark:text-white">
+          <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">
             {t('wishlist.title')}
           </h1>
         </div>
@@ -129,7 +134,7 @@ export function Wishlist() {
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="flex items-center gap-3 mb-8">
         <Heart className="w-6 h-6 text-red-500 fill-red-500" />
-        <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] dark:text-white">
+        <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">
           {t('wishlist.title')}
         </h1>
         {products.length > 0 && (
@@ -141,8 +146,8 @@ export function Wishlist() {
 
       {products.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <Heart className="w-16 h-16 text-[#1A1033]/10 dark:text-white/10 mb-4" />
-          <p className="text-[#1A1033]/40 dark:text-white/40 font-bold mb-6">
+          <Heart className="w-16 h-16 text-brand-primary/10 dark:text-white/10 mb-4" />
+          <p className="text-brand-primary/40 dark:text-white/40 font-bold mb-6">
             {t('wishlist.empty') || 'İstek listeniz boş'}
           </p>
           <Link
@@ -155,7 +160,7 @@ export function Wishlist() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {products.map(product => (
+          {products.map((product) => (
             <div key={product.id} className="relative group">
               {/* Action buttons overlay */}
               <div className="absolute top-2 end-2 z-10 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -184,7 +189,9 @@ export function Wishlist() {
               {priceDrops[product.id] && (
                 <div className="absolute top-2 start-2 z-10 flex items-center gap-1 bg-green-500 text-white px-2 py-1 rounded-lg shadow-lg text-[9px] font-black uppercase tracking-wider">
                   <TrendingDown size={10} />
-                  <span>{priceDrops[product.id].from} → {priceDrops[product.id].to} ₺</span>
+                  <span>
+                    {priceDrops[product.id].from} → {priceDrops[product.id].to} ₺
+                  </span>
                 </div>
               )}
 
@@ -211,7 +218,11 @@ export function Wishlist() {
             className="inline-flex items-center gap-2 px-6 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl text-xs font-bold hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-300"
           >
             <Share2 size={16} />
-            <span>{shareFeedback === 'page' ? (t('wishlist.copied') || 'Kopyalandı!') : (t('wishlist.share') || 'Paylaş')}</span>
+            <span>
+              {shareFeedback === 'page'
+                ? t('wishlist.copied') || 'Kopyalandı!'
+                : t('wishlist.share') || 'Paylaş'}
+            </span>
           </button>
         </div>
       )}

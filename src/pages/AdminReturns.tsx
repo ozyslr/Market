@@ -69,7 +69,7 @@ export function AdminReturns() {
 
   return (
     <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm">
-      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-8">
+      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary mb-8">
         İade Talepleri
       </h3>
 
@@ -80,7 +80,7 @@ export function AdminReturns() {
       )}
 
       {returns.length === 0 ? (
-        <p className="text-center py-16 text-[#1A1033]/30 font-bold">İade talebi bulunmuyor</p>
+        <p className="text-center py-16 text-brand-primary/30 font-bold">İade talebi bulunmuyor</p>
       ) : (
         <div className="space-y-4">
           {returns.map((order) => {
@@ -95,7 +95,7 @@ export function AdminReturns() {
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
-                    <span className="text-xs font-black text-[#1A1033]">
+                    <span className="text-xs font-black text-brand-primary">
                       #{order.id.slice(-8).toUpperCase()}
                     </span>
                     <span
@@ -107,11 +107,11 @@ export function AdminReturns() {
                       {st.label}
                     </span>
                   </div>
-                  <p className="text-[10px] text-[#1A1033]/40">
+                  <p className="text-[10px] text-brand-primary/40">
                     {new Date(order.createdAt).toLocaleDateString('tr-TR')} · {order.items.length}{' '}
                     ürün
                   </p>
-                  <p className="text-xs font-bold text-[#1A1033] mt-0.5">
+                  <p className="text-xs font-bold text-brand-primary mt-0.5">
                     {order.totalAmount?.toLocaleString('tr-TR') || '—'} ₺
                   </p>
                 </div>

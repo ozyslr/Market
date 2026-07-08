@@ -52,7 +52,7 @@ export function AdminSettings() {
 
   return (
     <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm max-w-2xl">
-      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-8">
+      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary mb-8">
         Site Ayarları
       </h3>
 
@@ -67,7 +67,7 @@ export function AdminSettings() {
           },
         ].map(({ label, key, placeholder }) => (
           <div key={key}>
-            <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">
+            <label className="block text-[10px] font-bold text-brand-primary uppercase mb-2">
               {label}
             </label>
             <input
@@ -93,8 +93,8 @@ export function AdminSettings() {
 
         <div className="flex items-center justify-between p-4 bg-[#F8F8FA] rounded-2xl">
           <div>
-            <p className="text-sm font-black text-[#1A1033]">Bakım Modu</p>
-            <p className="text-[10px] text-[#1A1033]/40">
+            <p className="text-sm font-black text-brand-primary">Bakım Modu</p>
+            <p className="text-[10px] text-brand-primary/40">
               Aktifken site ziyaretçilere bakım sayfası gösterir
             </p>
           </div>
@@ -106,14 +106,14 @@ export function AdminSettings() {
             {settings.maintenanceMode ? (
               <ToggleRight size={28} className="text-accent" />
             ) : (
-              <ToggleLeft size={28} className="text-[#1A1033]/30" />
+              <ToggleLeft size={28} className="text-brand-primary/30" />
             )}
           </button>
         </div>
 
         {settings.maintenanceMode && (
           <div>
-            <label className="block text-[10px] font-bold text-[#1A1033] uppercase mb-2">
+            <label className="block text-[10px] font-bold text-brand-primary uppercase mb-2">
               Bakım Mesajı
             </label>
             <textarea
@@ -129,7 +129,7 @@ export function AdminSettings() {
         <button
           type="submit"
           disabled={saving}
-          className="flex items-center gap-2 px-8 py-4 bg-[#1A1033] text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 hover:bg-accent transition-all"
+          className="flex items-center gap-2 px-8 py-4 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 hover:bg-accent transition-all"
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           {saved ? 'Kaydedildi ✓' : 'Kaydet'}

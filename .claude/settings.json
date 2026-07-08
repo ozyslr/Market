@@ -1,4 +1,12 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(echo \"grep exit: $?\")",
+      "Bash(bash \"C:/Users/ozyslr/.claude/plugins/cache/claude-plugins-official/superpowers/6.1.0/skills/subagent-driven-development/scripts/review-package\" 58c8578 96fc3c7)",
+      "Bash(npx prettier *)",
+      "Bash(bash ~/.claude/plugins/cache/claude-plugins-official/superpowers/6.1.0/skills/subagent-driven-development/scripts/review-package 96fc3c7 3c1d42e)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {

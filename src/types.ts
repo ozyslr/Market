@@ -126,6 +126,7 @@ export interface Order {
 
 export interface UserProfile extends User {
   spentTotal: number;
+  createdAt: string;
   lastLogin: string;
   phone?: string;
   surname?: string;

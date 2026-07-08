@@ -678,11 +678,11 @@ export function CheckoutPage() {
             <button
               onClick={() => navigate('/cart')}
               aria-label="Sepete geri dön"
-              className="p-2 border border-[#1A1033]/10 rounded-xl hover:bg-[#1A1033]/5 transition-colors"
+              className="p-2 border border-brand-primary/10 rounded-xl hover:bg-brand-primary/5 transition-colors"
             >
-              <ChevronRight size={20} className="rotate-180 text-[#1A1033]" />
+              <ChevronRight size={20} className="rotate-180 text-brand-primary" />
             </button>
-            <h1 className="text-4xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+            <h1 className="text-4xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
               Secure Checkout
             </h1>
           </div>
@@ -707,7 +707,7 @@ export function CheckoutPage() {
           )}
 
           {/* Progress Bar */}
-          <div className="flex items-center justify-between mb-12 relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-0 before:w-full before:h-1 before:bg-[#1A1033]/5 before:-z-10">
+          <div className="flex items-center justify-between mb-12 relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-0 before:w-full before:h-1 before:bg-brand-primary/5 before:-z-10">
             {[
               { num: 1, label: 'Delivery' },
               { num: 2, label: 'Payment' },
@@ -716,12 +716,12 @@ export function CheckoutPage() {
               <div key={s.num} className="flex flex-col items-center gap-2">
                 <div
                   aria-current={step === s.num ? 'step' : undefined}
-                  className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-black transition-all ${step >= s.num ? 'bg-accent text-white shadow-lg' : 'bg-white text-[#1A1033]/30 border border-[#1A1033]/5'}`}
+                  className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-black transition-all ${step >= s.num ? 'bg-accent text-white shadow-lg' : 'bg-white text-brand-primary/30 border border-brand-primary/5'}`}
                 >
                   {step > s.num ? <CheckCircle2 size={20} /> : s.num}
                 </div>
                 <span
-                  className={`text-[10px] uppercase font-black tracking-widest ${step >= s.num ? 'text-[#1A1033]' : 'text-[#1A1033]/30'}`}
+                  className={`text-[10px] uppercase font-black tracking-widest ${step >= s.num ? 'text-brand-primary' : 'text-brand-primary/30'}`}
                 >
                   {s.label}
                 </span>
@@ -742,7 +742,7 @@ export function CheckoutPage() {
                     <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center">
                       <Truck size={24} />
                     </div>
-                    <h2 className="text-2xl font-display font-black uppercase tracking-tight text-[#1A1033]">
+                    <h2 className="text-2xl font-display font-black uppercase tracking-tight text-brand-primary">
                       Shipping Address
                     </h2>
                   </div>
@@ -763,7 +763,7 @@ export function CheckoutPage() {
                     {/* Guest email field — shown only for anonymous users */}
                     {isAnonymous && (
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-2">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">
                           E-posta Adresi <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -775,7 +775,7 @@ export function CheckoutPage() {
                           value={guestEmail}
                           onChange={(e) => setGuestEmail(e.target.value)}
                           placeholder="ornek@email.com"
-                          className="w-full px-5 py-4 bg-[#F8F8FA] rounded-2xl text-sm font-bold text-[#1A1033] placeholder:text-[#1A1033]/25 outline-none focus:ring-2 focus:ring-accent/20 transition-all"
+                          className="w-full px-5 py-4 bg-[#F8F8FA] rounded-2xl text-sm font-bold text-brand-primary placeholder:text-brand-primary/25 outline-none focus:ring-2 focus:ring-accent/20 transition-all"
                         />
                       </div>
                     )}
@@ -806,7 +806,7 @@ export function CheckoutPage() {
                     <button
                       type="submit"
                       disabled={isFetchingIntent || missingIds.length > 0}
-                      className="w-full py-4 bg-[#1A1033] text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 mt-8 disabled:opacity-60"
+                      className="w-full py-4 bg-brand-primary text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 mt-8 disabled:opacity-60"
                     >
                       {isFetchingIntent ? (
                         <>
@@ -833,18 +833,18 @@ export function CheckoutPage() {
                     <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center">
                       <CreditCard size={24} />
                     </div>
-                    <h2 className="text-2xl font-display font-black uppercase tracking-tight text-[#1A1033]">
+                    <h2 className="text-2xl font-display font-black uppercase tracking-tight text-brand-primary">
                       Secure Payment
                     </h2>
                   </div>
 
                   {/* Escrow notice */}
-                  <div className="bg-[#F8F8FA] p-6 rounded-2xl mb-6 border border-[#1A1033]/5 relative overflow-hidden">
+                  <div className="bg-[#F8F8FA] p-6 rounded-2xl mb-6 border border-brand-primary/5 relative overflow-hidden">
                     <ShieldCheck className="absolute -end-4 -bottom-4 text-accent/5 size-32" />
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">
                       Escrow Protection
                     </p>
-                    <p className="text-sm font-medium text-[#1A1033]/60 relative z-10">
+                    <p className="text-sm font-medium text-brand-primary/60 relative z-10">
                       Your funds are held securely until the artifact is delivered and verified by
                       you.
                     </p>
@@ -1042,10 +1042,10 @@ export function CheckoutPage() {
                     <div className="flex items-center gap-4 bg-[#F8F8FA] rounded-2xl px-5 py-4">
                       <Truck size={20} className="text-accent shrink-0" />
                       <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40">
                           Tahmini Teslimat
                         </p>
-                        <p className="text-sm font-black text-[#1A1033]">
+                        <p className="text-sm font-black text-brand-primary">
                           {(() => {
                             const d = new Date();
                             d.setDate(d.getDate() + 3);
@@ -1060,7 +1060,7 @@ export function CheckoutPage() {
                     {/* Order items summary */}
                     {confirmedOrder && (
                       <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-3">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-3">
                           Sipariş Özeti
                         </p>
                         <div className="space-y-2">
@@ -1073,10 +1073,10 @@ export function CheckoutPage() {
                                 loading="lazy"
                                 className="w-10 h-10 rounded-xl object-contain bg-[#F8F8FA] p-1 shrink-0"
                               />
-                              <span className="flex-1 text-[11px] font-bold text-[#1A1033] line-clamp-1">
+                              <span className="flex-1 text-[11px] font-bold text-brand-primary line-clamp-1">
                                 {item.name}
                               </span>
-                              <span className="text-[11px] font-black text-[#1A1033]/50">
+                              <span className="text-[11px] font-black text-brand-primary/50">
                                 ×{item.quantity}
                               </span>
                             </div>
@@ -1087,14 +1087,14 @@ export function CheckoutPage() {
 
                     {/* Shipping address */}
                     {confirmedOrder?.shippingAddress && (
-                      <div className="border-t border-[#1A1033]/5 pt-5">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-2">
+                      <div className="border-t border-brand-primary/5 pt-5">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">
                           Teslimat Adresi
                         </p>
-                        <p className="text-[12px] font-bold text-[#1A1033]">
+                        <p className="text-[12px] font-bold text-brand-primary">
                           {confirmedOrder.shippingAddress.fullName}
                         </p>
-                        <p className="text-[11px] text-[#1A1033]/50 leading-relaxed">
+                        <p className="text-[11px] text-brand-primary/50 leading-relaxed">
                           {confirmedOrder.shippingAddress.line1},{' '}
                           {confirmedOrder.shippingAddress.city}{' '}
                           {confirmedOrder.shippingAddress.postalCode}
@@ -1116,14 +1116,14 @@ export function CheckoutPage() {
                       {confirmedOrder && (
                         <button
                           onClick={() => setShowInvoice(true)}
-                          className="flex-1 py-3.5 border-2 border-[#1A1033]/10 text-[#1A1033] rounded-2xl font-black uppercase text-[10px] tracking-widest hover:border-accent hover:text-accent transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 py-3.5 border-2 border-brand-primary/10 text-brand-primary rounded-2xl font-black uppercase text-[10px] tracking-widest hover:border-accent hover:text-accent transition-colors flex items-center justify-center gap-2"
                         >
                           <Download size={14} /> Fatura İndir
                         </button>
                       )}
                       <button
                         onClick={() => navigate('/profile')}
-                        className="flex-1 py-3.5 bg-[#1A1033] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:bg-accent transition-colors"
+                        className="flex-1 py-3.5 bg-brand-primary text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:bg-accent transition-colors"
                       >
                         Siparişlerimi Gör
                       </button>
@@ -1131,18 +1131,18 @@ export function CheckoutPage() {
 
                     {/* Create Account prompt — shown only for anonymous guest checkout */}
                     {isAnonymous && !accountCreated && (
-                      <div className="border-t border-[#1A1033]/5 pt-6 mt-4">
+                      <div className="border-t border-brand-primary/5 pt-6 mt-4">
                         <div className="bg-accent/5 rounded-2xl p-6 border border-accent/10">
-                          <h3 className="text-lg font-display font-black text-[#1A1033] mb-1">
+                          <h3 className="text-lg font-display font-black text-brand-primary mb-1">
                             Siparişini takip etmek ister misin?
                           </h3>
-                          <p className="text-[11px] font-medium text-[#1A1033]/50 mb-5 leading-relaxed">
+                          <p className="text-[11px] font-medium text-brand-primary/50 mb-5 leading-relaxed">
                             Hesap oluştur, siparişlerini gör, daha hızlı alışveriş yap.
                           </p>
 
                           <div className="space-y-3">
                             <div>
-                              <label className="block text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1.5">
+                              <label className="block text-[9px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
                                 Şifre
                               </label>
                               <input
@@ -1155,7 +1155,7 @@ export function CheckoutPage() {
                                   setAccountError('');
                                 }}
                                 placeholder="En az 6 karakter"
-                                className="w-full px-4 py-3 bg-white rounded-xl text-sm font-bold text-[#1A1033] placeholder:text-[#1A1033]/25 outline-none focus:ring-2 focus:ring-accent/20 transition-all"
+                                className="w-full px-4 py-3 bg-white rounded-xl text-sm font-bold text-brand-primary placeholder:text-brand-primary/25 outline-none focus:ring-2 focus:ring-accent/20 transition-all"
                               />
                             </div>
 
@@ -1201,7 +1201,7 @@ export function CheckoutPage() {
                             <button
                               type="button"
                               onClick={() => navigate('/')}
-                              className="w-full text-[10px] font-medium text-[#1A1033]/30 hover:text-[#1A1033]/50 transition-colors py-1"
+                              className="w-full text-[10px] font-medium text-brand-primary/30 hover:text-brand-primary/50 transition-colors py-1"
                             >
                               Şimdi değil
                             </button>
@@ -1212,7 +1212,7 @@ export function CheckoutPage() {
 
                     {/* Account created success message */}
                     {isAnonymous && accountCreated && (
-                      <div className="border-t border-[#1A1033]/5 pt-6 mt-4">
+                      <div className="border-t border-brand-primary/5 pt-6 mt-4">
                         <div className="bg-green-50 rounded-2xl p-6 border border-green-200">
                           <div className="flex items-center gap-3 mb-3">
                             <CheckCircle2 size={20} className="text-green-600" />

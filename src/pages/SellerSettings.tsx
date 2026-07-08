@@ -44,11 +44,11 @@ export function SellerSettings() {
   useEffect(() => {
     if (!user?.id) return;
     getDoc(doc(db, 'sellers', user.id))
-      .then(snap => {
+      .then((snap) => {
         if (snap.exists()) {
           const data = snap.data() as Seller;
           setSeller({ ...data, id: snap.id });
-          setForm(prev => ({
+          setForm((prev) => ({
             ...prev,
             storeName: data.storeName || '',
             description: data.description || '',
@@ -70,7 +70,9 @@ export function SellerSettings() {
           }).then(() => setSeller({ id: user.id, userId: user.id, storeName: '' } as any));
         }
       })
-      .catch(() => {/* sessiz hata — loading false yapılacak */})
+      .catch(() => {
+        /* sessiz hata — loading false yapılacak */
+      })
       .finally(() => setLoading(false));
   }, [user?.id]);
 
@@ -111,14 +113,14 @@ export function SellerSettings() {
   if (!seller) {
     return (
       <div className="max-w-xl mx-auto px-4 py-24 text-center">
-        <p className="text-[#1A1033]/40 font-bold">Satıcı profili bulunamadı.</p>
+        <p className="text-brand-primary/40 font-bold">Satıcı profili bulunamadı.</p>
       </div>
     );
   }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="text-2xl font-display font-black uppercase italic tracking-tight text-[#1A1033] mb-8">
+      <h1 className="text-2xl font-display font-black uppercase italic tracking-tight text-brand-primary mb-8">
         Mağaza Ayarları
       </h1>
 
@@ -132,7 +134,7 @@ export function SellerSettings() {
               'flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black transition-colors',
               activeTab === key
                 ? 'bg-accent text-white'
-                : 'bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-accent/10'
+                : 'bg-[#F8F8FA] text-brand-primary/60 hover:bg-accent/10',
             )}
           >
             <Icon size={12} /> {label}
@@ -146,31 +148,39 @@ export function SellerSettings() {
             <Field
               label="Mağaza Adı"
               value={form.storeName}
-              onChange={v => setForm(p => ({ ...p, storeName: v }))}
+              onChange={(v) => setForm((p) => ({ ...p, storeName: v }))}
             />
             <Field
               label="Mağaza Açıklaması"
               value={form.description}
-              onChange={v => setForm(p => ({ ...p, description: v }))}
+              onChange={(v) => setForm((p) => ({ ...p, description: v }))}
               type="textarea"
               placeholder="Mağazanızı tanıtın..."
             />
             <Field
               label="Logo URL"
               value={form.logoUrl}
-              onChange={v => setForm(p => ({ ...p, logoUrl: v }))}
+              onChange={(v) => setForm((p) => ({ ...p, logoUrl: v }))}
               placeholder="https://..."
             />
             <Field
               label="Banner URL"
               value={form.bannerUrl}
-              onChange={v => setForm(p => ({ ...p, bannerUrl: v }))}
+              onChange={(v) => setForm((p) => ({ ...p, bannerUrl: v }))}
               placeholder="https://..."
             />
             {form.logoUrl && (
               <div>
-                <p className="text-[10px] font-black uppercase text-[#1A1033]/40 mb-2">Logo Önizleme</p>
-                <img src={form.logoUrl} alt={form.storeName + ' logo'} className="w-16 h-16 rounded-xl object-cover border border-[#F8F8FA]" referrerPolicy="no-referrer" loading="lazy" />
+                <p className="text-[10px] font-black uppercase text-brand-primary/40 mb-2">
+                  Logo Önizleme
+                </p>
+                <img
+                  src={form.logoUrl}
+                  alt={form.storeName + ' logo'}
+                  className="w-16 h-16 rounded-xl object-cover border border-[#F8F8FA]"
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
+                />
               </div>
             )}
           </>
@@ -181,12 +191,12 @@ export function SellerSettings() {
             <Field
               label="İade Politikası"
               value={form.returnPolicy}
-              onChange={v => setForm(p => ({ ...p, returnPolicy: v }))}
+              onChange={(v) => setForm((p) => ({ ...p, returnPolicy: v }))}
               type="textarea"
               placeholder="Müşterilerinize sunduğunuz iade koşulları..."
             />
             <div>
-              <label className="block text-[10px] font-black uppercase text-[#1A1033]/40 mb-1">
+              <label className="block text-[10px] font-black uppercase text-brand-primary/40 mb-1">
                 Tahmini Teslimat (Gün)
               </label>
               <input
@@ -194,35 +204,56 @@ export function SellerSettings() {
                 min={1}
                 max={30}
                 value={form.estimatedDeliveryDays}
-                onChange={e => setForm(p => ({ ...p, estimatedDeliveryDays: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, estimatedDeliveryDays: Number(e.target.value) }))
+                }
                 className="w-24 border border-[#F8F8FA] rounded-xl p-3 text-sm focus:outline-none focus:border-accent"
               />
             </div>
             <Field
               label="Kargo Notu"
               value={form.shippingNote}
-              onChange={v => setForm(p => ({ ...p, shippingNote: v }))}
+              onChange={(v) => setForm((p) => ({ ...p, shippingNote: v }))}
               type="textarea"
               placeholder="Kargo hakkında ek bilgi..."
             />
             <div className="space-y-3">
-              <p className="text-[10px] font-black uppercase text-[#1A1033]/40">Bölgesel Kargo Ücretleri (₺)</p>
+              <p className="text-[10px] font-black uppercase text-brand-primary/40">
+                Bölgesel Kargo Ücretleri (₺)
+              </p>
               {[
-                { key: 'shippingMarmara', label: 'Marmara', val: form as any, default: 29.90 },
-                { key: 'shippingEge', label: 'Ege', val: form as any, default: 34.90 },
-                { key: 'shippingIcAnadolu', label: 'İç Anadolu', val: form as any, default: 39.90 },
-                { key: 'shippingAkdeniz', label: 'Akdeniz', val: form as any, default: 39.90 },
-                { key: 'shippingKaradeniz', label: 'Karadeniz', val: form as any, default: 44.90 },
-                { key: 'shippingDogu', label: 'Doğu/G.Doğu Anadolu', val: form as any, default: 49.90 },
-              ].map(region => (
-                <div key={region.key} className="flex items-center justify-between bg-[#F8F8FA] rounded-xl px-4 py-2.5">
-                  <span className="text-xs font-bold text-[#1A1033]">{region.label}</span>
+                { key: 'shippingMarmara', label: 'Marmara', val: form as any, default: 29.9 },
+                { key: 'shippingEge', label: 'Ege', val: form as any, default: 34.9 },
+                { key: 'shippingIcAnadolu', label: 'İç Anadolu', val: form as any, default: 39.9 },
+                { key: 'shippingAkdeniz', label: 'Akdeniz', val: form as any, default: 39.9 },
+                { key: 'shippingKaradeniz', label: 'Karadeniz', val: form as any, default: 44.9 },
+                {
+                  key: 'shippingDogu',
+                  label: 'Doğu/G.Doğu Anadolu',
+                  val: form as any,
+                  default: 49.9,
+                },
+              ].map((region) => (
+                <div
+                  key={region.key}
+                  className="flex items-center justify-between bg-[#F8F8FA] rounded-xl px-4 py-2.5"
+                >
+                  <span className="text-xs font-bold text-brand-primary">{region.label}</span>
                   <div className="flex items-center gap-1">
-                    <input type="number" min={0} step={0.01}
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
                       value={region.val[region.key] ?? (region as any).default}
-                      onChange={e => setForm((p: any) => ({ ...p, [region.key]: parseFloat(e.target.value) || 0 }))}
-                      className="w-20 text-end bg-white rounded-lg px-2 py-1 text-xs font-bold outline-none border border-transparent focus:border-accent/20" />
-                    <span className="text-[10px] text-[#1A1033]/40">₺</span>
+                      onChange={(e) =>
+                        setForm((p: any) => ({
+                          ...p,
+                          [region.key]: parseFloat(e.target.value) || 0,
+                        }))
+                      }
+                      className="w-20 text-end bg-white rounded-lg px-2 py-1 text-xs font-bold outline-none border border-transparent focus:border-accent/20"
+                    />
+                    <span className="text-[10px] text-brand-primary/40">₺</span>
                   </div>
                 </div>
               ))}
@@ -236,20 +267,20 @@ export function SellerSettings() {
               Ödeme bilgileri admin onayından geçer. Değişiklikler 1-2 iş günü içinde aktif olur.
             </div>
             <div>
-              <label className="block text-[10px] font-black uppercase text-[#1A1033]/40 mb-2">
+              <label className="block text-[10px] font-black uppercase text-brand-primary/40 mb-2">
                 Ödeme Yöntemi
               </label>
               <div className="flex gap-4">
-                {(['bank_transfer', 'paypal'] as const).map(m => (
+                {(['bank_transfer', 'paypal'] as const).map((m) => (
                   <label key={m} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
                       value={m}
                       checked={form.payoutMethod === m}
-                      onChange={() => setForm(p => ({ ...p, payoutMethod: m }))}
+                      onChange={() => setForm((p) => ({ ...p, payoutMethod: m }))}
                       className="accent-accent"
                     />
-                    <span className="text-sm font-bold text-[#1A1033]">
+                    <span className="text-sm font-bold text-brand-primary">
                       {m === 'bank_transfer' ? 'Banka Transferi' : 'PayPal'}
                     </span>
                   </label>
@@ -260,14 +291,14 @@ export function SellerSettings() {
               <Field
                 label="IBAN"
                 value={form.payoutIban}
-                onChange={v => setForm(p => ({ ...p, payoutIban: v }))}
+                onChange={(v) => setForm((p) => ({ ...p, payoutIban: v }))}
                 placeholder="TR..."
               />
             ) : (
               <Field
                 label="PayPal E-Posta"
                 value={form.payoutEmail}
-                onChange={v => setForm(p => ({ ...p, payoutEmail: v }))}
+                onChange={(v) => setForm((p) => ({ ...p, payoutEmail: v }))}
                 placeholder="email@example.com"
               />
             )}
@@ -302,14 +333,17 @@ function Field({
   type?: string;
   placeholder?: string;
 }) {
-  const cls = 'w-full border border-[#F8F8FA] rounded-xl p-3 text-sm focus:outline-none focus:border-accent';
+  const cls =
+    'w-full border border-[#F8F8FA] rounded-xl p-3 text-sm focus:outline-none focus:border-accent';
   return (
     <div>
-      <label className="block text-[10px] font-black uppercase text-[#1A1033]/40 mb-1">{label}</label>
+      <label className="block text-[10px] font-black uppercase text-brand-primary/40 mb-1">
+        {label}
+      </label>
       {type === 'textarea' ? (
         <textarea
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={3}
           className={`${cls} resize-none`}
@@ -318,7 +352,7 @@ function Field({
         <input
           type={type}
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className={cls}
         />

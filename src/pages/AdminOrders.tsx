@@ -123,7 +123,7 @@ export function AdminOrders() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+            <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
               Sipariş Merkezi
             </h2>
             <span
@@ -148,12 +148,12 @@ export function AdminOrders() {
               </span>
             )}
           </div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30 mt-1">
+          <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mt-1">
             {orders.length} kayıt
           </p>
         </div>
         {selectedIds.size > 0 && (
-          <div className="flex items-center gap-3 bg-[#1A1033] text-white px-5 py-3 rounded-2xl">
+          <div className="flex items-center gap-3 bg-brand-primary text-white px-5 py-3 rounded-2xl">
             <span className="text-[10px] font-black uppercase tracking-widest">
               {selectedIds.size} seçili
             </span>
@@ -183,8 +183,8 @@ export function AdminOrders() {
                 className={cn(
                   'px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
                   filter === s
-                    ? 'bg-[#1A1033] text-white'
-                    : 'bg-[#F8F8FA] text-[#1A1033]/40 hover:text-[#1A1033]',
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-[#F8F8FA] text-brand-primary/40 hover:text-brand-primary',
                 )}
               >
                 {s === 'all' ? 'Tümü' : s}
@@ -194,7 +194,7 @@ export function AdminOrders() {
           <div className="relative flex-1 max-w-sm md:ml-auto">
             <Search
               size={14}
-              className="absolute start-4 top-1/2 -translate-y-1/2 text-[#1A1033]/20"
+              className="absolute start-4 top-1/2 -translate-y-1/2 text-brand-primary/20"
             />
             <input
               value={search}
@@ -213,8 +213,8 @@ export function AdminOrders() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-24 text-center">
-            <Package size={40} className="mx-auto text-[#1A1033]/10 mb-4" />
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+            <Package size={40} className="mx-auto text-brand-primary/10 mb-4" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
               Sipariş bulunamadı
             </p>
           </div>
@@ -222,7 +222,7 @@ export function AdminOrders() {
           <div className="overflow-x-auto">
             <table className="w-full text-start">
               <thead>
-                <tr className="bg-[#F8F8FA] text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                <tr className="bg-[#F8F8FA] text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                   <th className="px-4 py-5 w-10">
                     <button
                       onClick={toggleSelectAll}
@@ -268,26 +268,26 @@ export function AdminOrders() {
                             ) : (
                               <Square
                                 size={16}
-                                className="text-[#1A1033]/15 group-hover:text-[#1A1033]/40"
+                                className="text-brand-primary/15 group-hover:text-brand-primary/40"
                               />
                             )}
                           </button>
                         </td>
                         <td className="px-4 py-5">
-                          <p className="font-black text-[#1A1033] text-sm">
+                          <p className="font-black text-brand-primary text-sm">
                             {order.id.slice(0, 8)}…
                           </p>
                         </td>
                         <td className="px-8 py-5">
-                          <p className="text-sm font-bold text-[#1A1033]">
+                          <p className="text-sm font-bold text-brand-primary">
                             {order.shippingAddress?.fullName || '—'}
                           </p>
-                          <p className="text-[10px] text-[#1A1033]/40 font-bold">
+                          <p className="text-[10px] text-brand-primary/40 font-bold">
                             {order.userEmail}
                           </p>
                         </td>
                         <td className="px-8 py-5">
-                          <p className="font-black text-[#1A1033]">
+                          <p className="font-black text-brand-primary">
                             {order.currency} {order.total.toFixed(2)}
                           </p>
                         </td>
@@ -327,7 +327,9 @@ export function AdminOrders() {
                                   onClick={() => handleStatusChange(order.id, s)}
                                   className={cn(
                                     'w-full px-4 py-2 text-start text-[10px] font-black uppercase tracking-widest hover:bg-[#F8F8FA] transition-colors',
-                                    order.status === s ? 'text-[#1A1033]' : 'text-[#1A1033]/40',
+                                    order.status === s
+                                      ? 'text-brand-primary'
+                                      : 'text-brand-primary/40',
                                   )}
                                 >
                                   {s}
@@ -337,7 +339,7 @@ export function AdminOrders() {
                           </div>
                         </td>
                         <td className="px-8 py-5">
-                          <p className="text-xs font-bold text-[#1A1033]/40">
+                          <p className="text-xs font-bold text-brand-primary/40">
                             {new Date(order.createdAt).toLocaleDateString('tr-TR')}
                           </p>
                         </td>
@@ -350,8 +352,8 @@ export function AdminOrders() {
                               className={cn(
                                 'px-3 py-1.5 border rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
                                 expandedId === order.id
-                                  ? 'bg-[#1A1033] text-white border-transparent'
-                                  : 'border-[#F8F8FA] hover:bg-[#1A1033] hover:text-white hover:border-transparent',
+                                  ? 'bg-brand-primary text-white border-transparent'
+                                  : 'border-[#F8F8FA] hover:bg-brand-primary hover:text-white hover:border-transparent',
                               )}
                             >
                               {expandedId === order.id ? 'Kapat' : 'Detay'}
@@ -366,7 +368,7 @@ export function AdminOrders() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                               {/* Items */}
                               <div>
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30 mb-3">
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-3">
                                   Ürünler ({order.items?.length || 0})
                                 </h4>
                                 <div className="space-y-2">
@@ -384,21 +386,21 @@ export function AdminOrders() {
                                         />
                                       )}
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-bold text-[#1A1033] truncate">
+                                        <p className="text-xs font-bold text-brand-primary truncate">
                                           {item.name || item.title}
                                         </p>
-                                        <p className="text-[10px] text-[#1A1033]/40 font-bold">
+                                        <p className="text-[10px] text-brand-primary/40 font-bold">
                                           {item.quantity}x {order.currency} {item.price?.toFixed(2)}
                                         </p>
                                       </div>
-                                      <p className="text-xs font-black text-[#1A1033]">
+                                      <p className="text-xs font-black text-brand-primary">
                                         {order.currency}{' '}
                                         {((item.price || 0) * (item.quantity || 1)).toFixed(2)}
                                       </p>
                                     </div>
                                   ))}
                                   {(!order.items || order.items.length === 0) && (
-                                    <p className="text-xs text-[#1A1033]/30">Ürün detayı yok</p>
+                                    <p className="text-xs text-brand-primary/30">Ürün detayı yok</p>
                                   )}
                                 </div>
                               </div>
@@ -406,11 +408,11 @@ export function AdminOrders() {
                               {/* Shipping & Payment */}
                               <div className="space-y-4">
                                 <div>
-                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30 mb-2">
+                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
                                     Teslimat Adresi
                                   </h4>
                                   {order.shippingAddress ? (
-                                    <div className="bg-white rounded-xl p-3 border border-[#F8F8FA] text-xs text-[#1A1033] space-y-0.5">
+                                    <div className="bg-white rounded-xl p-3 border border-[#F8F8FA] text-xs text-brand-primary space-y-0.5">
                                       <p className="font-bold">{order.shippingAddress.fullName}</p>
                                       <p>{order.shippingAddress.line1}</p>
                                       {order.shippingAddress.line2 && (
@@ -425,31 +427,33 @@ export function AdminOrders() {
                                       </p>
                                       <p>{order.shippingAddress.country}</p>
                                       {order.shippingAddress.phone && (
-                                        <p className="text-[#1A1033]/50">
+                                        <p className="text-brand-primary/50">
                                           {order.shippingAddress.phone}
                                         </p>
                                       )}
                                     </div>
                                   ) : (
-                                    <p className="text-xs text-[#1A1033]/30">Adres bilgisi yok</p>
+                                    <p className="text-xs text-brand-primary/30">
+                                      Adres bilgisi yok
+                                    </p>
                                   )}
                                 </div>
 
                                 <div>
-                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30 mb-2">
+                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
                                     Kargo Takip
                                   </h4>
                                   {order.trackingNumber ? (
                                     <div className="bg-white rounded-xl p-3 border border-[#F8F8FA]">
-                                      <p className="text-xs font-bold text-[#1A1033]">
+                                      <p className="text-xs font-bold text-brand-primary">
                                         {order.carrier || 'Kargo'}
                                       </p>
-                                      <p className="text-[10px] text-[#1A1033]/50 font-mono">
+                                      <p className="text-[10px] text-brand-primary/50 font-mono">
                                         {order.trackingNumber}
                                       </p>
                                     </div>
                                   ) : (
-                                    <p className="text-xs text-[#1A1033]/30">
+                                    <p className="text-xs text-brand-primary/30">
                                       Henüz kargo bilgisi girilmemiş
                                     </p>
                                   )}
@@ -459,50 +463,50 @@ export function AdminOrders() {
                               {/* Order Info */}
                               <div className="space-y-4">
                                 <div>
-                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30 mb-2">
+                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
                                     Sipariş Bilgisi
                                   </h4>
                                   <div className="bg-white rounded-xl p-3 border border-[#F8F8FA] space-y-2 text-xs">
                                     <div className="flex justify-between">
-                                      <span className="text-[#1A1033]/40">Sipariş ID</span>
-                                      <span className="font-mono font-bold text-[#1A1033]">
+                                      <span className="text-brand-primary/40">Sipariş ID</span>
+                                      <span className="font-mono font-bold text-brand-primary">
                                         {order.id.slice(0, 12)}…
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-[#1A1033]/40">Ödeme</span>
+                                      <span className="text-brand-primary/40">Ödeme</span>
                                       <span className="font-bold">
                                         {order.paymentMethod || '—'}
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-[#1A1033]/40">Ara Toplam</span>
+                                      <span className="text-brand-primary/40">Ara Toplam</span>
                                       <span className="font-bold">
                                         {order.currency} {order.subtotal?.toFixed(2) || '—'}
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-[#1A1033]/40">Kargo</span>
+                                      <span className="text-brand-primary/40">Kargo</span>
                                       <span className="font-bold">
                                         {order.currency} {order.shipping?.toFixed(2) || '0.00'}
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-[#1A1033]/40">Vergi</span>
+                                      <span className="text-brand-primary/40">Vergi</span>
                                       <span className="font-bold">
                                         {order.currency} {order.tax?.toFixed(2) || '0.00'}
                                       </span>
                                     </div>
                                     <div className="flex justify-between border-t border-[#F8F8FA] pt-2">
-                                      <span className="font-black text-[#1A1033]">Toplam</span>
-                                      <span className="font-black text-[#1A1033]">
+                                      <span className="font-black text-brand-primary">Toplam</span>
+                                      <span className="font-black text-brand-primary">
                                         {order.currency} {order.total?.toFixed(2)}
                                       </span>
                                     </div>
                                     {order.stripePaymentIntentId && (
                                       <div className="flex justify-between">
-                                        <span className="text-[#1A1033]/40">Stripe PI</span>
-                                        <span className="font-mono text-[10px] text-[#1A1033]/50">
+                                        <span className="text-brand-primary/40">Stripe PI</span>
+                                        <span className="font-mono text-[10px] text-brand-primary/50">
                                           {order.stripePaymentIntentId.slice(0, 16)}…
                                         </span>
                                       </div>
@@ -511,19 +515,19 @@ export function AdminOrders() {
                                 </div>
 
                                 <div>
-                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30 mb-2">
+                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-2">
                                     Zaman Damgaları
                                   </h4>
                                   <div className="bg-white rounded-xl p-3 border border-[#F8F8FA] space-y-1.5 text-[10px]">
                                     <div className="flex justify-between">
-                                      <span className="text-[#1A1033]/40">Oluşturma</span>
+                                      <span className="text-brand-primary/40">Oluşturma</span>
                                       <span className="font-bold">
                                         {new Date(order.createdAt).toLocaleString('tr-TR')}
                                       </span>
                                     </div>
                                     {order.paidAt && (
                                       <div className="flex justify-between">
-                                        <span className="text-[#1A1033]/40">Ödeme</span>
+                                        <span className="text-brand-primary/40">Ödeme</span>
                                         <span className="font-bold">
                                           {new Date(order.paidAt).toLocaleString('tr-TR')}
                                         </span>
@@ -531,7 +535,7 @@ export function AdminOrders() {
                                     )}
                                     {order.shippedAt && (
                                       <div className="flex justify-between">
-                                        <span className="text-[#1A1033]/40">Kargo</span>
+                                        <span className="text-brand-primary/40">Kargo</span>
                                         <span className="font-bold">
                                           {new Date(order.shippedAt).toLocaleString('tr-TR')}
                                         </span>
@@ -539,7 +543,7 @@ export function AdminOrders() {
                                     )}
                                     {order.updatedAt && (
                                       <div className="flex justify-between">
-                                        <span className="text-[#1A1033]/40">Güncelleme</span>
+                                        <span className="text-brand-primary/40">Güncelleme</span>
                                         <span className="font-bold">
                                           {new Date(order.updatedAt).toLocaleString('tr-TR')}
                                         </span>
@@ -566,30 +570,30 @@ export function AdminOrders() {
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl space-y-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-display font-black text-[#1A1033] uppercase italic">
+              <h3 className="text-xl font-display font-black text-brand-primary uppercase italic">
                 Toplu Durum Güncelle
               </h3>
               <button
                 onClick={() => setBatchOpen(false)}
                 className="p-2 hover:bg-[#F8F8FA] rounded-xl transition-colors"
               >
-                <X size={20} className="text-[#1A1033]/40" />
+                <X size={20} className="text-brand-primary/40" />
               </button>
             </div>
             <div className="bg-accent/5 border border-accent/20 rounded-2xl p-4">
-              <p className="text-sm font-black text-[#1A1033]">{selectedIds.size} sipariş</p>
-              <p className="text-[10px] font-bold text-[#1A1033]/50 uppercase tracking-widest">
+              <p className="text-sm font-black text-brand-primary">{selectedIds.size} sipariş</p>
+              <p className="text-[10px] font-bold text-brand-primary/50 uppercase tracking-widest">
                 toplu olarak güncellenecek
               </p>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
                 Yeni Durum
               </label>
               <select
                 value={batchStatus}
                 onChange={(e) => setBatchStatus(e.target.value as OrderStatus)}
-                className="w-full bg-[#F8F8FA] text-[#1A1033] rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10"
+                className="w-full bg-[#F8F8FA] text-brand-primary rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-accent/10"
               >
                 {ALL_STATUSES.map((s) => (
                   <option key={s}>{s}</option>
@@ -599,7 +603,7 @@ export function AdminOrders() {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => setBatchOpen(false)}
-                className="flex-1 py-3 bg-[#F8F8FA] text-[#1A1033] rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#F8F8FA]/70 transition-all"
+                className="flex-1 py-3 bg-[#F8F8FA] text-brand-primary rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#F8F8FA]/70 transition-all"
               >
                 İptal
               </button>

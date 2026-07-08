@@ -1,4 +1,13 @@
-﻿import { doc, updateDoc, collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+﻿import {
+  doc,
+  updateDoc,
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export interface StockLocation {
@@ -35,7 +44,9 @@ export async function getStockLocation(productId: string): Promise<StockLocation
   return null;
 }
 
-export async function recordStockMovement(movement: Omit<StockMovement, 'id' | 'timestamp'>): Promise<void> {
+export async function recordStockMovement(
+  movement: Omit<StockMovement, 'id' | 'timestamp'>,
+): Promise<void> {
   const mov: any = { ...movement, timestamp: new Date().toISOString() };
   await addDoc(collection(db, 'stockMovements'), mov);
 }
@@ -44,16 +55,27 @@ export async function getStockMovements(productId: string): Promise<StockMovemen
   try {
     const q = query(collection(db, 'stockMovements'), where('productId', '==', productId));
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as StockMovement));
-  } catch { return []; }
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as StockMovement);
+  } catch {
+    return [];
+  }
 }
 
-export async function checkLowStock(storeId: string, threshold = 5): Promise<Array<{ productId: string; title: string; stock: number }>> {
+export async function checkLowStock(
+  storeId: string,
+  threshold = 5,
+): Promise<Array<{ productId: string; title: string; stock: number }>> {
   try {
     const q = query(collection(db, 'products'), where('storeId', '==', storeId));
     const snap = await getDocs(q);
     return snap.docs
-      .map((d) => ({ productId: d.id, title: (d.data() as any).title || '', stock: (d.data() as any).stock || 0 }))
+      .map((d) => ({
+        productId: d.id,
+        title: (d.data() as any).title || '',
+        stock: (d.data() as any).stock || 0,
+      }))
       .filter((p) => p.stock <= threshold);
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }

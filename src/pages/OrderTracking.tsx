@@ -174,8 +174,8 @@ function LegacyOrderTimeline({ order, currentStep }: { order: Order; currentStep
   const activeIndex = isCancelled ? 1 : currentStep - 1;
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
-      <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400 mb-6 flex items-center gap-2">
+    <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800">
+      <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary/60 dark:text-zinc-400 mb-6 flex items-center gap-2">
         <Navigation size={16} className="text-accent" /> Sipariş Durumu
       </h3>
 
@@ -232,7 +232,7 @@ function LegacyOrderTimeline({ order, currentStep }: { order: Order; currentStep
                       ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
                       : isActive
                         ? 'bg-accent text-white shadow-lg shadow-accent/20'
-                        : 'bg-[#F8F8FA] dark:bg-zinc-800 text-[#1A1033]/20 dark:text-zinc-600',
+                        : 'bg-[#F8F8FA] dark:bg-zinc-800 text-brand-primary/20 dark:text-zinc-600',
                 )}
               >
                 {isCompleted ? (
@@ -256,8 +256,8 @@ function LegacyOrderTimeline({ order, currentStep }: { order: Order; currentStep
                     isCancelledStep
                       ? 'text-red-600 dark:text-red-400'
                       : isCompleted || isActive
-                        ? 'text-[#1A1033] dark:text-white'
-                        : 'text-[#1A1033]/20 dark:text-zinc-600',
+                        ? 'text-brand-primary dark:text-white'
+                        : 'text-brand-primary/20 dark:text-zinc-600',
                   )}
                 >
                   {step.label}
@@ -267,8 +267,8 @@ function LegacyOrderTimeline({ order, currentStep }: { order: Order; currentStep
                     className={cn(
                       'text-[11px] mt-0.5',
                       isCompleted || isActive
-                        ? 'text-[#1A1033]/50 dark:text-zinc-400'
-                        : 'text-[#1A1033]/20 dark:text-zinc-600',
+                        ? 'text-brand-primary/50 dark:text-zinc-400'
+                        : 'text-brand-primary/20 dark:text-zinc-600',
                     )}
                   >
                     {date.toLocaleDateString('tr-TR', {
@@ -337,8 +337,8 @@ function CarrierTrackingCard({
   const lastEvent = tracking?.events?.[0] ?? null;
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
-      <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400 mb-5 flex items-center gap-2">
+    <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800">
+      <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary/60 dark:text-zinc-400 mb-5 flex items-center gap-2">
         <Truck size={16} className="text-accent" /> Kargo Takibi
       </h3>
 
@@ -347,9 +347,11 @@ function CarrierTrackingCard({
           <Truck size={28} className="text-accent" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-black text-[#1A1033] dark:text-white text-sm">{order.carrier} Kargo</p>
+          <p className="font-black text-brand-primary dark:text-white text-sm">
+            {order.carrier} Kargo
+          </p>
           <div className="flex items-center gap-2 mt-1">
-            <code className="text-[11px] text-[#1A1033]/60 dark:text-zinc-400 font-mono bg-[#F8F8FA] dark:bg-zinc-800 px-2 py-0.5 rounded-lg truncate max-w-[180px]">
+            <code className="text-[11px] text-brand-primary/60 dark:text-zinc-400 font-mono bg-[#F8F8FA] dark:bg-zinc-800 px-2 py-0.5 rounded-lg truncate max-w-[180px]">
               {order.trackingNumber}
             </code>
             <button
@@ -360,7 +362,7 @@ function CarrierTrackingCard({
               {copied ? (
                 <CheckCircle2 size={14} className="text-green-500" />
               ) : (
-                <Copy size={14} className="text-[#1A1033]/40 dark:text-zinc-500" />
+                <Copy size={14} className="text-brand-primary/40 dark:text-zinc-500" />
               )}
             </button>
           </div>
@@ -370,16 +372,16 @@ function CarrierTrackingCard({
       {/* Last tracking status */}
       {lastEvent && (
         <div className="mt-5 pt-4 border-t border-[#F8F8FA] dark:border-zinc-800">
-          <p className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 mb-1 font-bold uppercase tracking-wider">
+          <p className="text-[10px] text-brand-primary/40 dark:text-zinc-500 mb-1 font-bold uppercase tracking-wider">
             Son Guncelleme
           </p>
-          <p className="text-xs font-bold text-[#1A1033]/80 dark:text-zinc-300">
+          <p className="text-xs font-bold text-brand-primary/80 dark:text-zinc-300">
             {lastEvent.status}
           </p>
-          <p className="text-[10px] text-[#1A1033]/50 dark:text-zinc-400">
+          <p className="text-[10px] text-brand-primary/50 dark:text-zinc-400">
             {lastEvent.description}
           </p>
-          <p className="text-[9px] text-[#1A1033]/30 dark:text-zinc-500 mt-0.5">
+          <p className="text-[9px] text-brand-primary/30 dark:text-zinc-500 mt-0.5">
             {new Date(lastEvent.timestamp).toLocaleString('tr-TR')}
           </p>
         </div>
@@ -547,15 +549,15 @@ function SubOrderReturnSection({
   // Form state
   if (returnFormState === 'form' || returnFormState === 'submitting') {
     return (
-      <div className="mt-3 space-y-3 p-4 bg-[#F8F8FA] dark:bg-zinc-800/50 rounded-2xl border border-[#1A1033]/5 dark:border-zinc-700">
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400">
+      <div className="mt-3 space-y-3 p-4 bg-[#F8F8FA] dark:bg-zinc-800/50 rounded-2xl border border-brand-primary/5 dark:border-zinc-700">
+        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60 dark:text-zinc-400">
           İade Sebebi
         </p>
         <select
           value={returnReason}
           onChange={(e) => setReturnReason(e.target.value as ReturnReason)}
           disabled={returnFormState === 'submitting'}
-          className="w-full text-xs font-bold bg-white dark:bg-zinc-900 border border-[#1A1033]/10 dark:border-zinc-700 rounded-xl px-3 py-2 text-[#1A1033] dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
+          className="w-full text-xs font-bold bg-white dark:bg-zinc-900 border border-brand-primary/10 dark:border-zinc-700 rounded-xl px-3 py-2 text-brand-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
         >
           {(Object.entries(RETURN_REASON_LABELS) as [ReturnReason, string][]).map(
             ([val, label]) => (
@@ -572,7 +574,7 @@ function SubOrderReturnSection({
           placeholder="Ek açıklama (isteğe bağlı)"
           disabled={returnFormState === 'submitting'}
           rows={3}
-          className="w-full text-xs bg-white dark:bg-zinc-900 border border-[#1A1033]/10 dark:border-zinc-700 rounded-xl px-3 py-2 text-[#1A1033] dark:text-white placeholder-[#1A1033]/30 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none disabled:opacity-50"
+          className="w-full text-xs bg-white dark:bg-zinc-900 border border-brand-primary/10 dark:border-zinc-700 rounded-xl px-3 py-2 text-brand-primary dark:text-white placeholder-[#1A1033]/30 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none disabled:opacity-50"
         />
         {returnError && <p className="text-[10px] font-bold text-red-600">{returnError}</p>}
         <div className="flex gap-2">
@@ -592,7 +594,7 @@ function SubOrderReturnSection({
               setReturnError(null);
             }}
             disabled={returnFormState === 'submitting'}
-            className="px-4 py-2 border border-[#1A1033]/10 dark:border-zinc-700 text-[#1A1033]/60 dark:text-zinc-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#F8F8FA] dark:hover:bg-zinc-800 transition-all disabled:opacity-50"
+            className="px-4 py-2 border border-brand-primary/10 dark:border-zinc-700 text-brand-primary/60 dark:text-zinc-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#F8F8FA] dark:hover:bg-zinc-800 transition-all disabled:opacity-50"
           >
             İptal
           </button>
@@ -665,7 +667,7 @@ export function OrderTracking() {
   if (!order && !orderSet)
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-sm text-[#1A1033]/40">Siparis bulunamadi</p>
+        <p className="text-sm text-brand-primary/40">Siparis bulunamadi</p>
       </div>
     );
 
@@ -682,26 +684,26 @@ export function OrderTracking() {
           {/* Back */}
           <Link
             to="/orders"
-            className="inline-flex items-center gap-2 text-xs font-bold text-[#1A1033]/40 dark:text-zinc-500 hover:text-accent transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-bold text-brand-primary/40 dark:text-zinc-500 hover:text-accent transition-colors"
           >
             <ArrowLeft size={14} /> Siparislerime Don
           </Link>
 
           {/* OrderSet Summary Card */}
-          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
+          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/30 dark:text-zinc-500">
+                <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary/30 dark:text-zinc-500">
                   Siparis #{orderSet.id.slice(-6).toUpperCase()}
                 </span>
-                <p className="text-xs text-[#1A1033]/50 dark:text-zinc-400 mt-1">
+                <p className="text-xs text-brand-primary/50 dark:text-zinc-400 mt-1">
                   {new Date(orderSet.createdAt).toLocaleDateString('tr-TR', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',
                   })}
                 </p>
-                <p className="text-xs text-[#1A1033]/40 dark:text-zinc-500">
+                <p className="text-xs text-brand-primary/40 dark:text-zinc-500">
                   {totalItems} urun, {orderSet.subOrders.length} alt siparis
                 </p>
               </div>
@@ -709,7 +711,7 @@ export function OrderTracking() {
                 <span className="px-3 py-1 rounded-xl text-[10px] font-black uppercase bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
                   {orderSet.status}
                 </span>
-                <span className="text-xl font-black text-[#1A1033] dark:text-white">
+                <span className="text-xl font-black text-brand-primary dark:text-white">
                   {orderSet.totalAmount.toFixed(2)} {orderSet.currency}
                 </span>
               </div>
@@ -723,13 +725,13 @@ export function OrderTracking() {
           {orderSet.subOrders.map((subOrder) => (
             <div
               key={subOrder.id}
-              className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800"
+              className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800"
             >
               {/* SubOrder header with seller + status */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Store size={16} className="text-accent" />
-                  <span className="text-xs font-black text-[#1A1033] dark:text-white">
+                  <span className="text-xs font-black text-brand-primary dark:text-white">
                     Satici: {subOrder.sellerId.slice(0, 12)}
                   </span>
                 </div>
@@ -760,14 +762,14 @@ export function OrderTracking() {
                       className="w-12 h-12 rounded-lg object-contain bg-white dark:bg-zinc-900 p-1 shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-[#1A1033] dark:text-white line-clamp-1">
+                      <p className="text-xs font-bold text-brand-primary dark:text-white line-clamp-1">
                         {item.name}
                       </p>
-                      <p className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500">
+                      <p className="text-[10px] text-brand-primary/40 dark:text-zinc-500">
                         {item.quantity} adet x {item.price.toFixed(2)}
                       </p>
                     </div>
-                    <p className="text-xs font-black text-[#1A1033] dark:text-white shrink-0">
+                    <p className="text-xs font-black text-brand-primary dark:text-white shrink-0">
                       {item.subtotal.toFixed(2)}
                     </p>
                   </div>
@@ -776,8 +778,8 @@ export function OrderTracking() {
 
               {/* SubOrder footer */}
               <div className="mt-4 pt-3 border-t border-[#F8F8FA] dark:border-zinc-800 flex justify-between text-xs">
-                <span className="text-[#1A1033]/40 dark:text-zinc-500">Ara Toplam</span>
-                <span className="font-bold text-[#1A1033] dark:text-white">
+                <span className="text-brand-primary/40 dark:text-zinc-500">Ara Toplam</span>
+                <span className="font-bold text-brand-primary dark:text-white">
                   {subOrder.subtotal.toFixed(2)}
                 </span>
               </div>
@@ -785,7 +787,7 @@ export function OrderTracking() {
               {/* Shipping tracking section — shown when shipped or delivered */}
               {(subOrder.status === 'shipped' || subOrder.status === 'delivered') && (
                 <div className="mt-4 pt-4 border-t border-[#F8F8FA] dark:border-zinc-800 space-y-3">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 dark:text-zinc-400 flex items-center gap-2">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/50 dark:text-zinc-400 flex items-center gap-2">
                     <Truck size={13} className="text-accent" /> Kargo Takibi
                   </h4>
 
@@ -793,12 +795,12 @@ export function OrderTracking() {
                   {(subOrder.carrier || subOrder.trackingNumber) && (
                     <div className="flex items-center gap-3 flex-wrap">
                       {subOrder.carrier && (
-                        <span className="text-xs font-bold text-[#1A1033] dark:text-white">
+                        <span className="text-xs font-bold text-brand-primary dark:text-white">
                           {subOrder.carrier}
                         </span>
                       )}
                       {subOrder.trackingNumber && (
-                        <code className="text-[11px] font-mono bg-[#F8F8FA] dark:bg-zinc-800 text-[#1A1033]/60 dark:text-zinc-400 px-2 py-0.5 rounded-lg">
+                        <code className="text-[11px] font-mono bg-[#F8F8FA] dark:bg-zinc-800 text-brand-primary/60 dark:text-zinc-400 px-2 py-0.5 rounded-lg">
                           {subOrder.trackingNumber}
                         </code>
                       )}
@@ -838,10 +840,10 @@ export function OrderTracking() {
 
                   {/* estimatedDelivery */}
                   {subOrder.estimatedDelivery && (
-                    <p className="text-xs text-[#1A1033]/50 dark:text-zinc-400 flex items-center gap-1.5">
+                    <p className="text-xs text-brand-primary/50 dark:text-zinc-400 flex items-center gap-1.5">
                       <Clock size={12} className="text-accent shrink-0" />
                       Tahmini Teslimat:{' '}
-                      <span className="font-bold text-[#1A1033] dark:text-white">
+                      <span className="font-bold text-brand-primary dark:text-white">
                         {new Date(subOrder.estimatedDelivery).toLocaleDateString('tr-TR', {
                           day: 'numeric',
                           month: 'long',
@@ -860,7 +862,7 @@ export function OrderTracking() {
                       return daysElapsed <= 14 ? (
                         <SubOrderReturnSection orderSetId={orderSet.id} subOrderId={subOrder.id} />
                       ) : (
-                        <p className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 font-bold">
+                        <p className="text-[10px] text-brand-primary/40 dark:text-zinc-500 font-bold">
                           İade süresi doldu (14 gün)
                         </p>
                       );
@@ -888,27 +890,29 @@ export function OrderTracking() {
         {/* Back */}
         <Link
           to="/profile"
-          className="inline-flex items-center gap-2 text-xs font-bold text-[#1A1033]/40 dark:text-zinc-500 hover:text-accent transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-bold text-brand-primary/40 dark:text-zinc-500 hover:text-accent transition-colors"
         >
           <ArrowLeft size={14} /> Siparişlerime Dön
         </Link>
 
         {/* ───── E. Order Summary Card ───── */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
+        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800">
           <div className="flex flex-wrap items-start justify-between gap-3">
             {/* Left: order id + date + item count */}
             <div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/30 dark:text-zinc-500">
+              <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary/30 dark:text-zinc-500">
                 Sipariş #{o.id.slice(-6).toUpperCase()}
               </span>
-              <p className="text-xs text-[#1A1033]/50 dark:text-zinc-400 mt-1">
+              <p className="text-xs text-brand-primary/50 dark:text-zinc-400 mt-1">
                 {new Date(o.createdAt).toLocaleDateString('tr-TR', {
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric',
                 })}
               </p>
-              <p className="text-xs text-[#1A1033]/40 dark:text-zinc-500">{o.items.length} ürün</p>
+              <p className="text-xs text-brand-primary/40 dark:text-zinc-500">
+                {o.items.length} ürün
+              </p>
             </div>
             {/* Right: status badge + total */}
             <div className="flex flex-col items-end gap-2">
@@ -926,7 +930,7 @@ export function OrderTracking() {
               >
                 {STEP_LABELS[o.status]?.label || o.status}
               </span>
-              <span className="text-xl font-black text-[#1A1033] dark:text-white">
+              <span className="text-xl font-black text-brand-primary dark:text-white">
                 {o.total.toFixed(2)} ₺
               </span>
             </div>
@@ -935,8 +939,8 @@ export function OrderTracking() {
           {/* Payment method + Quick actions */}
           <div className="mt-5 pt-4 border-t border-[#F8F8FA] dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <paymentMeta.icon size={14} className="text-[#1A1033]/40 dark:text-zinc-500" />
-              <span className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 uppercase tracking-wider">
+              <paymentMeta.icon size={14} className="text-brand-primary/40 dark:text-zinc-500" />
+              <span className="text-[10px] text-brand-primary/40 dark:text-zinc-500 uppercase tracking-wider">
                 {paymentMeta.label}
                 {o.installment && o.installment > 1 ? ` (${o.installment} taksit)` : ''}
               </span>
@@ -947,7 +951,7 @@ export function OrderTracking() {
               )}
               <Link
                 to="/iletisim"
-                className="flex items-center gap-1.5 py-2 px-3 border border-[#1A1033]/10 dark:border-zinc-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400 hover:border-accent hover:text-accent transition-all"
+                className="flex items-center gap-1.5 py-2 px-3 border border-brand-primary/10 dark:border-zinc-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/60 dark:text-zinc-400 hover:border-accent hover:text-accent transition-all"
               >
                 <HelpCircle size={12} />
                 Destek
@@ -960,8 +964,8 @@ export function OrderTracking() {
         <LegacyOrderTimeline order={o} currentStep={currentStep} />
 
         {/* ───── B. Order Items Grid ───── */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800">
-          <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400 mb-6">
+        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800">
+          <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary/60 dark:text-zinc-400 mb-6">
             Sipariş Detayı
           </h3>
 
@@ -980,19 +984,22 @@ export function OrderTracking() {
                   className="w-16 h-16 rounded-xl object-contain bg-white dark:bg-zinc-900 p-2 shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-[#1A1033] dark:text-white line-clamp-2 group-hover:text-accent transition-colors">
+                  <p className="text-xs font-bold text-brand-primary dark:text-white line-clamp-2 group-hover:text-accent transition-colors">
                     {item.name}
                   </p>
-                  <p className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 mt-1">
+                  <p className="text-[10px] text-brand-primary/40 dark:text-zinc-500 mt-1">
                     {item.quantity} adet x {item.price.toFixed(2)} ₺
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-sm font-black text-[#1A1033] dark:text-white">
+                  <p className="text-sm font-black text-brand-primary dark:text-white">
                     {item.subtotal.toFixed(2)} ₺
                   </p>
                 </div>
-                <ChevronRight size={14} className="text-[#1A1033]/20 dark:text-zinc-600 shrink-0" />
+                <ChevronRight
+                  size={14}
+                  className="text-brand-primary/20 dark:text-zinc-600 shrink-0"
+                />
               </Link>
             ))}
           </div>
@@ -1000,19 +1007,21 @@ export function OrderTracking() {
           {/* Totals */}
           <div className="mt-6 pt-4 border-t border-[#F8F8FA] dark:border-zinc-800 space-y-2 text-xs">
             <div className="flex justify-between">
-              <span className="text-[#1A1033]/40 dark:text-zinc-500">Ara Toplam</span>
-              <span className="font-bold text-[#1A1033] dark:text-white">
+              <span className="text-brand-primary/40 dark:text-zinc-500">Ara Toplam</span>
+              <span className="font-bold text-brand-primary dark:text-white">
                 {o.subtotal.toFixed(2)} ₺
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#1A1033]/40 dark:text-zinc-500">Kargo</span>
-              <span className="font-bold text-[#1A1033] dark:text-white">
+              <span className="text-brand-primary/40 dark:text-zinc-500">Kargo</span>
+              <span className="font-bold text-brand-primary dark:text-white">
                 {o.shipping.toFixed(2)} ₺
               </span>
             </div>
             <div className="flex justify-between text-sm pt-2 border-t border-[#F8F8FA] dark:border-zinc-800">
-              <span className="font-black uppercase text-[#1A1033] dark:text-white">Toplam</span>
+              <span className="font-black uppercase text-brand-primary dark:text-white">
+                Toplam
+              </span>
               <span className="font-black text-accent">{o.total.toFixed(2)} ₺</span>
             </div>
           </div>
@@ -1032,8 +1041,8 @@ export function OrderTracking() {
 
         {/* ───── Live Tracking Info (kept from original) ───── */}
         {isShipped && o.trackingNumber && (
-          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-[#1A1033]/5 dark:border-zinc-800 space-y-5">
-            <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/60 dark:text-zinc-400 flex items-center gap-2">
+          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800 space-y-5">
+            <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary/60 dark:text-zinc-400 flex items-center gap-2">
               <Navigation size={16} className="text-accent" /> Canlı Takip
             </h3>
 
@@ -1068,21 +1077,21 @@ export function OrderTracking() {
                             ? 'bg-accent ring-4 ring-accent/20'
                             : idx === tracking.events.length - 1
                               ? 'bg-green-500'
-                              : 'bg-[#1A1033]/15 dark:bg-zinc-700',
+                              : 'bg-brand-primary/15 dark:bg-zinc-700',
                         )}
                       />
                       {idx < tracking.events.length - 1 && (
-                        <div className="w-px flex-1 bg-[#1A1033]/10 dark:bg-zinc-800 mt-1" />
+                        <div className="w-px flex-1 bg-brand-primary/10 dark:bg-zinc-800 mt-1" />
                       )}
                     </div>
                     <div className="flex-1 pb-3">
-                      <p className="text-xs font-black text-[#1A1033] dark:text-white">
+                      <p className="text-xs font-black text-brand-primary dark:text-white">
                         {event.status}
                       </p>
-                      <p className="text-[10px] text-[#1A1033]/50 dark:text-zinc-400">
+                      <p className="text-[10px] text-brand-primary/50 dark:text-zinc-400">
                         {event.description}
                       </p>
-                      <p className="text-[9px] text-[#1A1033]/30 dark:text-zinc-500 flex items-center gap-2">
+                      <p className="text-[9px] text-brand-primary/30 dark:text-zinc-500 flex items-center gap-2">
                         {event.location && <span>{event.location}</span>}
                         <span>{new Date(event.timestamp).toLocaleString('tr-TR')}</span>
                       </p>
@@ -1092,7 +1101,7 @@ export function OrderTracking() {
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-xs text-[#1A1033]/30 dark:text-zinc-500">
+                <p className="text-xs text-brand-primary/30 dark:text-zinc-500">
                   Takip bilgisi alınamadı
                 </p>
               </div>

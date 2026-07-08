@@ -141,7 +141,7 @@ export function StripePaymentForm({
           <button
             type="button"
             onClick={onBack}
-            className="px-6 py-4 bg-[#F8F8FA] text-[#1A1033] rounded-2xl font-black uppercase text-[11px] hover:bg-[#1A1033]/5 transition-all"
+            className="px-6 py-4 bg-[#F8F8FA] text-brand-primary rounded-2xl font-black uppercase text-[11px] hover:bg-brand-primary/5 transition-all"
           >
             Geri
           </button>
@@ -203,11 +203,11 @@ export function StripePaymentForm({
             }}
           />
           <div className="flex items-center gap-3 my-4">
-            <div className="flex-1 h-px bg-[#1A1033]/10" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+            <div className="flex-1 h-px bg-brand-primary/10" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
               veya kart ile
             </span>
-            <div className="flex-1 h-px bg-[#1A1033]/10" />
+            <div className="flex-1 h-px bg-brand-primary/10" />
           </div>
         </div>
       )}
@@ -238,7 +238,7 @@ export function StripePaymentForm({
         <button
           type="button"
           onClick={onBack}
-          className="px-6 py-4 bg-[#F8F8FA] text-[#1A1033] rounded-2xl font-black uppercase text-[11px] hover:bg-[#1A1033]/5 transition-all"
+          className="px-6 py-4 bg-[#F8F8FA] text-brand-primary rounded-2xl font-black uppercase text-[11px] hover:bg-brand-primary/5 transition-all"
         >
           Back
         </button>

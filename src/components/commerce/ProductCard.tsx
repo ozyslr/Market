@@ -152,7 +152,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
             <Heart
               size={14}
               className={
-                isWishlisted(product.id) ? 'fill-red-500 text-red-500' : 'text-[#1A1033]/40'
+                isWishlisted(product.id) ? 'fill-red-500 text-red-500' : 'text-brand-primary/40'
               }
             />
           </button>
@@ -381,7 +381,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                   </p>
 
                   {/* Title */}
-                  <h3 className="text-sm font-bold text-[#1A1033] dark:text-white leading-snug mb-3">
+                  <h3 className="text-sm font-bold text-brand-primary dark:text-white leading-snug mb-3">
                     {product.title}
                   </h3>
 
@@ -444,7 +444,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                         <div key={key} className="mb-3">
                           <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1.5">
                             {key}:{' '}
-                            <span className="text-[#1A1033] dark:text-white normal-case font-bold">
+                            <span className="text-brand-primary dark:text-white normal-case font-bold">
                               {selectedVariants[key] || value}
                             </span>
                           </p>

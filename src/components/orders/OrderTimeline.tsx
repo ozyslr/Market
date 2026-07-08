@@ -54,8 +54,8 @@ export function OrderTimeline({ status, history }: OrderTimelineProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-6 border border-[#1A1033]/5 dark:border-zinc-800">
-      <h3 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 dark:text-zinc-400 mb-5">
+    <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-6 border border-brand-primary/5 dark:border-zinc-800">
+      <h3 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/50 dark:text-zinc-400 mb-5">
         Sipariş Durumu
       </h3>
 
@@ -109,7 +109,7 @@ export function OrderTimeline({ status, history }: OrderTimelineProps) {
                     ? 'border-green-400 bg-green-400 text-white'
                     : isActive
                       ? 'border-[#6418E5] bg-[#6418E5] text-white'
-                      : 'border-[#E8E8F0] bg-white dark:border-zinc-700 dark:bg-zinc-800 text-[#1A1033]/30 dark:text-zinc-600',
+                      : 'border-[#E8E8F0] bg-white dark:border-zinc-700 dark:bg-zinc-800 text-brand-primary/30 dark:text-zinc-600',
                 )}
               >
                 <Icon size={14} />
@@ -121,14 +121,16 @@ export function OrderTimeline({ status, history }: OrderTimelineProps) {
                   className={cn(
                     'text-xs font-bold',
                     isCompleted || isActive
-                      ? 'text-[#1A1033] dark:text-white'
-                      : 'text-[#1A1033]/35 dark:text-zinc-600',
+                      ? 'text-brand-primary dark:text-white'
+                      : 'text-brand-primary/35 dark:text-zinc-600',
                   )}
                 >
                   {step.label}
                 </p>
                 {date && (
-                  <p className="text-[10px] text-[#1A1033]/40 dark:text-zinc-500 mt-0.5">{date}</p>
+                  <p className="text-[10px] text-brand-primary/40 dark:text-zinc-500 mt-0.5">
+                    {date}
+                  </p>
                 )}
               </div>
             </motion.div>

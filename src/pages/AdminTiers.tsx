@@ -72,10 +72,10 @@ export function AdminTiers() {
   return (
     <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm space-y-8">
       <div>
-        <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+        <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
           Satıcı Kademeleri
         </h3>
-        <p className="text-[10px] font-bold text-[#1A1033]/40 uppercase tracking-widest mt-1">
+        <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest mt-1">
           Her kademe için ürün limiti, komisyon ve özellik yönetimi
         </p>
       </div>
@@ -98,16 +98,16 @@ export function AdminTiers() {
                           : 'text-zinc-400',
                 )}
               />
-              <span className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40">
+              <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40">
                 {tier.minPerformanceScore}+ puan
               </span>
             </div>
-            <h4 className="text-lg font-display font-black text-[#1A1033]">{tier.label}</h4>
+            <h4 className="text-lg font-display font-black text-brand-primary">{tier.label}</h4>
 
             {editingTier === tier.tier ? (
               <div className="mt-3 space-y-2">
                 <div>
-                  <label className="text-[8px] font-bold uppercase text-[#1A1033]/40">
+                  <label className="text-[8px] font-bold uppercase text-brand-primary/40">
                     Maks. Ürün
                   </label>
                   <input
@@ -120,7 +120,7 @@ export function AdminTiers() {
                   />
                 </div>
                 <div>
-                  <label className="text-[8px] font-bold uppercase text-[#1A1033]/40">
+                  <label className="text-[8px] font-bold uppercase text-brand-primary/40">
                     Komisyon %
                   </label>
                   <input
@@ -136,7 +136,7 @@ export function AdminTiers() {
                   />
                 </div>
                 <div>
-                  <label className="text-[8px] font-bold uppercase text-[#1A1033]/40">
+                  <label className="text-[8px] font-bold uppercase text-brand-primary/40">
                     Aylık Ücret (₺)
                   </label>
                   <input
@@ -168,32 +168,32 @@ export function AdminTiers() {
               <>
                 <div className="mt-3 space-y-1.5">
                   <div className="flex items-center gap-2 text-xs">
-                    <Package size={12} className="text-[#1A1033]/30" />
-                    <span className="font-black text-[#1A1033]">
+                    <Package size={12} className="text-brand-primary/30" />
+                    <span className="font-black text-brand-primary">
                       {tier.maxProducts.toLocaleString()}
                     </span>
-                    <span className="text-[#1A1033]/40">ürün</span>
+                    <span className="text-brand-primary/40">ürün</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs">
-                    <DollarSign size={12} className="text-[#1A1033]/30" />
-                    <span className="font-black text-[#1A1033]">%{tier.commissionRate}</span>
-                    <span className="text-[#1A1033]/40">komisyon</span>
+                    <DollarSign size={12} className="text-brand-primary/30" />
+                    <span className="font-black text-brand-primary">%{tier.commissionRate}</span>
+                    <span className="text-brand-primary/40">komisyon</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="font-black text-[#1A1033]">{tier.monthlyFee} ₺</span>
-                    <span className="text-[#1A1033]/40">/ ay</span>
+                    <span className="font-black text-brand-primary">{tier.monthlyFee} ₺</span>
+                    <span className="text-brand-primary/40">/ ay</span>
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-[#1A1033]/10">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-[#1A1033]/30 mb-1.5">
+                <div className="mt-3 pt-3 border-t border-brand-primary/10">
+                  <p className="text-[8px] font-black uppercase tracking-widest text-brand-primary/30 mb-1.5">
                     Özellikler
                   </p>
                   <div className="space-y-1">
                     {tier.benefits.map((b, i) => (
                       <div key={i} className="flex items-center gap-1.5">
                         <Check size={10} className="text-green-500 shrink-0" />
-                        <span className="text-[10px] text-[#1A1033]/60">{b}</span>
+                        <span className="text-[10px] text-brand-primary/60">{b}</span>
                       </div>
                     ))}
                   </div>
@@ -219,7 +219,7 @@ export function AdminTiers() {
 
                 <button
                   onClick={() => startEdit(tier)}
-                  className="w-full mt-3 py-2 border border-[#1A1033]/10 rounded-xl text-[9px] font-black uppercase text-[#1A1033]/40 hover:bg-[#1A1033]/5 transition-colors"
+                  className="w-full mt-3 py-2 border border-brand-primary/10 rounded-xl text-[9px] font-black uppercase text-brand-primary/40 hover:bg-brand-primary/5 transition-colors"
                 >
                   Düzenle
                 </button>

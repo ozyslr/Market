@@ -114,10 +114,10 @@ export function SellerApiKeys() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+            <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
               API Anahtarları
             </h1>
-            <p className="text-[10px] font-bold text-[#1A1033]/40 uppercase tracking-widest mt-1">
+            <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest mt-1">
               Satıcı REST API&apos;si için erişim anahtarları
             </p>
           </div>
@@ -151,7 +151,7 @@ export function SellerApiKeys() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 bg-white rounded-lg p-3 border border-amber-200">
-                  <code className="flex-1 text-sm font-mono text-[#1A1033] break-all select-all">
+                  <code className="flex-1 text-sm font-mono text-brand-primary break-all select-all">
                     {newlyCreatedKey}
                   </code>
                   <button
@@ -189,8 +189,8 @@ export function SellerApiKeys() {
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="overflow-hidden"
             >
-              <div className="bg-white rounded-[2rem] p-6 border border-[#1A1033]/5 space-y-4">
-                <h3 className="text-sm font-black uppercase text-[#1A1033]/60">
+              <div className="bg-white rounded-[2rem] p-6 border border-brand-primary/5 space-y-4">
+                <h3 className="text-sm font-black uppercase text-brand-primary/60">
                   Yeni API Anahtarı
                 </h3>
                 {createError && (
@@ -205,7 +205,9 @@ export function SellerApiKeys() {
                   className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold outline-none"
                 />
                 <div>
-                  <p className="text-[9px] font-black uppercase text-[#1A1033]/40 mb-2">İzinler</p>
+                  <p className="text-[9px] font-black uppercase text-brand-primary/40 mb-2">
+                    İzinler
+                  </p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {ALL_PERMISSIONS.map((perm) => (
                       <label
@@ -218,7 +220,7 @@ export function SellerApiKeys() {
                           onChange={() => togglePerm(perm)}
                           className="w-3.5 h-3.5 rounded accent-accent"
                         />
-                        <span className="text-[10px] font-bold text-[#1A1033]">{perm}</span>
+                        <span className="text-[10px] font-bold text-brand-primary">{perm}</span>
                       </label>
                     ))}
                   </div>
@@ -226,7 +228,7 @@ export function SellerApiKeys() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowCreate(false)}
-                    className="px-4 py-2.5 bg-[#F8F8FA] text-[#1A1033] rounded-xl text-[10px] font-black uppercase"
+                    className="px-4 py-2.5 bg-[#F8F8FA] text-brand-primary rounded-xl text-[10px] font-black uppercase"
                   >
                     İptal
                   </button>
@@ -247,10 +249,10 @@ export function SellerApiKeys() {
         {/* Keys List */}
         <div className="space-y-3">
           {keys.length === 0 && !newlyCreatedKey && (
-            <div className="bg-white rounded-[2rem] p-16 text-center border border-dashed border-[#1A1033]/10">
-              <Key size={40} className="mx-auto text-[#1A1033]/10 mb-4" />
-              <p className="text-sm font-bold text-[#1A1033]/30">Henüz API anahtarı yok</p>
-              <p className="text-[10px] text-[#1A1033]/20 mt-1">
+            <div className="bg-white rounded-[2rem] p-16 text-center border border-dashed border-brand-primary/10">
+              <Key size={40} className="mx-auto text-brand-primary/10 mb-4" />
+              <p className="text-sm font-bold text-brand-primary/30">Henüz API anahtarı yok</p>
+              <p className="text-[10px] text-brand-primary/20 mt-1">
                 Entegrasyonlarınız için API anahtarı oluşturun
               </p>
             </div>
@@ -269,7 +271,7 @@ export function SellerApiKeys() {
                 <div
                   className={cn(
                     'bg-white rounded-2xl p-5 border',
-                    apiKey.isActive ? 'border-[#1A1033]/5' : 'border-red-200 opacity-60',
+                    apiKey.isActive ? 'border-brand-primary/5' : 'border-red-200 opacity-60',
                   )}
                 >
                   {/* Key row */}
@@ -284,8 +286,8 @@ export function SellerApiKeys() {
                         <Key size={18} />
                       </div>
                       <div>
-                        <p className="font-black text-[#1A1033] text-sm">{apiKey.name}</p>
-                        <code className="text-[10px] text-[#1A1033]/40">
+                        <p className="font-black text-brand-primary text-sm">{apiKey.name}</p>
+                        <code className="text-[10px] text-brand-primary/40">
                           {apiKey.keyPrefix}••••••••
                         </code>
                       </div>
@@ -324,7 +326,7 @@ export function SellerApiKeys() {
                   </div>
 
                   {/* Meta */}
-                  <div className="flex items-center gap-4 mt-2 text-[9px] text-[#1A1033]/30">
+                  <div className="flex items-center gap-4 mt-2 text-[9px] text-brand-primary/30">
                     <span>{apiKey.usageCount} istek</span>
                     {apiKey.lastUsedAt && (
                       <span>Son: {new Date(apiKey.lastUsedAt).toLocaleString('tr-TR')}</span>
@@ -361,7 +363,7 @@ export function SellerApiKeys() {
                           </button>
                           <button
                             onClick={() => setRevokingId(null)}
-                            className="text-[10px] font-bold text-[#1A1033]/50 hover:text-[#1A1033] transition-colors"
+                            className="text-[10px] font-bold text-brand-primary/50 hover:text-brand-primary transition-colors"
                           >
                             Vazgeç
                           </button>
@@ -385,12 +387,12 @@ export function SellerApiKeys() {
         </div>
 
         {/* API Documentation */}
-        <div className="bg-white rounded-[2rem] border border-[#1A1033]/5 p-6 space-y-4">
+        <div className="bg-white rounded-[2rem] border border-brand-primary/5 p-6 space-y-4">
           <div className="flex items-center gap-2">
             <Key size={18} className="text-accent" />
-            <h3 className="text-sm font-black uppercase text-[#1A1033]">API Dokümantasyonu</h3>
+            <h3 className="text-sm font-black uppercase text-brand-primary">API Dokümantasyonu</h3>
           </div>
-          <div className="bg-[#1A1033] rounded-2xl p-5 text-white/90 font-mono text-xs space-y-2 overflow-x-auto">
+          <div className="bg-brand-primary rounded-2xl p-5 text-white/90 font-mono text-xs space-y-2 overflow-x-auto">
             <p className="text-green-400"># Benim Olan Seller REST API v1.0</p>
             <p className="text-white/60"># Auth: Authorization: Bearer bo_&#123;api_key&#125;</p>
             <br />

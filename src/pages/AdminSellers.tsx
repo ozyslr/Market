@@ -272,7 +272,7 @@ export function AdminSellers() {
     <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+          <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
             Satıcı Yönetimi
           </h3>
           {pendingKycCount > 0 && (
@@ -284,7 +284,7 @@ export function AdminSellers() {
         <div className="relative w-full sm:w-64">
           <Search
             size={14}
-            className="absolute start-3 top-1/2 -translate-y-1/2 text-[#1A1033]/30"
+            className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-primary/30"
           />
           <input
             value={search}
@@ -309,8 +309,8 @@ export function AdminSellers() {
             className={cn(
               'flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
               adminTab === key
-                ? 'bg-[#1A1033] text-white'
-                : 'bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/10',
+                ? 'bg-brand-primary text-white'
+                : 'bg-[#F8F8FA] text-brand-primary/60 hover:bg-brand-primary/10',
             )}
           >
             <Icon size={14} /> {label}
@@ -329,8 +329,8 @@ export function AdminSellers() {
                 className={cn(
                   'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
                   kycFilter === f
-                    ? 'bg-[#1A1033] text-white'
-                    : 'bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/10',
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-[#F8F8FA] text-brand-primary/60 hover:bg-brand-primary/10',
                 )}
               >
                 {f === 'all'
@@ -351,25 +351,25 @@ export function AdminSellers() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#F8F8FA]">
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Mağaza
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       KYC
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Komisyon
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Durum
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Rating
                     </th>
-                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Performans
                     </th>
-                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       İşlemler
                     </th>
                   </tr>
@@ -387,12 +387,14 @@ export function AdminSellers() {
                       >
                         <td className="py-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-[#F8F8FA] flex items-center justify-center text-[#1A1033]/40">
+                            <div className="w-9 h-9 rounded-xl bg-[#F8F8FA] flex items-center justify-center text-brand-primary/40">
                               <Store size={16} />
                             </div>
                             <div>
-                              <p className="font-bold text-[#1A1033] text-xs">{seller.storeName}</p>
-                              <p className="text-[10px] text-[#1A1033]/40">
+                              <p className="font-bold text-brand-primary text-xs">
+                                {seller.storeName}
+                              </p>
+                              <p className="text-[10px] text-brand-primary/40">
                                 {seller.origin} · {seller.joinedDate}
                               </p>
                             </div>
@@ -447,7 +449,7 @@ export function AdminSellers() {
                                 className="w-14 px-2 py-1 border border-accent/30 rounded-lg text-xs font-bold outline-none"
                                 autoFocus
                               />
-                              <span className="text-[10px] text-[#1A1033]/50">%</span>
+                              <span className="text-[10px] text-brand-primary/50">%</span>
                               <button
                                 onClick={() => saveCommission(seller)}
                                 disabled={isSaving}
@@ -457,7 +459,7 @@ export function AdminSellers() {
                               </button>
                               <button
                                 onClick={() => setEditingCommission(null)}
-                                className="p-1 rounded bg-[#F8F8FA] text-[#1A1033]/40 hover:bg-[#1A1033]/10 transition-all"
+                                className="p-1 rounded bg-[#F8F8FA] text-brand-primary/40 hover:bg-brand-primary/10 transition-all"
                               >
                                 <X size={12} />
                               </button>
@@ -468,7 +470,7 @@ export function AdminSellers() {
                                 setEditingCommission(seller.id);
                                 setCommissionValue(String(seller.commissionRate));
                               }}
-                              className="flex items-center gap-1 text-xs font-black text-[#1A1033] hover:text-accent transition-colors group"
+                              className="flex items-center gap-1 text-xs font-black text-brand-primary hover:text-accent transition-colors group"
                             >
                               %{seller.commissionRate}
                               <Edit2
@@ -490,10 +492,10 @@ export function AdminSellers() {
                         </td>
                         <td className="py-3">
                           <div className="flex items-center gap-1">
-                            <span className="text-xs font-bold text-[#1A1033]">
+                            <span className="text-xs font-bold text-brand-primary">
                               {seller.rating.toFixed(1)}
                             </span>
-                            <span className="text-[10px] text-[#1A1033]/40">
+                            <span className="text-[10px] text-brand-primary/40">
                               ({seller.reviewsCount})
                             </span>
                           </div>
@@ -519,7 +521,7 @@ export function AdminSellers() {
                               </span>
                             </span>
                           ) : (
-                            <span className="text-[9px] text-[#1A1033]/30">—</span>
+                            <span className="text-[9px] text-brand-primary/30">—</span>
                           )}
                         </td>
                         <td className="py-3">
@@ -550,14 +552,14 @@ export function AdminSellers() {
                             </Link>
                             <button
                               onClick={() => setSelectedSeller(seller)}
-                              className="p-1.5 rounded-lg bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/10 transition-all"
+                              className="p-1.5 rounded-lg bg-[#F8F8FA] text-brand-primary/60 hover:bg-brand-primary/10 transition-all"
                               title="Ürünleri Gör"
                             >
                               <Package size={14} />
                             </button>
                             <Link
                               to={`/admin/seller/${seller.id}`}
-                              className="p-1.5 rounded-lg bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-accent hover:text-white transition-all"
+                              className="p-1.5 rounded-lg bg-[#F8F8FA] text-brand-primary/60 hover:bg-accent hover:text-white transition-all"
                               title="Satıcı Paneli Görünümü"
                             >
                               <ChevronRight size={14} />
@@ -571,7 +573,7 @@ export function AdminSellers() {
                     <tr>
                       <td
                         colSpan={7}
-                        className="py-10 text-center text-[#1A1033]/30 text-sm font-bold"
+                        className="py-10 text-center text-brand-primary/30 text-sm font-bold"
                       >
                         Satıcı bulunamadı
                       </td>
@@ -595,13 +597,13 @@ export function AdminSellers() {
                     <h4 className="text-lg font-display font-black uppercase italic">
                       {selectedSeller.storeName}
                     </h4>
-                    <p className="text-[10px] text-[#1A1033]/40">
+                    <p className="text-[10px] text-brand-primary/40">
                       %{selectedSeller.commissionRate} komisyon · {selectedSeller.origin}
                     </p>
                   </div>
                   <button
                     onClick={() => setSelectedSeller(null)}
-                    className="text-[#1A1033]/30 hover:text-[#1A1033]"
+                    className="text-brand-primary/30 hover:text-brand-primary"
                   >
                     <X size={18} />
                   </button>
@@ -622,8 +624,8 @@ export function AdminSellers() {
                     },
                   ].map((stat) => (
                     <div key={stat.label} className="bg-[#F8F8FA] rounded-2xl p-3 text-center">
-                      <p className="text-xl font-black text-[#1A1033]">{stat.value}</p>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40">
+                      <p className="text-xl font-black text-brand-primary">{stat.value}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
                         {stat.label}
                       </p>
                     </div>
@@ -648,7 +650,7 @@ export function AdminSellers() {
                       <Loader2 className="w-6 h-6 animate-spin text-accent" />
                     </div>
                   ) : sellerProducts.length === 0 ? (
-                    <p className="text-center py-8 text-[#1A1033]/30 text-sm font-bold">
+                    <p className="text-center py-8 text-brand-primary/30 text-sm font-bold">
                       Bu satıcıya ait ürün yok
                     </p>
                   ) : (
@@ -674,10 +676,10 @@ export function AdminSellers() {
                             loading="lazy"
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold text-[#1A1033] text-xs line-clamp-1">
+                            <p className="font-bold text-brand-primary text-xs line-clamp-1">
                               {p.title}
                             </p>
-                            <p className="text-[10px] text-[#1A1033]/40">
+                            <p className="text-[10px] text-brand-primary/40">
                               {p.price.toLocaleString('tr-TR')} ₺ · Stok: {p.stock}
                             </p>
                           </div>
@@ -721,33 +723,33 @@ export function AdminSellers() {
             </div>
           ) : applications.length === 0 ? (
             <div className="text-center py-16">
-              <FileText size={36} className="mx-auto text-[#1A1033]/20 mb-3" />
-              <p className="text-sm font-bold text-[#1A1033]/30">Henüz başvuru yok</p>
+              <FileText size={36} className="mx-auto text-brand-primary/20 mb-3" />
+              <p className="text-sm font-bold text-brand-primary/30">Henüz başvuru yok</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#F8F8FA]">
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Mağaza
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Satıcı
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Kategoriler
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Deneyim
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Hedef
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Durum
                     </th>
-                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       İşlem
                     </th>
                   </tr>
@@ -759,11 +761,15 @@ export function AdminSellers() {
                       className="border-b border-[#F8F8FA] hover:bg-[#F8F8FA]/50 transition-colors"
                     >
                       <td className="py-3">
-                        <span className="font-bold text-[#1A1033] text-xs">{app.storeName}</span>
+                        <span className="font-bold text-brand-primary text-xs">
+                          {app.storeName}
+                        </span>
                       </td>
                       <td className="py-3">
-                        <span className="text-xs text-[#1A1033]">{app.userName}</span>
-                        <span className="text-[10px] text-[#1A1033]/40 block">{app.userEmail}</span>
+                        <span className="text-xs text-brand-primary">{app.userName}</span>
+                        <span className="text-[10px] text-brand-primary/40 block">
+                          {app.userEmail}
+                        </span>
                         {app.kycDocuments && app.kycDocuments.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
                             {app.kycDocuments.map(
@@ -788,17 +794,17 @@ export function AdminSellers() {
                           {app.productCategories?.slice(0, 3).map((c: string) => (
                             <span
                               key={c}
-                              className="px-1.5 py-0.5 rounded bg-[#F8F8FA] text-[9px] font-bold text-[#1A1033]/60"
+                              className="px-1.5 py-0.5 rounded bg-[#F8F8FA] text-[9px] font-bold text-brand-primary/60"
                             >
                               {c}
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td className="py-3 text-xs font-bold text-[#1A1033]">
+                      <td className="py-3 text-xs font-bold text-brand-primary">
                         {app.experience ? `${app.experience} yıl` : '—'}
                       </td>
-                      <td className="py-3 text-xs text-[#1A1033]/60">
+                      <td className="py-3 text-xs text-brand-primary/60">
                         {app.monthlySalesTarget || '—'}
                       </td>
                       <td className="py-3">
@@ -878,22 +884,22 @@ export function AdminSellers() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#F8F8FA]">
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Kural Adı
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Oran
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Min/Max
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Kategori Override
                     </th>
-                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       Durum
                     </th>
-                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                    <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                       İşlem
                     </th>
                   </tr>
@@ -904,9 +910,9 @@ export function AdminSellers() {
                       key={rule.id}
                       className="border-b border-[#F8F8FA] hover:bg-[#F8F8FA]/50 transition-colors"
                     >
-                      <td className="py-3 font-bold text-[#1A1033] text-xs">{rule.name}</td>
-                      <td className="py-3 text-xs font-black text-[#1A1033]">%{rule.rate}</td>
-                      <td className="py-3 text-xs text-[#1A1033]/60">
+                      <td className="py-3 font-bold text-brand-primary text-xs">{rule.name}</td>
+                      <td className="py-3 text-xs font-black text-brand-primary">%{rule.rate}</td>
+                      <td className="py-3 text-xs text-brand-primary/60">
                         {rule.minAmount != null ? `Min: ${rule.minAmount}₺` : '—'}
                         {rule.maxAmount != null ? ` / Max: ${rule.maxAmount}₺` : ''}
                       </td>
@@ -919,14 +925,14 @@ export function AdminSellers() {
                                 .map(([cat, r]) => (
                                   <span
                                     key={cat}
-                                    className="px-1.5 py-0.5 rounded bg-[#F8F8FA] text-[9px] font-bold text-[#1A1033]/60"
+                                    className="px-1.5 py-0.5 rounded bg-[#F8F8FA] text-[9px] font-bold text-brand-primary/60"
                                   >
                                     {cat}: %{r as number}
                                   </span>
                                 ))}
                           </div>
                         ) : (
-                          <span className="text-xs text-[#1A1033]/30">—</span>
+                          <span className="text-xs text-brand-primary/30">—</span>
                         )}
                       </td>
                       <td className="py-3">
@@ -944,7 +950,7 @@ export function AdminSellers() {
                       <td className="py-3 text-end">
                         <button
                           onClick={() => setEditingRule(rule)}
-                          className="p-1.5 rounded-lg bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/10 transition-all"
+                          className="p-1.5 rounded-lg bg-[#F8F8FA] text-brand-primary/60 hover:bg-brand-primary/10 transition-all"
                         >
                           <Edit2 size={12} />
                         </button>
@@ -955,7 +961,7 @@ export function AdminSellers() {
                     <tr>
                       <td
                         colSpan={6}
-                        className="py-10 text-center text-[#1A1033]/30 text-sm font-bold"
+                        className="py-10 text-center text-brand-primary/30 text-sm font-bold"
                       >
                         Henüz komisyon kuralı yok
                       </td>
@@ -969,12 +975,12 @@ export function AdminSellers() {
           {/* Yeni kural / Düzenleme formu */}
           {editingRule && (
             <div className="bg-amber-50 rounded-2xl p-6 border border-amber-200 space-y-4">
-              <h4 className="text-sm font-black uppercase italic text-[#1A1033]">
+              <h4 className="text-sm font-black uppercase italic text-brand-primary">
                 {rules.find((r) => r.id === editingRule.id) ? 'Kuralı Düzenle' : 'Yeni Kural'}
               </h4>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-xs font-bold text-[#1A1033]/60 mb-1">
+                  <label className="block text-xs font-bold text-brand-primary/60 mb-1">
                     Kural Adı
                   </label>
                   <input
@@ -983,11 +989,11 @@ export function AdminSellers() {
                       setEditingRule((p) => (p ? { ...p, name: e.target.value } : null))
                     }
                     placeholder="Örn: Varsayılan Komisyon"
-                    className="w-full px-3 py-2 bg-white border border-[#1A1033]/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-full px-3 py-2 bg-white border border-brand-primary/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1A1033]/60 mb-1">
+                  <label className="block text-xs font-bold text-brand-primary/60 mb-1">
                     Komisyon Oranı (%)
                   </label>
                   <input
@@ -1001,22 +1007,22 @@ export function AdminSellers() {
                         p ? { ...p, rate: parseFloat(e.target.value) || 0 } : null,
                       )
                     }
-                    className="w-full px-3 py-2 bg-white border border-[#1A1033]/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-full px-3 py-2 bg-white border border-brand-primary/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1A1033]/60 mb-1">
+                  <label className="block text-xs font-bold text-brand-primary/60 mb-1">
                     Platform Hizmet Bedeli (%)
                   </label>
                   <input
                     type="number"
                     disabled
                     value="3.5"
-                    className="w-full px-3 py-2 bg-gray-50 border border-[#1A1033]/10 rounded-xl text-sm font-bold text-[#1A1033]/50 outline-none"
+                    className="w-full px-3 py-2 bg-gray-50 border border-brand-primary/10 rounded-xl text-sm font-bold text-brand-primary/50 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1A1033]/60 mb-1">
+                  <label className="block text-xs font-bold text-brand-primary/60 mb-1">
                     Minimum Komisyon (₺)
                   </label>
                   <input
@@ -1033,11 +1039,11 @@ export function AdminSellers() {
                           : null,
                       )
                     }
-                    className="w-full px-3 py-2 bg-white border border-[#1A1033]/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-full px-3 py-2 bg-white border border-brand-primary/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1A1033]/60 mb-1">
+                  <label className="block text-xs font-bold text-brand-primary/60 mb-1">
                     Maksimum Komisyon (₺)
                   </label>
                   <input
@@ -1054,7 +1060,7 @@ export function AdminSellers() {
                           : null,
                       )
                     }
-                    className="w-full px-3 py-2 bg-white border border-[#1A1033]/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-full px-3 py-2 bg-white border border-brand-primary/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-400"
                   />
                 </div>
               </div>
@@ -1067,19 +1073,19 @@ export function AdminSellers() {
                   }
                   className="w-4 h-4 accent-amber-500"
                 />
-                <span className="text-xs font-bold text-[#1A1033]/60">Aktif</span>
+                <span className="text-xs font-bold text-brand-primary/60">Aktif</span>
               </label>
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setEditingRule(null)}
-                  className="px-5 py-2 border border-[#1A1033]/10 text-[#1A1033] text-xs font-black rounded-xl hover:bg-white transition-all"
+                  className="px-5 py-2 border border-brand-primary/10 text-brand-primary text-xs font-black rounded-xl hover:bg-white transition-all"
                 >
                   İptal
                 </button>
                 <button
                   onClick={handleSaveRule}
                   disabled={savingRule || !editingRule.name}
-                  className="px-5 py-2 bg-[#1A1033] text-white text-xs font-black rounded-xl hover:bg-amber-800 transition-all disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2 bg-brand-primary text-white text-xs font-black rounded-xl hover:bg-amber-800 transition-all disabled:opacity-50 flex items-center gap-2"
                 >
                   {savingRule ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                   Kaydet
@@ -1090,7 +1096,7 @@ export function AdminSellers() {
 
           <button
             onClick={newRule}
-            className="flex items-center gap-2 px-4 py-2 bg-[#1A1033] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
           >
             <Plus size={14} /> Yeni Kural Ekle
           </button>

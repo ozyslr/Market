@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Store, Star, MapPin, UserPlus, Package,
-  ShoppingCart
-} from 'lucide-react';
+import { Store, Star, MapPin, UserPlus, Package, ShoppingCart } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -18,7 +15,10 @@ function CardSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="animate-pulse bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-brand-primary/5 p-6 space-y-4">
+        <div
+          key={i}
+          className="animate-pulse bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-brand-primary/5 p-6 space-y-4"
+        >
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-zinc-200 dark:bg-zinc-800 rounded-2xl" />
             <div className="flex-1 space-y-2">
@@ -47,12 +47,13 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 function hasNewProducts(products: Product[]): number {
   const cutoff = Date.now() - SEVEN_DAYS_MS;
-  return products.filter(p => {
+  return products.filter((p) => {
     const createdAt = (p as any).createdAt;
     if (!createdAt) return false;
-    const ts = typeof createdAt === 'string'
-      ? new Date(createdAt).getTime()
-      : createdAt.toDate?.()?.getTime() ?? new Date(createdAt).getTime();
+    const ts =
+      typeof createdAt === 'string'
+        ? new Date(createdAt).getTime()
+        : (createdAt.toDate?.()?.getTime() ?? new Date(createdAt).getTime());
     return ts >= cutoff;
   }).length;
 }
@@ -93,7 +94,7 @@ export function FollowedSellers() {
 
         // Fetch seller docs in parallel
         const snapshots = await Promise.all(
-          ids.map(id => getDoc(doc(db, 'sellers', id)).then(snap => ({ id, snap })))
+          ids.map((id) => getDoc(doc(db, 'sellers', id)).then((snap) => ({ id, snap }))),
         );
 
         const results: (Seller & { products?: Product[] })[] = [];
@@ -123,7 +124,9 @@ export function FollowedSellers() {
     }
 
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [firebaseUser, followedSellers]);
 
   // ─── States ────────────────────────────────────────────────────────────────
@@ -134,10 +137,10 @@ export function FollowedSellers() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <Store className="w-20 h-20 text-zinc-200 dark:text-zinc-700 mb-6" />
-          <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] dark:text-white mb-3">
+          <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white mb-3">
             Takip Ettiğim Satıcılar
           </h2>
-          <p className="text-[#1A1033]/40 dark:text-white/40 font-bold mb-8 max-w-md">
+          <p className="text-brand-primary/40 dark:text-white/40 font-bold mb-8 max-w-md">
             Takip ettiğiniz satıcıları görüntülemek için giriş yapın.
           </p>
           <button
@@ -157,7 +160,7 @@ export function FollowedSellers() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex items-center gap-3 mb-8">
           <Store className="w-6 h-6 text-accent" />
-          <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] dark:text-white">
+          <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">
             Takip Ettiğim Satıcılar
           </h1>
         </div>
@@ -192,13 +195,13 @@ export function FollowedSellers() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex items-center gap-3 mb-8">
           <Store className="w-6 h-6 text-accent" />
-          <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] dark:text-white">
+          <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">
             Takip Ettiğim Satıcılar
           </h1>
         </div>
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <Store className="w-16 h-16 text-[#1A1033]/10 dark:text-white/10 mb-4" />
-          <p className="text-[#1A1033]/40 dark:text-white/40 font-bold mb-6">
+          <Store className="w-16 h-16 text-brand-primary/10 dark:text-white/10 mb-4" />
+          <p className="text-brand-primary/40 dark:text-white/40 font-bold mb-6">
             Henüz bir satıcı takip etmiyorsunuz
           </p>
           <Link
@@ -219,7 +222,7 @@ export function FollowedSellers() {
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="flex items-center gap-3 mb-8">
         <Store className="w-6 h-6 text-accent" />
-        <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] dark:text-white">
+        <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">
           Takip Ettiğim Satıcılar
         </h1>
         <span className="ms-2 px-2.5 py-0.5 bg-accent/10 text-accent rounded-full text-xs font-black">
@@ -228,7 +231,7 @@ export function FollowedSellers() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sellers.map(seller => {
+        {sellers.map((seller) => {
           const newCount = seller.products ? hasNewProducts(seller.products) : 0;
 
           return (
@@ -274,7 +277,7 @@ export function FollowedSellers() {
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm text-[#1A1033] dark:text-white truncate">
+                    <h3 className="font-bold text-sm text-brand-primary dark:text-white truncate">
                       {seller.storeName}
                     </h3>
                     <div className="flex items-center gap-3 mt-1.5">
@@ -297,8 +300,11 @@ export function FollowedSellers() {
                 {/* Product thumbnails */}
                 {seller.products && seller.products.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mb-4">
-                    {seller.products.slice(0, 3).map(product => (
-                      <div key={product.id} className="aspect-square bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden">
+                    {seller.products.slice(0, 3).map((product) => (
+                      <div
+                        key={product.id}
+                        className="aspect-square bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden"
+                      >
                         {product.images?.[0] ? (
                           <img
                             src={product.images[0]}
@@ -319,8 +325,11 @@ export function FollowedSellers() {
                 {/* Empty products placeholder */}
                 {(!seller.products || seller.products.length === 0) && (
                   <div className="grid grid-cols-3 gap-2 mb-4">
-                    {[0, 1, 2].map(i => (
-                      <div key={i} className="aspect-square bg-zinc-50 dark:bg-zinc-800/50 rounded-xl flex items-center justify-center text-zinc-200 dark:text-zinc-700">
+                    {[0, 1, 2].map((i) => (
+                      <div
+                        key={i}
+                        className="aspect-square bg-zinc-50 dark:bg-zinc-800/50 rounded-xl flex items-center justify-center text-zinc-200 dark:text-zinc-700"
+                      >
                         <Package size={16} />
                       </div>
                     ))}
@@ -334,7 +343,7 @@ export function FollowedSellers() {
                 onClick={async () => {
                   await toggleFollow(seller.id);
                   // Remove from local state immediately
-                  setSellers(prev => prev.filter(s => s.id !== seller.id));
+                  setSellers((prev) => prev.filter((s) => s.id !== seller.id));
                 }}
                 className="w-full py-2.5 mt-2 rounded-xl border border-brand-primary/10 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-brand-primary/60 dark:text-white/60 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 hover:border-red-200 dark:hover:border-red-800 transition-all"
               >

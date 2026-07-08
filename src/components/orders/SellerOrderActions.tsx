@@ -92,11 +92,11 @@ export function SellerOrderActions({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-10 z-50 w-72 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-[#1A1033]/10 dark:border-zinc-700 p-4 space-y-3">
-          <p className="text-xs font-black text-[#1A1033] dark:text-white">Kargo Bilgileri</p>
+        <div className="absolute right-0 top-10 z-50 w-72 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-brand-primary/10 dark:border-zinc-700 p-4 space-y-3">
+          <p className="text-xs font-black text-brand-primary dark:text-white">Kargo Bilgileri</p>
 
           <div>
-            <label className="block text-[10px] font-bold text-[#1A1033]/50 dark:text-zinc-400 mb-1">
+            <label className="block text-[10px] font-bold text-brand-primary/50 dark:text-zinc-400 mb-1">
               Takip Numarası *
             </label>
             <input
@@ -104,18 +104,18 @@ export function SellerOrderActions({
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
               placeholder="örn. 1234567890"
-              className="w-full px-3 py-2 rounded-xl border border-[#E8E8F0] dark:border-zinc-700 bg-[#F8F8FA] dark:bg-zinc-800 text-xs text-[#1A1033] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6418E5]/30"
+              className="w-full px-3 py-2 rounded-xl border border-[#E8E8F0] dark:border-zinc-700 bg-[#F8F8FA] dark:bg-zinc-800 text-xs text-brand-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6418E5]/30"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-[#1A1033]/50 dark:text-zinc-400 mb-1">
+            <label className="block text-[10px] font-bold text-brand-primary/50 dark:text-zinc-400 mb-1">
               Kargo Firması
             </label>
             <select
               value={carrier}
               onChange={(e) => setCarrier(e.target.value as Carrier)}
-              className="w-full px-3 py-2 rounded-xl border border-[#E8E8F0] dark:border-zinc-700 bg-[#F8F8FA] dark:bg-zinc-800 text-xs text-[#1A1033] dark:text-white focus:outline-none"
+              className="w-full px-3 py-2 rounded-xl border border-[#E8E8F0] dark:border-zinc-700 bg-[#F8F8FA] dark:bg-zinc-800 text-xs text-brand-primary dark:text-white focus:outline-none"
             >
               {CARRIERS.map((c) => (
                 <option key={c} value={c}>

@@ -850,10 +850,10 @@ export function Home() {
           <section className="max-w-7xl mx-auto px-4 py-12">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#1A1033]/30 mb-1">
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-primary/30 mb-1">
                   Kişisel
                 </p>
-                <h2 className="text-2xl font-display font-black tracking-tighter text-[#1A1033] uppercase italic">
+                <h2 className="text-2xl font-display font-black tracking-tighter text-brand-primary uppercase italic">
                   Son Gezilen
                 </h2>
               </div>
@@ -865,7 +865,7 @@ export function Home() {
                   to={`/product/${product.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-white rounded-3xl p-4 border border-[#1A1033]/5 hover:border-accent/30 transition-all group"
+                  className="bg-white rounded-3xl p-4 border border-brand-primary/5 hover:border-accent/30 transition-all group"
                 >
                   <div className="aspect-square bg-[#F8F8FA] rounded-2xl overflow-hidden mb-3 p-3">
                     <img
@@ -876,13 +876,15 @@ export function Home() {
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
-                  <p className="text-[10px] font-black text-[#1A1033]/30 uppercase tracking-widest mb-1">
+                  <p className="text-[10px] font-black text-brand-primary/30 uppercase tracking-widest mb-1">
                     {product.brand}
                   </p>
-                  <p className="text-xs font-bold text-[#1A1033] line-clamp-2 mb-2">
+                  <p className="text-xs font-bold text-brand-primary line-clamp-2 mb-2">
                     {product.title}
                   </p>
-                  <p className="text-sm font-black text-[#1A1033]">£{product.price.toFixed(2)}</p>
+                  <p className="text-sm font-black text-brand-primary">
+                    £{product.price.toFixed(2)}
+                  </p>
                 </Link>
               ))}
             </div>

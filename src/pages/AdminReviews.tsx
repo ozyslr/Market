@@ -65,12 +65,12 @@ export function AdminReviews() {
 
   return (
     <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm">
-      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-8">
+      <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary mb-8">
         Ürün Değerlendirmeleri
       </h3>
 
       {reviews.length === 0 ? (
-        <p className="text-center py-16 text-[#1A1033]/30 font-bold">Henüz yorum yok</p>
+        <p className="text-center py-16 text-brand-primary/30 font-bold">Henüz yorum yok</p>
       ) : (
         <div className="space-y-4">
           {reviews.map((review) => (
@@ -96,7 +96,7 @@ export function AdminReviews() {
                       />
                     )}
                     <div>
-                      <p className="text-xs font-black text-[#1A1033]">{review.userName}</p>
+                      <p className="text-xs font-black text-brand-primary">{review.userName}</p>
                       <div className="flex items-center gap-0.5">
                         {Array.from({ length: 5 }).map((_, i) => (
                           <Star
@@ -105,7 +105,7 @@ export function AdminReviews() {
                             className={
                               i < review.rating
                                 ? 'text-yellow-400 fill-yellow-400'
-                                : 'text-[#1A1033]/20'
+                                : 'text-brand-primary/20'
                             }
                           />
                         ))}
@@ -117,8 +117,8 @@ export function AdminReviews() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-[#1A1033]/70 leading-relaxed">{review.comment}</p>
-                  <p className="text-[10px] text-[#1A1033]/30 mt-1">
+                  <p className="text-sm text-brand-primary/70 leading-relaxed">{review.comment}</p>
+                  <p className="text-[10px] text-brand-primary/30 mt-1">
                     {new Date(review.createdAt).toLocaleDateString('tr-TR')}
                   </p>
                 </div>

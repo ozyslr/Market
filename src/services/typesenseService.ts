@@ -49,23 +49,25 @@ export async function initializeCollections(): Promise<void> {
     const collectionName = `products_${lang}`;
     if (existingNames.includes(collectionName)) continue;
 
-    await getClient().collections().create({
-      name: collectionName,
-      default_sorting_field: 'createdAt',
-      fields: [
-        { name: 'title', type: 'string', locale: lang as 'tr' | 'en' | 'de' | 'ar' },
-        { name: 'description', type: 'string', locale: lang as 'tr' | 'en' | 'de' | 'ar' },
-        { name: 'price', type: 'float', facet: true },
-        { name: 'categoryId', type: 'string', facet: true },
-        { name: 'brand', type: 'string', facet: true },
-        { name: 'rating', type: 'float', facet: true },
-        { name: 'imageUrl', type: 'string', index: false },
-        { name: 'storeId', type: 'string' },
-        { name: 'language', type: 'string', facet: true },
-        { name: 'tags', type: 'string[]', optional: true },
-        { name: 'createdAt', type: 'int64' },
-      ],
-    });
+    await getClient()
+      .collections()
+      .create({
+        name: collectionName,
+        default_sorting_field: 'createdAt',
+        fields: [
+          { name: 'title', type: 'string', locale: lang as 'tr' | 'en' | 'de' | 'ar' },
+          { name: 'description', type: 'string', locale: lang as 'tr' | 'en' | 'de' | 'ar' },
+          { name: 'price', type: 'float', facet: true },
+          { name: 'categoryId', type: 'string', facet: true },
+          { name: 'brand', type: 'string', facet: true },
+          { name: 'rating', type: 'float', facet: true },
+          { name: 'imageUrl', type: 'string', index: false },
+          { name: 'storeId', type: 'string' },
+          { name: 'language', type: 'string', facet: true },
+          { name: 'tags', type: 'string[]', optional: true },
+          { name: 'createdAt', type: 'int64' },
+        ],
+      });
   }
 }
 
@@ -102,7 +104,10 @@ export async function upsertProduct(product: TypesenseProduct): Promise<void> {
 export async function deleteProduct(productId: string): Promise<void> {
   for (const col of COLLECTIONS) {
     try {
-      await getClient().collections(col).documents().delete({ id: productId } as any);
+      await getClient()
+        .collections(col)
+        .documents()
+        .delete({ id: productId } as any);
     } catch {
       // ignore if not found in a collection
     }
@@ -181,7 +186,9 @@ export async function deleteAllProducts(): Promise<void> {
     try {
       const docs = await getClient().collections(col).documents().search({ q: '*', per_page: 250 });
       for (const hit of (docs as any).hits || []) {
-        await getClient().collections(col).documents()
+        await getClient()
+          .collections(col)
+          .documents()
           .delete({ id: hit.document.id } as any);
       }
     } catch {

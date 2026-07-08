@@ -320,7 +320,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-[#1A1033] dark:text-white truncate">
+            <p className="font-bold text-sm text-brand-primary dark:text-white truncate">
               {user?.name}
             </p>
             <div className="flex items-center gap-2 mt-1.5">
@@ -330,7 +330,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
                   style={{ width: `${completion}%` }}
                 />
               </div>
-              <span className="text-[11px] font-black text-[#1A1033] dark:text-white shrink-0">
+              <span className="text-[11px] font-black text-brand-primary dark:text-white shrink-0">
                 %{completion}
               </span>
             </div>
@@ -343,7 +343,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
           {stats.map((s) => (
             <div key={s.label} className="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-3 text-center">
               <s.icon size={16} className={cn('mx-auto mb-1', s.color)} />
-              <p className="text-base font-black text-[#1A1033] dark:text-white leading-none">
+              <p className="text-base font-black text-brand-primary dark:text-white leading-none">
                 {s.value}
               </p>
               <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mt-1">
@@ -387,7 +387,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
               </div>
             </div>
             <div>
-              <p className="font-bold text-sm text-[#1A1033] dark:text-white">{user?.name}</p>
+              <p className="font-bold text-sm text-brand-primary dark:text-white">{user?.name}</p>
               <p className="text-[10px] text-zinc-400">{user?.email}</p>
             </div>
           </div>
@@ -498,7 +498,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
                 <button
                   type="submit"
                   disabled={savingProfile}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-[#1A1033] dark:bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-brand-primary dark:bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
                 >
                   {savingProfile && (
                     <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
@@ -522,7 +522,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
               <MapPin size={18} className="text-violet-600" />
             </div>
             <div>
-              <p className="font-bold text-sm text-[#1A1033] dark:text-white">
+              <p className="font-bold text-sm text-brand-primary dark:text-white">
                 {t('profile.addresses')}
               </p>
               <p className="text-[10px] text-zinc-400">
@@ -556,7 +556,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
                     )}
                   >
                     <div className="flex items-start justify-between mb-1">
-                      <p className="font-bold text-sm text-[#1A1033] dark:text-white">
+                      <p className="font-bold text-sm text-brand-primary dark:text-white">
                         {addr.label}
                       </p>
                       {addr.id === defaultId && (
@@ -739,7 +739,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
                           <button
                             type="submit"
                             disabled={savingAddress}
-                            className="flex items-center gap-1.5 px-5 py-2 bg-[#1A1033] dark:bg-violet-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40"
+                            className="flex items-center gap-1.5 px-5 py-2 bg-brand-primary dark:bg-violet-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40"
                           >
                             {savingAddress && (
                               <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
@@ -798,7 +798,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
               <Lock size={18} className="text-amber-500" />
             </div>
             <div>
-              <p className="font-bold text-sm text-[#1A1033] dark:text-white">
+              <p className="font-bold text-sm text-brand-primary dark:text-white">
                 {t('profile.security')}
               </p>
               <p className="text-[10px] text-zinc-400">{user?.email}</p>
@@ -867,7 +867,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
                     <button
                       onClick={handleSendReset}
                       disabled={sendingReset}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1033] dark:bg-zinc-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary dark:bg-zinc-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40"
                     >
                       {sendingReset && (
                         <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
@@ -934,7 +934,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
                     <button
                       type="submit"
                       disabled={changingPassword}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1033] dark:bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary dark:bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40"
                     >
                       {changingPassword && (
                         <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
@@ -959,7 +959,7 @@ export function ProfileSettings({ defaultOpen }: { defaultOpen?: CardKey } = {})
             <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
               <Bell size={18} className="text-green-500" />
             </div>
-            <p className="font-bold text-sm text-[#1A1033] dark:text-white">
+            <p className="font-bold text-sm text-brand-primary dark:text-white">
               {t('profile.notifications')}
             </p>
           </div>

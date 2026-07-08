@@ -109,14 +109,14 @@ export function ReorderModal({ isOpen, onClose, orderId, userId }: ReorderModalP
             onClick={(e) => e.stopPropagation()}
           >
             {/* ── Header ─────────────────────────────────── */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#1A1033]/5">
-              <h2 className="text-sm font-black uppercase tracking-widest text-[#1A1033] flex items-center gap-2">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-brand-primary/5">
+              <h2 className="text-sm font-black uppercase tracking-widest text-brand-primary flex items-center gap-2">
                 <RotateCcw size={14} className="text-accent" /> Tekrar Siparis Ver
               </h2>
               <button
                 onClick={onClose}
                 aria-label="Kapat"
-                className="p-2 text-[#1A1033]/30 hover:text-[#1A1033] transition-colors"
+                className="p-2 text-brand-primary/30 hover:text-brand-primary transition-colors"
               >
                 <X size={18} />
               </button>
@@ -128,7 +128,7 @@ export function ReorderModal({ isOpen, onClose, orderId, userId }: ReorderModalP
               {state === 'validating' && (
                 <div className="flex flex-col items-center justify-center py-8">
                   <Loader2 className="w-8 h-8 animate-spin text-accent mb-3" />
-                  <p className="text-xs font-bold text-[#1A1033]/50">
+                  <p className="text-xs font-bold text-brand-primary/50">
                     Urunler kontrol ediliyor...
                   </p>
                 </div>
@@ -137,14 +137,11 @@ export function ReorderModal({ isOpen, onClose, orderId, userId }: ReorderModalP
               {/* Ready — show validation results */}
               {state === 'ready' && (
                 <div className="space-y-3">
-                  <p className="text-[10px] font-bold text-[#1A1033]/40 uppercase tracking-widest mb-4">
+                  <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest mb-4">
                     Siparisinizdeki Urunler
                   </p>
                   {validation.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-[#F8F8FA]"
-                    >
+                    <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl bg-[#F8F8FA]">
                       <img
                         src={item.image}
                         alt={item.title}
@@ -153,10 +150,10 @@ export function ReorderModal({ isOpen, onClose, orderId, userId }: ReorderModalP
                         referrerPolicy="no-referrer"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-[#1A1033] line-clamp-1">
+                        <p className="text-xs font-bold text-brand-primary line-clamp-1">
                           {item.title}
                         </p>
-                        <p className="text-[10px] text-[#1A1033]/40">
+                        <p className="text-[10px] text-brand-primary/40">
                           {item.quantity} adet &middot; {item.price.toFixed(2)} TL
                         </p>
                       </div>
@@ -178,11 +175,11 @@ export function ReorderModal({ isOpen, onClose, orderId, userId }: ReorderModalP
                   {/* Empty state — all unavailable */}
                   {availableCount === 0 && (
                     <div className="flex flex-col items-center justify-center py-6">
-                      <XCircle size={32} className="text-[#1A1033]/20 mb-3" />
-                      <p className="text-sm font-black text-[#1A1033]/40 mb-1">
+                      <XCircle size={32} className="text-brand-primary/20 mb-3" />
+                      <p className="text-sm font-black text-brand-primary/40 mb-1">
                         Hicbir urun yeniden siparis edilemez
                       </p>
-                      <p className="text-xs text-[#1A1033]/30 text-center">
+                      <p className="text-xs text-brand-primary/30 text-center">
                         Tum urunler stokta yok veya artik satista degil.
                       </p>
                     </div>
@@ -194,9 +191,7 @@ export function ReorderModal({ isOpen, onClose, orderId, userId }: ReorderModalP
               {state === 'adding' && (
                 <div className="flex flex-col items-center justify-center py-8">
                   <Loader2 className="w-8 h-8 animate-spin text-accent mb-3" />
-                  <p className="text-xs font-bold text-[#1A1033]/50">
-                    Sepete ekleniyor...
-                  </p>
+                  <p className="text-xs font-bold text-brand-primary/50">Sepete ekleniyor...</p>
                 </div>
               )}
 
@@ -206,16 +201,11 @@ export function ReorderModal({ isOpen, onClose, orderId, userId }: ReorderModalP
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                     <ShoppingCart size={28} className="text-green-600" />
                   </div>
-                  <p className="text-sm font-black text-[#1A1033] mb-1">
-                    Sepete Eklendi!
-                  </p>
-                  <p className="text-xs text-[#1A1033]/50 text-center max-w-xs">
+                  <p className="text-sm font-black text-brand-primary mb-1">Sepete Eklendi!</p>
+                  <p className="text-xs text-brand-primary/50 text-center max-w-xs">
                     {result?.added} urun basariyla sepete eklendi.
                     {result && result.skipped > 0 && (
-                      <>
-                        {' '}
-                        {result.skipped} urun kullanilamadigi icin atlandi.
-                      </>
+                      <> {result.skipped} urun kullanilamadigi icin atlandi.</>
                     )}
                   </p>
                 </div>
@@ -225,19 +215,19 @@ export function ReorderModal({ isOpen, onClose, orderId, userId }: ReorderModalP
               {state === 'error' && (
                 <div className="flex flex-col items-center justify-center py-8">
                   <XCircle size={32} className="text-red-400 mb-3" />
-                  <p className="text-sm font-black text-[#1A1033] mb-1">Hata</p>
-                  <p className="text-xs text-[#1A1033]/50 text-center">{errorMessage}</p>
+                  <p className="text-sm font-black text-brand-primary mb-1">Hata</p>
+                  <p className="text-xs text-brand-primary/50 text-center">{errorMessage}</p>
                 </div>
               )}
             </div>
 
             {/* ── Footer ─────────────────────────────────── */}
-            <div className="px-6 py-4 border-t border-[#1A1033]/5 flex gap-3">
+            <div className="px-6 py-4 border-t border-brand-primary/5 flex gap-3">
               {state === 'ready' && (
                 <>
                   <button
                     onClick={onClose}
-                    className="flex-1 py-2.5 border border-[#1A1033]/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 hover:border-[#1A1033]/30 transition-all"
+                    className="flex-1 py-2.5 border border-brand-primary/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/50 hover:border-brand-primary/30 transition-all"
                   >
                     Kapat
                   </button>
@@ -254,7 +244,7 @@ export function ReorderModal({ isOpen, onClose, orderId, userId }: ReorderModalP
                 <>
                   <button
                     onClick={onClose}
-                    className="flex-1 py-2.5 border border-[#1A1033]/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 hover:border-[#1A1033]/30 transition-all"
+                    className="flex-1 py-2.5 border border-brand-primary/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/50 hover:border-brand-primary/30 transition-all"
                   >
                     Kapat
                   </button>
@@ -269,7 +259,7 @@ export function ReorderModal({ isOpen, onClose, orderId, userId }: ReorderModalP
               {state === 'error' && (
                 <button
                   onClick={onClose}
-                  className="w-full py-2.5 border border-[#1A1033]/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 hover:border-[#1A1033]/30 transition-all"
+                  className="w-full py-2.5 border border-brand-primary/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/50 hover:border-brand-primary/30 transition-all"
                 >
                   Kapat
                 </button>

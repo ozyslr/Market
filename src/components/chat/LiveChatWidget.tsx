@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2, ChevronDown, Bot } from 'lucide-react';
+import {
+  MessageCircle,
+  X,
+  Send,
+  Loader2,
+  Minimize2,
+  Maximize2,
+  ChevronDown,
+  Bot,
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import {
@@ -48,7 +57,10 @@ export function LiveChatWidget() {
     if (!sessionId) return;
     const unsubMsgs = subscribeToMessages(sessionId, setMessages);
     const unsubSesh = subscribeToSession(sessionId, (s) => setSession(s));
-    return () => { unsubMsgs(); unsubSesh(); };
+    return () => {
+      unsubMsgs();
+      unsubSesh();
+    };
   }, [sessionId]);
 
   // Auto-scroll on new messages
@@ -143,7 +155,9 @@ export function LiveChatWidget() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-black text-brand-primary">Canlı Destek</p>
-                <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Çevrimiçi</p>
+                <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">
+                  Çevrimiçi
+                </p>
               </div>
               <ChevronDown size={18} className="text-brand-primary/30" />
             </div>
@@ -161,7 +175,7 @@ export function LiveChatWidget() {
             className="fixed bottom-6 end-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[600px] max-h-[calc(100vh-120px)] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-[#1A1033] text-white px-6 py-5 flex items-center justify-between shrink-0">
+            <div className="bg-brand-primary text-white px-6 py-5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#F9423A]/20 rounded-xl flex items-center justify-center">
                   <Bot size={20} className="text-[#F9423A]" />
@@ -214,10 +228,7 @@ export function LiveChatWidget() {
                   return (
                     <div
                       key={msg.id || i}
-                      className={cn(
-                        'flex',
-                        isAdmin ? 'justify-start' : 'justify-end',
-                      )}
+                      className={cn('flex', isAdmin ? 'justify-start' : 'justify-end')}
                     >
                       <div
                         className={cn(

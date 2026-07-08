@@ -202,7 +202,7 @@ export function AdminCategories() {
               {children.length > 0 ? (
                 <button
                   onClick={() => toggleExpand(cat.id)}
-                  className="text-[#1A1033]/30 hover:text-purple-600 transition-colors"
+                  className="text-brand-primary/30 hover:text-purple-600 transition-colors"
                 >
                   {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
@@ -212,16 +212,16 @@ export function AdminCategories() {
               {children.length > 0 ? (
                 <FolderOpen size={14} className="text-purple-400 shrink-0" />
               ) : (
-                <Folder size={14} className="text-[#1A1033]/20 shrink-0" />
+                <Folder size={14} className="text-brand-primary/20 shrink-0" />
               )}
-              <span className="font-bold text-sm text-[#1A1033]">
+              <span className="font-bold text-sm text-brand-primary">
                 {cat.icon && <span className="me-1">{cat.icon}</span>}
                 {cat.name}
               </span>
             </div>
           </td>
           <td className="px-6 py-4">
-            <code className="text-[10px] text-[#1A1033]/40 font-mono">{cat.slug}</code>
+            <code className="text-[10px] text-brand-primary/40 font-mono">{cat.slug}</code>
           </td>
           <td className="px-6 py-4">
             <span
@@ -234,29 +234,29 @@ export function AdminCategories() {
             </span>
           </td>
           <td className="px-6 py-4">
-            <span className="text-[10px] text-[#1A1033]/40">{cat.menuOrder ?? 0}</span>
+            <span className="text-[10px] text-brand-primary/40">{cat.menuOrder ?? 0}</span>
           </td>
           <td className="px-6 py-4">
-            <span className="text-[10px] text-[#1A1033]/40">{childrenOf(cat.id).length}</span>
+            <span className="text-[10px] text-brand-primary/40">{childrenOf(cat.id).length}</span>
           </td>
           <td className="px-6 py-4">
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => openCreate(cat.id)}
                 title="Alt kategori ekle"
-                className="p-1.5 hover:bg-purple-100 rounded-lg text-[#1A1033]/30 hover:text-purple-600 transition-colors"
+                className="p-1.5 hover:bg-purple-100 rounded-lg text-brand-primary/30 hover:text-purple-600 transition-colors"
               >
                 <Plus size={13} />
               </button>
               <button
                 onClick={() => openEdit(cat)}
-                className="p-1.5 hover:bg-blue-100 rounded-lg text-[#1A1033]/30 hover:text-blue-600 transition-colors"
+                className="p-1.5 hover:bg-blue-100 rounded-lg text-brand-primary/30 hover:text-blue-600 transition-colors"
               >
                 <Edit size={13} />
               </button>
               <button
                 onClick={() => handleDelete(cat)}
-                className="p-1.5 hover:bg-red-100 rounded-lg text-[#1A1033]/30 hover:text-red-500 transition-colors"
+                className="p-1.5 hover:bg-red-100 rounded-lg text-brand-primary/30 hover:text-red-500 transition-colors"
               >
                 <Trash2 size={13} />
               </button>
@@ -275,10 +275,10 @@ export function AdminCategories() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1">
+            <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1">
               Admin Panel
             </p>
-            <h1 className="text-3xl font-display font-black uppercase italic text-[#1A1033]">
+            <h1 className="text-3xl font-display font-black uppercase italic text-brand-primary">
               Kategori Yönetimi
             </h1>
           </div>
@@ -301,10 +301,10 @@ export function AdminCategories() {
               key={s.label}
               className="bg-white rounded-3xl p-6 border border-[#F8F8FA] shadow-sm"
             >
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">
                 {s.label}
               </p>
-              <p className="text-3xl font-display font-black text-[#1A1033]">{s.value}</p>
+              <p className="text-3xl font-display font-black text-brand-primary">{s.value}</p>
             </div>
           ))}
         </div>
@@ -321,7 +321,7 @@ export function AdminCategories() {
               <p className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-2">
                 Yükleme Hatasi
               </p>
-              <p className="text-sm text-[#1A1033]/50 mb-6 max-w-md text-center">{error}</p>
+              <p className="text-sm text-brand-primary/50 mb-6 max-w-md text-center">{error}</p>
               <button
                 onClick={fetchCategories}
                 className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-700 transition-all"
@@ -333,7 +333,7 @@ export function AdminCategories() {
             <div className="overflow-x-auto">
               <table className="w-full text-start">
                 <thead>
-                  <tr className="bg-[#F8F8FA] text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40">
+                  <tr className="bg-[#F8F8FA] text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
                     <th className="px-6 py-4">Kategori</th>
                     <th className="px-6 py-4">Slug</th>
                     <th className="px-6 py-4">Seviye</th>
@@ -346,8 +346,8 @@ export function AdminCategories() {
                   {topLevel.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-6 py-16 text-center">
-                        <Tag size={32} className="mx-auto mb-4 text-[#1A1033]/20" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                        <Tag size={32} className="mx-auto mb-4 text-brand-primary/20" />
+                        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                           Henüz kategori yok
                         </p>
                         <button
@@ -378,7 +378,7 @@ export function AdminCategories() {
           <div className="relative bg-white rounded-4xl p-8 w-full max-w-lg shadow-2xl">
             <button
               onClick={() => setIsFormOpen(false)}
-              className="absolute top-5 end-5 text-[#1A1033]/30 hover:text-[#1A1033]"
+              className="absolute top-5 end-5 text-brand-primary/30 hover:text-brand-primary"
             >
               <X size={18} />
             </button>
@@ -388,7 +388,7 @@ export function AdminCategories() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 mb-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/50 mb-1">
                     Ad *
                   </label>
                   <input
@@ -400,18 +400,18 @@ export function AdminCategories() {
                         slug: p.slug || slugify(e.target.value),
                       }))
                     }
-                    className="w-full px-4 py-3 bg-[#F8F8FA] border border-[#1A1033]/10 rounded-xl text-sm outline-none focus:border-purple-300"
+                    className="w-full px-4 py-3 bg-[#F8F8FA] border border-brand-primary/10 rounded-xl text-sm outline-none focus:border-purple-300"
                     placeholder="Elektronik"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 mb-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/50 mb-1">
                     Slug
                   </label>
                   <input
                     value={form.slug}
                     onChange={(e) => setForm((p) => ({ ...p, slug: slugify(e.target.value) }))}
-                    className="w-full px-4 py-3 bg-[#F8F8FA] border border-[#1A1033]/10 rounded-xl text-sm font-mono outline-none focus:border-purple-300"
+                    className="w-full px-4 py-3 bg-[#F8F8FA] border border-brand-primary/10 rounded-xl text-sm font-mono outline-none focus:border-purple-300"
                     placeholder="elektronik"
                   />
                 </div>
@@ -419,7 +419,7 @@ export function AdminCategories() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 mb-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/50 mb-1">
                     Seviye
                   </label>
                   <select
@@ -427,7 +427,7 @@ export function AdminCategories() {
                     onChange={(e) =>
                       setForm((p) => ({ ...p, level: parseInt(e.target.value) as 1 | 2 | 3 }))
                     }
-                    className="w-full px-4 py-3 bg-[#F8F8FA] border border-[#1A1033]/10 rounded-xl text-sm outline-none focus:border-purple-300"
+                    className="w-full px-4 py-3 bg-[#F8F8FA] border border-brand-primary/10 rounded-xl text-sm outline-none focus:border-purple-300"
                   >
                     <option value={1}>Seviye 1</option>
                     <option value={2}>Seviye 2</option>
@@ -435,7 +435,7 @@ export function AdminCategories() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 mb-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/50 mb-1">
                     Sıra
                   </label>
                   <input
@@ -445,30 +445,30 @@ export function AdminCategories() {
                     onChange={(e) =>
                       setForm((p) => ({ ...p, menuOrder: parseInt(e.target.value) || 0 }))
                     }
-                    className="w-full px-4 py-3 bg-[#F8F8FA] border border-[#1A1033]/10 rounded-xl text-sm outline-none focus:border-purple-300"
+                    className="w-full px-4 py-3 bg-[#F8F8FA] border border-brand-primary/10 rounded-xl text-sm outline-none focus:border-purple-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 mb-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/50 mb-1">
                     İkon
                   </label>
                   <input
                     value={form.icon}
                     onChange={(e) => setForm((p) => ({ ...p, icon: e.target.value }))}
-                    className="w-full px-4 py-3 bg-[#F8F8FA] border border-[#1A1033]/10 rounded-xl text-sm outline-none focus:border-purple-300"
+                    className="w-full px-4 py-3 bg-[#F8F8FA] border border-brand-primary/10 rounded-xl text-sm outline-none focus:border-purple-300"
                     placeholder="📱"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 mb-1">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/50 mb-1">
                   Üst Kategori
                 </label>
                 <select
                   value={form.parentId}
                   onChange={(e) => setForm((p) => ({ ...p, parentId: e.target.value }))}
-                  className="w-full px-4 py-3 bg-[#F8F8FA] border border-[#1A1033]/10 rounded-xl text-sm outline-none focus:border-purple-300"
+                  className="w-full px-4 py-3 bg-[#F8F8FA] border border-brand-primary/10 rounded-xl text-sm outline-none focus:border-purple-300"
                 >
                   <option value="">— Ana Kategori —</option>
                   {categories
@@ -483,14 +483,14 @@ export function AdminCategories() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-[#1A1033]/50 mb-1">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/50 mb-1">
                   Açıklama
                 </label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                   rows={2}
-                  className="w-full px-4 py-3 bg-[#F8F8FA] border border-[#1A1033]/10 rounded-xl text-sm outline-none focus:border-purple-300 resize-none"
+                  className="w-full px-4 py-3 bg-[#F8F8FA] border border-brand-primary/10 rounded-xl text-sm outline-none focus:border-purple-300 resize-none"
                 />
               </div>
             </div>
@@ -498,7 +498,7 @@ export function AdminCategories() {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setIsFormOpen(false)}
-                className="flex-1 py-3 bg-[#F8F8FA] text-[#1A1033] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#1A1033]/10 transition-all"
+                className="flex-1 py-3 bg-[#F8F8FA] text-brand-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary/10 transition-all"
               >
                 İptal
               </button>

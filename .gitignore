@@ -26,3 +26,4 @@ coverage/
 design/
 public/*.cdr
 public/*.zip
+.gstack/

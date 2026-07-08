@@ -201,7 +201,7 @@ export function AdminDeals() {
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <Zap className="w-6 h-6 text-accent" />
-          <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+          <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
             Fırsatı Yakala
           </h3>
         </div>
@@ -214,24 +214,24 @@ export function AdminDeals() {
       </div>
 
       {showForm && (
-        <div className="mb-8 p-6 bg-[#F8F8FA] rounded-3xl border border-[#1A1033]/10">
-          <h4 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/50 mb-5">
+        <div className="mb-8 p-6 bg-[#F8F8FA] rounded-3xl border border-brand-primary/10">
+          <h4 className="text-sm font-black uppercase tracking-widest text-brand-primary/50 mb-5">
             {editing ? 'Fırsatı Düzenle' : 'Yeni Fırsat'}
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Product picker */}
             <div className="md:col-span-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Ürün *
               </label>
               {form.productId ? (
                 <div className="flex items-center justify-between px-4 py-2.5 bg-white rounded-xl border border-accent/30">
-                  <span className="text-sm font-bold text-[#1A1033] truncate">
+                  <span className="text-sm font-bold text-brand-primary truncate">
                     {form.title || form.productId}
                   </span>
                   <button
                     onClick={() => set('productId', '')}
-                    className="text-[#1A1033]/40 hover:text-red-500"
+                    className="text-brand-primary/40 hover:text-red-500"
                   >
                     <X size={16} />
                   </button>
@@ -239,7 +239,7 @@ export function AdminDeals() {
               ) : (
                 <div className="relative">
                   <div className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-transparent focus-within:border-accent/30">
-                    <Search size={14} className="text-[#1A1033]/30" />
+                    <Search size={14} className="text-brand-primary/30" />
                     <input
                       value={productQuery}
                       onChange={(e) => setProductQuery(e.target.value)}
@@ -248,7 +248,7 @@ export function AdminDeals() {
                     />
                   </div>
                   {filteredProducts.length > 0 && (
-                    <div className="absolute z-10 mt-1 w-full bg-white rounded-xl border border-[#1A1033]/10 shadow-xl max-h-60 overflow-y-auto">
+                    <div className="absolute z-10 mt-1 w-full bg-white rounded-xl border border-brand-primary/10 shadow-xl max-h-60 overflow-y-auto">
                       {filteredProducts.map((p) => (
                         <button
                           key={p.id}
@@ -261,8 +261,10 @@ export function AdminDeals() {
                             className="w-8 h-8 rounded-lg object-cover"
                           />
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-[#1A1033] truncate">{p.title}</p>
-                            <p className="text-[10px] text-[#1A1033]/40">
+                            <p className="text-xs font-bold text-brand-primary truncate">
+                              {p.title}
+                            </p>
+                            <p className="text-[10px] text-brand-primary/40">
                               ₺{p.price?.toLocaleString('tr-TR')}
                             </p>
                           </div>
@@ -275,7 +277,7 @@ export function AdminDeals() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Başlık *
               </label>
               <input
@@ -287,7 +289,7 @@ export function AdminDeals() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Rozet
               </label>
               <input
@@ -298,7 +300,7 @@ export function AdminDeals() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Sıra
               </label>
               <input
@@ -311,7 +313,7 @@ export function AdminDeals() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Eski Fiyat (₺)
               </label>
               <input
@@ -326,7 +328,7 @@ export function AdminDeals() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Fiyat (₺)
               </label>
               <input
@@ -341,7 +343,7 @@ export function AdminDeals() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Bitiş Zamanı
               </label>
               <input
@@ -356,17 +358,17 @@ export function AdminDeals() {
                 {form.active ? (
                   <ToggleRight size={28} />
                 ) : (
-                  <ToggleLeft size={28} className="text-[#1A1033]/30" />
+                  <ToggleLeft size={28} className="text-brand-primary/30" />
                 )}
               </button>
-              <span className="text-sm font-bold text-[#1A1033]/60">
+              <span className="text-sm font-bold text-brand-primary/60">
                 {form.active ? 'Aktif' : 'Pasif'}
               </span>
             </div>
 
             {/* Image */}
             <div className="md:col-span-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-1 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1 block">
                 Görsel *
               </label>
               <div className="flex items-center gap-3">
@@ -374,7 +376,7 @@ export function AdminDeals() {
                   <img
                     src={form.image}
                     alt=""
-                    className="w-16 h-16 rounded-xl object-cover border border-[#1A1033]/10"
+                    className="w-16 h-16 rounded-xl object-cover border border-brand-primary/10"
                   />
                 )}
                 <input
@@ -385,7 +387,7 @@ export function AdminDeals() {
                 />
                 <label
                   className={cn(
-                    'flex items-center gap-2 px-4 py-2.5 bg-[#1A1033]/10 rounded-xl text-xs font-black uppercase cursor-pointer hover:bg-[#1A1033]/20 transition-colors',
+                    'flex items-center gap-2 px-4 py-2.5 bg-brand-primary/10 rounded-xl text-xs font-black uppercase cursor-pointer hover:bg-brand-primary/20 transition-colors',
                     uploading && 'opacity-50 pointer-events-none',
                   )}
                 >
@@ -423,7 +425,7 @@ export function AdminDeals() {
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="px-5 py-2.5 bg-[#1A1033]/10 text-[#1A1033] rounded-2xl text-xs font-black uppercase hover:bg-[#1A1033]/20 transition-colors"
+              className="px-5 py-2.5 bg-brand-primary/10 text-brand-primary rounded-2xl text-xs font-black uppercase hover:bg-brand-primary/20 transition-colors"
             >
               İptal
             </button>
@@ -435,22 +437,22 @@ export function AdminDeals() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#F8F8FA]">
-              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Fırsat
               </th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Fiyat
               </th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Bitiş
               </th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Sıra
               </th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Durum
               </th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 İşlem
               </th>
             </tr>
@@ -471,23 +473,23 @@ export function AdminDeals() {
                         className="w-10 h-10 rounded-xl object-cover"
                       />
                       <div>
-                        <p className="font-bold text-[#1A1033] text-xs">{d.title}</p>
-                        {d.badge && <p className="text-[10px] text-[#1A1033]/40">{d.badge}</p>}
+                        <p className="font-bold text-brand-primary text-xs">{d.title}</p>
+                        {d.badge && <p className="text-[10px] text-brand-primary/40">{d.badge}</p>}
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 text-center font-bold text-[#1A1033] text-xs">
+                  <td className="py-3 text-center font-bold text-brand-primary text-xs">
                     {d.price != null ? `₺${d.price.toLocaleString('tr-TR')}` : '—'}
                     {d.oldPrice != null && (
-                      <span className="block text-[10px] line-through text-[#1A1033]/30">
+                      <span className="block text-[10px] line-through text-brand-primary/30">
                         ₺{d.oldPrice.toLocaleString('tr-TR')}
                       </span>
                     )}
                   </td>
-                  <td className="py-3 text-center text-[10px] text-[#1A1033]/50">
+                  <td className="py-3 text-center text-[10px] text-brand-primary/50">
                     {d.endsAt ? d.endsAt.slice(0, 16).replace('T', ' ') : '—'}
                   </td>
-                  <td className="py-3 text-center text-xs font-bold text-[#1A1033]/60">
+                  <td className="py-3 text-center text-xs font-bold text-brand-primary/60">
                     {d.order}
                   </td>
                   <td className="py-3 text-center">
@@ -504,7 +506,7 @@ export function AdminDeals() {
                     <div className="flex items-center justify-center gap-1">
                       <button
                         onClick={() => handleToggle(d)}
-                        className="p-1.5 rounded-lg hover:bg-[#F8F8FA] text-[#1A1033]/40 hover:text-accent transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-[#F8F8FA] text-brand-primary/40 hover:text-accent transition-colors"
                       >
                         {d.active ? (
                           <ToggleRight size={16} className="text-accent" />
@@ -514,13 +516,13 @@ export function AdminDeals() {
                       </button>
                       <button
                         onClick={() => openEdit(d)}
-                        className="p-1.5 rounded-lg hover:bg-[#F8F8FA] text-[#1A1033]/40 hover:text-blue-500 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-[#F8F8FA] text-brand-primary/40 hover:text-blue-500 transition-colors"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button
                         onClick={() => handleDelete(d.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-[#1A1033]/40 hover:text-red-500 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-brand-primary/40 hover:text-red-500 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -533,8 +535,8 @@ export function AdminDeals() {
         </table>
         {deals.length === 0 && (
           <div className="text-center py-12">
-            <Zap className="w-10 h-10 text-[#1A1033]/10 mx-auto mb-3" />
-            <p className="text-[#1A1033]/30 text-sm font-bold">Henüz fırsat yok</p>
+            <Zap className="w-10 h-10 text-brand-primary/10 mx-auto mb-3" />
+            <p className="text-brand-primary/30 text-sm font-bold">Henüz fırsat yok</p>
           </div>
         )}
       </div>

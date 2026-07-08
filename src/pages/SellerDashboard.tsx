@@ -97,10 +97,10 @@ const KPICard = ({ label, value, growth, icon: Icon, color, bg }: any) => (
         <Icon size={26} strokeWidth={2.5} />
       </div>
       <div className="text-end">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1A1033]/30 mb-1">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/30 mb-1">
           {label}
         </p>
-        <h3 className="text-3xl font-display font-black text-[#1A1033] tracking-tighter leading-none">
+        <h3 className="text-3xl font-display font-black text-brand-primary tracking-tighter leading-none">
           {value}
         </h3>
       </div>
@@ -115,7 +115,7 @@ const KPICard = ({ label, value, growth, icon: Icon, color, bg }: any) => (
           )}
           {growth}
         </span>
-        <span className="text-[#1A1033]/20 tracking-widest whitespace-nowrap">
+        <span className="text-brand-primary/20 tracking-widest whitespace-nowrap">
           Geçen haftaya göre
         </span>
       </div>
@@ -207,7 +207,7 @@ export function SellerDashboard() {
   }
 
   return (
-    <div className="flex-1 h-full overflow-y-auto no-scrollbar bg-zinc-50 dark:bg-zinc-950 text-[#1A1033] relative">
+    <div className="flex-1 h-full overflow-y-auto no-scrollbar bg-zinc-50 dark:bg-zinc-950 text-brand-primary relative">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl px-4 lg:px-12 py-4 lg:py-6 flex items-center justify-between border-b border-brand-primary/5 dark:border-white/5 gap-4">
         <div className="flex items-center gap-4">
@@ -368,7 +368,7 @@ export function SellerDashboard() {
                 </div>
 
                 <div className="lg:col-span-4 flex flex-col gap-10">
-                  <div className="bg-[#1A1033] rounded-[3.5rem] p-12 text-white relative overflow-hidden group">
+                  <div className="bg-brand-primary rounded-[3.5rem] p-12 text-white relative overflow-hidden group">
                     <Smartphone
                       size={300}
                       className="absolute -bottom-20 -end-20 text-white/5 opacity-40 group-hover:scale-125 transition-transform duration-1000 pointer-events-none"
@@ -417,7 +417,7 @@ export function SellerDashboard() {
                     <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest italic">
                       Onaylandı & Ödemeye Hazır
                     </p>
-                    <button className="w-full mt-auto py-5 bg-white text-[#1A1033] rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all">
+                    <button className="w-full mt-auto py-5 bg-white text-brand-primary rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all">
                       Ödeme Talep Et
                     </button>
                   </div>
@@ -525,13 +525,13 @@ export function SellerDashboard() {
                     >
                       <item.icon size={26} strokeWidth={2.5} />
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1A1033]/20 mb-3 italic">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary/20 mb-3 italic">
                       {item.label}
                     </p>
-                    <h5 className="text-xl font-display font-black text-[#1A1033] mb-4 uppercase tracking-tight">
+                    <h5 className="text-xl font-display font-black text-brand-primary mb-4 uppercase tracking-tight">
                       {item.title}
                     </h5>
-                    <p className="text-[13px] font-medium text-[#1A1033]/40 italic leading-relaxed">
+                    <p className="text-[13px] font-medium text-brand-primary/40 italic leading-relaxed">
                       {item.desc}
                     </p>
                   </div>
@@ -545,15 +545,15 @@ export function SellerDashboard() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-12"
             >
-              <div className="bg-white rounded-[4rem] p-16 border-2 border-dashed border-[#1A1033]/5 min-h-[500px] flex flex-col items-center justify-center text-center relative overflow-hidden group">
+              <div className="bg-white rounded-[4rem] p-16 border-2 border-dashed border-brand-primary/5 min-h-[500px] flex flex-col items-center justify-center text-center relative overflow-hidden group">
                 {isUploading ? (
                   <div className="w-full max-w-md space-y-10 scale-110">
                     <div className="flex justify-between items-end">
                       <div>
-                        <p className="text-xs font-black uppercase text-[#1A1033]/50 text-start">
+                        <p className="text-xs font-black uppercase text-brand-primary/50 text-start">
                           Toplu İşlem Devam Ediyor
                         </p>
-                        <p className="text-[10px] font-bold text-[#1A1033]/30 italic text-start mt-1">
+                        <p className="text-[10px] font-bold text-brand-primary/30 italic text-start mt-1">
                           Envanter_2026_Q2.json
                         </p>
                       </div>
@@ -580,17 +580,17 @@ export function SellerDashboard() {
                     <div className="w-28 h-28 bg-accent/5 rounded-[3rem] flex items-center justify-center text-accent mb-12 shadow-2xl shadow-accent/5">
                       <Upload size={48} strokeWidth={1.5} />
                     </div>
-                    <h2 className="text-4xl font-display font-black uppercase italic tracking-tighter text-[#1A1033] mb-6">
+                    <h2 className="text-4xl font-display font-black uppercase italic tracking-tighter text-brand-primary mb-6">
                       Toplu Yükleme
                     </h2>
-                    <p className="max-w-md text-[#1A1033]/40 text-sm font-medium italic leading-relaxed mb-12">
+                    <p className="max-w-md text-brand-primary/40 text-sm font-medium italic leading-relaxed mb-12">
                       Shopify, Amazon veya Etsy&apos;den JSON veya CSV verilerinizi buraya bırakın.
                       Yapay zeka kategorileri, HS kodlarını otomatik olarak eşler ve ürün
                       açıklamalarını oluşturur.
                     </p>
                     <button
                       onClick={simulateUpload}
-                      className="px-16 py-6 bg-[#1A1033] text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl shadow-black/30 hover:bg-accent hover:scale-105 transition-all"
+                      className="px-16 py-6 bg-brand-primary text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl shadow-black/30 hover:bg-accent hover:scale-105 transition-all"
                     >
                       Dosya Seç
                     </button>
@@ -599,7 +599,7 @@ export function SellerDashboard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="bg-[#1A1033] rounded-[3.5rem] p-12 text-white relative overflow-hidden group">
+                <div className="bg-brand-primary rounded-[3.5rem] p-12 text-white relative overflow-hidden group">
                   <Sparkles
                     size={160}
                     className="absolute -bottom-20 -start-20 text-white/5 opacity-50 group-hover:scale-125 transition-transform duration-1000"
@@ -618,20 +618,22 @@ export function SellerDashboard() {
                 <div className="bg-white rounded-[3.5rem] p-12 border border-[#F8F8FA] shadow-sm relative overflow-hidden group">
                   <Package
                     size={160}
-                    className="absolute -bottom-20 -end-20 text-[#1A1033]/5 group-hover:scale-125 transition-transform duration-1000"
+                    className="absolute -bottom-20 -end-20 text-brand-primary/5 group-hover:scale-125 transition-transform duration-1000"
                   />
-                  <h4 className="text-2xl font-display font-black uppercase italic mb-6 text-[#1A1033]">
+                  <h4 className="text-2xl font-display font-black uppercase italic mb-6 text-brand-primary">
                     Senkronizasyon İstatistikleri
                   </h4>
                   <div className="grid grid-cols-2 gap-8 relative z-10">
                     <div>
-                      <p className="text-[10px] font-black text-[#1A1033]/30 uppercase tracking-widest mb-1">
+                      <p className="text-[10px] font-black text-brand-primary/30 uppercase tracking-widest mb-1">
                         Toplam Kapasite
                       </p>
-                      <p className="text-2xl font-display font-black text-[#1A1033]">50.000 SKU</p>
+                      <p className="text-2xl font-display font-black text-brand-primary">
+                        50.000 SKU
+                      </p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-[#1A1033]/30 uppercase tracking-widest mb-1">
+                      <p className="text-[10px] font-black text-brand-primary/30 uppercase tracking-widest mb-1">
                         Günlük Limit
                       </p>
                       <p className="text-2xl font-display font-black text-accent">Sınırsız</p>
@@ -648,7 +650,7 @@ export function SellerDashboard() {
               className="space-y-8"
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+                <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
                   Finans Özeti
                 </h3>
                 <div className="flex gap-2">
@@ -656,7 +658,7 @@ export function SellerDashboard() {
                     <button
                       key={p}
                       onClick={() => setFinancePeriod(p)}
-                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${financePeriod === p ? 'bg-[#1A1033] text-white' : 'bg-white text-[#1A1033]/40 border border-[#F8F8FA]'}`}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${financePeriod === p ? 'bg-brand-primary text-white' : 'bg-white text-brand-primary/40 border border-[#F8F8FA]'}`}
                     >
                       {p === 'all' ? 'Tümü' : `Son ${p} Gün`}
                     </button>
@@ -722,10 +724,10 @@ export function SellerDashboard() {
                               <Icon size={20} className={color} />
                             </div>
                             <div>
-                              <p className="text-[10px] font-bold text-[#1A1033]/40 uppercase tracking-widest mb-0.5">
+                              <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest mb-0.5">
                                 {label}
                               </p>
-                              <p className="text-xl font-black text-[#1A1033]">{value}</p>
+                              <p className="text-xl font-black text-brand-primary">{value}</p>
                             </div>
                           </div>
                         ))}
@@ -733,12 +735,12 @@ export function SellerDashboard() {
 
                       <div className="bg-white rounded-[2.5rem] border border-[#F8F8FA] shadow-sm overflow-hidden">
                         <div className="p-8 border-b border-[#F8F8FA]">
-                          <h4 className="text-sm font-black uppercase tracking-widest text-[#1A1033]/40">
+                          <h4 className="text-sm font-black uppercase tracking-widest text-brand-primary/40">
                             Sipariş Bazında Kazanç
                           </h4>
                         </div>
                         {delivered.length === 0 ? (
-                          <p className="text-center py-12 text-[#1A1033]/30 font-bold text-sm">
+                          <p className="text-center py-12 text-brand-primary/30 font-bold text-sm">
                             Bu dönem teslim edilen sipariş yok
                           </p>
                         ) : (
@@ -746,19 +748,19 @@ export function SellerDashboard() {
                             <table className="w-full text-sm">
                               <thead>
                                 <tr className="border-b border-[#F8F8FA]">
-                                  <th className="px-8 py-4 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                                  <th className="px-8 py-4 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                                     Sipariş No
                                   </th>
-                                  <th className="px-8 py-4 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                                  <th className="px-8 py-4 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                                     Tarih
                                   </th>
-                                  <th className="px-8 py-4 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                                  <th className="px-8 py-4 text-end text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                                     Tutar
                                   </th>
-                                  <th className="px-8 py-4 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                                  <th className="px-8 py-4 text-end text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                                     Komisyon
                                   </th>
-                                  <th className="px-8 py-4 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                                  <th className="px-8 py-4 text-end text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                                     Net
                                   </th>
                                 </tr>
@@ -772,10 +774,10 @@ export function SellerDashboard() {
                                       key={o.id}
                                       className="border-b border-[#F8F8FA] hover:bg-[#F8F8FA]/50"
                                     >
-                                      <td className="px-8 py-4 font-bold text-xs text-[#1A1033]">
+                                      <td className="px-8 py-4 font-bold text-xs text-brand-primary">
                                         {o.id.slice(0, 10)}...
                                       </td>
-                                      <td className="px-8 py-4 text-xs text-[#1A1033]/50">
+                                      <td className="px-8 py-4 text-xs text-brand-primary/50">
                                         {new Date(o.createdAt).toLocaleDateString('tr-TR')}
                                       </td>
                                       <td className="px-8 py-4 text-end text-xs font-bold">
@@ -803,10 +805,10 @@ export function SellerDashboard() {
           ) : (
             <div className="text-center py-40 bg-white border border-[#F8F8FA] rounded-[5rem] shadow-sm">
               <Activity size={48} className="mx-auto text-accent mb-10 animate-pulse" />
-              <h3 className="text-3xl font-display font-black uppercase italic text-[#1A1033]/20 tracking-widest">
+              <h3 className="text-3xl font-display font-black uppercase italic text-brand-primary/20 tracking-widest">
                 Veriler <span className="text-accent">Yükleniyor...</span>
               </h3>
-              <p className="text-[11px] font-black text-[#1A1033]/20 uppercase tracking-[0.4em] mt-6">
+              <p className="text-[11px] font-black text-brand-primary/20 uppercase tracking-[0.4em] mt-6">
                 Mağaza verileri getiriliyor
               </p>
             </div>

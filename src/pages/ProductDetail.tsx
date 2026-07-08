@@ -546,7 +546,7 @@ export function ProductDetail() {
                         </span>
                       )}
                       {(product.discountPercentage ?? 0) > 0 && (
-                        <span className="px-2 py-1 bg-[#1A1033] text-white text-[9px] font-black rounded-lg">
+                        <span className="px-2 py-1 bg-brand-primary text-white text-[9px] font-black rounded-lg">
                           %{product.discountPercentage}
                         </span>
                       )}
@@ -584,10 +584,10 @@ export function ProductDetail() {
                       </div>
                     )}
                     <div className="flex items-baseline gap-1">
-                      <span className="text-[28px] font-bold text-[#1A1033] dark:text-white tracking-tight">
+                      <span className="text-[28px] font-bold text-brand-primary dark:text-white tracking-tight">
                         £{Math.floor(product.price)}
                       </span>
-                      <span className="text-lg font-bold text-[#1A1033] dark:text-white">
+                      <span className="text-lg font-bold text-brand-primary dark:text-white">
                         ,
                         {Math.floor((product.price % 1) * 100)
                           .toString()

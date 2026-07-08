@@ -126,17 +126,17 @@ export function MessageCenter() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+          <h1 className="text-xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
             Mesajlarım
           </h1>
         </div>
 
         {/* Two-panel */}
-        <div className="bg-white rounded-2xl border border-[#1A1033]/5 overflow-hidden grid grid-cols-1 lg:grid-cols-[340px_1fr] min-h-[70vh]">
+        <div className="bg-white rounded-2xl border border-brand-primary/5 overflow-hidden grid grid-cols-1 lg:grid-cols-[340px_1fr] min-h-[70vh]">
           {/* Left panel — conversation list */}
           <div
             className={cn(
-              'border-r border-[#1A1033]/5 overflow-y-auto',
+              'border-r border-brand-primary/5 overflow-y-auto',
               selectedId && mobileOpen ? 'hidden lg:block' : 'block',
             )}
           >
@@ -146,8 +146,8 @@ export function MessageCenter() {
               </div>
             ) : conversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                <MessageSquare size={40} className="text-[#1A1033]/20 mb-3" />
-                <p className="text-xs font-bold text-[#1A1033]/40">Henüz mesajınız yok.</p>
+                <MessageSquare size={40} className="text-brand-primary/20 mb-3" />
+                <p className="text-xs font-bold text-brand-primary/40">Henüz mesajınız yok.</p>
               </div>
             ) : (
               conversations.map((conv) => {
@@ -162,7 +162,7 @@ export function MessageCenter() {
                       setMobileOpen(true);
                     }}
                     className={cn(
-                      'w-full text-start p-4 border-b border-[#1A1033]/5 transition-colors hover:bg-[#F8F8FA]',
+                      'w-full text-start p-4 border-b border-brand-primary/5 transition-colors hover:bg-[#F8F8FA]',
                       selectedId === conv.id ? 'bg-[#F0F0FF]' : '',
                     )}
                   >
@@ -174,24 +174,24 @@ export function MessageCenter() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-bold text-[#1A1033] truncate">
+                          <p className="text-sm font-bold text-brand-primary truncate">
                             {isBuyer ? 'Satıcı' : 'Alıcı'}
                           </p>
                           {conv.lastMessageAt && (
-                            <span className="text-[10px] text-[#1A1033]/40 shrink-0">
+                            <span className="text-[10px] text-brand-primary/40 shrink-0">
                               {formatDate(conv.lastMessageAt)}
                             </span>
                           )}
                         </div>
                         {conv.productTitle && (
-                          <p className="text-[10px] text-[#1A1033]/50 mt-0.5 truncate">
+                          <p className="text-[10px] text-brand-primary/50 mt-0.5 truncate">
                             {conv.productTitle}
                           </p>
                         )}
                         <p
                           className={cn(
                             'text-xs mt-1 truncate',
-                            unread > 0 ? 'font-bold text-[#1A1033]' : 'text-[#1A1033]/50',
+                            unread > 0 ? 'font-bold text-brand-primary' : 'text-brand-primary/50',
                           )}
                         >
                           {conv.lastMessage || 'Mesaj yok'}
@@ -218,20 +218,20 @@ export function MessageCenter() {
             {!selectedId ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
-                  <MessageSquare size={48} className="mx-auto text-[#1A1033]/10 mb-4" />
-                  <p className="text-sm font-bold text-[#1A1033]/40">Bir konuşma seçin</p>
+                  <MessageSquare size={48} className="mx-auto text-brand-primary/10 mb-4" />
+                  <p className="text-sm font-bold text-brand-primary/40">Bir konuşma seçin</p>
                 </div>
               </div>
             ) : (
               <>
                 {/* Message header */}
-                <div className="flex items-center gap-3 p-3 border-b border-[#1A1033]/5">
+                <div className="flex items-center gap-3 p-3 border-b border-brand-primary/5">
                   <button
                     onClick={() => {
                       setSelectedId(null);
                       setMobileOpen(false);
                     }}
-                    className="lg:hidden p-1 text-[#1A1033]/40 hover:text-accent"
+                    className="lg:hidden p-1 text-brand-primary/40 hover:text-accent"
                   >
                     <ChevronLeft size={20} />
                   </button>
@@ -241,13 +241,15 @@ export function MessageCenter() {
                     </span>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[#1A1033]">
+                    <p className="text-sm font-bold text-brand-primary">
                       {selectedConv && user && selectedConv.buyerId === user.id
                         ? 'Satıcı'
                         : 'Alıcı'}
                     </p>
                     {selectedConv?.productTitle && (
-                      <p className="text-[10px] text-[#1A1033]/50">{selectedConv.productTitle}</p>
+                      <p className="text-[10px] text-brand-primary/50">
+                        {selectedConv.productTitle}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -255,7 +257,7 @@ export function MessageCenter() {
                 {/* Messages list */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {messages.length === 0 && (
-                    <p className="text-xs text-center text-[#1A1033]/30 py-8">
+                    <p className="text-xs text-center text-brand-primary/30 py-8">
                       Henüz mesaj yok. İlk mesajı gönderin.
                     </p>
                   )}
@@ -269,14 +271,14 @@ export function MessageCenter() {
                           'max-w-[75%] px-3 py-2 rounded-2xl text-sm leading-relaxed',
                           isMe(msg)
                             ? 'bg-accent text-white rounded-br-md'
-                            : 'bg-[#F0F0F5] text-[#1A1033] rounded-bl-md',
+                            : 'bg-[#F0F0F5] text-brand-primary rounded-bl-md',
                         )}
                       >
                         <p className="whitespace-pre-wrap break-words">{msg.text}</p>
                         <p
                           className={cn(
                             'text-[9px] mt-1 text-right',
-                            isMe(msg) ? 'text-white/60' : 'text-[#1A1033]/40',
+                            isMe(msg) ? 'text-white/60' : 'text-brand-primary/40',
                           )}
                         >
                           {msg.ts ? formatTime(msg.ts) : ''}
@@ -288,7 +290,7 @@ export function MessageCenter() {
                 </div>
 
                 {/* Input bar */}
-                <div className="border-t border-[#1A1033]/5 p-3">
+                <div className="border-t border-brand-primary/5 p-3">
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
@@ -298,7 +300,7 @@ export function MessageCenter() {
                       placeholder="Mesaj yazın..."
                       className="flex-1 px-4 py-2.5 bg-[#F8F8FA] rounded-xl text-sm
                         outline-none border border-transparent focus:border-accent/30
-                        placeholder:text-[#1A1033]/30 transition-colors"
+                        placeholder:text-brand-primary/30 transition-colors"
                     />
                     <button
                       onClick={handleSend}

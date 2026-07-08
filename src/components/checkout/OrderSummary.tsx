@@ -62,17 +62,17 @@ export function OrderSummary({
 }: OrderSummaryProps) {
   return (
     <>
-      <h3 className="text-sm font-black uppercase tracking-widest text-[#1A1033] mb-6">
+      <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary mb-6">
         Order Summary
       </h3>
 
       <div className="space-y-3 mb-6">
-        {cartProducts.map(p => (
+        {cartProducts.map((p) => (
           <div key={p.id} className="flex justify-between text-xs gap-2">
-            <span className="text-[#1A1033]/50 font-medium truncate">
+            <span className="text-brand-primary/50 font-medium truncate">
               {p.title} &times;{p.quantity}
             </span>
-            <span className="font-black text-[#1A1033] shrink-0">
+            <span className="font-black text-brand-primary shrink-0">
               &pound;{(p.price * p.quantity).toFixed(2)}
             </span>
           </div>
@@ -113,8 +113,8 @@ export function OrderSummary({
           <div className="flex gap-2">
             <input
               value={couponCode}
-              onChange={e => onCouponCodeChange(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && onApplyCoupon()}
+              onChange={(e) => onCouponCodeChange(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && onApplyCoupon()}
               placeholder="Kupon kodu"
               className="flex-1 px-3 py-2 bg-[#F8F8FA] rounded-xl text-xs font-bold outline-none border border-transparent focus:border-accent/20 uppercase"
             />
@@ -139,9 +139,7 @@ export function OrderSummary({
             </button>
           </div>
         )}
-        {couponError && (
-          <p className="text-[10px] text-red-500 font-bold mt-1">{couponError}</p>
-        )}
+        {couponError && <p className="text-[10px] text-red-500 font-bold mt-1">{couponError}</p>}
       </div>
 
       <ShippingSection
@@ -153,19 +151,15 @@ export function OrderSummary({
         convertTRY={convertTRY}
       />
 
-      <div className="space-y-4 mb-6 pt-4 border-t border-[#1A1033]/5">
+      <div className="space-y-4 mb-6 pt-4 border-t border-brand-primary/5">
         <div className="flex justify-between text-sm">
-          <span className="text-[#1A1033]/40 font-bold">Subtotal</span>
-          <span className="font-black text-[#1A1033]">
-            &pound;{totals.subtotal.toFixed(2)}
-          </span>
+          <span className="text-brand-primary/40 font-bold">Subtotal</span>
+          <span className="font-black text-brand-primary">&pound;{totals.subtotal.toFixed(2)}</span>
         </div>
         {discountAmount > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-green-600 font-bold">Kupon İndirimi</span>
-            <span className="font-black text-green-600">
-              -{discountAmount.toFixed(2)} &#8378;
-            </span>
+            <span className="font-black text-green-600">-{discountAmount.toFixed(2)} &#8378;</span>
           </div>
         )}
         {cartCampaignDiscount > 0 && (
@@ -177,29 +171,31 @@ export function OrderSummary({
           </div>
         )}
         <div className="flex justify-between text-sm">
-          <span className="text-[#1A1033]/40 font-bold">Logistics</span>
-          <span className="font-black text-[#1A1033]">
-            {curSym}{totals.shipping.toFixed(2)}
+          <span className="text-brand-primary/40 font-bold">Logistics</span>
+          <span className="font-black text-brand-primary">
+            {curSym}
+            {totals.shipping.toFixed(2)}
           </span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-[#1A1033]/40 font-bold">VAT</span>
-          <span className="font-black text-[#1A1033]">
-            &pound;{totals.vat.toFixed(2)}
-          </span>
+          <span className="text-brand-primary/40 font-bold">VAT</span>
+          <span className="font-black text-brand-primary">&pound;{totals.vat.toFixed(2)}</span>
         </div>
       </div>
 
-      <div className="pt-6 border-t border-[#1A1033]/5 flex justify-between items-center mb-8">
-        <span className="text-xs font-black uppercase tracking-widest text-[#1A1033]">Total</span>
+      <div className="pt-6 border-t border-brand-primary/5 flex justify-between items-center mb-8">
+        <span className="text-xs font-black uppercase tracking-widest text-brand-primary">
+          Total
+        </span>
         <span className="text-2xl font-display font-black text-accent">
-          {curSym}{totals.total.toFixed(2)}
+          {curSym}
+          {totals.total.toFixed(2)}
         </span>
       </div>
 
       <div className="flex items-center gap-3 bg-[#F8F8FA] p-4 rounded-xl">
-        <ShieldCheck className="text-[#1A1033]/30 shrink-0" size={20} />
-        <p className="text-[9px] font-black uppercase tracking-widest text-[#1A1033]/40 leading-relaxed">
+        <ShieldCheck className="text-brand-primary/30 shrink-0" size={20} />
+        <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 leading-relaxed">
           256-bit Node Encryption active. Multi-sig escrow holding.
         </p>
       </div>

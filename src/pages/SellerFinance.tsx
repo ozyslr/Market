@@ -25,16 +25,16 @@ export function SellerFinance() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+            <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
               Finans Paneli
             </h1>
-            <p className="text-xs text-[#1A1033]/40 mt-1 font-bold uppercase tracking-widest">
+            <p className="text-xs text-brand-primary/40 mt-1 font-bold uppercase tracking-widest">
               Kazançlarınız ve ödeme geçmişiniz
             </p>
           </div>
           <Link
             to="/seller/dashboard"
-            className="flex items-center gap-2 text-xs font-bold text-[#1A1033]/60 hover:text-[#6418E5] transition-colors"
+            className="flex items-center gap-2 text-xs font-bold text-brand-primary/60 hover:text-[#6418E5] transition-colors"
           >
             Dashboard <ChevronRight size={14} />
           </Link>

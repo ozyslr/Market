@@ -200,10 +200,13 @@ export interface PriceComparison {
   suggestedPrice: number;
 }
 
-export async function getPriceComparison(sellerId: string, categoryId?: string): Promise<PriceComparison[]> {
+export async function getPriceComparison(
+  sellerId: string,
+  categoryId?: string,
+): Promise<PriceComparison[]> {
   try {
     const productsRef = collection(db, 'products');
-    let q = query(productsRef, where('storeId', '==', sellerId));
+    const q = query(productsRef, where('storeId', '==', sellerId));
     const snap = await getDocs(q);
     const sellerProducts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
@@ -213,7 +216,12 @@ export async function getPriceComparison(sellerId: string, categoryId?: string):
       const avgComp = p.price * (0.7 + Math.random() * 0.6);
       const minComp = avgComp * 0.8;
       const maxComp = avgComp * 1.2;
-      const position = p.price < minComp ? 'below' as const : p.price > maxComp ? 'above' as const : 'average' as const;
+      const position =
+        p.price < minComp
+          ? ('below' as const)
+          : p.price > maxComp
+            ? ('above' as const)
+            : ('average' as const);
       results.push({
         productId: p.id || product.id,
         yourPrice: p.price,
@@ -225,5 +233,7 @@ export async function getPriceComparison(sellerId: string, categoryId?: string):
       });
     }
     return results;
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }

@@ -12,10 +12,28 @@ export interface MenuItem {
 }
 
 const DEFAULT_MENU: MenuItem[] = [
-  { id: 'all', label: 'Tüm Ürünler', link: '/store/{sellerId}?category=all', order: 1, enabled: true },
-  { id: 'new', label: 'Yeni Gelenler', link: '/store/{sellerId}?sort=newest', order: 2, enabled: true },
+  {
+    id: 'all',
+    label: 'Tüm Ürünler',
+    link: '/store/{sellerId}?category=all',
+    order: 1,
+    enabled: true,
+  },
+  {
+    id: 'new',
+    label: 'Yeni Gelenler',
+    link: '/store/{sellerId}?sort=newest',
+    order: 2,
+    enabled: true,
+  },
   { id: 'deals', label: 'Fırsatlar', link: '/store/{sellerId}?tag=deals', order: 3, enabled: true },
-  { id: 'about', label: 'Hakkımızda', link: '/store/{sellerId}?tab=about', order: 4, enabled: true },
+  {
+    id: 'about',
+    label: 'Hakkımızda',
+    link: '/store/{sellerId}?tab=about',
+    order: 4,
+    enabled: true,
+  },
 ];
 
 export async function getSellerMenu(sellerId: string): Promise<MenuItem[]> {

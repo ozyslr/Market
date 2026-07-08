@@ -1,9 +1,21 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
-  TrendingUp, DollarSign, ShoppingCart, Activity, Users, RefreshCcw,
-  Loader2, ChevronRight, Package, AlertCircle, BarChart3, ArrowUpRight,
-  ArrowDownRight, Percent, Download,
+  TrendingUp,
+  DollarSign,
+  ShoppingCart,
+  Activity,
+  Users,
+  RefreshCcw,
+  Loader2,
+  ChevronRight,
+  Package,
+  AlertCircle,
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+  Percent,
+  Download,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -15,8 +27,20 @@ import {
 } from '@/services/sellerOnboardingService';
 import { cn } from '@/lib/utils';
 import {
-  ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Area,
+  AreaChart,
 } from 'recharts';
 
 type Period = '7d' | '30d' | '90d' | '1y';
@@ -53,10 +77,12 @@ const STATUS_COLORS: Record<string, string> = {
 const PIE_COLORS = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#F97316', '#EC4899'];
 
 function formatCurrency(amount: number): string {
-  return amount.toLocaleString('tr-TR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }) + ' ₺';
+  return (
+    amount.toLocaleString('tr-TR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + ' ₺'
+  );
 }
 
 function formatCompact(amount: number): string {
@@ -69,7 +95,7 @@ function formatCompact(amount: number): string {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-[#1A1033]/5 p-5 space-y-4 animate-pulse">
+    <div className="bg-white rounded-2xl border border-brand-primary/5 p-5 space-y-4 animate-pulse">
       <div className="flex justify-between">
         <div className="w-10 h-10 rounded-xl bg-zinc-200" />
         <div className="w-16 h-4 rounded bg-zinc-200" />
@@ -85,7 +111,7 @@ function SkeletonCard() {
 
 function SkeletonChart() {
   return (
-    <div className="bg-white rounded-2xl border border-[#1A1033]/5 p-6 space-y-4 animate-pulse">
+    <div className="bg-white rounded-2xl border border-brand-primary/5 p-6 space-y-4 animate-pulse">
       <div className="w-32 h-4 rounded bg-zinc-200" />
       <div className="h-[300px] rounded-xl bg-zinc-100" />
     </div>
@@ -109,26 +135,30 @@ function KPICard({ label, value, subtext, icon: Icon, color, bg, trend }: KPICar
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-[#1A1033]/5 p-5 flex flex-col gap-3 hover:shadow-lg transition-shadow duration-300"
+      className="bg-white rounded-2xl border border-brand-primary/5 p-5 flex flex-col gap-3 hover:shadow-lg transition-shadow duration-300"
     >
       <div className="flex items-center justify-between">
         <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', bg)}>
           <Icon size={18} className={color} />
         </div>
         {trend && (
-          <div className={cn(
-            'flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full',
-            trend.isPositive ? 'text-green-600 bg-green-50' : 'text-red-500 bg-red-50',
-          )}>
+          <div
+            className={cn(
+              'flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full',
+              trend.isPositive ? 'text-green-600 bg-green-50' : 'text-red-500 bg-red-50',
+            )}
+          >
             {trend.isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
             {Math.abs(trend.value)}%
           </div>
         )}
       </div>
       <div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-0.5">{label}</p>
-        <p className="text-xl font-display font-black text-[#1A1033] tracking-tight">{value}</p>
-        {subtext && <p className="text-[10px] text-[#1A1033]/30 mt-0.5">{subtext}</p>}
+        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-0.5">
+          {label}
+        </p>
+        <p className="text-xl font-display font-black text-brand-primary tracking-tight">{value}</p>
+        {subtext && <p className="text-[10px] text-brand-primary/30 mt-0.5">{subtext}</p>}
       </div>
     </motion.div>
   );
@@ -140,7 +170,7 @@ function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-zinc-200 rounded-xl px-4 py-3 shadow-xl text-xs space-y-1">
-      <p className="font-bold text-[#1A1033]">{label}</p>
+      <p className="font-bold text-brand-primary">{label}</p>
       {payload.map((entry: any, idx: number) => (
         <p key={idx} className="font-semibold" style={{ color: entry.color }}>
           {entry.name}: {entry.name === 'Gelir' ? formatCurrency(entry.value) : entry.value}
@@ -192,10 +222,7 @@ function formatTimestamp(iso: string | null): string {
   }
 }
 
-function getElapsedLabel(
-  currentEvent: FunnelEvent,
-  funnel: FunnelMetrics,
-): string | null {
+function getElapsedLabel(currentEvent: FunnelEvent, funnel: FunnelMetrics): string | null {
   const prev =
     currentEvent === 'kyc_submitted'
       ? 'seller_first_login'
@@ -236,15 +263,12 @@ export default function SellerAnalyticsPage() {
     if (!user?.id) return;
     setLoading(true);
     setError(null);
-    Promise.all([
-      getSellerAnalytics(user.id, period),
-      getSellerFunnelMetrics(user.id),
-    ])
+    Promise.all([getSellerAnalytics(user.id, period), getSellerFunnelMetrics(user.id)])
       .then(([analytics, funnelData]) => {
         setData(analytics);
         setFunnel(funnelData);
       })
-      .catch(err => setError(err instanceof Error ? err.message : 'Bir hata olustu'))
+      .catch((err) => setError(err instanceof Error ? err.message : 'Bir hata olustu'))
       .finally(() => setLoading(false));
   }, [user?.id, period]);
 
@@ -259,10 +283,20 @@ export default function SellerAnalyticsPage() {
     lines.push('Bölüm,Metrik,Değer');
     lines.push([esc('Genel'), esc('Toplam Sipariş'), esc(data.overview.totalOrders)].join(','));
     lines.push([esc('Genel'), esc('Toplam Gelir'), esc(data.overview.totalRevenue)].join(','));
-    lines.push([esc('Genel'), esc('Ortalama Sepet'), esc(data.overview.averageOrderValue)].join(','));
-    lines.push([esc('Genel'), esc('Tekil Müşteri'), esc(data.customerMetrics.uniqueCustomers)].join(','));
-    lines.push([esc('Genel'), esc('Tekrar Eden Müşteri'), esc(data.customerMetrics.repeatCustomers)].join(','));
-    lines.push([esc('Genel'), esc('İade Oranı (%)'), esc(data.customerMetrics.returnRate)].join(','));
+    lines.push(
+      [esc('Genel'), esc('Ortalama Sepet'), esc(data.overview.averageOrderValue)].join(','),
+    );
+    lines.push(
+      [esc('Genel'), esc('Tekil Müşteri'), esc(data.customerMetrics.uniqueCustomers)].join(','),
+    );
+    lines.push(
+      [esc('Genel'), esc('Tekrar Eden Müşteri'), esc(data.customerMetrics.repeatCustomers)].join(
+        ',',
+      ),
+    );
+    lines.push(
+      [esc('Genel'), esc('İade Oranı (%)'), esc(data.customerMetrics.returnRate)].join(','),
+    );
     lines.push('');
     lines.push('En Çok Satan Ürünler');
     lines.push(['Ürün', 'Satış Adedi', 'Gelir'].map(esc).join(','));
@@ -308,21 +342,20 @@ export default function SellerAnalyticsPage() {
   return (
     <div className="min-h-screen bg-[#F8F8FA] p-6 lg:p-10">
       <div className="max-w-6xl mx-auto space-y-6">
-
         {/* ── Header ──────────────────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
           <div>
-            <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+            <h1 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
               Analitik
             </h1>
-            <p className="text-xs text-[#1A1033]/40 mt-1 font-bold uppercase tracking-widest">
+            <p className="text-xs text-brand-primary/40 mt-1 font-bold uppercase tracking-widest">
               Satis ve performans goruntuleme
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             {/* Period selector */}
-            <div className="flex items-center gap-1 bg-white rounded-xl border border-[#1A1033]/5 p-1">
+            <div className="flex items-center gap-1 bg-white rounded-xl border border-brand-primary/5 p-1">
               {(Object.entries(PERIOD_LABELS) as [Period, string][]).map(([key, label]) => (
                 <button
                   key={key}
@@ -330,8 +363,8 @@ export default function SellerAnalyticsPage() {
                   className={cn(
                     'px-3.5 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all',
                     period === key
-                      ? 'bg-[#1A1033] text-white shadow-sm'
-                      : 'text-[#1A1033]/40 hover:text-[#1A1033]/70',
+                      ? 'bg-brand-primary text-white shadow-sm'
+                      : 'text-brand-primary/40 hover:text-brand-primary/70',
                   )}
                 >
                   {label}
@@ -343,7 +376,7 @@ export default function SellerAnalyticsPage() {
             <button
               onClick={exportCSV}
               disabled={!data}
-              className="flex items-center gap-2 px-3.5 py-2.5 bg-white rounded-xl border border-[#1A1033]/5 text-[11px] font-black uppercase tracking-wider text-[#1A1033]/60 hover:text-[#1A1033] hover:border-[#1A1033]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-3.5 py-2.5 bg-white rounded-xl border border-brand-primary/5 text-[11px] font-black uppercase tracking-wider text-brand-primary/60 hover:text-brand-primary hover:border-brand-primary/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               title="CSV olarak dışa aktar"
             >
               <Download size={14} /> CSV
@@ -355,21 +388,27 @@ export default function SellerAnalyticsPage() {
           /* ── Loading State ────────────────────────────────────────────────── */
           <div className="space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+              {Array.from({ length: 4 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2"><SkeletonChart /></div>
-              <div><SkeletonChart /></div>
+              <div className="lg:col-span-2">
+                <SkeletonChart />
+              </div>
+              <div>
+                <SkeletonChart />
+              </div>
             </div>
           </div>
         ) : !data ? (
           /* ── Empty State ──────────────────────────────────────────────────── */
-          <div className="bg-white rounded-2xl border border-[#1A1033]/5 p-16 text-center">
-            <BarChart3 size={48} className="mx-auto mb-4 text-[#1A1033]/20" />
-            <h2 className="text-lg font-bold text-[#1A1033] mb-2">Henuz Veri Yok</h2>
-            <p className="text-sm text-[#1A1033]/40 max-w-md mx-auto leading-relaxed">
-              Henuz hic siparis bulunmuyor. Urun ekleyip satis yapmaya basladiktan sonra
-              analitik verileriniz burada goruntulenecek.
+          <div className="bg-white rounded-2xl border border-brand-primary/5 p-16 text-center">
+            <BarChart3 size={48} className="mx-auto mb-4 text-brand-primary/20" />
+            <h2 className="text-lg font-bold text-brand-primary mb-2">Henuz Veri Yok</h2>
+            <p className="text-sm text-brand-primary/40 max-w-md mx-auto leading-relaxed">
+              Henuz hic siparis bulunmuyor. Urun ekleyip satis yapmaya basladiktan sonra analitik
+              verileriniz burada goruntulenecek.
             </p>
           </div>
         ) : (
@@ -411,7 +450,7 @@ export default function SellerAnalyticsPage() {
               <KPICard
                 label="Aktif Urun"
                 value={`${data.overview.activeProducts} / ${data.overview.totalProducts}`}
-                subtext={`%${data.overview.totalProducts > 0 ? Math.round(data.overview.activeProducts / data.overview.totalProducts * 100) : 0} stokta`}
+                subtext={`%${data.overview.totalProducts > 0 ? Math.round((data.overview.activeProducts / data.overview.totalProducts) * 100) : 0} stokta`}
                 icon={Package}
                 color="text-amber-600"
                 bg="bg-amber-100"
@@ -426,13 +465,13 @@ export default function SellerAnalyticsPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.08 }}
-                  className="bg-white rounded-2xl border border-[#1A1033]/5 p-8 text-center"
+                  className="bg-white rounded-2xl border border-brand-primary/5 p-8 text-center"
                 >
                   <div className="text-3xl mb-3">🚀</div>
-                  <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60 mb-2">
+                  <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60 mb-2">
                     Satici Yolculugu
                   </h2>
-                  <p className="text-sm text-[#1A1033]/40 leading-relaxed">
+                  <p className="text-sm text-brand-primary/40 leading-relaxed">
                     Henuz veri yok. Ilk urununu eklediginde burada yolculugunu gorebilirsin.
                   </p>
                 </motion.div>
@@ -441,10 +480,10 @@ export default function SellerAnalyticsPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.08 }}
-                  className="bg-white rounded-2xl border border-[#1A1033]/5 p-6"
+                  className="bg-white rounded-2xl border border-brand-primary/5 p-6"
                 >
                   <div className="flex items-center justify-between mb-5">
-                    <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60">
+                    <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60">
                       Satici Yolculugu
                     </h2>
                     {/* Time-to-first-listing summary */}
@@ -497,12 +536,12 @@ export default function SellerAnalyticsPage() {
                             <p
                               className={cn(
                                 'text-xs font-bold',
-                                ts ? 'text-[#1A1033]' : 'text-zinc-400',
+                                ts ? 'text-brand-primary' : 'text-zinc-400',
                               )}
                             >
                               {m.label}
                             </p>
-                            <p className="text-[10px] text-[#1A1033]/40 font-mono mt-0.5">
+                            <p className="text-[10px] text-brand-primary/40 font-mono mt-0.5">
                               {formatTimestamp(ts)}
                             </p>
                             {elapsed && (
@@ -520,26 +559,25 @@ export default function SellerAnalyticsPage() {
 
             {/* ── Revenue Chart + Status Breakdown ────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
               {/* Revenue over time */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="lg:col-span-2 bg-white rounded-2xl border border-[#1A1033]/5 p-6"
+                className="lg:col-span-2 bg-white rounded-2xl border border-brand-primary/5 p-6"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60">
+                  <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60">
                     Gelir Grafigi
                   </h2>
                   <div className="flex items-center gap-4 text-[10px]">
                     <span className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                      <span className="font-bold text-[#1A1033]/50">Gelir</span>
+                      <span className="font-bold text-brand-primary/50">Gelir</span>
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
-                      <span className="font-bold text-[#1A1033]/50">Siparis</span>
+                      <span className="font-bold text-brand-primary/50">Siparis</span>
                     </span>
                   </div>
                 </div>
@@ -554,9 +592,12 @@ export default function SellerAnalyticsPage() {
                           tick={{ fontSize: 10, fill: '#1A1033' }}
                           tickLine={false}
                           axisLine={false}
-                          tickFormatter={v => {
+                          tickFormatter={(v) => {
                             const d = new Date(v);
-                            return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+                            return d.toLocaleDateString('tr-TR', {
+                              day: 'numeric',
+                              month: 'short',
+                            });
                           }}
                         />
                         <YAxis
@@ -564,7 +605,7 @@ export default function SellerAnalyticsPage() {
                           tick={{ fontSize: 10, fill: '#1A1033' }}
                           tickLine={false}
                           axisLine={false}
-                          tickFormatter={v => formatCompact(v)}
+                          tickFormatter={(v) => formatCompact(v)}
                         />
                         <YAxis
                           yAxisId="right"
@@ -600,7 +641,9 @@ export default function SellerAnalyticsPage() {
                   </div>
                 ) : (
                   <div className="h-[280px] flex items-center justify-center">
-                    <p className="text-sm text-[#1A1033]/30 font-bold">Bu donemde veri bulunmuyor</p>
+                    <p className="text-sm text-brand-primary/30 font-bold">
+                      Bu donemde veri bulunmuyor
+                    </p>
                   </div>
                 )}
               </motion.div>
@@ -610,9 +653,9 @@ export default function SellerAnalyticsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="bg-white rounded-2xl border border-[#1A1033]/5 p-6"
+                className="bg-white rounded-2xl border border-brand-primary/5 p-6"
               >
-                <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60 mb-4">
+                <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60 mb-4">
                   Siparis Durumu
                 </h2>
 
@@ -634,7 +677,9 @@ export default function SellerAnalyticsPage() {
                             {data.orderStatusBreakdown.map((entry, idx) => (
                               <Cell
                                 key={entry.status}
-                                fill={STATUS_COLORS[entry.status] || PIE_COLORS[idx % PIE_COLORS.length]}
+                                fill={
+                                  STATUS_COLORS[entry.status] || PIE_COLORS[idx % PIE_COLORS.length]
+                                }
                               />
                             ))}
                           </Pie>
@@ -642,8 +687,12 @@ export default function SellerAnalyticsPage() {
                             content={({ active, payload }) =>
                               active && payload?.length ? (
                                 <div className="bg-white border border-zinc-200 rounded-xl px-3 py-2 shadow-xl text-xs">
-                                  <p className="font-bold">{STATUS_LABELS[payload[0].name as string] || payload[0].name}</p>
-                                  <p className="font-semibold text-zinc-600">{payload[0].value} siparis</p>
+                                  <p className="font-bold">
+                                    {STATUS_LABELS[payload[0].name as string] || payload[0].name}
+                                  </p>
+                                  <p className="font-semibold text-zinc-600">
+                                    {payload[0].value} siparis
+                                  </p>
                                 </div>
                               ) : null
                             }
@@ -652,25 +701,28 @@ export default function SellerAnalyticsPage() {
                       </ResponsiveContainer>
                     </div>
                     <div className="space-y-1.5 mt-2">
-                      {data.orderStatusBreakdown.slice(0, 5).map(entry => (
-                        <div key={entry.status} className="flex items-center justify-between text-[11px]">
+                      {data.orderStatusBreakdown.slice(0, 5).map((entry) => (
+                        <div
+                          key={entry.status}
+                          className="flex items-center justify-between text-[11px]"
+                        >
                           <div className="flex items-center gap-2">
                             <span
                               className="w-2 h-2 rounded-full"
                               style={{ backgroundColor: STATUS_COLORS[entry.status] || '#999' }}
                             />
-                            <span className="font-semibold text-[#1A1033]/60">
+                            <span className="font-semibold text-brand-primary/60">
                               {STATUS_LABELS[entry.status] || entry.status}
                             </span>
                           </div>
-                          <span className="font-black text-[#1A1033]">{entry.count}</span>
+                          <span className="font-black text-brand-primary">{entry.count}</span>
                         </div>
                       ))}
                     </div>
                   </>
                 ) : (
                   <div className="h-[200px] flex items-center justify-center">
-                    <p className="text-sm text-[#1A1033]/30 font-bold">Veri yok</p>
+                    <p className="text-sm text-brand-primary/30 font-bold">Veri yok</p>
                   </div>
                 )}
               </motion.div>
@@ -678,16 +730,15 @@ export default function SellerAnalyticsPage() {
 
             {/* ── Top Products + Customer Metrics ──────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
               {/* Top Products Table */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="lg:col-span-2 bg-white rounded-2xl border border-[#1A1033]/5 overflow-hidden"
+                className="lg:col-span-2 bg-white rounded-2xl border border-brand-primary/5 overflow-hidden"
               >
-                <div className="px-6 py-4 border-b border-[#1A1033]/5 flex items-center justify-between">
-                  <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60">
+                <div className="px-6 py-4 border-b border-brand-primary/5 flex items-center justify-between">
+                  <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60">
                     En Cok Satan Urunler
                   </h2>
                 </div>
@@ -696,9 +747,12 @@ export default function SellerAnalyticsPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-start">
                       <thead>
-                        <tr className="border-b border-[#1A1033]/5">
-                          {['Urun', 'Adet', 'Gelir'].map(h => (
-                            <th key={h} className="px-5 py-3 text-[9px] font-black uppercase tracking-widest text-[#1A1033]/30">
+                        <tr className="border-b border-brand-primary/5">
+                          {['Urun', 'Adet', 'Gelir'].map((h) => (
+                            <th
+                              key={h}
+                              className="px-5 py-3 text-[9px] font-black uppercase tracking-widest text-brand-primary/30"
+                            >
                               {h}
                             </th>
                           ))}
@@ -708,19 +762,21 @@ export default function SellerAnalyticsPage() {
                         {data.topProducts.slice(0, 8).map((product, idx) => (
                           <tr
                             key={product.productId}
-                            className="border-b border-[#1A1033]/5 hover:bg-[#F8F8FA] transition-colors"
+                            className="border-b border-brand-primary/5 hover:bg-[#F8F8FA] transition-colors"
                           >
                             <td className="px-5 py-3">
                               <div className="flex items-center gap-3">
-                                <span className="w-5 h-5 rounded-lg bg-[#1A1033]/5 flex items-center justify-center text-[9px] font-black text-[#1A1033]/40">
+                                <span className="w-5 h-5 rounded-lg bg-brand-primary/5 flex items-center justify-center text-[9px] font-black text-brand-primary/40">
                                   {idx + 1}
                                 </span>
-                                <span className="text-[12px] font-bold text-[#1A1033] truncate max-w-[240px]">
+                                <span className="text-[12px] font-bold text-brand-primary truncate max-w-[240px]">
                                   {product.name}
                                 </span>
                               </div>
                             </td>
-                            <td className="px-5 py-3 text-[12px] font-bold text-[#1A1033]">{product.unitsSold}</td>
+                            <td className="px-5 py-3 text-[12px] font-bold text-brand-primary">
+                              {product.unitsSold}
+                            </td>
                             <td className="px-5 py-3 text-[12px] font-black text-emerald-600">
                               {formatCurrency(product.revenue)}
                             </td>
@@ -731,8 +787,10 @@ export default function SellerAnalyticsPage() {
                   </div>
                 ) : (
                   <div className="py-12 text-center">
-                    <Package size={28} className="mx-auto mb-2 text-[#1A1033]/20" />
-                    <p className="text-xs text-[#1A1033]/40 font-bold">Henuz satilan urun yok</p>
+                    <Package size={28} className="mx-auto mb-2 text-brand-primary/20" />
+                    <p className="text-xs text-brand-primary/40 font-bold">
+                      Henuz satilan urun yok
+                    </p>
                   </div>
                 )}
               </motion.div>
@@ -742,9 +800,9 @@ export default function SellerAnalyticsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25 }}
-                className="bg-white rounded-2xl border border-[#1A1033]/5 p-6 space-y-6"
+                className="bg-white rounded-2xl border border-brand-primary/5 p-6 space-y-6"
               >
-                <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60">
+                <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60">
                   Musteri Metrikleri
                 </h2>
 
@@ -755,7 +813,9 @@ export default function SellerAnalyticsPage() {
                         <Users size={16} className="text-blue-600" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600/50">Tekil Musteri</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600/50">
+                          Tekil Musteri
+                        </p>
                         <p className="text-lg font-black text-blue-700">
                           {data.customerMetrics.uniqueCustomers.toLocaleString('tr-TR')}
                         </p>
@@ -769,7 +829,9 @@ export default function SellerAnalyticsPage() {
                         <RefreshCcw size={16} className="text-purple-600" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-purple-600/50">Tekrar Eden</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-purple-600/50">
+                          Tekrar Eden
+                        </p>
                         <p className="text-lg font-black text-purple-700">
                           {data.customerMetrics.repeatCustomers.toLocaleString('tr-TR')}
                         </p>
@@ -777,7 +839,7 @@ export default function SellerAnalyticsPage() {
                     </div>
                     <span className="text-[11px] font-black text-purple-500">
                       {data.customerMetrics.uniqueCustomers > 0
-                        ? `%${Math.round(data.customerMetrics.repeatCustomers / data.customerMetrics.uniqueCustomers * 100)}`
+                        ? `%${Math.round((data.customerMetrics.repeatCustomers / data.customerMetrics.uniqueCustomers) * 100)}`
                         : '%0'}
                     </span>
                   </div>
@@ -788,8 +850,12 @@ export default function SellerAnalyticsPage() {
                         <Percent size={16} className="text-orange-600" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-600/50">Iade Orani</p>
-                        <p className="text-lg font-black text-orange-700">%{data.customerMetrics.returnRate}</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-600/50">
+                          Iade Orani
+                        </p>
+                        <p className="text-lg font-black text-orange-700">
+                          %{data.customerMetrics.returnRate}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -797,11 +863,11 @@ export default function SellerAnalyticsPage() {
 
                 {/* Mini bar chart showing order status */}
                 <div className="pt-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-3">
                     Siparis Dagilimi
                   </p>
                   <div className="h-2 rounded-full bg-zinc-100 overflow-hidden flex">
-                    {data.orderStatusBreakdown.slice(0, 5).map(entry => {
+                    {data.orderStatusBreakdown.slice(0, 5).map((entry) => {
                       const total = data.orderStatusBreakdown.reduce((s, e) => s + e.count, 0);
                       const pct = total > 0 ? (entry.count / total) * 100 : 0;
                       if (pct < 1) return null;
@@ -818,8 +884,11 @@ export default function SellerAnalyticsPage() {
                     })}
                   </div>
                   <div className="flex flex-wrap gap-3 mt-2">
-                    {data.orderStatusBreakdown.slice(0, 4).map(entry => (
-                      <span key={entry.status} className="flex items-center gap-1 text-[9px] font-bold text-[#1A1033]/40">
+                    {data.orderStatusBreakdown.slice(0, 4).map((entry) => (
+                      <span
+                        key={entry.status}
+                        className="flex items-center gap-1 text-[9px] font-bold text-brand-primary/40"
+                      >
                         <span
                           className="w-1.5 h-1.5 rounded-full"
                           style={{ backgroundColor: STATUS_COLORS[entry.status] || '#999' }}

@@ -372,8 +372,8 @@ export function DeliveryLocationSelector({
         type="button"
         onClick={handleGps}
         disabled={gpsLoading}
-        className="w-full flex items-center gap-3 px-4 py-3.5 bg-[#1A1033]/5 dark:bg-white/5
-                   hover:bg-accent/10 border border-[#1A1033]/5 dark:border-white/10
+        className="w-full flex items-center gap-3 px-4 py-3.5 bg-brand-primary/5 dark:bg-white/5
+                   hover:bg-accent/10 border border-brand-primary/5 dark:border-white/10
                    hover:border-accent/30 rounded-2xl transition-all group disabled:opacity-50"
         aria-label="Mevcut konumumu kullan"
       >
@@ -385,7 +385,7 @@ export function DeliveryLocationSelector({
             className="text-accent group-hover:scale-110 transition-transform"
           />
         )}
-        <span className="text-xs font-black uppercase tracking-widest text-[#1A1033] dark:text-white/80">
+        <span className="text-xs font-black uppercase tracking-widest text-brand-primary dark:text-white/80">
           {gpsLoading ? 'Konum alınıyor...' : 'Mevcut Konumumu Kullan'}
         </span>
       </button>
@@ -397,7 +397,7 @@ export function DeliveryLocationSelector({
 
       {/* ---- Country / Market Selector ---- */}
       <fieldset>
-        <legend className="text-[9px] font-black uppercase tracking-[0.3em] text-[#1A1033]/30 dark:text-white/30 mb-3">
+        <legend className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-primary/30 dark:text-white/30 mb-3">
           Ülke / Market
         </legend>
         <div className="grid grid-cols-2 gap-2">
@@ -410,7 +410,7 @@ export function DeliveryLocationSelector({
                 'flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all',
                 selectedMarket === key
                   ? 'border-accent bg-accent/5 shadow-sm'
-                  : 'border-[#1A1033]/5 dark:border-white/10 hover:border-accent/30 bg-[#F8F8FA] dark:bg-white/5',
+                  : 'border-brand-primary/5 dark:border-white/10 hover:border-accent/30 bg-[#F8F8FA] dark:bg-white/5',
               )}
               aria-pressed={selectedMarket === key}
             >
@@ -418,8 +418,10 @@ export function DeliveryLocationSelector({
                 {cfg.flag}
               </span>
               <div className="text-start">
-                <p className="text-[10px] font-black text-[#1A1033] dark:text-white/80">{key}</p>
-                <p className="text-[9px] text-[#1A1033]/40 dark:text-white/40 font-bold">
+                <p className="text-[10px] font-black text-brand-primary dark:text-white/80">
+                  {key}
+                </p>
+                <p className="text-[9px] text-brand-primary/40 dark:text-white/40 font-bold">
                   {cfg.currency}
                 </p>
               </div>
@@ -433,7 +435,7 @@ export function DeliveryLocationSelector({
 
       {/* ---- City Selector ---- */}
       <div>
-        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#1A1033]/30 dark:text-white/30 mb-2">
+        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-primary/30 dark:text-white/30 mb-2">
           Şehir / Bölge
         </p>
 
@@ -441,13 +443,13 @@ export function DeliveryLocationSelector({
           /* Selected city chip with clear button */
           <div className="flex items-center gap-2 px-4 py-3 bg-accent/5 border border-accent/30 rounded-2xl">
             <MapPin size={14} className="text-accent shrink-0" />
-            <span className="text-sm font-bold text-[#1A1033] dark:text-white/80 flex-1 truncate">
+            <span className="text-sm font-bold text-brand-primary dark:text-white/80 flex-1 truncate">
               {selectedCity}
             </span>
             <button
               type="button"
               onClick={clearCity}
-              className="p-1 text-[#1A1033]/30 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
+              className="p-1 text-brand-primary/30 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
               aria-label="Şehri temizle"
             >
               <X size={14} />
@@ -458,7 +460,7 @@ export function DeliveryLocationSelector({
           <div className="relative">
             <Search
               size={14}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1033]/20 dark:text-white/20 pointer-events-none"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-primary/20 dark:text-white/20 pointer-events-none"
             />
             <input
               ref={cityInputRef}
@@ -467,10 +469,10 @@ export function DeliveryLocationSelector({
               onChange={(e) => setCitySearch(e.target.value)}
               placeholder="Şehir ara..."
               className="w-full pl-10 pr-4 py-3 bg-[#F8F8FA] dark:bg-white/5
-                         border border-[#1A1033]/5 dark:border-white/10 rounded-2xl
-                         text-sm font-bold text-[#1A1033] dark:text-white/80
+                         border border-brand-primary/5 dark:border-white/10 rounded-2xl
+                         text-sm font-bold text-brand-primary dark:text-white/80
                          outline-none focus:ring-4 ring-accent/10 focus:border-accent/30
-                         transition-all placeholder:text-[#1A1033]/20 dark:placeholder:text-white/15"
+                         transition-all placeholder:text-brand-primary/20 dark:placeholder:text-white/15"
               aria-label="Şehir ara"
               autoComplete="off"
             />
@@ -482,12 +484,12 @@ export function DeliveryLocationSelector({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute z-10 mt-1 w-full bg-white dark:bg-[#1A1033]
-                             border border-[#1A1033]/10 dark:border-white/10 rounded-2xl
+                  className="absolute z-10 mt-1 w-full bg-white dark:bg-brand-primary
+                             border border-brand-primary/10 dark:border-white/10 rounded-2xl
                              shadow-xl max-h-52 overflow-y-auto py-1"
                 >
                   {filteredCities.length === 0 ? (
-                    <p className="px-4 py-4 text-[10px] text-[#1A1033]/40 dark:text-white/30 font-bold text-center">
+                    <p className="px-4 py-4 text-[10px] text-brand-primary/40 dark:text-white/30 font-bold text-center">
                       Şehir bulunamadı
                     </p>
                   ) : (
@@ -497,7 +499,7 @@ export function DeliveryLocationSelector({
                         type="button"
                         onClick={() => selectCity(city)}
                         className="w-full text-left px-4 py-2.5 text-sm font-bold
-                                   text-[#1A1033] dark:text-white/80
+                                   text-brand-primary dark:text-white/80
                                    hover:bg-accent/10 transition-colors"
                       >
                         {city}
@@ -519,8 +521,8 @@ export function DeliveryLocationSelector({
                 type="button"
                 onClick={() => selectCity(city)}
                 className="text-left px-3 py-2 text-[11px] font-bold
-                           text-[#1A1033]/60 dark:text-white/50
-                           hover:text-[#1A1033] dark:hover:text-white
+                           text-brand-primary/60 dark:text-white/50
+                           hover:text-brand-primary dark:hover:text-white
                            hover:bg-[#F8F8FA] dark:hover:bg-white/5
                            rounded-xl transition-all truncate"
               >
@@ -528,7 +530,7 @@ export function DeliveryLocationSelector({
               </button>
             ))}
             {cities.length > 24 && (
-              <p className="col-span-2 text-[9px] text-[#1A1033]/30 dark:text-white/20 font-bold text-center py-1">
+              <p className="col-span-2 text-[9px] text-brand-primary/30 dark:text-white/20 font-bold text-center py-1">
                 Aramak için yazmaya başlayın…
               </p>
             )}
@@ -539,7 +541,7 @@ export function DeliveryLocationSelector({
       {/* ---- District Selector (TR only) ---- */}
       {marketCfg?.hasDistricts && selectedCity && districts.length > 0 && (
         <div>
-          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#1A1033]/30 dark:text-white/30 mb-2">
+          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-primary/30 dark:text-white/30 mb-2">
             İlçe
           </p>
           <div className="grid grid-cols-2 gap-1 max-h-40 overflow-y-auto">
@@ -551,7 +553,7 @@ export function DeliveryLocationSelector({
                 'text-left px-3 py-2 text-[11px] font-bold rounded-xl transition-all',
                 !selectedDistrict
                   ? 'bg-accent/10 text-accent'
-                  : 'text-[#1A1033]/60 dark:text-white/50 hover:text-[#1A1033] dark:hover:text-white hover:bg-[#F8F8FA] dark:hover:bg-white/5',
+                  : 'text-brand-primary/60 dark:text-white/50 hover:text-brand-primary dark:hover:text-white hover:bg-[#F8F8FA] dark:hover:bg-white/5',
               )}
             >
               {!selectedDistrict && <Check size={10} className="inline me-1" />}
@@ -566,7 +568,7 @@ export function DeliveryLocationSelector({
                   'text-left px-3 py-2 text-[11px] font-bold rounded-xl transition-all truncate',
                   selectedDistrict === district
                     ? 'bg-accent/10 text-accent'
-                    : 'text-[#1A1033]/60 dark:text-white/50 hover:text-[#1A1033] dark:hover:text-white hover:bg-[#F8F8FA] dark:hover:bg-white/5',
+                    : 'text-brand-primary/60 dark:text-white/50 hover:text-brand-primary dark:hover:text-white hover:bg-[#F8F8FA] dark:hover:bg-white/5',
                 )}
               >
                 {selectedDistrict === district && <Check size={10} className="inline me-1" />}
@@ -582,7 +584,7 @@ export function DeliveryLocationSelector({
         type="button"
         onClick={handleConfirm}
         disabled={gpsLoading}
-        className="w-full py-3.5 bg-[#1A1033] dark:bg-white dark:text-[#1A1033]
+        className="w-full py-3.5 bg-brand-primary dark:bg-white dark:text-brand-primary
                    hover:bg-accent hover:text-white text-white
                    rounded-2xl text-[10px] font-black uppercase tracking-widest
                    transition-all active:scale-95 disabled:opacity-50 disabled:scale-100"
@@ -607,7 +609,7 @@ export function DeliveryLocationSelector({
           onClick={() => setIsDropdownOpen((prev) => !prev)}
           className={cn(
             'flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all group',
-            'bg-[#F8F8FA] dark:bg-white/5 border-[#1A1033]/5 dark:border-white/10',
+            'bg-[#F8F8FA] dark:bg-white/5 border-brand-primary/5 dark:border-white/10',
             'hover:border-accent/30',
             isDropdownOpen && 'border-accent/30 bg-accent/5 dark:bg-accent/10',
           )}
@@ -616,13 +618,13 @@ export function DeliveryLocationSelector({
           aria-label={`Teslimat konumu: ${location.displayText}. Seçmek için tıklayın.`}
         >
           <MapPin size={14} className="text-accent shrink-0" aria-hidden="true" />
-          <span className="text-[11px] font-bold text-[#1A1033] dark:text-white/80 truncate max-w-[150px]">
+          <span className="text-[11px] font-bold text-brand-primary dark:text-white/80 truncate max-w-[150px]">
             {location.displayText}
           </span>
           <ChevronDown
             size={14}
             className={cn(
-              'text-[#1A1033]/30 dark:text-white/30 transition-transform duration-200',
+              'text-brand-primary/30 dark:text-white/30 transition-transform duration-200',
               isDropdownOpen && 'rotate-180',
             )}
             aria-hidden="true"
@@ -637,8 +639,8 @@ export function DeliveryLocationSelector({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.96 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="absolute z-50 mt-2 w-80 bg-white dark:bg-[#1A1033]
-                         border border-[#1A1033]/10 dark:border-white/10
+              className="absolute z-50 mt-2 w-80 bg-white dark:bg-brand-primary
+                         border border-brand-primary/10 dark:border-white/10
                          rounded-3xl shadow-2xl p-5"
               role="dialog"
               aria-label="Teslimat konumu seç"
@@ -650,9 +652,9 @@ export function DeliveryLocationSelector({
                   setIsDropdownOpen(false);
                   onClose?.();
                 }}
-                className="absolute top-4 right-4 p-1.5 text-[#1A1033]/30
-                           hover:text-[#1A1033] dark:hover:text-white transition-colors
-                           rounded-lg hover:bg-[#1A1033]/5"
+                className="absolute top-4 right-4 p-1.5 text-brand-primary/30
+                           hover:text-brand-primary dark:hover:text-white transition-colors
+                           rounded-lg hover:bg-brand-primary/5"
                 aria-label="Kapat"
               >
                 <X size={16} />

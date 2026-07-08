@@ -274,32 +274,6 @@
   @apply border-zinc-700;
 }
 
-/* Fix hardcoded #1A1033 (brand dark purple) — invisible on dark bg */
-.dark [class*='text-[#1A1033]']:not([class*='dark:']) {
-  color: #ffffff !important;
-}
-.dark .bg-\[\#1A1033\]\/5 {
-  background-color: rgb(255 255 255 / 0.05) !important;
-}
-.dark .bg-\[\#1A1033\]\/10 {
-  background-color: rgb(255 255 255 / 0.1) !important;
-}
-.dark .bg-\[\#F8F8FA\] {
-  background-color: #18181b !important;
-}
-.dark .bg-\[\#F8F8FA\]\/50 {
-  background-color: rgb(24 24 27 / 0.5) !important;
-}
-.dark .border-\[\#1A1033\]\/5 {
-  border-color: rgb(255 255 255 / 0.05) !important;
-}
-.dark .border-\[\#1A1033\]\/10 {
-  border-color: rgb(255 255 255 / 0.1) !important;
-}
-.dark .border-\[\#F8F8FA\] {
-  border-color: #27272a !important;
-}
-
 .perspective-1000 {
   perspective: 1000px;
 }

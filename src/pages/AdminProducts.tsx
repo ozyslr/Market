@@ -206,7 +206,7 @@ export function AdminProducts() {
     <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-[#1A1033]">
+          <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
             Ürün Kataloğu
           </h3>
           {pendingCount > 0 && (
@@ -218,7 +218,7 @@ export function AdminProducts() {
         <div className="relative w-full sm:w-72">
           <Search
             size={14}
-            className="absolute start-3 top-1/2 -translate-y-1/2 text-[#1A1033]/30"
+            className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-primary/30"
           />
           <input
             value={search}
@@ -238,13 +238,13 @@ export function AdminProducts() {
             className={cn(
               'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
               statusFilter === f.value
-                ? 'bg-[#1A1033] text-white'
-                : 'bg-[#F8F8FA] text-[#1A1033]/60 hover:bg-[#1A1033]/10',
+                ? 'bg-brand-primary text-white'
+                : 'bg-[#F8F8FA] text-brand-primary/60 hover:bg-brand-primary/10',
             )}
           >
             {f.label}
             {f.value === 'pending' && pendingCount > 0 && (
-              <span className="ms-1.5 bg-yellow-400 text-[#1A1033] rounded-full px-1.5">
+              <span className="ms-1.5 bg-yellow-400 text-brand-primary rounded-full px-1.5">
                 {pendingCount}
               </span>
             )}
@@ -288,7 +288,9 @@ export function AdminProducts() {
 
       {selected.size > 0 && (
         <div className="flex items-center gap-3 mb-4 p-3 bg-accent/5 rounded-2xl flex-wrap">
-          <span className="text-xs font-bold text-[#1A1033]/60">{selected.size} ürün seçildi</span>
+          <span className="text-xs font-bold text-brand-primary/60">
+            {selected.size} ürün seçildi
+          </span>
           <button
             onClick={bulkApprove}
             className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-[10px] font-black uppercase flex items-center gap-1 hover:bg-green-200 transition-all"
@@ -299,13 +301,13 @@ export function AdminProducts() {
             <React.Fragment key={f.key}>
               <button
                 onClick={() => bulkSetFlag(f.key, true)}
-                className="px-3 py-1 bg-white rounded-lg text-[10px] font-black uppercase text-[#1A1033]/60 hover:text-accent border border-[#1A1033]/10 flex items-center gap-1"
+                className="px-3 py-1 bg-white rounded-lg text-[10px] font-black uppercase text-brand-primary/60 hover:text-accent border border-brand-primary/10 flex items-center gap-1"
               >
                 <f.icon size={10} className={f.color} /> {f.label} Ekle
               </button>
               <button
                 onClick={() => bulkSetFlag(f.key, false)}
-                className="px-3 py-1 bg-white rounded-lg text-[10px] font-black uppercase text-[#1A1033]/60 hover:text-red-500 border border-[#1A1033]/10 flex items-center gap-1"
+                className="px-3 py-1 bg-white rounded-lg text-[10px] font-black uppercase text-brand-primary/60 hover:text-red-500 border border-brand-primary/10 flex items-center gap-1"
               >
                 <f.icon size={10} /> {f.label} Kaldır
               </button>
@@ -319,7 +321,7 @@ export function AdminProducts() {
           <thead>
             <tr className="border-b border-[#F8F8FA]">
               <th className="pb-3 text-start w-8">
-                <button onClick={selectAll} className="text-[#1A1033]/30 hover:text-accent">
+                <button onClick={selectAll} className="text-brand-primary/30 hover:text-accent">
                   {selected.size === filtered.length && filtered.length > 0 ? (
                     <CheckSquare size={16} />
                   ) : (
@@ -327,27 +329,27 @@ export function AdminProducts() {
                   )}
                 </button>
               </th>
-              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Ürün
               </th>
-              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-start text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Durum
               </th>
-              <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Fiyat
               </th>
-              <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-end text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 Stok
               </th>
               {FLAGS.map((f) => (
                 <th
                   key={f.key}
-                  className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30"
+                  className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30"
                 >
                   <f.icon size={12} className={cn('mx-auto', f.color)} />
                 </th>
               ))}
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-[#1A1033]/30">
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
                 İşlem
               </th>
             </tr>
@@ -367,7 +369,7 @@ export function AdminProducts() {
                   <td className="py-3">
                     <button
                       onClick={() => toggleSelect(product.id)}
-                      className="text-[#1A1033]/30 hover:text-accent"
+                      className="text-brand-primary/30 hover:text-accent"
                     >
                       {selected.has(product.id) ? (
                         <CheckSquare size={16} className="text-accent" />
@@ -388,10 +390,10 @@ export function AdminProducts() {
                         />
                       )}
                       <div>
-                        <p className="font-bold text-[#1A1033] text-xs line-clamp-1">
+                        <p className="font-bold text-brand-primary text-xs line-clamp-1">
                           {product.title}
                         </p>
-                        <p className="text-[10px] text-[#1A1033]/40">{product.brand}</p>
+                        <p className="text-[10px] text-brand-primary/40">{product.brand}</p>
                         {status === 'rejected' && product.moderationNote && (
                           <p
                             className="text-[10px] text-red-500 italic mt-0.5 max-w-[180px] truncate"
@@ -433,10 +435,10 @@ export function AdminProducts() {
                       </span>
                     )}
                   </td>
-                  <td className="py-3 text-end font-bold text-[#1A1033] text-xs">
+                  <td className="py-3 text-end font-bold text-brand-primary text-xs">
                     {product.price.toLocaleString('tr-TR')} ₺
                   </td>
-                  <td className="py-3 text-end text-[10px] font-bold text-[#1A1033]/60">
+                  <td className="py-3 text-end text-[10px] font-bold text-brand-primary/60">
                     {product.stock}
                   </td>
                   {FLAGS.map((f) => {
@@ -455,7 +457,7 @@ export function AdminProducts() {
                         >
                           <f.icon
                             size={14}
-                            className={cn(active ? f.color : 'text-[#1A1033]/20')}
+                            className={cn(active ? f.color : 'text-brand-primary/20')}
                           />
                         </button>
                       </td>
@@ -518,7 +520,9 @@ export function AdminProducts() {
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <p className="text-center py-8 text-[#1A1033]/30 text-sm font-bold">Ürün bulunamadı</p>
+          <p className="text-center py-8 text-brand-primary/30 text-sm font-bold">
+            Ürün bulunamadı
+          </p>
         )}
       </div>
 
@@ -532,15 +536,15 @@ export function AdminProducts() {
           <div className="relative bg-white rounded-4xl p-8 w-full max-w-md shadow-2xl">
             <button
               onClick={() => setRejectModal(null)}
-              className="absolute top-5 end-5 text-[#1A1033]/30 hover:text-[#1A1033]"
+              className="absolute top-5 end-5 text-brand-primary/30 hover:text-brand-primary"
             >
               <X size={18} />
             </button>
             <h4 className="text-lg font-display font-black uppercase italic mb-1">Ürünü Reddet</h4>
-            <p className="text-xs text-[#1A1033]/50 mb-5 line-clamp-2">
+            <p className="text-xs text-brand-primary/50 mb-5 line-clamp-2">
               {rejectModal.product.title}
             </p>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-[#1A1033]/60 mb-2">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/60 mb-2">
               Red Sebebi (Satıcıya bildirilir)
             </label>
             <textarea
@@ -548,12 +552,12 @@ export function AdminProducts() {
               onChange={(e) => setRejectNote(e.target.value)}
               rows={3}
               placeholder="Ürün görselleri yetersiz, açıklama eksik..."
-              className="w-full px-4 py-3 bg-[#F8F8FA] border border-[#1A1033]/10 rounded-xl text-sm outline-none focus:border-accent/30 resize-none"
+              className="w-full px-4 py-3 bg-[#F8F8FA] border border-brand-primary/10 rounded-xl text-sm outline-none focus:border-accent/30 resize-none"
             />
             <div className="flex gap-3 mt-5">
               <button
                 onClick={() => setRejectModal(null)}
-                className="flex-1 py-3 bg-[#F8F8FA] text-[#1A1033] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#1A1033]/10 transition-all"
+                className="flex-1 py-3 bg-[#F8F8FA] text-brand-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary/10 transition-all"
               >
                 İptal
               </button>

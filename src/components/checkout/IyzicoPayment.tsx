@@ -125,14 +125,14 @@ export function IyzicoPayment({
           <Loader2 size={32} className="animate-spin text-accent" />
         </div>
         <div>
-          <h3 className="text-lg font-black text-[#1A1033] uppercase tracking-tight mb-2">
+          <h3 className="text-lg font-black text-brand-primary uppercase tracking-tight mb-2">
             iyzico&apos;ya Yönlendiriliyor
           </h3>
-          <p className="text-sm text-[#1A1033]/50 font-medium">
+          <p className="text-sm text-brand-primary/50 font-medium">
             Güvenli ödeme sayfasına yönlendiriliyorsunuz...
           </p>
         </div>
-        <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-[#1A1033]/30">
+        <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-brand-primary/30">
           <ExternalLink size={12} /> Yeni sayfada açılmazsa{' '}
           <button onClick={handlePay} className="text-accent underline">
             tıklayın
@@ -148,10 +148,10 @@ export function IyzicoPayment({
         <div className="w-16 h-16 bg-green-100 rounded-[1.5rem] flex items-center justify-center mx-auto">
           <CheckCircle2 size={32} className="text-green-600" />
         </div>
-        <h3 className="text-lg font-black text-[#1A1033] uppercase tracking-tight">
+        <h3 className="text-lg font-black text-brand-primary uppercase tracking-tight">
           Ödeme Başarılı!
         </h3>
-        <p className="text-sm text-[#1A1033]/50">Siparişiniz alındı, teşekkür ederiz.</p>
+        <p className="text-sm text-brand-primary/50">Siparişiniz alındı, teşekkür ederiz.</p>
       </div>
     );
   }
@@ -169,7 +169,7 @@ export function IyzicoPayment({
     <div className="space-y-6">
       {/* Installment Selection */}
       <div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#1A1033]/40 mb-3">
+        <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-3">
           Taksit Seçeneği
         </p>
 
@@ -178,7 +178,7 @@ export function IyzicoPayment({
           {bankLogos.map((b) => (
             <span
               key={b.name}
-              className="px-3 py-1.5 bg-[#F8F8FA] rounded-lg text-[10px] font-bold text-[#1A1033]/40 border border-[#1A1033]/5"
+              className="px-3 py-1.5 bg-[#F8F8FA] rounded-lg text-[10px] font-bold text-brand-primary/40 border border-brand-primary/5"
             >
               {b.name}
             </span>
@@ -197,15 +197,15 @@ export function IyzicoPayment({
                 className={`px-3 py-3 rounded-2xl border-2 text-center transition-all ${
                   installment === num
                     ? 'border-accent bg-accent/5 shadow-sm'
-                    : 'border-[#1A1033]/10 bg-[#F8F8FA] hover:border-accent/40'
+                    : 'border-brand-primary/10 bg-[#F8F8FA] hover:border-accent/40'
                 }`}
               >
                 <span
-                  className={`text-sm font-black ${installment === num ? 'text-accent' : 'text-[#1A1033]'}`}
+                  className={`text-sm font-black ${installment === num ? 'text-accent' : 'text-brand-primary'}`}
                 >
                   {num}
                 </span>
-                <span className="block text-[9px] font-bold text-[#1A1033]/40 uppercase tracking-widest">
+                <span className="block text-[9px] font-bold text-brand-primary/40 uppercase tracking-widest">
                   Taksit
                 </span>
               </button>
@@ -232,7 +232,7 @@ export function IyzicoPayment({
         <button
           type="button"
           onClick={onBack}
-          className="px-6 py-4 bg-[#F8F8FA] text-[#1A1033] rounded-2xl font-black uppercase text-[11px] hover:bg-[#1A1033]/5 transition-all"
+          className="px-6 py-4 bg-[#F8F8FA] text-brand-primary rounded-2xl font-black uppercase text-[11px] hover:bg-brand-primary/5 transition-all"
         >
           Geri
         </button>
