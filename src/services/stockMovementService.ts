@@ -19,6 +19,7 @@ export interface StockMovement {
   delta: number;
   reason: string;
   userId: string;
+  warehouseId?: string;
   createdAt?: any;
 }
 
@@ -49,6 +50,7 @@ export async function recordStockChange(
   newStock: number,
   reason: string,
   userId: string,
+  warehouseId?: string,
 ): Promise<void> {
   if (oldStock === newStock) return;
   try {
@@ -60,6 +62,7 @@ export async function recordStockChange(
       delta: newStock - oldStock,
       reason,
       userId: userId || 'system',
+      warehouseId: warehouseId || '',
       createdAt: serverTimestamp(),
     });
   } catch (error) {

@@ -22,6 +22,7 @@ import { Product, Category } from '../types';
 import { MOCK_PRODUCTS, CATEGORIES } from '../mockData';
 import { recordPrice } from './priceHistoryService';
 import { recordStockChange } from './stockMovementService';
+import { getTotalStock, getDefaultWarehouse, setWarehouseStock } from './warehouseService';
 
 export interface GetProductsOptions {
   categoryId?: string;
@@ -395,6 +396,7 @@ export async function decreaseProductStock(
     sellerId: string;
     oldStock: number;
     newStock: number;
+    quantity: number;
   }> = [];
 
   try {
@@ -441,6 +443,7 @@ export async function decreaseProductStock(
             sellerId: product.sellerId || '',
             oldStock: product.stock ?? 0,
             newStock: newTotal,
+            quantity,
           });
         } else {
           // Decrement product-level stock
@@ -461,13 +464,39 @@ export async function decreaseProductStock(
             sellerId: product.sellerId || '',
             oldStock: available,
             newStock,
+            quantity,
           });
         }
       }
     });
 
-    // Record stock movements after successful transaction (fire-and-forget)
+    // Record stock movements and warehouse stock updates after successful transaction
     for (const m of movements) {
+      let warehouseId: string | undefined;
+
+      try {
+        // Check if product has warehouse-managed stock
+        const { totalQuantity } = await getTotalStock(m.productId);
+        if (totalQuantity > 0) {
+          // Product has warehouse allocations — update default warehouse
+          const defaultWarehouse = await getDefaultWarehouse(m.sellerId);
+          if (defaultWarehouse) {
+            warehouseId = defaultWarehouse.id;
+            // Get current warehouse stock and decrement
+            const { breakdown } = await getTotalStock(m.productId);
+            const currentWS = breakdown.find((ws) => ws.warehouseId === defaultWarehouse.id);
+            const currentQty = currentWS?.quantity ?? 0;
+            await setWarehouseStock(
+              defaultWarehouse.id,
+              m.productId,
+              Math.max(0, currentQty - m.quantity),
+            );
+          }
+        }
+      } catch {
+        // Non-blocking — warehouse stock update failure must never fail the parent operation
+      }
+
       recordStockChange(
         m.productId,
         m.sellerId,
@@ -475,6 +504,7 @@ export async function decreaseProductStock(
         m.newStock,
         meta?.reason || 'order_placed',
         meta?.userId || 'system',
+        warehouseId,
       ).catch(() => {});
     }
   } catch (error: any) {
@@ -501,6 +531,7 @@ export async function restoreProductStock(
     sellerId: string;
     oldStock: number;
     newStock: number;
+    quantity: number;
   }> = [];
 
   try {
@@ -532,6 +563,7 @@ export async function restoreProductStock(
             sellerId: product.sellerId || '',
             oldStock: product.stock ?? 0,
             newStock: newTotal,
+            quantity,
           });
         } else {
           const newStock = (product.stock ?? 0) + quantity;
@@ -544,13 +576,35 @@ export async function restoreProductStock(
             sellerId: product.sellerId || '',
             oldStock: product.stock ?? 0,
             newStock,
+            quantity,
           });
         }
       }
     });
 
-    // Record stock movements after successful transaction (fire-and-forget)
+    // Record stock movements and warehouse stock updates after successful transaction
     for (const m of movements) {
+      let warehouseId: string | undefined;
+
+      try {
+        // Check if product has warehouse-managed stock
+        const { totalQuantity } = await getTotalStock(m.productId);
+        if (totalQuantity > 0) {
+          // Product has warehouse allocations — update default warehouse
+          const defaultWarehouse = await getDefaultWarehouse(m.sellerId);
+          if (defaultWarehouse) {
+            warehouseId = defaultWarehouse.id;
+            // Get current warehouse stock and increment
+            const { breakdown } = await getTotalStock(m.productId);
+            const currentWS = breakdown.find((ws) => ws.warehouseId === defaultWarehouse.id);
+            const currentQty = currentWS?.quantity ?? 0;
+            await setWarehouseStock(defaultWarehouse.id, m.productId, currentQty + m.quantity);
+          }
+        }
+      } catch {
+        // Non-blocking — warehouse stock update failure must never fail the parent operation
+      }
+
       recordStockChange(
         m.productId,
         m.sellerId,
@@ -558,6 +612,7 @@ export async function restoreProductStock(
         m.newStock,
         meta?.reason || 'order_cancelled',
         meta?.userId || 'system',
+        warehouseId,
       ).catch(() => {});
     }
   } catch (error) {
