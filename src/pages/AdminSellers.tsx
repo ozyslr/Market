@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
+﻿import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { getSellers, updateSeller } from '@/services/userService';
 import { createNotification } from '@/services/notificationService';
@@ -38,6 +38,14 @@ import { useAuth } from '@/context/AuthContext';
 import { LoadingState, ErrorState, EmptyState } from '@/components/shared/DataStates';
 import { TIER_ORDER, type SellerTier } from '@/services/sellerTierService';
 
+// ─── Toast ────────────────────────────────────────────────────────────────────
+
+interface ToastMsg {
+  id: number;
+  message: string;
+  type: 'success' | 'error';
+}
+
 const TIER_LABELS: Record<string, string> = {
   starter: 'Baslangic',
   bronze: 'Bronz',
@@ -68,6 +76,8 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
 
 export function AdminSellers() {
   const { user: actor } = useAuth();
+  const toastIdRef = useRef(0);
+
   const [adminTab, setAdminTab] = useState<'sellers' | 'applications' | 'rules'>('sellers');
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading');
@@ -76,11 +86,20 @@ export function AdminSellers() {
   const [editingCommission, setEditingCommission] = useState<string | null>(null);
   const [commissionValue, setCommissionValue] = useState('');
   const [editingTier, setEditingTier] = useState<string | null>(null);
+  const [editingTierValue, setEditingTierValue] = useState<string>('');
   const [savingId, setSavingId] = useState<string | null>(null);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [sellerProducts, setSellerProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [errorProducts, setErrorProducts] = useState(false);
+
+  // Toasts
+  const [toasts, setToasts] = useState<ToastMsg[]>([]);
+  const addToast = (message: string, type: 'success' | 'error') => {
+    const id = ++toastIdRef.current;
+    setToasts((t) => [...t, { id, message, type }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
+  };
 
   // Application state
   const [applications, setApplications] = useState<any[]>([]);
@@ -176,6 +195,8 @@ export function AdminSellers() {
       setSellers((prev) => prev.map((s) => (s.id === id ? { ...s, ...data } : s)));
       if (selectedSeller?.id === id)
         setSelectedSeller((prev) => (prev ? { ...prev, ...data } : null));
+    } catch (err: any) {
+      addToast(err?.message ?? 'Kaydetme başarısız oldu', 'error');
     } finally {
       setSavingId(null);
     }
@@ -184,7 +205,18 @@ export function AdminSellers() {
   const saveCommission = async (seller: Seller) => {
     const val = parseFloat(commissionValue);
     if (isNaN(val) || val < 0 || val > 100) return;
-    await update(seller.id, { commissionRate: val });
+    setSavingId(seller.id);
+    try {
+      await updateSeller(seller.id, { commissionRate: val });
+      setSellers((prev) =>
+        prev.map((s) => (s.id === seller.id ? { ...s, commissionRate: val } : s)),
+      );
+      addToast(`Komisyon %${val} olarak kaydedildi`, 'success');
+    } catch (err: any) {
+      addToast(err?.message ?? 'Komisyon kaydedilemedi', 'error');
+    } finally {
+      setSavingId(null);
+    }
     setEditingCommission(null);
   };
 
@@ -288,6 +320,20 @@ export function AdminSellers() {
 
   return (
     <div className="bg-white rounded-[3.5rem] p-8 lg:p-12 border border-[#F8F8FA] shadow-sm">
+      {/* Toast container */}
+      <div className="fixed top-4 end-4 z-50 space-y-2 pointer-events-none">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={cn(
+              'px-4 py-3 rounded-xl text-sm font-bold shadow-xl pointer-events-auto max-w-xs',
+              t.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white',
+            )}
+          >
+            {t.message}
+          </div>
+        ))}
+      </div>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
@@ -505,15 +551,8 @@ export function AdminSellers() {
                           {editingTier === seller.id ? (
                             <div className="flex items-center gap-1">
                               <select
-                                value={seller.tier || 'starter'}
-                                onChange={(e) => {
-                                  const newTier = e.target.value;
-                                  setSellers((prev) =>
-                                    prev.map((s) =>
-                                      s.id === seller.id ? { ...s, tier: newTier } : s,
-                                    ),
-                                  );
-                                }}
+                                value={editingTierValue}
+                                onChange={(e) => setEditingTierValue(e.target.value)}
                                 className="px-2 py-1 border border-accent/30 rounded-lg text-xs font-bold outline-none"
                               >
                                 {TIER_ORDER.map((t) => (
@@ -523,8 +562,24 @@ export function AdminSellers() {
                                 ))}
                               </select>
                               <button
-                                onClick={() => {
-                                  update(seller.id, { tier: seller.tier || 'starter' });
+                                onClick={async () => {
+                                  setSavingId(seller.id);
+                                  try {
+                                    await updateSeller(seller.id, { tier: editingTierValue });
+                                    setSellers((prev) =>
+                                      prev.map((s) =>
+                                        s.id === seller.id ? { ...s, tier: editingTierValue } : s,
+                                      ),
+                                    );
+                                    addToast(
+                                      `Kademe ${TIER_LABELS[editingTierValue] || editingTierValue} olarak kaydedildi`,
+                                      'success',
+                                    );
+                                  } catch (err: any) {
+                                    addToast(err?.message ?? 'Kademe kaydedilemedi', 'error');
+                                  } finally {
+                                    setSavingId(null);
+                                  }
                                   setEditingTier(null);
                                 }}
                                 disabled={isSaving}
@@ -541,7 +596,10 @@ export function AdminSellers() {
                             </div>
                           ) : (
                             <button
-                              onClick={() => setEditingTier(seller.id)}
+                              onClick={() => {
+                                setEditingTier(seller.id);
+                                setEditingTierValue(seller.tier || 'starter');
+                              }}
                               className="flex items-center gap-1 group"
                             >
                               <span

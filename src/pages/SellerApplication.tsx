@@ -11,6 +11,14 @@ import {
   ChevronRight,
   AlertCircle,
   ShieldCheck,
+  Percent,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  GraduationCap,
+  Zap,
+  Crown,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -20,6 +28,7 @@ import {
   type KycDocument,
 } from '@/services/sellerApplicationService';
 import { recordEvent } from '@/services/sellerOnboardingService';
+import { TIER_ORDER, DEFAULT_TIERS, type SellerTier } from '@/services/sellerTierService';
 
 const MAX_DOC_BYTES = 5 * 1024 * 1024; // 5 MB
 const ACCEPTED_DOC_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
@@ -237,6 +246,13 @@ export function SellerApplication() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showCommissionInfo, setShowCommissionInfo] = useState(false);
+
+  // Tier options with features for the selection UI
+  const tierOptions = TIER_ORDER.map((tier) => ({
+    tier,
+    config: DEFAULT_TIERS[tier],
+  }));
 
   // KYC doc slots: one per docType
   const [docSlots, setDocSlots] = useState<Record<DocType, DocSlotState>>({
@@ -261,6 +277,7 @@ export function SellerApplication() {
     productCategories: [] as string[],
     monthlySalesTarget: '',
     experience: '',
+    sellerTier: 'starter' as string,
   });
 
   const set = (k: keyof typeof form, v: unknown) => setForm((p) => ({ ...p, [k]: v }));
@@ -403,6 +420,7 @@ export function SellerApplication() {
         userEmail: user.email || '',
         userName: user.name || '',
         ...form,
+        sellerTier: form.sellerTier,
         slug: form.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         socialMedia: [],
         kycDocuments,
@@ -430,21 +448,30 @@ export function SellerApplication() {
           <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
-          <h2 className="text-2xl font-black uppercase italic text-brand-primary dark:text-white mb-3">
-            Application Submitted!
+          <h2 className="text-2xl font-black uppercase italic text-brand-primary dark:text-white mb-2">
+            Basvurunuz Alindi!
           </h2>
-          <p className="text-sm text-brand-primary/60 dark:text-white/60 mb-2">
-            Your seller application has been successfully submitted.
+          <p className="text-sm font-bold text-brand-primary/70 dark:text-white/70 mb-2">
+            Basvurunuz incelendikten sonra size e-posta ile bilgi verilecektir.
           </p>
-          <p className="text-xs text-brand-primary/40 dark:text-white/40 mb-8">
-            Our team will review it within 1–3 business days. You will be notified by email.
+          <p className="text-xs text-brand-primary/50 dark:text-white/50 mb-8">
+            Ortalama inceleme suresi 1-3 is gunudur. Basvurunuz onaylandiktan sonra satici
+            panelinize erisebilirsiniz.
           </p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-8 py-3 bg-violet-600 text-white font-black text-sm rounded-xl hover:bg-violet-700 transition-colors uppercase tracking-widest"
-          >
-            Back to Home
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => navigate('/')}
+              className="px-8 py-3 bg-violet-600 text-white font-black text-sm rounded-xl hover:bg-violet-700 transition-colors uppercase tracking-widest"
+            >
+              Ana Sayfa
+            </button>
+            <button
+              onClick={() => navigate('/seller/dashboard')}
+              className="px-8 py-3 border-2 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400 font-black text-sm rounded-xl hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors uppercase tracking-widest"
+            >
+              Satici Paneli
+            </button>
+          </div>
         </motion.div>
       </div>
     );
@@ -502,11 +529,99 @@ export function SellerApplication() {
         </div>
       </div>
 
+      {/* ── Commission & Tier Info (collapsible) ─────────────────────────── */}
+      <div className="max-w-2xl mx-auto px-4 mb-6">
+        <button
+          onClick={() => setShowCommissionInfo(!showCommissionInfo)}
+          className="w-full flex items-center justify-between bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-brand-primary/5 p-4 hover:border-violet-200 dark:hover:border-violet-800 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Percent size={16} className="text-violet-600" />
+            <span className="text-sm font-bold text-brand-primary dark:text-white">
+              Komisyon Oranlari ve Satici Kademeleri
+            </span>
+          </div>
+          {showCommissionInfo ? (
+            <ChevronUp size={16} className="text-brand-primary/50" />
+          ) : (
+            <ChevronDown size={16} className="text-brand-primary/50" />
+          )}
+        </button>
+        {showCommissionInfo && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-3 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-brand-primary/5 p-5 space-y-4"
+          >
+            <p className="text-xs text-brand-primary/50 dark:text-white/50 leading-relaxed">
+              Mercora, satici kademenize gore degisen komisyon oranlari uygular. Baslangic kademesi
+              ucretsizdir. Daha yuksek kademelerde komisyon orani duser ve daha fazla ozellik
+              acilir.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {tierOptions.map(({ tier, config }) => {
+                const isSelected = tier === form.sellerTier;
+                const tierIcons: Record<string, React.ReactNode> = {
+                  starter: <GraduationCap size={14} />,
+                  bronze: <Zap size={14} />,
+                  silver: <Users size={14} />,
+                  gold: <Crown size={14} />,
+                  platinum: <Info size={14} />,
+                };
+                return (
+                  <div
+                    key={tier}
+                    className={cn(
+                      'rounded-xl p-3 text-xs border transition-colors',
+                      isSelected
+                        ? 'border-violet-300 bg-violet-50 dark:border-violet-600 dark:bg-violet-900/20'
+                        : 'border-brand-primary/10 bg-zinc-50 dark:bg-zinc-800',
+                    )}
+                  >
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="text-violet-600">{tierIcons[tier]}</span>
+                      <span className="font-black uppercase text-brand-primary dark:text-white text-[11px]">
+                        {config.label}
+                      </span>
+                    </div>
+                    <div className="space-y-0.5 text-[10px] text-brand-primary/50 dark:text-white/50">
+                      <p>
+                        Komisyon:{' '}
+                        <span className="font-bold text-brand-primary dark:text-white">
+                          %{config.commissionRate}
+                        </span>
+                      </p>
+                      <p>
+                        Max Urun:{' '}
+                        <span className="font-bold text-brand-primary dark:text-white">
+                          {config.maxProducts.toLocaleString()}
+                        </span>
+                      </p>
+                      <p>
+                        Aylik Ucret:{' '}
+                        <span className="font-bold text-brand-primary dark:text-white">
+                          {config.monthlyFee === 0
+                            ? 'Ucretsiz'
+                            : `₺${config.monthlyFee.toLocaleString()}`}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-brand-primary/30 dark:text-white/30 text-center">
+              * Kademeniz performans puaniniza gore zamanla otomatik olarak yukselebilir.
+            </p>
+          </motion.div>
+        )}
+      </div>
+
       <div className="max-w-2xl mx-auto px-4 pb-16">
         <motion.div
           key={step}
           initial={{ x: 20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
+          animate={{ x: 1, opacity: 1 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
           className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl border border-brand-primary/5 p-8"
         >
@@ -653,6 +768,62 @@ export function SellerApplication() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* ── Seller Tier Selection ─────────────────────────────────── */}
+              <div>
+                <label className="block text-xs font-bold text-brand-primary/60 mb-1.5">
+                  Satici Kademesi
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  {tierOptions.map(({ tier, config }) => {
+                    const isSelected = form.sellerTier === tier;
+                    return (
+                      <button
+                        key={tier}
+                        type="button"
+                        onClick={() => set('sellerTier', tier)}
+                        className={cn(
+                          'flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all',
+                          isSelected
+                            ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 ring-1 ring-violet-500'
+                            : 'border-brand-primary/10 bg-white dark:bg-zinc-800 hover:border-violet-200 dark:hover:border-violet-700',
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0',
+                            isSelected
+                              ? 'border-violet-600 bg-violet-600'
+                              : 'border-brand-primary/20',
+                          )}
+                        >
+                          {isSelected && <CheckCircle size={12} className="text-white" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-brand-primary dark:text-white capitalize">
+                            {config.label}
+                          </p>
+                          <p className="text-[10px] text-brand-primary/40 dark:text-white/40 truncate">
+                            {config.benefits.slice(0, 3).join(' - ')}
+                            {config.benefits.length > 3 ? ' ...' : ''}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-bold text-violet-600">
+                            %{config.commissionRate} komisyon
+                          </p>
+                          <p className="text-[10px] text-brand-primary/40 dark:text-white/40">
+                            {config.monthlyFee === 0 ? 'Ucretsiz' : `₺${config.monthlyFee}/ay`}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-brand-primary/30 dark:text-white/30 mt-1.5">
+                  Kademeniz performans puaniniza gore zamanla otomatik olarak yukselebilir.
+                </p>
               </div>
 
               <div className="flex gap-3 pt-4">

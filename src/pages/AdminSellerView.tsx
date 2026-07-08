@@ -15,6 +15,7 @@ import {
 } from '@/services/sellerApplicationService';
 import { useAuth } from '@/context/AuthContext';
 import { Seller, Product } from '@/types';
+import { updateSeller } from '@/services/userService';
 import { Order } from '@/types/order';
 import {
   ArrowLeft,
@@ -33,6 +34,7 @@ import {
   Copy,
   ExternalLink,
   ShieldCheck,
+  Edit2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TIER_ORDER, type SellerTier } from '@/services/sellerTierService';
@@ -140,6 +142,18 @@ export function AdminSellerView() {
   const [rejectionError, setRejectionError] = useState('');
   const [onboardingUrl, setOnboardingUrl] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Tier & commission editing
+  const [editingTier, setEditingTier] = useState(false);
+  const [editingTierValue, setEditingTierValue] = useState<string>(
+    (seller as any)?.tier || 'starter',
+  );
+  const [savingTier, setSavingTier] = useState(false);
+  const [editingCommission, setEditingCommission] = useState(false);
+  const [commissionValue, setCommissionValue] = useState<string>(
+    String(seller?.commissionRate ?? ''),
+  );
+  const [savingCommission, setSavingCommission] = useState(false);
 
   // Toasts
   const [toasts, setToasts] = useState<ToastMsg[]>([]);
@@ -378,6 +392,215 @@ export function AdminSellerView() {
               {totalRevenue.toLocaleString('tr-TR')} ₺
             </p>
             <p className="text-xs text-zinc-500 mt-0.5">Total Revenue</p>
+          </div>
+        </div>
+
+        {/* ── Admin Management Card ──────────────────────────────────── */}
+        <div className="bg-zinc-900 rounded-2xl p-6 mb-6 space-y-5">
+          <h2 className="text-base font-semibold text-zinc-300">Admin Management</h2>
+
+          {/* Tier */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <span className="text-sm text-zinc-400 font-semibold min-w-[60px]">Tier</span>
+            {editingTier ? (
+              <div className="flex items-center gap-2">
+                <select
+                  value={editingTierValue}
+                  onChange={(e) => setEditingTierValue(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg bg-zinc-700 border border-zinc-600 text-sm text-white font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  {TIER_ORDER.map((t) => (
+                    <option key={t} value={t}>
+                      {TIER_LABELS[t]}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={async () => {
+                    if (!sellerId) return;
+                    setSavingTier(true);
+                    try {
+                      await updateSeller(sellerId, { tier: editingTierValue } as any);
+                      setSeller((prev) =>
+                        prev ? ({ ...prev, tier: editingTierValue } as any) : prev,
+                      );
+                      addToast(
+                        `Tier updated to ${TIER_LABELS[editingTierValue] || editingTierValue}`,
+                        'success',
+                      );
+                      setEditingTier(false);
+                    } catch (err: any) {
+                      addToast(err?.message ?? 'Failed to save tier', 'error');
+                    } finally {
+                      setSavingTier(false);
+                    }
+                  }}
+                  disabled={savingTier}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors disabled:opacity-50"
+                >
+                  {savingTier ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <CheckCircle size={12} />
+                  )}
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingTier(false)}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 transition-colors"
+                >
+                  <XCircle size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400">
+                  {TIER_LABELS[(seller as any).tier || 'starter'] || 'Baslangic'}
+                </span>
+                <button
+                  onClick={() => {
+                    setEditingTierValue((seller as any).tier || 'starter');
+                    setEditingTier(true);
+                  }}
+                  className="text-zinc-500 hover:text-purple-400 transition-colors"
+                  title="Edit tier"
+                >
+                  <Edit2 size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Commission Rate */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <span className="text-sm text-zinc-400 font-semibold min-w-[60px]">Commission</span>
+            {editingCommission ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value={commissionValue}
+                  onChange={(e) => setCommissionValue(e.target.value)}
+                  className="w-16 px-3 py-1.5 rounded-lg bg-zinc-700 border border-zinc-600 text-sm text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  autoFocus
+                />
+                <span className="text-zinc-500 text-xs">%</span>
+                <button
+                  onClick={async () => {
+                    if (!sellerId) return;
+                    const val = parseFloat(commissionValue);
+                    if (isNaN(val) || val < 0 || val > 100) {
+                      addToast('Please enter a valid rate (0-100)', 'error');
+                      return;
+                    }
+                    setSavingCommission(true);
+                    try {
+                      await updateSeller(sellerId, { commissionRate: val });
+                      setSeller((prev) => (prev ? { ...prev, commissionRate: val } : prev));
+                      addToast(`Commission set to %${val}`, 'success');
+                      setEditingCommission(false);
+                    } catch (err: any) {
+                      addToast(err?.message ?? 'Failed to save commission', 'error');
+                    } finally {
+                      setSavingCommission(false);
+                    }
+                  }}
+                  disabled={savingCommission}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors disabled:opacity-50"
+                >
+                  {savingCommission ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <CheckCircle size={12} />
+                  )}
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingCommission(false)}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 transition-colors"
+                >
+                  <XCircle size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-zinc-200">%{seller.commissionRate}</span>
+                <button
+                  onClick={() => {
+                    setCommissionValue(String(seller.commissionRate ?? ''));
+                    setEditingCommission(true);
+                  }}
+                  className="text-zinc-500 hover:text-emerald-400 transition-colors"
+                  title="Edit commission"
+                >
+                  <Edit2 size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* KYC Status */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <span className="text-sm text-zinc-400 font-semibold min-w-[60px]">KYC</span>
+            <span
+              className={cn(
+                'px-2.5 py-0.5 rounded-full text-xs font-semibold',
+                seller.kycStatus === 'verified'
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : seller.kycStatus === 'pending'
+                    ? 'bg-blue-500/20 text-blue-400'
+                    : 'bg-red-500/20 text-red-400',
+              )}
+            >
+              {seller.kycStatus === 'verified'
+                ? 'Verified'
+                : seller.kycStatus === 'pending'
+                  ? 'Pending'
+                  : 'Rejected'}
+            </span>
+            {seller.kycStatus !== 'verified' && (
+              <button
+                onClick={async () => {
+                  if (!sellerId) return;
+                  try {
+                    await updateSeller(sellerId, {
+                      kycStatus: 'verified',
+                      isVerified: true,
+                    } as any);
+                    setSeller((prev) =>
+                      prev ? ({ ...prev, kycStatus: 'verified', isVerified: true } as any) : prev,
+                    );
+                    addToast('Seller KYC marked as verified', 'success');
+                  } catch (err: any) {
+                    addToast(err?.message ?? 'Failed to update KYC status', 'error');
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 text-xs font-bold transition-colors"
+              >
+                Mark as Verified
+              </button>
+            )}
+            {seller.kycStatus !== 'rejected' && seller.kycStatus === 'pending' && (
+              <button
+                onClick={async () => {
+                  if (!sellerId) return;
+                  try {
+                    await updateSeller(sellerId, { kycStatus: 'rejected' } as any);
+                    setSeller((prev) =>
+                      prev ? ({ ...prev, kycStatus: 'rejected' } as any) : prev,
+                    );
+                    addToast('Seller KYC rejected', 'error');
+                  } catch (err: any) {
+                    addToast(err?.message ?? 'Failed to update KYC status', 'error');
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/30 text-xs font-bold transition-colors"
+              >
+                Reject
+              </button>
+            )}
           </div>
         </div>
 

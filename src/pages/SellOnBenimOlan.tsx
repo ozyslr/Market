@@ -146,7 +146,10 @@ export function SellOnBenimOlan() {
             >
               Satıcı Başvurusu Yap <ArrowRight size={18} />
             </button>
-            <button className="px-10 py-5 bg-white/10 text-white border border-white/10 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-white/20 transition-all">
+            <button
+              onClick={() => navigate('/sell/apply')}
+              className="px-10 py-5 bg-white/10 text-white border border-white/10 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-white/20 transition-all"
+            >
               Komisyon Yapısını İncele
             </button>
           </div>

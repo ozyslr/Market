@@ -67,7 +67,7 @@ export interface SellerTierStatus {
 
 // ─── Tier Definitions ───────────────────────────────────────────────────────
 
-const DEFAULT_TIERS: Record<SellerTier, Omit<TierConfig, 'tier'>> = {
+export const DEFAULT_TIERS: Record<SellerTier, Omit<TierConfig, 'tier'>> = {
   starter: {
     label: 'Başlangıç',
     maxProducts: 50,

@@ -49,6 +49,8 @@ export interface SellerApplication {
   productCategories: string[];
   monthlySalesTarget: string;
   experience: string;
+  /** Selected seller tier (defaults to 'starter') */
+  sellerTier?: string;
   status: 'pending' | 'approved' | 'rejected';
   adminNote?: string;
   reviewedBy?: string;
@@ -90,6 +92,24 @@ export async function submitApplication(
       status: 'pending',
       createdAt: new Date().toISOString(),
     });
+
+    // Create/update sellers doc so the SellerLayout guard shows "pending review"
+    await setDoc(
+      doc(db, 'sellers', data.userId),
+      {
+        id: data.userId,
+        storeName: data.storeName,
+        slug,
+        kycStatus: 'pending',
+        email: data.userEmail,
+        name: data.userName,
+        phone: data.phone,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true },
+    );
+
     notifyAdmins(
       'admin_alert',
       'Yeni Satıcı Başvurusu',
