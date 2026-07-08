@@ -274,6 +274,11 @@
   @apply border-zinc-700;
 }
 
+/* Fix mix-blend-multiply on dark backgrounds — makes product images invisible */
+.dark .mix-blend-multiply {
+  mix-blend-mode: normal;
+}
+
 .perspective-1000 {
   perspective: 1000px;
 }
