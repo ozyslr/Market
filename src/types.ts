@@ -10,6 +10,7 @@
  *   5. Commerce       — Coupon, ReturnRequest, Campaign, CartCampaign, FeaturedDeal
  *   6. Community      — ProductQuestion
  *   7. Advertising    — AdCampaign, AdEvent, AdConfig, AdPerformance
+ *   8. Warehouse      — Warehouse, WarehouseStock
  */
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -268,6 +269,11 @@ export interface Product {
   reviews?: Review[];
   lowStockThreshold?: number;
   createdAt?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -530,4 +536,33 @@ export interface SellerAdAnalytics {
   averageCtr: number;
   activeCampaigns: number;
   campaigns: (AdCampaign & { ctr: number; avgCpc: number })[];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 8. Warehouse
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface Warehouse {
+  id: string;
+  sellerId: string;
+  name: string;
+  address: {
+    line1: string;
+    line2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
+  isDefault: boolean;
+  createdAt: any;
+  updatedAt?: any;
+}
+
+export interface WarehouseStock {
+  warehouseId: string;
+  productId: string;
+  quantity: number;
+  lowStockThreshold: number;
+  updatedAt?: any;
 }
