@@ -275,7 +275,6 @@
 }
 
 /* Fix hardcoded #1A1033 (brand dark purple) — invisible on dark bg */
-/* Use !important to override Tailwind v4 arbitrary value specificity */
 .dark [class*='text-[#1A1033]']:not([class*='dark:']) {
   color: #ffffff !important;
 }
@@ -286,10 +285,10 @@
   background-color: rgb(255 255 255 / 0.1) !important;
 }
 .dark .bg-\[\#F8F8FA\] {
-  @apply bg-zinc-900 !important;
+  background-color: #18181b !important;
 }
 .dark .bg-\[\#F8F8FA\]\/50 {
-  @apply bg-zinc-900/50 !important;
+  background-color: rgb(24 24 27 / 0.5) !important;
 }
 .dark .border-\[\#1A1033\]\/5 {
   border-color: rgb(255 255 255 / 0.05) !important;
@@ -298,7 +297,7 @@
   border-color: rgb(255 255 255 / 0.1) !important;
 }
 .dark .border-\[\#F8F8FA\] {
-  @apply border-zinc-800 !important;
+  border-color: #27272a !important;
 }
 
 .perspective-1000 {
