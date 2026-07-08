@@ -15,6 +15,7 @@ import {
   sendShippingUpdateEmail,
   sendDeliveryConfirmationEmail,
 } from '../services/emailService.js';
+import { triggerWebhooks, triggerWebhooksForSellers } from '../services/webhookService.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
@@ -100,6 +101,20 @@ export function registerOrderRoutes(app: Express, deps: OrderRouteDeps) {
               (ledgerErr as Error).message,
             );
           }
+        }
+
+        // Fire-and-forget: trigger order.created webhooks for each seller
+        const sellerIds: string[] = [
+          ...new Set((items as any[]).map((i: any) => String(i.sellerId))),
+        ];
+        if (deps.adminDb) {
+          triggerWebhooksForSellers(deps.adminDb, sellerIds, 'order.created', {
+            orderSetId: result.id,
+            status: result.status,
+            totalAmount: result.totalAmount,
+            currency: result.currency,
+            createdAt: result.createdAt,
+          });
         }
 
         return res.status(201).json(result);
@@ -239,8 +254,8 @@ export function registerOrderRoutes(app: Express, deps: OrderRouteDeps) {
 
         // Delivery hook: trigger iyzico approval + ledger status update (non-blocking)
         if (newStatus! === 'delivered') {
-          const db = deps.adminDb;
-          const subSnap = await db.collection('subOrders').doc(subOrderId).get();
+          const deliveryDb = deps.adminDb;
+          const subSnap = await deliveryDb.collection('subOrders').doc(subOrderId).get();
           const subData = subSnap.exists ? subSnap.data() : {};
           const paymentTransactionId = subData?.paymentTransactionId || null;
 
@@ -253,6 +268,23 @@ export function registerOrderRoutes(app: Express, deps: OrderRouteDeps) {
           ).catch((err: Error) => {
             console.warn('[payout] processDelivery failed (non-blocking):', err.message);
           });
+        }
+
+        // Fire-and-forget: trigger order.updated webhook for the seller
+        if (deps.adminDb) {
+          const subSnap = await deps.adminDb.collection('subOrders').doc(subOrderId).get();
+          const sellerId = subSnap.exists ? subSnap.data()?.sellerId : null;
+          if (sellerId) {
+            triggerWebhooks(deps.adminDb, sellerId, 'order.updated', {
+              orderSetId,
+              subOrderId,
+              status: newStatus!,
+              event,
+              trackingNumber: trackingNumber || null,
+              carrier: carrier || null,
+              updatedAt: new Date().toISOString(),
+            });
+          }
         }
 
         return res.json({ success: true, status: newStatus! });

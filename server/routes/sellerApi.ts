@@ -8,6 +8,12 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { validate } from '../lib/validate.js';
 import { createProductSchema, updateProductSchema, bulkStockUpdateSchema } from '../lib/schemas.js';
 import type { Firestore } from 'firebase-admin/firestore';
+import {
+  createWebhook,
+  getWebhooks,
+  deleteWebhook,
+  triggerWebhooks,
+} from '../services/webhookService.js';
 
 const API_RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
   'products:read': { max: 300, windowMs: 60000 },
@@ -15,6 +21,8 @@ const API_RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
   'orders:read': { max: 200, windowMs: 60000 },
   'inventory:read': { max: 200, windowMs: 60000 },
   'inventory:write': { max: 100, windowMs: 60000 },
+  'webhooks:read': { max: 60, windowMs: 60000 },
+  'webhooks:write': { max: 30, windowMs: 60000 },
 };
 
 // ─── Hash helpers ────────────────────────────────────────────────────────────
@@ -75,6 +83,9 @@ export function registerSellerApiRoutes(
     app.put('/api/v1/products/stock', unavailable);
     app.get('/api/v1/orders', unavailable);
     app.get('/api/v1/orders/:id', unavailable);
+    app.post('/api/v1/webhooks', unavailable);
+    app.get('/api/v1/webhooks', unavailable);
+    app.delete('/api/v1/webhooks/:id', unavailable);
     console.warn('[sellerApi] adminDb is null — all /api/v1 routes return 503');
     return;
   }
@@ -353,6 +364,14 @@ export function registerSellerApiRoutes(
         if (req.body[key] !== undefined) updates[key] = req.body[key];
       }
       await docRef.update(updates);
+
+      // Fire-and-forget: trigger product.updated webhooks
+      triggerWebhooks(db, auth.sellerId, 'product.updated', {
+        productId: req.params.id,
+        updates,
+        updatedAt: updates.updatedAt,
+      });
+
       return res.json({ success: true, updates });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -445,6 +464,101 @@ export function registerSellerApiRoutes(
     }
   });
 
+  // ─── POST /api/v1/webhooks — register a webhook ────────────────────────
+  app.post('/api/v1/webhooks', async (req: any, res: any) => {
+    const auth = await authenticateApiKey(req);
+    if (!auth)
+      return res.status(401).json({
+        error: 'Geçersiz API anahtarı. Lütfen yeni bir anahtar oluşturun.',
+        code: 'KEY_REHASH_REQUIRED',
+      });
+    if (!auth.permissions.includes('webhooks:write'))
+      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok (webhooks:write)' });
+    const rateCheck = await checkApiRateLimit(db, auth.sellerId, 'webhooks:write');
+    if (!rateCheck.allowed)
+      return res.status(429).json({ error: 'Hız limiti aşıldı. 60 saniye içinde tekrar deneyin.' });
+
+    try {
+      const { url, events } = req.body || {};
+      if (!url || typeof url !== 'string' || !url.startsWith('https://')) {
+        return res
+          .status(400)
+          .json({ error: 'Geçerli bir HTTPS URL gereklidir (https:// ile başlamalı).' });
+      }
+      const validEvents: string[] = ['order.created', 'order.updated', 'product.updated'];
+      if (!Array.isArray(events) || events.length === 0) {
+        return res.status(400).json({ error: 'En az bir event tipi seçilmelidir.', validEvents });
+      }
+      const invalidEvents = events.filter((e: string) => !validEvents.includes(e));
+      if (invalidEvents.length > 0) {
+        return res
+          .status(400)
+          .json({ error: `Geçersiz event tipi: ${invalidEvents.join(', ')}`, validEvents });
+      }
+
+      const webhook = await createWebhook(db, auth.sellerId, url, events as any);
+      return res.status(201).json({ webhook: { id: webhook.id, url, events, isActive: true } });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ─── GET /api/v1/webhooks — list webhooks ──────────────────────────────
+  app.get('/api/v1/webhooks', async (req: any, res: any) => {
+    const auth = await authenticateApiKey(req);
+    if (!auth)
+      return res.status(401).json({
+        error: 'Geçersiz API anahtarı. Lütfen yeni bir anahtar oluşturun.',
+        code: 'KEY_REHASH_REQUIRED',
+      });
+    if (!auth.permissions.includes('webhooks:read'))
+      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok (webhooks:read)' });
+    const rateCheck = await checkApiRateLimit(db, auth.sellerId, 'webhooks:read');
+    if (!rateCheck.allowed)
+      return res.status(429).json({ error: 'Hız limiti aşıldı. 60 saniye içinde tekrar deneyin.' });
+
+    try {
+      const webhooks = await getWebhooks(db, auth.sellerId);
+      // Strip secrets from the response
+      const safe = webhooks.map((w) => ({
+        id: w.id,
+        sellerId: w.sellerId,
+        url: w.url,
+        events: w.events,
+        isActive: w.isActive,
+        createdAt: w.createdAt,
+        updatedAt: w.updatedAt,
+      }));
+      return res.json({ count: safe.length, webhooks: safe });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ─── DELETE /api/v1/webhooks/:id — remove a webhook ────────────────────
+  app.delete('/api/v1/webhooks/:id', async (req: any, res: any) => {
+    const auth = await authenticateApiKey(req);
+    if (!auth)
+      return res.status(401).json({
+        error: 'Geçersiz API anahtarı. Lütfen yeni bir anahtar oluşturun.',
+        code: 'KEY_REHASH_REQUIRED',
+      });
+    if (!auth.permissions.includes('webhooks:write'))
+      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok (webhooks:write)' });
+    const rateCheck = await checkApiRateLimit(db, auth.sellerId, 'webhooks:write');
+    if (!rateCheck.allowed)
+      return res.status(429).json({ error: 'Hız limiti aşıldı. 60 saniye içinde tekrar deneyin.' });
+
+    try {
+      const deleted = await deleteWebhook(db, req.params.id, auth.sellerId);
+      if (!deleted)
+        return res.status(404).json({ error: 'Webhook bulunamadı veya size ait değil.' });
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // GET /api/v1 — API info / health
   app.get('/api/v1', (_req: any, res: any) => {
     return res.json({
@@ -459,6 +573,9 @@ export function registerSellerApiRoutes(
         'PUT    /api/v1/products/stock',
         'GET    /api/v1/orders',
         'GET    /api/v1/orders/:id',
+        'POST   /api/v1/webhooks',
+        'GET    /api/v1/webhooks',
+        'DELETE /api/v1/webhooks/:id',
       ],
       auth: 'Bearer bo_<api_key>',
       docs: '/api/v1',

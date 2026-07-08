@@ -41,7 +41,7 @@ const STATIC_PAGES = [
 // Hata/ağ sorununda boş dizi döner; sitemap yine de üretilir.
 async function fetchProductSlugs(projectId) {
   if (!projectId) return [];
-  const slugs = [];
+  const products = [];
   let pageToken = '';
   try {
     do {
@@ -54,7 +54,10 @@ async function fetchProductSlugs(projectId) {
       for (const docItem of data.documents || []) {
         const fields = docItem.fields || {};
         const slug = fields.slug?.stringValue;
-        if (slug) slugs.push(slug);
+        if (slug) {
+          const canonicalUrl = fields.canonicalUrl?.stringValue || '';
+          products.push({ slug, canonicalUrl });
+        }
       }
       pageToken = data.nextPageToken || '';
     } while (pageToken);
@@ -62,7 +65,7 @@ async function fetchProductSlugs(projectId) {
     console.warn('Ürün slug çekimi atlandı (ağ/erişim yok):', err?.message || err);
     return [];
   }
-  return slugs;
+  return products;
 }
 
 async function generateSitemap() {
@@ -70,10 +73,10 @@ async function generateSitemap() {
   const urls = [...STATIC_PAGES];
 
   // Ürün sayfaları (dinamik)
-  const slugs = await fetchProductSlugs(projectId);
-  for (const slug of slugs) {
+  const products = await fetchProductSlugs(projectId);
+  for (const p of products) {
     urls.push({
-      loc: `/product/${slug}`,
+      loc: p.canonicalUrl || `/product/${p.slug}`,
       priority: 0.6,
       changefreq: 'weekly',
     });
@@ -92,7 +95,7 @@ ${urls.map(page => `  <url>
 
   const outputPath = resolve(root, 'public', 'sitemap.xml');
   writeFileSync(outputPath, xml, 'utf-8');
-  console.log(`Sitemap oluşturuldu: ${outputPath} (${urls.length} URL, ${slugs.length} ürün)`);
+  console.log(`Sitemap oluşturuldu: ${outputPath} (${urls.length} URL, ${products.length} ürün)`);
 }
 
 generateSitemap();

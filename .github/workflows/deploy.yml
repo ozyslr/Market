@@ -2,7 +2,7 @@
 
 on:
   push:
-    branches: [master]
+    branches: [main]
 
 concurrency:
   group: production-deploy

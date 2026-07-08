@@ -32,6 +32,7 @@ import { registerReturnsRoutes } from './server/routes/returns.js';
 import { registerTypesenseSyncRoutes } from './server/routes/typesenseSync.js';
 import { registerFxRateRoutes } from './server/routes/fxRates.js';
 import { registerVerificationRoutes } from './server/routes/verification.js';
+import { registerGibRoutes } from './server/routes/gib.js';
 import { sendAbandonedCartEmail } from './server/services/emailService.js';
 import { logger, httpLogger } from './server/logger.js';
 import { audit } from './server/lib/auditLog.js';
@@ -510,6 +511,9 @@ async function startServer() {
   // ─── FX Rate routes → server/routes/fxRates.ts ──────────────────────────
   registerFxRateRoutes(app, { verifyCronSecret });
   registerVerificationRoutes(app);
+
+  // ─── GIB E-Fatura routes → server/routes/gib.ts ─────────────────────────────
+  registerGibRoutes(app, { adminDb, verifyFirebaseToken, verifySeller });
 
   // â”€â”€â”€ Legacy Scheduled Auto-Payout (sellerBalances â€” kept for backward compat) â”€â”€
   // The new T+7 ledger-based payout is handled by registerPayoutRoutes above.

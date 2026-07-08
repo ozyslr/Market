@@ -24,7 +24,7 @@ import {
   Save,
   Edit3,
   History,
-  Warehouse,
+  Warehouse as WarehouseIcon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -472,7 +472,7 @@ export function SellerInventoryPage() {
             { icon: AlertTriangle, id: 'lowStock' },
             { icon: Upload, id: 'bulk' },
             { icon: BarChart3, id: 'analytics' },
-            { icon: Warehouse, id: 'depolar' },
+            { icon: WarehouseIcon, id: 'depolar' },
           ].map((item) => (
             <button
               key={item.id}
@@ -965,7 +965,7 @@ export function SellerInventoryPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-accent/10 rounded-xl text-accent">
-                      <Warehouse size={20} />
+                      <WarehouseIcon size={20} />
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
@@ -1007,7 +1007,7 @@ export function SellerInventoryPage() {
                 ) : warehouses.length === 0 ? (
                   <div className="bg-white rounded-[2rem] p-12 shadow-sm border border-brand-primary/5">
                     <div className="flex flex-col items-center justify-center gap-4 text-center">
-                      <Warehouse size={64} className="text-brand-primary/20" />
+                      <WarehouseIcon size={64} className="text-brand-primary/20" />
                       <h3 className="text-xl font-display font-black text-brand-primary">
                         Henuz depo eklenmemis
                       </h3>
@@ -1050,7 +1050,7 @@ export function SellerInventoryPage() {
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
                             <div className="p-2.5 bg-brand-secondary rounded-xl text-brand-primary">
-                              <Warehouse size={18} />
+                              <WarehouseIcon size={18} />
                             </div>
                             <div>
                               <h3 className="font-bold text-brand-primary text-sm">{wh.name}</h3>

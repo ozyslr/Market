@@ -16,10 +16,12 @@ interface SEOProps {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   /** Active language code (en, tr, de, ar) — enables hreflang alternates */
   lang?: string;
+  keywords?: string;
 }
 
 const LANGUAGES = ['tr', 'en', 'de', 'ar'];
-const DEFAULT_DESCRIPTION = "Benim Olan'da binlerce ürünü keşfedin. Moda, elektronik, ev & yaşam ve daha fazlası. Güvenli alışveriş, hızlı teslimat.";
+const DEFAULT_DESCRIPTION =
+  "Benim Olan'da binlerce ürünü keşfedin. Moda, elektronik, ev & yaşam ve daha fazlası. Güvenli alışveriş, hızlı teslimat.";
 
 export const SEO: React.FC<SEOProps> = ({
   title,
@@ -30,6 +32,7 @@ export const SEO: React.FC<SEOProps> = ({
   name = 'Benim Olan',
   jsonLd,
   lang = 'tr',
+  keywords,
 }) => {
   const fullTitle = title ? `${title} | ${name}` : name;
   const siteDescription = description || DEFAULT_DESCRIPTION;
@@ -53,6 +56,7 @@ export const SEO: React.FC<SEOProps> = ({
         {/* Basic Meta Tags */}
         <title>{fullTitle}</title>
         <meta name="description" content={siteDescription} />
+        {keywords && <meta name="keywords" content={keywords} />}
         <link rel="canonical" href={canonicalUrl} />
 
         {/* Open Graph / Facebook */}
@@ -73,7 +77,11 @@ export const SEO: React.FC<SEOProps> = ({
         {hreflangLinks.map(({ lang: l, href }) => (
           <link key={l} rel="alternate" hrefLang={l} href={href} />
         ))}
-        <link rel="alternate" hrefLang="x-default" href={hreflangLinks.find(l => l.lang === 'en')?.href || canonicalUrl} />
+        <link
+          rel="alternate"
+          hrefLang="x-default"
+          href={hreflangLinks.find((l) => l.lang === 'en')?.href || canonicalUrl}
+        />
       </Helmet>
 
       {/* Default Organization + Website schemas */}

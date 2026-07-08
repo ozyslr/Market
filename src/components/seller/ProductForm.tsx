@@ -56,7 +56,11 @@ export interface ProductFormData {
   gpsrDeclarationDate: string;
   freeShipping: boolean;
   visibility: 'public' | 'hidden' | 'draft' | 'unlisted';
+  metaTitle: string;
   metaDescription: string;
+  metaKeywords: string;
+  ogImage: string;
+  canonicalUrl: string;
   variants: ProductVariant[];
 }
 
@@ -87,7 +91,11 @@ const EMPTY_FORM: ProductFormData = {
   gpsrDeclarationDate: '',
   freeShipping: false,
   visibility: 'public',
+  metaTitle: '',
   metaDescription: '',
+  metaKeywords: '',
+  ogImage: '',
+  canonicalUrl: '',
   variants: [],
 };
 
@@ -1245,7 +1253,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
             )}
           </AnimatePresence>
 
-          {/* 7 — SEO */}
+          {/* 7 — SEO Ayarları */}
           <AnimatePresence>
             {!quickAdd && (
               <motion.section
@@ -1258,7 +1266,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
-                    SEO
+                    SEO Ayarları
                   </h3>
                   <button
                     onClick={async () => {
@@ -1278,7 +1286,30 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                     AI Meta Oluştur
                   </button>
                 </div>
-                <div>
+
+                {/* Meta Title */}
+                <div className="mb-3">
+                  <label className="block text-xs text-zinc-400 mb-1">
+                    Meta Başlık
+                    <span
+                      className={`ms-2 ${form.metaTitle.length > 60 ? 'text-red-400' : 'text-zinc-600'}`}
+                    >
+                      {form.metaTitle.length}/60
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.metaTitle}
+                    onChange={(e) => update('metaTitle', e.target.value)}
+                    maxLength={70}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                    placeholder={form.title || 'Tarayıcı sekmesinde görünen başlık'}
+                  />
+                  <p className="text-xs text-zinc-600 mt-1">Boş bırakılırsa ürün adı kullanılır.</p>
+                </div>
+
+                {/* Meta Description */}
+                <div className="mb-3">
                   <label className="block text-xs text-zinc-400 mb-1">
                     Meta Açıklama
                     <span
@@ -1295,21 +1326,84 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                     className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
                     placeholder="Arama sonuçlarında görünen özet"
                   />
-                  <p className="text-xs text-zinc-600 mt-1">
-                    Boş bırakılırsa kısa açıklama kullanılır.
-                  </p>
                 </div>
-                <div className="mt-3 p-3 bg-zinc-800 rounded-lg space-y-0.5">
-                  <p className="text-xs text-blue-400 font-medium truncate">
-                    {form.title || 'Ürün Adı'}
+
+                {/* Meta Keywords */}
+                <div className="mb-3">
+                  <label className="block text-xs text-zinc-400 mb-1">
+                    Meta Anahtar Kelimeler
+                    <span
+                      className={`ms-2 ${form.metaKeywords.length > 200 ? 'text-red-400' : 'text-zinc-600'}`}
+                    >
+                      {form.metaKeywords.length}/200
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.metaKeywords}
+                    onChange={(e) => update('metaKeywords', e.target.value)}
+                    maxLength={210}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                    placeholder="anahtar1, anahtar2, anahtar3"
+                  />
+                  <p className="text-xs text-zinc-600 mt-1">Virgülle ayrılmış anahtar kelimeler.</p>
+                </div>
+
+                {/* OG Image */}
+                <div className="mb-3">
+                  <label className="block text-xs text-zinc-400 mb-1">
+                    OG Görseli (Sosyal Paylaşım)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={form.ogImage}
+                      onChange={(e) => update('ogImage', e.target.value)}
+                      className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                      placeholder="https://... veya boş (ilk ürün görseli kullanılır)"
+                    />
+                  </div>
+                  {form.ogImage && (
+                    <div className="mt-2 w-24 h-24 rounded-lg overflow-hidden bg-zinc-800 border border-zinc-700">
+                      <img
+                        src={form.ogImage}
+                        alt="OG preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Canonical URL */}
+                <div className="mb-3">
+                  <label className="block text-xs text-zinc-400 mb-1">Canonical URL</label>
+                  <input
+                    type="text"
+                    value={form.canonicalUrl}
+                    onChange={(e) => update('canonicalUrl', e.target.value)}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                    placeholder="Boş bırakılırsa otomatik oluşturulur"
+                  />
+                </div>
+
+                {/* SEO Önizleme */}
+                <div className="mt-4 p-3 bg-zinc-900 rounded-lg border border-zinc-700 space-y-0.5">
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">
+                    SEO Önizleme (Google)
+                  </p>
+                  <p className="text-sm text-blue-400 font-medium truncate">
+                    {form.metaTitle || form.title || 'Ürün Adı - Benim Olan'}
                   </p>
                   <p className="text-xs text-green-500 truncate">
-                    benimolan.com/product/
-                    {(form.title || 'urun')
-                      .toLowerCase()
-                      .replace(/\s+/g, '-')
-                      .replace(/[^a-z0-9-]/g, '')
-                      .slice(0, 50)}
+                    {form.canonicalUrl ||
+                      `benimolan.com/product/${(form.title || 'urun')
+                        .toLowerCase()
+                        .replace(/\s+/g, '-')
+                        .replace(/[^a-z0-9-]/g, '')
+                        .slice(0, 50)}`}
                   </p>
                   <p className="text-xs text-zinc-400 line-clamp-2">
                     {form.metaDescription || form.description || 'Meta açıklama önizlemesi...'}

@@ -6,7 +6,17 @@
  * Plug in real GİB credentials for production.
  */
 
-import { collection, doc, getDocs, addDoc, updateDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -81,7 +91,11 @@ export interface InvoiceFilter {
 // ─── UBL-TR XML Generator ───────────────────────────────────────────────────
 
 function escapeXml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function formatDate(iso: string): string {
@@ -96,7 +110,9 @@ export function generateUblTrXml(invoice: InvoiceData): string {
   const profileId = 'TEMELFATURA';
   const invoiceTypeCode = invoice.type;
 
-  const itemXml = invoice.items.map((item, idx) => `
+  const itemXml = invoice.items
+    .map(
+      (item, idx) => `
     <cac:InvoiceLine>
       <cbc:ID>${idx + 1}</cbc:ID>
       <cbc:InvoicedQuantity unitCode="C62">${item.quantity}</cbc:InvoicedQuantity>
@@ -121,7 +137,9 @@ export function generateUblTrXml(invoice: InvoiceData): string {
       <cac:Price>
         <cbc:PriceAmount currencyID="${invoice.currency}">${item.unitPrice.toFixed(2)}</cbc:PriceAmount>
       </cac:Price>
-    </cac:InvoiceLine>`).join('');
+    </cac:InvoiceLine>`,
+    )
+    .join('');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
@@ -189,7 +207,14 @@ let _counter: number | null = null;
 async function getNextInvoiceNumber(): Promise<string> {
   if (_counter === null) {
     // Load from Firestore counter or start from 1
-    const snap = await getDocs(query(collection(db, 'invoices'), orderBy('invoiceNumber', 'desc'), where('invoiceNumber', '>=', 'BEN'), where('invoiceNumber', '<', 'BEO')));
+    const snap = await getDocs(
+      query(
+        collection(db, 'invoices'),
+        orderBy('invoiceNumber', 'desc'),
+        where('invoiceNumber', '>=', 'BEN'),
+        where('invoiceNumber', '<', 'BEO'),
+      ),
+    );
     // Fallback: count existing invoices
     _counter = snap.size + 1;
   }
@@ -199,18 +224,44 @@ async function getNextInvoiceNumber(): Promise<string> {
   return `${prefix}${year}${String(_counter).padStart(6, '0')}`;
 }
 
-// ─── Mock GİB Provider ─────────────────────────────────────────────────────
+// ─── GİB Submission (via server API) ─────────────────────────────────────────
 
-async function sendToGib(xml: string, invoice: InvoiceData): Promise<{ success: boolean; ettn?: string; envelopeId?: string; message?: string }> {
-  // Mock: Simulate GİB API call (0.5-1.5s delay)
-  await new Promise(r => setTimeout(r, 500 + Math.random() * 1000));
+async function sendToGibViaApi(
+  invoiceId: string,
+): Promise<{
+  success: boolean;
+  ettn?: string;
+  envelopeId?: string;
+  message?: string;
+  data?: InvoiceData;
+}> {
+  const { auth } = await import('@/lib/firebase');
+  const user = auth.currentUser;
+  if (!user) throw new Error('Oturum acmaniz gerekiyor');
 
-  // 90% acceptance rate for mock
-  if (Math.random() > 0.1) {
-    const ettn = `ETTN-${crypto.randomUUID().split('-')[0].toUpperCase()}`;
-    return { success: true, ettn, envelopeId: `ENV-${Date.now()}`, message: 'Fatura GİB tarafından kabul edildi.' };
+  const token = await user.getIdToken();
+  const baseUrl = import.meta.env.VITE_API_URL || '';
+  const resp = await fetch(`${baseUrl}/api/invoices/${invoiceId}/send-to-gib`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ error: resp.statusText }));
+    throw new Error(err.error || 'GIB gönderimi başarısız');
   }
-  return { success: false, message: 'GİB: Şema validasyon hatası — lütfen fatura bilgilerini kontrol edin.' };
+
+  const result = await resp.json();
+  return {
+    success: result.success,
+    ettn: result.data?.ettn,
+    envelopeId: result.data?.envelopeId,
+    message: result.message,
+    data: result.data,
+  };
 }
 
 // ─── CRUD ───────────────────────────────────────────────────────────────────
@@ -219,14 +270,30 @@ const COL = 'invoices';
 
 export async function createInvoice(
   sellerId: string,
-  data: Omit<InvoiceData, 'id' | 'invoiceNumber' | 'status' | 'ettn' | 'envelopeId' | 'gibStatus' | 'sentAt' | 'createdAt' | 'updatedAt' | 'sellerId'>,
+  data: Omit<
+    InvoiceData,
+    | 'id'
+    | 'invoiceNumber'
+    | 'status'
+    | 'ettn'
+    | 'envelopeId'
+    | 'gibStatus'
+    | 'sentAt'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'sellerId'
+  >,
 ): Promise<InvoiceData> {
   try {
     const now = new Date().toISOString();
     const invoiceNumber = await getNextInvoiceNumber();
     const invoice: InvoiceData = {
-      ...data, invoiceNumber, status: 'draft', sellerId,
-      createdAt: now, updatedAt: now,
+      ...data,
+      invoiceNumber,
+      status: 'draft',
+      sellerId,
+      createdAt: now,
+      updatedAt: now,
     };
 
     const ref = await addDoc(collection(db, COL), invoice);
@@ -239,18 +306,24 @@ export async function createInvoice(
 
 export async function sendInvoiceToGib(invoiceId: string): Promise<InvoiceData> {
   try {
+    // Call server-side GIB API (handles real GIB or mock fallback)
+    const gibResult = await sendToGibViaApi(invoiceId);
+
+    // If the server returned the updated invoice data, use it directly
+    if (gibResult.data) {
+      return gibResult.data;
+    }
+
+    // Fallback: read and update locally (should not normally happen)
     const snap = await getDocs(query(collection(db, COL), where('__name__', '==', invoiceId)));
     if (snap.empty) throw new Error('Fatura bulunamadı');
     const invoice = { id: snap.docs[0].id, ...snap.docs[0].data() } as InvoiceData;
-
-    const xml = generateUblTrXml(invoice);
-    const gibResult = await sendToGib(xml, invoice);
 
     const now = new Date().toISOString();
     const updates: Partial<InvoiceData> = {
       status: gibResult.success ? 'sent' : 'rejected',
       gibStatus: gibResult.success ? 'accepted' : 'rejected',
-      gibMessage: gibResult.message,
+      gibMessage: gibResult.message || '',
       sentAt: gibResult.success ? now : undefined,
       ettn: gibResult.ettn,
       envelopeId: gibResult.envelopeId,
@@ -273,7 +346,7 @@ export async function getInvoices(filter?: InvoiceFilter): Promise<InvoiceData[]
     if (filter?.orderId) constraints.push(where('orderId', '==', filter.orderId));
     const q = query(collection(db, COL), ...constraints);
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as InvoiceData));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as InvoiceData);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, COL);
     return [];
@@ -292,7 +365,10 @@ export async function getInvoiceById(invoiceId: string): Promise<InvoiceData | n
 
 export async function cancelInvoice(invoiceId: string): Promise<void> {
   try {
-    await updateDoc(doc(db, COL, invoiceId), { status: 'cancelled', updatedAt: new Date().toISOString() });
+    await updateDoc(doc(db, COL, invoiceId), {
+      status: 'cancelled',
+      updatedAt: new Date().toISOString(),
+    });
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, `${COL}/${invoiceId}`);
     throw error;
@@ -317,9 +393,9 @@ export async function autoGenerateInvoice(
     const subtotal = items.reduce((s, i) => s + i.quantity * i.price, 0);
     const totalVat = Math.round(totalAmount - subtotal * 100) / 100;
 
-    const invoiceItems: InvoiceItem[] = items.map(item => {
+    const invoiceItems: InvoiceItem[] = items.map((item) => {
       const vatRate = 20; // Default KDV
-      const vatAmount = Math.round(item.subtotal * vatRate / (100 + vatRate) * 100) / 100;
+      const vatAmount = Math.round(((item.subtotal * vatRate) / (100 + vatRate)) * 100) / 100;
       return {
         name: item.name,
         quantity: item.quantity,
@@ -384,7 +460,10 @@ export function downloadInvoiceText(invoice: InvoiceData): void {
     `Alıcı: ${invoice.buyerName}`,
     ``,
     `Ürünler:`,
-    ...invoice.items.map(i => `  ${i.name} x${i.quantity} — ${i.unitPrice.toFixed(2)} ₺ (KDV %${i.vatRate}) = ${i.totalAmount.toFixed(2)} ₺`),
+    ...invoice.items.map(
+      (i) =>
+        `  ${i.name} x${i.quantity} — ${i.unitPrice.toFixed(2)} ₺ (KDV %${i.vatRate}) = ${i.totalAmount.toFixed(2)} ₺`,
+    ),
     ``,
     `Ara Toplam: ${invoice.subtotal.toFixed(2)} ₺`,
     `KDV: ${invoice.totalVat.toFixed(2)} ₺`,

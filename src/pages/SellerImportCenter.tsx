@@ -34,11 +34,14 @@ import {
   ArrowRight,
   Database,
   Package,
+  Globe,
+  ShoppingCart,
+  Store,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
 
-type ImportTab = 'overview' | 'xml' | 'csv' | 'mapping' | 'logs' | 'templates';
+type ImportTab = 'overview' | 'xml' | 'csv' | 'mapping' | 'logs' | 'templates' | 'platform';
 
 interface ImportJob {
   id: string;
@@ -241,6 +244,25 @@ export function SellerImportCenter() {
   } | null>(null);
   const serverCsvRef = useRef<HTMLInputElement>(null);
 
+  // ── Platform Connector State ──────────────────────────────────────────────
+  const [platformType, setPlatformType] = useState<'shopify' | 'woocommerce'>('shopify');
+  const [platformStoreUrl, setPlatformStoreUrl] = useState('');
+  const [platformApiKey, setPlatformApiKey] = useState('');
+  const [platformApiSecret, setPlatformApiSecret] = useState('');
+  const [platformValidating, setPlatformValidating] = useState(false);
+  const [platformValid, setPlatformValid] = useState<boolean | null>(null);
+  const [platformImporting, setPlatformImporting] = useState(false);
+  const [platformProgress, setPlatformProgress] = useState('');
+  const [platformResult, setPlatformResult] = useState<{
+    imported: number;
+    skipped: number;
+    errors: string[];
+  } | null>(null);
+  const [platformCategories, setPlatformCategories] = useState<string[]>([]);
+  const [platformCategoryId, setPlatformCategoryId] = useState('');
+  const [platformSaving, setPlatformSaving] = useState(false);
+  const [platformSaved, setPlatformSaved] = useState(false);
+
   function pickServerFile(file: File | undefined) {
     if (!file) return;
     if (!file.name.toLowerCase().endsWith('.csv')) {
@@ -347,6 +369,122 @@ export function SellerImportCenter() {
       /* swallow — export is best-effort */
     } finally {
       setIsExporting(false);
+    }
+  }
+
+  // ── Platform Connector Handlers ──────────────────────────────────────────
+
+  async function handlePlatformValidate() {
+    if (!platformStoreUrl || !platformApiKey || !platformApiSecret) return;
+    setPlatformValidating(true);
+    setPlatformValid(null);
+    try {
+      const { ShopifyConnector } = await import('@/services/connectors/ShopifyConnector');
+      const { WooCommerceConnector } = await import('@/services/connectors/WooCommerceConnector');
+      const Connector = platformType === 'shopify' ? ShopifyConnector : WooCommerceConnector;
+      const connector = new Connector({
+        storeUrl: platformStoreUrl,
+        apiKey: platformApiKey,
+        apiSecret: platformApiSecret,
+      });
+      const valid = await connector.validateCredentials();
+      setPlatformValid(valid);
+      if (valid) {
+        // Pre-fetch categories on successful validation
+        const cats = await connector.getCategories();
+        setPlatformCategories(cats);
+      }
+    } catch {
+      setPlatformValid(false);
+    } finally {
+      setPlatformValidating(false);
+    }
+  }
+
+  async function handlePlatformImport() {
+    if (!user?.uid) return;
+    setPlatformImporting(true);
+    setPlatformProgress('Connecting...');
+    setPlatformResult(null);
+    try {
+      const { ShopifyConnector } = await import('@/services/connectors/ShopifyConnector');
+      const { WooCommerceConnector } = await import('@/services/connectors/WooCommerceConnector');
+      const { createProduct } = await import('@/services/productService');
+      const Connector = platformType === 'shopify' ? ShopifyConnector : WooCommerceConnector;
+      const connector = new Connector({
+        storeUrl: platformStoreUrl,
+        apiKey: platformApiKey,
+        apiSecret: platformApiSecret,
+      });
+
+      const products = await connector.importAll(user.uid, platformCategoryId || undefined, (msg) =>
+        setPlatformProgress(msg),
+      );
+
+      setPlatformProgress(`Saving ${products.length} products to Firestore...`);
+      let imported = 0;
+      const errors: string[] = [];
+      for (const p of products) {
+        try {
+          await createProduct(p);
+          imported++;
+        } catch (err: any) {
+          errors.push(`${p.title}: ${err?.message || 'Unknown error'}`);
+        }
+      }
+
+      setPlatformResult({
+        imported,
+        skipped: products.length - imported,
+        errors,
+      });
+      setPlatformProgress('');
+
+      // Log import job
+      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase');
+      await addDoc(collection(db, 'sellers', user.id, 'importJobs'), {
+        feedName: `${platformType === 'shopify' ? 'Shopify' : 'WooCommerce'} Import`,
+        type: 'api',
+        status: 'completed',
+        total: products.length,
+        success: imported,
+        failed: products.length - imported,
+        createdAt: serverTimestamp(),
+      });
+    } catch (err: any) {
+      setPlatformResult({
+        imported: 0,
+        skipped: 0,
+        errors: [err?.message || 'Import failed'],
+      });
+      setPlatformProgress('');
+    } finally {
+      setPlatformImporting(false);
+    }
+  }
+
+  async function handlePlatformSave() {
+    if (!user?.id || !platformStoreUrl || !platformApiKey) return;
+    setPlatformSaving(true);
+    try {
+      const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase');
+      await addDoc(collection(db, 'sellerIntegrations'), {
+        sellerId: user.uid,
+        userId: user.id,
+        platform: platformType,
+        storeUrl: platformStoreUrl,
+        apiKey: platformApiKey,
+        label: platformType === 'shopify' ? 'Shopify Store' : 'WooCommerce Store',
+        createdAt: serverTimestamp(),
+      });
+      setPlatformSaved(true);
+      setTimeout(() => setPlatformSaved(false), 2000);
+    } catch {
+      // silently fail save
+    } finally {
+      setPlatformSaving(false);
     }
   }
 
@@ -562,6 +700,7 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
     { key: 'mapping', label: 'Alan Eşleştirme', icon: Layers },
     { key: 'logs', label: 'Geçmiş', icon: List },
     { key: 'templates', label: 'Şablonlar', icon: FileText },
+    { key: 'platform', label: 'Platform Bağlantısı', icon: Globe },
   ];
 
   const requiredFields = SYSTEM_FIELDS.filter((sf) => sf.required);
@@ -1328,6 +1467,295 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── PLATFORM BAĞLANTISI ── */}
+      {activeTab === 'platform' && (
+        <div className="space-y-6 max-w-2xl">
+          {/* Platform selector */}
+          <div className="bg-zinc-800 rounded-xl p-6 space-y-4">
+            <h3 className="text-sm font-semibold text-white">Platform Se\xE7imi</h3>
+            <div className="flex gap-3">
+              {[
+                { key: 'shopify' as const, label: 'Shopify', icon: ShoppingCart },
+                { key: 'woocommerce' as const, label: 'WooCommerce', icon: Store },
+              ].map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setPlatformType(key);
+                    setPlatformValid(null);
+                    setPlatformResult(null);
+                    setPlatformCategories([]);
+                  }}
+                  className={cn(
+                    'flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-colors flex-1',
+                    platformType === key
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-zinc-700 text-zinc-400 hover:bg-zinc-600',
+                  )}
+                >
+                  <Icon size={16} /> {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Credentials */}
+          <div className="bg-zinc-800 rounded-xl p-6 space-y-4">
+            <h3 className="text-sm font-semibold text-white">
+              {platformType === 'shopify' ? 'Shopify API Bilgileri' : 'WooCommerce API Bilgileri'}
+            </h3>
+
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Mağaza URL</label>
+              <input
+                value={platformStoreUrl}
+                onChange={(e) => {
+                  setPlatformStoreUrl(e.target.value);
+                  setPlatformValid(null);
+                }}
+                placeholder={
+                  platformType === 'shopify'
+                    ? 'https://your-store.myshopify.com'
+                    : 'https://your-store.com'
+                }
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">
+                {platformType === 'shopify' ? 'API Key / Access Token' : 'Consumer Key'}
+              </label>
+              <input
+                value={platformApiKey}
+                onChange={(e) => {
+                  setPlatformApiKey(e.target.value);
+                  setPlatformValid(null);
+                }}
+                type="password"
+                placeholder={
+                  platformType === 'shopify'
+                    ? 'shpat_xxxxxxxxxxxxxxxxxxxx'
+                    : 'ck_xxxxxxxxxxxxxxxxxxxxxxxx'
+                }
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">
+                {platformType === 'shopify' ? 'API Secret Key' : 'Consumer Secret'}
+              </label>
+              <input
+                value={platformApiSecret}
+                onChange={(e) => {
+                  setPlatformApiSecret(e.target.value);
+                  setPlatformValid(null);
+                }}
+                type="password"
+                placeholder={
+                  platformType === 'shopify'
+                    ? 'shpss_xxxxxxxxxxxxxxxxxxxx'
+                    : 'cs_xxxxxxxxxxxxxxxxxxxxxxxx'
+                }
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono"
+              />
+            </div>
+
+            {/* Category mapping (shown after validation) */}
+            {platformCategories.length > 0 && (
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1">
+                  Varsayılan Kategori (isteğe bağlı)
+                </label>
+                <select
+                  value={platformCategoryId}
+                  onChange={(e) => setPlatformCategoryId(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                >
+                  <option value="">-- Se\xE7ilmedi --</option>
+                  {platformCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Validation result */}
+            {platformValid !== null && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={cn(
+                  'rounded-lg px-4 py-3 text-sm font-medium',
+                  platformValid
+                    ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-700'
+                    : 'bg-red-900/30 text-red-400 border border-red-700',
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  {platformValid ? <CheckCircle size={16} /> : <XCircle size={16} />}
+                  {platformValid
+                    ? 'Bağlantı başarılı!'
+                    : 'Bağlantı başarısız — bilgileri kontrol edin'}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-3 pt-2">
+              <button
+                onClick={handlePlatformValidate}
+                disabled={
+                  platformValidating || !platformStoreUrl || !platformApiKey || !platformApiSecret
+                }
+                className="flex items-center gap-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
+              >
+                {platformValidating ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Link2 size={14} />
+                )}
+                Bağlantıyı Test Et
+              </button>
+
+              <button
+                onClick={handlePlatformImport}
+                disabled={platformImporting || !platformValid}
+                className="flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-colors"
+              >
+                {platformImporting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Download size={14} />
+                )}
+                Ürünleri İçe Aktar
+              </button>
+
+              <button
+                onClick={handlePlatformSave}
+                disabled={platformSaving || !platformValid || !platformStoreUrl}
+                className="flex items-center gap-2 px-4 py-2 border border-zinc-600 text-zinc-300 hover:bg-zinc-700 text-sm rounded-lg disabled:opacity-50 transition-colors"
+              >
+                {platformSaving ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Database size={14} />
+                )}
+                {platformSaved ? 'Kaydedildi ✓' : 'Bilgileri Kaydet'}
+              </button>
+            </div>
+          </div>
+
+          {/* Import progress */}
+          {platformImporting && platformProgress && (
+            <div className="bg-zinc-800 rounded-xl p-5 border border-emerald-700/50">
+              <div className="flex items-center gap-3">
+                <Loader2 size={18} className="animate-spin text-emerald-400" />
+                <div>
+                  <p className="text-sm text-white font-medium">İçe aktarılıyor...</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">{platformProgress}</p>
+                </div>
+              </div>
+              <div className="h-1.5 bg-zinc-700 rounded-full overflow-hidden mt-3">
+                <div className="h-full bg-emerald-500 animate-pulse rounded-full w-2/3" />
+              </div>
+            </div>
+          )}
+
+          {/* Import result */}
+          {platformResult && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={cn(
+                'rounded-xl p-5 border',
+                platformResult.imported > 0
+                  ? 'bg-emerald-900/20 border-emerald-700'
+                  : 'bg-red-900/20 border-red-700',
+              )}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                {platformResult.imported > 0 ? (
+                  <CheckCircle size={20} className="text-emerald-400" />
+                ) : (
+                  <XCircle size={20} className="text-red-400" />
+                )}
+                <h4
+                  className={cn(
+                    'font-semibold text-sm',
+                    platformResult.imported > 0 ? 'text-emerald-300' : 'text-red-300',
+                  )}
+                >
+                  {platformResult.imported > 0 ? 'İçe aktarma tamamlandı' : 'İçe aktarma başarısız'}
+                </h4>
+              </div>
+              <div className="flex gap-6 text-sm">
+                <span className="text-emerald-400">
+                  {platformResult.imported} ürün içe aktarıldı
+                </span>
+                <span className="text-zinc-400">{platformResult.skipped} atlandı</span>
+              </div>
+              {platformResult.errors.length > 0 && (
+                <details className="mt-3">
+                  <summary className="text-xs text-yellow-400 cursor-pointer">
+                    {platformResult.errors.length} hata görüntüle
+                  </summary>
+                  <ul className="mt-2 space-y-0.5 max-h-32 overflow-y-auto">
+                    {platformResult.errors.map((e, i) => (
+                      <li key={i} className="text-xs text-red-300">
+                        {e}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </motion.div>
+          )}
+
+          {/* Help text */}
+          <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-5">
+            <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+              Nasıl Çalışır?
+            </h4>
+            <ol className="space-y-2 text-xs text-zinc-400">
+              <li className="flex gap-2">
+                <span className="text-emerald-400 font-bold">1.</span>
+                {platformType === 'shopify'
+                  ? "Shopify Admin'den bir private app oluşturun veya Admin API access token alın."
+                  : 'WooCommerce > Settings > Advanced > REST API \xFCzerinden API key oluşturun.'}
+              </li>
+              <li className="flex gap-2">
+                <span className="text-emerald-400 font-bold">2.</span>
+                Mağaza URL, API key ve secret bilgilerini yukarı girin.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-emerald-400 font-bold">3.</span>
+                Bağlantıyı test edin, ardından ürünleri içe aktarın.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-emerald-400 font-bold">4.</span>
+                Ürün görselleri otomatik olarak Benim Olan depolama alanına yüklenir.
+              </li>
+            </ol>
+            {platformType === 'shopify' && (
+              <p className="text-xs text-zinc-500 mt-3 pt-3 border-t border-zinc-700">
+                Shopify private app oluşturmak için: Shopify Admin {`>`} Settings {`>`} Apps and
+                sales channels {`>`} Develop apps. Admin API scopes: read_products, read_inventory.
+              </p>
+            )}
+            {platformType === 'woocommerce' && (
+              <p className="text-xs text-zinc-500 mt-3 pt-3 border-t border-zinc-700">
+                WooCommerce API key&apos;i: WooCommerce {`>`} Settings {`>`} Advanced {`>`} REST
+                API. Permissions: Read.
+              </p>
+            )}
           </div>
         </div>
       )}
