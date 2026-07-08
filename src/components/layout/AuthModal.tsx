@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
+import { loginSchema, registerSchema } from '@/lib/validationSchemas';
+import type { LoginInput, RegisterInput } from '@/lib/validationSchemas';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -36,14 +38,21 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setLoading(true);
     try {
       if (mode === 'login') {
-        await loginWithEmail(email, password);
-      } else {
-        if (!name.trim()) {
-          setError(t('auth.error.nameRequired'));
+        const parsed = loginSchema.safeParse({ email, password });
+        if (!parsed.success) {
+          setError(parsed.error.issues[0]?.message ?? t('auth.error.generic'));
           setLoading(false);
           return;
         }
-        await registerWithEmail(email, name.trim(), password);
+        await loginWithEmail(parsed.data.email, parsed.data.password);
+      } else {
+        const parsed = registerSchema.safeParse({ name, email, password });
+        if (!parsed.success) {
+          setError(parsed.error.issues[0]?.message ?? t('auth.error.generic'));
+          setLoading(false);
+          return;
+        }
+        await registerWithEmail(parsed.data.name, parsed.data.email, parsed.data.password);
       }
       onClose();
     } catch (err: any) {
