@@ -275,53 +275,30 @@
 }
 
 /* Fix hardcoded #1A1033 (brand dark purple) — invisible on dark bg */
-.dark .text-\[\#1A1033\] {
-  @apply text-white;
-}
-.dark .text-\[\#1A1033\]\/5 {
-  @apply text-white/5;
-}
-.dark .text-\[\#1A1033\]\/10 {
-  @apply text-white/10;
-}
-.dark .text-\[\#1A1033\]\/20 {
-  @apply text-white/20;
-}
-.dark .text-\[\#1A1033\]\/30 {
-  @apply text-white/30;
-}
-.dark .text-\[\#1A1033\]\/40 {
-  @apply text-white/40;
-}
-.dark .text-\[\#1A1033\]\/50 {
-  @apply text-white/50;
-}
-.dark .text-\[\#1A1033\]\/60 {
-  @apply text-white/60;
-}
-.dark .text-\[\#1A1033\]\/80 {
-  @apply text-white/80;
+/* Use !important to override Tailwind v4 arbitrary value specificity */
+.dark [class*='text-[#1A1033]']:not([class*='dark:']) {
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1)) !important;
 }
 .dark .bg-\[\#1A1033\]\/5 {
-  @apply bg-white/5;
+  background-color: rgb(255 255 255 / 0.05) !important;
 }
 .dark .bg-\[\#1A1033\]\/10 {
-  @apply bg-white/10;
+  background-color: rgb(255 255 255 / 0.1) !important;
 }
 .dark .bg-\[\#F8F8FA\] {
-  @apply bg-zinc-900;
+  @apply bg-zinc-900 !important;
 }
 .dark .bg-\[\#F8F8FA\]\/50 {
-  @apply bg-zinc-900/50;
+  @apply bg-zinc-900/50 !important;
 }
 .dark .border-\[\#1A1033\]\/5 {
-  @apply border-white/5;
+  border-color: rgb(255 255 255 / 0.05) !important;
 }
 .dark .border-\[\#1A1033\]\/10 {
-  @apply border-white/10;
+  border-color: rgb(255 255 255 / 0.1) !important;
 }
 .dark .border-\[\#F8F8FA\] {
-  @apply border-zinc-800;
+  @apply border-zinc-800 !important;
 }
 
 .perspective-1000 {
