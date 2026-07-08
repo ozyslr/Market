@@ -205,7 +205,10 @@ export function CartPage() {
             </div>
 
             {missingIds.length > 0 && (
-              <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 flex items-start gap-2">
+              <div
+                className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 flex items-start gap-2"
+                role="alert"
+              >
                 <Info size={16} className="shrink-0 mt-0.5" />
                 <span>
                   Sepetindeki {missingIds.length} ürün artık mevcut değil ve toplamdan çıkarıldı.{' '}
@@ -303,6 +306,7 @@ export function CartPage() {
                           </span>
                           <button
                             onClick={() => removeItem(product.id, product.variantId)}
+                            aria-label={`${product.title} ürününü sepetten kaldır`}
                             className="text-brand-primary/20 hover:text-red-500 transition-colors p-2"
                           >
                             <Trash2 size={20} />
@@ -337,6 +341,7 @@ export function CartPage() {
                         <div className="flex items-center bg-brand-secondary/50 rounded-2xl p-1 border border-brand-primary/5">
                           <button
                             onClick={() => updateQuantityDelta(product.id, -1, product.variantId)}
+                            aria-label={`${product.title} adedini azalt`}
                             className="w-10 h-10 flex items-center justify-center hover:bg-white rounded-xl transition-all text-brand-primary/40 hover:text-brand-primary"
                           >
                             <Minus size={16} />
@@ -346,6 +351,7 @@ export function CartPage() {
                           </span>
                           <button
                             onClick={() => updateQuantityDelta(product.id, 1, product.variantId)}
+                            aria-label={`${product.title} adedini artır`}
                             className="w-10 h-10 flex items-center justify-center hover:bg-white rounded-xl transition-all text-brand-primary/40 hover:text-brand-primary"
                           >
                             <Plus size={16} />

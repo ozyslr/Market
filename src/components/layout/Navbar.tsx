@@ -200,6 +200,15 @@ export function Navbar() {
           <div className="flex-1 max-w-4xl h-11 group hidden sm:flex items-center gap-3">
             <div
               onClick={() => setIsLocationModalOpen(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setIsLocationModalOpen(true);
+                }
+              }}
+              aria-label={t('nav.location_select') || 'Konum seç'}
               className="flex flex-col px-3 py-1 bg-brand-secondary/50 dark:bg-zinc-900 border border-brand-primary/5 rounded-xl cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all whitespace-nowrap min-w-[140px] text-brand-primary dark:text-white"
             >
               <div className="flex items-center gap-1 opacity-60">

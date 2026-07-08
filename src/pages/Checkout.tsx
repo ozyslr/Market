@@ -677,6 +677,7 @@ export function CheckoutPage() {
           <div className="flex items-center gap-4 mb-8">
             <button
               onClick={() => navigate('/cart')}
+              aria-label="Sepete geri dön"
               className="p-2 border border-[#1A1033]/10 rounded-xl hover:bg-[#1A1033]/5 transition-colors"
             >
               <ChevronRight size={20} className="rotate-180 text-[#1A1033]" />
@@ -714,6 +715,7 @@ export function CheckoutPage() {
             ].map((s) => (
               <div key={s.num} className="flex flex-col items-center gap-2">
                 <div
+                  aria-current={step === s.num ? 'step' : undefined}
                   className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-black transition-all ${step >= s.num ? 'bg-accent text-white shadow-lg' : 'bg-white text-[#1A1033]/30 border border-[#1A1033]/5'}`}
                 >
                   {step > s.num ? <CheckCircle2 size={20} /> : s.num}
@@ -768,6 +770,8 @@ export function CheckoutPage() {
                           type="email"
                           autoComplete="email"
                           required
+                          aria-label="E-posta adresi"
+                          aria-required="true"
                           value={guestEmail}
                           onChange={(e) => setGuestEmail(e.target.value)}
                           placeholder="ornek@email.com"
@@ -981,13 +985,19 @@ export function CheckoutPage() {
                   )}
 
                   {stockValidating && (
-                    <div className="mt-4 flex items-center gap-2 bg-blue-50 border border-blue-200 px-4 py-3 rounded-xl">
+                    <div
+                      className="mt-4 flex items-center gap-2 bg-blue-50 border border-blue-200 px-4 py-3 rounded-xl"
+                      aria-live="polite"
+                    >
                       <Loader2 size={16} className="animate-spin text-blue-500" />
                       <p className="text-xs font-bold text-blue-700">Stok kontrol ediliyor...</p>
                     </div>
                   )}
                   {stockError && (
-                    <div className="mt-4 bg-red-50 border-2 border-red-400 px-4 py-3 rounded-xl">
+                    <div
+                      className="mt-4 bg-red-50 border-2 border-red-400 px-4 py-3 rounded-xl"
+                      role="alert"
+                    >
                       <p className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1">
                         Stok Hatası
                       </p>
@@ -995,7 +1005,10 @@ export function CheckoutPage() {
                     </div>
                   )}
                   {paymentError && (
-                    <p className="mt-4 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl">
+                    <p
+                      className="mt-4 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl"
+                      role="alert"
+                    >
                       {paymentError}
                     </p>
                   )}
