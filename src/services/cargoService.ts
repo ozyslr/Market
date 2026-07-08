@@ -94,6 +94,18 @@ export interface CargoProvider {
   getRates(originCity: string, destCity: string, weight: number): Promise<ShippingRate[]>;
 }
 
+// ─── Real Provider Detection ─────────────────────────────────────────────────
+
+/** True when Yurtici Kargo API credentials are configured. */
+export function isYurticiConfigured(): boolean {
+  return Boolean(import.meta.env.VITE_YURTICI_API_KEY && import.meta.env.VITE_YURTICI_API_SECRET);
+}
+
+/** True when Aras Kargo API credentials are configured. */
+export function isArasConfigured(): boolean {
+  return Boolean(import.meta.env.VITE_ARAS_API_KEY && import.meta.env.VITE_ARAS_API_SECRET);
+}
+
 // ─── Mock Base ──────────────────────────────────────────────────────────────
 
 const STATUS_CHAINS: Record<string, TrackingEvent[]> = {
@@ -473,26 +485,72 @@ class MockEasyPostProvider implements CargoProvider {
 
 const providerRegistry: Map<CargoProviderName, CargoProvider> = new Map();
 
-function getProviders(): Map<CargoProviderName, CargoProvider> {
-  if (providerRegistry.size === 0) {
-    // In production, swap mock providers with real implementations using API keys
-    providerRegistry.set('PTT', new MockPttProvider());
-    providerRegistry.set('Yurtici', new MockYurticiProvider());
-    providerRegistry.set('Aras', new MockArasProvider());
-    providerRegistry.set('Entegi', new MockEntegiProvider());
-    providerRegistry.set('EasyPost', new MockEasyPostProvider());
-    // Others fall back to PTT's provider
+/** Lazily load the Yurtici real provider (dynamic import avoids bundling when unused). */
+let _YurticiRealClass: (new () => CargoProvider) | null = null;
+async function getYurticiRealProvider(): Promise<CargoProvider> {
+  if (!_YurticiRealClass) {
+    const mod = await import('./cargo/YurticiProvider');
+    _YurticiRealClass = mod.YurticiProvider;
   }
-  return providerRegistry;
+  return new _YurticiRealClass();
+}
+
+/** Lazily load the Aras real provider (dynamic import avoids bundling when unused). */
+let _ArasRealClass: (new () => CargoProvider) | null = null;
+async function getArasRealProvider(): Promise<CargoProvider> {
+  if (!_ArasRealClass) {
+    const mod = await import('./cargo/ArasProvider');
+    _ArasRealClass = mod.ArasProvider;
+  }
+  return new _ArasRealClass();
+}
+
+async function initProviders(): Promise<void> {
+  if (providerRegistry.size > 0) return;
+
+  // PTT: no public API available, always use mock
+  providerRegistry.set('PTT', new MockPttProvider());
+
+  // Yurtici: real when API keys are set, mock otherwise
+  if (isYurticiConfigured()) {
+    providerRegistry.set('Yurtici', await getYurticiRealProvider());
+  } else {
+    providerRegistry.set('Yurtici', new MockYurticiProvider());
+  }
+
+  // Aras: real when API keys are set, mock otherwise
+  if (isArasConfigured()) {
+    providerRegistry.set('Aras', await getArasRealProvider());
+  } else {
+    providerRegistry.set('Aras', new MockArasProvider());
+  }
+
+  providerRegistry.set('Entegi', new MockEntegiProvider());
+  providerRegistry.set('EasyPost', new MockEasyPostProvider());
+  // Others fall back to PTT's provider
+}
+
+/** Ensures the provider registry has been populated (idempotent). */
+let _initPromise: Promise<void> | null = null;
+function ensureProviders(): Promise<void> {
+  if (!_initPromise) {
+    _initPromise = initProviders();
+  }
+  return _initPromise;
+}
+
+function getProviderSync(name: CargoProviderName): CargoProvider {
+  return providerRegistry.get(name) || providerRegistry.get('PTT')!;
+}
+
+async function getProvider(name: CargoProviderName): Promise<CargoProvider> {
+  await ensureProviders();
+  return getProviderSync(name);
 }
 
 /** Route to the appropriate carrier based on receiver's country code */
 export function routeCarrierByRegion(country: string): CargoProviderName {
   return country === 'TR' ? 'Entegi' : 'EasyPost';
-}
-
-function getProvider(name: CargoProviderName): CargoProvider {
-  return getProviders().get(name) || getProviders().get('PTT')!;
 }
 
 // ─── Public API ─────────────────────────────────────────────────────────────
@@ -506,7 +564,8 @@ export async function createCargoShipment(
   provider: CargoProviderName,
   req: ShipmentRequest,
 ): Promise<ShipmentResponse> {
-  return getProvider(provider).createShipment(req);
+  const p = await getProvider(provider);
+  return p.createShipment(req);
 }
 
 /** Get real-time tracking status for a shipment */
@@ -514,7 +573,8 @@ export async function getTrackingStatus(
   provider: CargoProviderName,
   trackingNumber: string,
 ): Promise<TrackingResponse> {
-  return getProvider(provider).getTracking(trackingNumber);
+  const p = await getProvider(provider);
+  return p.getTracking(trackingNumber);
 }
 
 /** Generate shipping label PDF */
@@ -522,7 +582,8 @@ export async function generateCargoLabel(
   provider: CargoProviderName,
   trackingNumber: string,
 ): Promise<string> {
-  return getProvider(provider).generateLabel(trackingNumber);
+  const p = await getProvider(provider);
+  return p.generateLabel(trackingNumber);
 }
 
 /** Cancel a shipment */
@@ -530,7 +591,8 @@ export async function cancelCargoShipment(
   provider: CargoProviderName,
   trackingNumber: string,
 ): Promise<boolean> {
-  return getProvider(provider).cancelShipment(trackingNumber);
+  const p = await getProvider(provider);
+  return p.cancelShipment(trackingNumber);
 }
 
 /** Get shipping rates from all providers */
@@ -539,9 +601,9 @@ export async function getAllShippingRates(
   destCity: string,
   weight: number,
 ): Promise<ShippingRate[]> {
-  const providers = getProviders();
+  await ensureProviders();
   const rates: ShippingRate[] = [];
-  for (const [, provider] of providers) {
+  for (const [, provider] of providerRegistry) {
     try {
       const providerRates = await provider.getRates(originCity, destCity, weight);
       rates.push(...providerRates);

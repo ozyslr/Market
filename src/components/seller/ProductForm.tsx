@@ -20,6 +20,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { CategorySelect } from './CategorySelect';
 import { cn } from '../../lib/utils';
 import { uploadImage } from '../../lib/storage';
+import type { ProductVariant } from '../../types';
 import {
   generateProductDescription,
   generateMetaDescription,
@@ -56,6 +57,7 @@ export interface ProductFormData {
   freeShipping: boolean;
   visibility: 'public' | 'hidden' | 'draft' | 'unlisted';
   metaDescription: string;
+  variants: ProductVariant[];
 }
 
 const EMPTY_FORM: ProductFormData = {
@@ -86,6 +88,7 @@ const EMPTY_FORM: ProductFormData = {
   freeShipping: false,
   visibility: 'public',
   metaDescription: '',
+  variants: [],
 };
 
 type ProductFormField = keyof ProductFormData;
@@ -193,6 +196,40 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
   const [isDragOver, setIsDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const fileMapRef = useRef<Map<string, File>>(new Map());
+
+  // ── Variant state ──────────────────────────────────────────────────────────
+  const [variantsOpen, setVariantsOpen] = useState(false);
+  const [vName, setVName] = useState('');
+  const [vValue, setVValue] = useState('');
+  const [vPrice, setVPrice] = useState('');
+  const [vStock, setVStock] = useState('');
+  const [vSku, setVSku] = useState('');
+
+  function addVariant() {
+    const name = vName.trim();
+    const value = vValue.trim();
+    if (!name || !value) return;
+    const entry: ProductVariant = {
+      id: crypto.randomUUID(),
+      sku: vSku.trim() || '',
+      price: vPrice ? parseFloat(vPrice) : form.price,
+      stock: vStock ? parseInt(vStock, 10) : 0,
+      attributes: { [name]: value },
+    };
+    update('variants', [...form.variants, entry]);
+    setVName('');
+    setVValue('');
+    setVPrice('');
+    setVStock('');
+    setVSku('');
+  }
+
+  function removeVariant(id: string) {
+    update(
+      'variants',
+      form.variants.filter((v) => v.id !== id),
+    );
+  }
 
   // dnd-kit sensors: PointerSensor with distance constraint for touch safety
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -898,6 +935,175 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                       </select>
                     </div>
                   </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+
+          {/* Variants — Varyantlar */}
+          <section>
+            <div
+              className="flex items-center justify-between mb-4 cursor-pointer select-none"
+              onClick={() => setVariantsOpen(!variantsOpen)}
+            >
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
+                  Varyantlar
+                </h3>
+                {form.variants.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 font-medium">
+                    {form.variants.length}
+                  </span>
+                )}
+              </div>
+              <ChevronDown
+                size={16}
+                className={cn(
+                  'text-zinc-400 transition-transform duration-200',
+                  variantsOpen && 'rotate-180',
+                )}
+              />
+            </div>
+
+            <AnimatePresence>
+              {variantsOpen && (
+                <motion.div
+                  key="variants-body"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  {/* Add variant inputs */}
+                  <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-2 mb-3">
+                    <div>
+                      <label className="block text-[10px] text-zinc-500 mb-0.5">
+                        Özellik Adı (örn. Beden)
+                      </label>
+                      <input
+                        value={vName}
+                        onChange={(e) => setVName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addVariant())}
+                        placeholder="Beden"
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-zinc-500 mb-0.5">
+                        Değer (örn. XL)
+                      </label>
+                      <input
+                        value={vValue}
+                        onChange={(e) => setVValue(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addVariant())}
+                        placeholder="XL"
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-zinc-500 mb-0.5">
+                        Fiyat (isteğe bağlı)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={vPrice}
+                        onChange={(e) => setVPrice(e.target.value)}
+                        placeholder={form.price > 0 ? `Varsayılan: ${form.price}` : '0'}
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-zinc-500 mb-0.5">Stok</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={vStock}
+                        onChange={(e) => setVStock(e.target.value)}
+                        placeholder="0"
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                      />
+                    </div>
+                    <div className="max-sm:col-span-1">
+                      <label className="block text-[10px] text-zinc-500 mb-0.5">
+                        SKU (isteğe bağlı)
+                      </label>
+                      <input
+                        value={vSku}
+                        onChange={(e) => setVSku(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addVariant())}
+                        placeholder="TSHIRT-XL"
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={addVariant}
+                    disabled={!vName.trim() || !vValue.trim()}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg transition-colors mb-3"
+                  >
+                    <Plus size={14} />
+                    Varyant Ekle
+                  </button>
+
+                  {/* Variant list */}
+                  <AnimatePresence>
+                    {form.variants.length > 0 && (
+                      <div className="space-y-2">
+                        {form.variants.map((v) => {
+                          const attrEntries = Object.entries(v.attributes);
+                          const attrLabel = attrEntries
+                            .map(([k, val]) => `${k}: ${val}`)
+                            .join(', ');
+                          return (
+                            <motion.div
+                              key={v.id}
+                              initial={{ opacity: 0, y: -8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="flex items-center justify-between bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm text-white font-medium">{attrLabel}</span>
+                                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+                                  {v.price > 0 && v.price !== form.price && (
+                                    <span className="text-[11px] text-amber-400">
+                                      {v.price.toFixed(2)} {form.currency}
+                                    </span>
+                                  )}
+                                  <span className="text-[11px] text-zinc-500">Stok: {v.stock}</span>
+                                  {v.sku && (
+                                    <span className="text-[11px] text-zinc-600">SKU: {v.sku}</span>
+                                  )}
+                                  {!v.price && !v.sku && v.stock === 0 && (
+                                    <span className="text-[11px] text-zinc-600">
+                                      Varsayılan fiyat & stok
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => removeVariant(v.id)}
+                                className="flex-shrink-0 ms-3 p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition-colors"
+                                title="Varyantı sil"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </AnimatePresence>
+
+                  {form.variants.length === 0 && (
+                    <p className="text-xs text-zinc-600 text-center py-4">
+                      Henüz varyant eklenmedi. Beden, renk gibi ürün seçenekleri ekleyin.
+                    </p>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
