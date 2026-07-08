@@ -10,6 +10,7 @@ import {
   FileText,
   ChevronRight,
   AlertCircle,
+  AlertTriangle,
   ShieldCheck,
   Percent,
   ChevronDown,
@@ -246,6 +247,7 @@ export function SellerApplication() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
   const [showCommissionInfo, setShowCommissionInfo] = useState(false);
 
   // Tier options with features for the selection UI
@@ -429,8 +431,8 @@ export function SellerApplication() {
       // Record KYC submission for funnel instrumentation (fire-and-forget)
       recordEvent(user.id, 'kyc_submitted').catch(() => {});
       setSubmitted(true);
-    } catch {
-      // handled by service
+    } catch (err: any) {
+      setError(err?.message || 'Başvuru gönderilemedi. Lütfen tekrar deneyin.');
     } finally {
       setSubmitting(false);
     }
@@ -991,6 +993,12 @@ export function SellerApplication() {
                     !allDocsUploaded ? 'Upload all 3 required documents to continue' : undefined
                   }
                 >
+                  {error && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-2">
+                      <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                      <span>{error}</span>
+                    </div>
+                  )}
                   <button
                     onClick={handleSubmit}
                     disabled={submitting || !allDocsUploaded}

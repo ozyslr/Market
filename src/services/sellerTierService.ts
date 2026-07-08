@@ -146,7 +146,7 @@ export const DEFAULT_TIERS: Record<SellerTier, Omit<TierConfig, 'tier'>> = {
   platinum: {
     label: 'Platin',
     maxProducts: 10000,
-    maxMonthlyRevenue: undefined, // Unlimited
+    // maxMonthlyRevenue intentionally omitted — unlimited
     commissionRate: 5,
     monthlyFee: 1499,
     benefits: [
@@ -190,7 +190,12 @@ export async function updateTierConfig(
   updates: Partial<Omit<TierConfig, 'tier'>>,
 ): Promise<void> {
   try {
-    await setDoc(doc(db, COL, tier), { ...DEFAULT_TIERS[tier], ...updates }, { merge: true });
+    // Strip undefined values — Firestore rejects them
+    const clean: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries({ ...DEFAULT_TIERS[tier], ...updates })) {
+      if (v !== undefined) clean[k] = v;
+    }
+    await setDoc(doc(db, COL, tier), clean, { merge: true });
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, `${COL}/${tier}`);
     throw error;
