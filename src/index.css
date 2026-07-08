@@ -277,7 +277,7 @@
 /* Fix hardcoded #1A1033 (brand dark purple) — invisible on dark bg */
 /* Use !important to override Tailwind v4 arbitrary value specificity */
 .dark [class*='text-[#1A1033]']:not([class*='dark:']) {
-  color: rgb(255 255 255 / var(--tw-text-opacity, 1)) !important;
+  color: #ffffff !important;
 }
 .dark .bg-\[\#1A1033\]\/5 {
   background-color: rgb(255 255 255 / 0.05) !important;
