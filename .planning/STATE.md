@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 Phase: 30 (Foundation & Shared) — Not started
 Plan: —
 Status: Roadmap defined, ready to plan Phase 30
-Last activity: 2026-06-08 — Milestone v6.0 roadmap created
+Last activity: 2026-07-08 — Completed quick task 260708-v39: multi-warehouse infrastructure
 
 ```
 Progress: ░░░░░░░░░░░░░░░░░░░░ 0% (0/6 phases)
@@ -82,6 +82,7 @@ See .planning/PROJECT.md Key Decisions for full log.
 | 260604-e5f                         | Firestore-only search improvement: best-selling sort, sort options, faceted filtering, client-side search polish (no Typesense) | 2026-06-04 | 60d9b63   |
 | 260604-gxl                         | Firebase Anonymous Auth for guest analytics events + firestore.rules hardening                                                  | 2026-06-04 | 1c0f94f   |
 | 20260605-authcontext-test-mock-fix | Mock signInAnonymously in AuthContext.test.tsx                                                                                  | 2026-06-05 | (pending) |
+| 260708-v39                         | Add multi-warehouse infrastructure: types, service, UI, warehouse-aware stock ops                                               | 2026-07-08 | bdcdc22   |
 
 ## Deferred Items
 
