@@ -18,10 +18,12 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'npm run build && npm run preview',
-    port: 4173,
-    reuseExistingServer: !process.env.CI,
-    timeout: 30000,
-  },
+  webServer: process.env.BASE_URL
+    ? undefined
+    : {
+        command: 'npm run build && npm run preview',
+        port: 4173,
+        reuseExistingServer: !process.env.CI,
+        timeout: 30000,
+      },
 });
