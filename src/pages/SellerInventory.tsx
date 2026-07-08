@@ -24,10 +24,11 @@ import {
   Save,
   Edit3,
   History,
+  Warehouse,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { Product, ProductVariant } from '@/types';
+import { Product, ProductVariant, Warehouse, WarehouseStock } from '@/types';
 import {
   getProducts,
   deleteProduct,
@@ -48,13 +49,22 @@ import {
   getReasonLabel,
   type StockMovement,
 } from '@/services/stockMovementService';
+import {
+  createWarehouse,
+  getWarehouses,
+  updateWarehouse,
+  deleteWarehouse,
+  setWarehouseStock,
+  getWarehouseStock,
+  getDefaultWarehouse,
+} from '@/services/warehouseService';
 
 export function SellerInventoryPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'lowStock' | 'bulk' | 'analytics'>(
-    'inventory',
-  );
+  const [activeTab, setActiveTab] = useState<
+    'inventory' | 'lowStock' | 'bulk' | 'analytics' | 'depolar'
+  >('inventory');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
@@ -80,6 +90,25 @@ export function SellerInventoryPage() {
   );
   const [csvMessage, setCsvMessage] = useState('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Warehouse state
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [warehouseForm, setWarehouseForm] = useState({
+    name: '',
+    line1: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: '',
+    isDefault: false,
+  });
+  const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
+  const [showWarehouseForm, setShowWarehouseForm] = useState(false);
+  const [stockAllocation, setStockAllocation] = useState<Record<string, WarehouseStock[]>>({});
+  const [selectedWarehouseStockProduct, setSelectedWarehouseStockProduct] = useState<string | null>(
+    null,
+  );
+  const [warehouseLoading, setWarehouseLoading] = useState(false);
 
   // Bulk inline edit mode
   const filteredProducts = products.filter((p) =>
@@ -192,6 +221,22 @@ export function SellerInventoryPage() {
       }
     })();
   }, [user, products.length]);
+
+  // Load warehouses when depolar tab is active
+  useEffect(() => {
+    if (!user || activeTab !== 'depolar') return;
+    (async () => {
+      setWarehouseLoading(true);
+      try {
+        const data = await getWarehouses(user.uid || user.id);
+        setWarehouses(data);
+      } catch {
+        setWarehouses([]);
+      } finally {
+        setWarehouseLoading(false);
+      }
+    })();
+  }, [user, activeTab]);
 
   const handleBulkDelete = async () => {
     if (confirm(`Are you sure you want to delete ${selectedProducts.length} items?`)) {
@@ -427,6 +472,7 @@ export function SellerInventoryPage() {
             { icon: AlertTriangle, id: 'lowStock' },
             { icon: Upload, id: 'bulk' },
             { icon: BarChart3, id: 'analytics' },
+            { icon: Warehouse, id: 'depolar' },
           ].map((item) => (
             <button
               key={item.id}
@@ -464,7 +510,9 @@ export function SellerInventoryPage() {
                     ? 'Dusuk Stok Urunleri'
                     : activeTab === 'bulk'
                       ? 'Mass Ingestion'
-                      : 'Demand Dynamics'}
+                      : activeTab === 'depolar'
+                        ? 'Depo Yonetimi'
+                        : 'Demand Dynamics'}
               </h1>
             </div>
 
@@ -905,6 +953,196 @@ export function SellerInventoryPage() {
               </motion.div>
             ) : activeTab === 'bulk' ? (
               <CSVImportPanel sellerId={user!.uid!} onImportComplete={handleImportComplete} />
+            ) : activeTab === 'depolar' ? (
+              <motion.div
+                key="depolar"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-6"
+              >
+                {/* Warehouse header + add button */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-accent/10 rounded-xl text-accent">
+                      <Warehouse size={20} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
+                        Depo Yonetimi
+                      </p>
+                      <p className="text-xs text-brand-primary/60">
+                        Depo bazli stok yonetimi ve atama
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingWarehouse(null);
+                      setWarehouseForm({
+                        name: '',
+                        line1: '',
+                        city: '',
+                        state: '',
+                        postalCode: '',
+                        country: '',
+                        isDefault: false,
+                      });
+                      setShowWarehouseForm(true);
+                    }}
+                    className="px-5 py-2.5 bg-brand-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg hover:bg-accent transition-all flex items-center gap-2"
+                  >
+                    <Plus size={14} /> Yeni Depo Ekle
+                  </button>
+                </div>
+
+                {/* Warehouse list */}
+                {warehouseLoading ? (
+                  <div className="flex flex-col items-center justify-center py-16 gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
+                      Depolar yukleniyor...
+                    </p>
+                  </div>
+                ) : warehouses.length === 0 ? (
+                  <div className="bg-white rounded-[2rem] p-12 shadow-sm border border-brand-primary/5">
+                    <div className="flex flex-col items-center justify-center gap-4 text-center">
+                      <Warehouse size={64} className="text-brand-primary/20" />
+                      <h3 className="text-xl font-display font-black text-brand-primary">
+                        Henuz depo eklenmemis
+                      </h3>
+                      <p className="text-sm text-brand-primary/40 max-w-sm">
+                        Urunlerinizi depolamak icin bir depo ekleyin. Her depo icin ozel stok
+                        atamasi yapabilirsiniz.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setEditingWarehouse(null);
+                          setWarehouseForm({
+                            name: '',
+                            line1: '',
+                            city: '',
+                            state: '',
+                            postalCode: '',
+                            country: '',
+                            isDefault: false,
+                          });
+                          setShowWarehouseForm(true);
+                        }}
+                        className="mt-2 px-6 py-3 bg-accent text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2"
+                      >
+                        <Plus size={14} /> Ilk Depoyu Ekle
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {warehouses.map((wh) => (
+                      <div
+                        key={wh.id}
+                        className="bg-white rounded-[2rem] p-6 shadow-sm border border-brand-primary/5 relative overflow-hidden"
+                      >
+                        {wh.isDefault && (
+                          <span className="absolute top-0 end-0 px-3 py-1 bg-accent text-white text-[8px] font-black uppercase tracking-widest rounded-bl-2xl">
+                            Varsayilan Depo
+                          </span>
+                        )}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-brand-secondary rounded-xl text-brand-primary">
+                              <Warehouse size={18} />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-brand-primary text-sm">{wh.name}</h3>
+                              <p className="text-[10px] text-brand-primary/40">
+                                {wh.address.line1}, {wh.address.city}, {wh.address.country}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={async () => {
+                                setEditingWarehouse(wh);
+                                setWarehouseForm({
+                                  name: wh.name,
+                                  line1: wh.address.line1,
+                                  city: wh.address.city,
+                                  state: wh.address.state,
+                                  postalCode: wh.address.postalCode,
+                                  country: wh.address.country,
+                                  isDefault: wh.isDefault,
+                                });
+                                setShowWarehouseForm(true);
+                              }}
+                              className="w-8 h-8 rounded-xl flex items-center justify-center text-brand-primary/40 hover:text-accent hover:bg-accent/10 transition-all"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (
+                                  window.confirm(
+                                    `"${wh.name}" deposunu silmek istediginize emin misiniz?`,
+                                  )
+                                ) {
+                                  try {
+                                    await deleteWarehouse(wh.id);
+                                    setWarehouses((prev) => prev.filter((w) => w.id !== wh.id));
+                                  } catch {
+                                    /* error handled by warehouseService */
+                                  }
+                                }
+                              }}
+                              className="w-8 h-8 rounded-xl flex items-center justify-center text-brand-primary/40 hover:text-red-500 hover:bg-red-50 transition-all"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Address details */}
+                        <div className="bg-brand-secondary/30 rounded-2xl p-4 space-y-1 text-[11px]">
+                          <p className="text-brand-primary/70">
+                            <span className="font-bold text-brand-primary/40">Adres: </span>
+                            {wh.address.line1}
+                            {wh.address.line2 ? `, ${wh.address.line2}` : ''}
+                          </p>
+                          <p className="text-brand-primary/70">
+                            <span className="font-bold text-brand-primary/40">Sehir: </span>
+                            {wh.address.city}, {wh.address.state} {wh.address.postalCode}
+                          </p>
+                          <p className="text-brand-primary/70">
+                            <span className="font-bold text-brand-primary/40">Ulke: </span>
+                            {wh.address.country}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Stock allocation summary */}
+                <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-brand-primary/5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-brand-secondary rounded-xl text-brand-primary">
+                      <Package size={16} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-brand-primary text-sm">
+                        Depo Bazli Stok Atamasi
+                      </p>
+                      <p className="text-[10px] text-brand-primary/40">
+                        Her urun icin depo bazli stok miktarlarini ayarlayin
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-brand-primary/50 leading-relaxed bg-brand-secondary/30 rounded-2xl p-4">
+                    Depo bazli stok atamasi, her bir urunun hangi depoda ne kadar stogu oldugunu
+                    belirlemenizi saglar. Su an icin depo bazli stok atamasi urun duzenleme
+                    formundan yapilabilir. Her urune varsayilan depo uzerinden stok atanir.
+                  </p>
+                </div>
+              </motion.div>
             ) : (
               <motion.div
                 key="analytics"
@@ -1281,6 +1519,211 @@ export function SellerInventoryPage() {
           setEditingProduct(null);
         }}
       />
+
+      {/* Warehouse Add/Edit Modal */}
+      <AnimatePresence>
+        {showWarehouseForm && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowWarehouseForm(false)}
+              className="absolute inset-0 bg-brand-primary/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-[3rem] overflow-hidden shadow-2xl"
+            >
+              {/* Header */}
+              <div className="p-8 pb-4 flex items-center justify-between border-b border-brand-primary/5">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">
+                    Depo
+                  </p>
+                  <h2 className="text-lg font-display font-black text-brand-primary">
+                    {editingWarehouse ? 'Depo Duzenle' : 'Yeni Depo Ekle'}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowWarehouseForm(false)}
+                  className="w-10 h-10 bg-brand-secondary rounded-full flex items-center justify-center text-brand-primary hover:bg-accent hover:text-white transition-all"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Form */}
+              <div className="p-8 space-y-5">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
+                    Depo Adi *
+                  </label>
+                  <input
+                    type="text"
+                    value={warehouseForm.name}
+                    onChange={(e) => setWarehouseForm({ ...warehouseForm, name: e.target.value })}
+                    placeholder="Ornegin: Merkez Depo, Ikinci Depo"
+                    className="w-full px-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-brand-primary/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
+                    Adres *
+                  </label>
+                  <input
+                    type="text"
+                    value={warehouseForm.line1}
+                    onChange={(e) => setWarehouseForm({ ...warehouseForm, line1: e.target.value })}
+                    placeholder="Ornegin: Ataturk Cad. No:123"
+                    className="w-full px-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-brand-primary/20"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
+                      Sehir *
+                    </label>
+                    <input
+                      type="text"
+                      value={warehouseForm.city}
+                      onChange={(e) => setWarehouseForm({ ...warehouseForm, city: e.target.value })}
+                      placeholder="Istanbul"
+                      className="w-full px-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-brand-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
+                      Ilce / Eyalet
+                    </label>
+                    <input
+                      type="text"
+                      value={warehouseForm.state}
+                      onChange={(e) =>
+                        setWarehouseForm({ ...warehouseForm, state: e.target.value })
+                      }
+                      placeholder="Kadikoy"
+                      className="w-full px-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-brand-primary/20"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
+                      Posta Kodu
+                    </label>
+                    <input
+                      type="text"
+                      value={warehouseForm.postalCode}
+                      onChange={(e) =>
+                        setWarehouseForm({ ...warehouseForm, postalCode: e.target.value })
+                      }
+                      placeholder="34000"
+                      className="w-full px-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-brand-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
+                      Ulke *
+                    </label>
+                    <input
+                      type="text"
+                      value={warehouseForm.country}
+                      onChange={(e) =>
+                        setWarehouseForm({ ...warehouseForm, country: e.target.value })
+                      }
+                      placeholder="Turkiye"
+                      className="w-full px-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-brand-primary/20"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 pt-2">
+                  <input
+                    type="checkbox"
+                    id="isDefault"
+                    checked={warehouseForm.isDefault}
+                    onChange={(e) =>
+                      setWarehouseForm({ ...warehouseForm, isDefault: e.target.checked })
+                    }
+                    className="w-4 h-4 rounded border-brand-primary/10 text-accent focus:ring-accent"
+                  />
+                  <label
+                    htmlFor="isDefault"
+                    className="text-xs font-bold text-brand-primary cursor-pointer"
+                  >
+                    Varsayilan depo yap
+                  </label>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="p-8 pt-4 flex gap-3 border-t border-brand-primary/5">
+                <button
+                  onClick={() => setShowWarehouseForm(false)}
+                  className="flex-1 py-3.5 bg-brand-secondary rounded-2xl font-black text-[10px] uppercase tracking-widest text-brand-primary/60 hover:text-brand-primary transition-all"
+                >
+                  Iptal
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!warehouseForm.name.trim()) {
+                      alert('Depo adi zorunludur.');
+                      return;
+                    }
+                    if (
+                      !warehouseForm.line1.trim() ||
+                      !warehouseForm.city.trim() ||
+                      !warehouseForm.country.trim()
+                    ) {
+                      alert('Adres, sehir ve ulke bilgileri zorunludur.');
+                      return;
+                    }
+                    try {
+                      if (editingWarehouse) {
+                        await updateWarehouse(editingWarehouse.id, {
+                          name: warehouseForm.name,
+                          address: {
+                            line1: warehouseForm.line1,
+                            city: warehouseForm.city,
+                            state: warehouseForm.state,
+                            postalCode: warehouseForm.postalCode,
+                            country: warehouseForm.country,
+                          },
+                          isDefault: warehouseForm.isDefault,
+                        });
+                      } else {
+                        await createWarehouse(user!.uid || user!.id, {
+                          name: warehouseForm.name,
+                          address: {
+                            line1: warehouseForm.line1,
+                            city: warehouseForm.city,
+                            state: warehouseForm.state,
+                            postalCode: warehouseForm.postalCode,
+                            country: warehouseForm.country,
+                          },
+                          isDefault: warehouseForm.isDefault,
+                        });
+                      }
+                      setShowWarehouseForm(false);
+                      // Refresh warehouse list
+                      const data = await getWarehouses(user!.uid || user!.id);
+                      setWarehouses(data);
+                    } catch {
+                      /* error handled by warehouseService */
+                    }
+                  }}
+                  className="flex-1 py-3.5 bg-brand-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-accent transition-all"
+                >
+                  <Save size={14} className="inline me-1.5" />
+                  {editingWarehouse ? 'Guncelle' : 'Kaydet'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
