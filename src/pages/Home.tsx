@@ -278,8 +278,10 @@ export function Home() {
           getCategories(),
           getHomepageSections(),
         ]);
-        setProducts(fetchedProducts);
-        setCategories(fetchedCategories);
+        // Only replace MOCK_PRODUCTS if Firestore returned real data.
+        // When the composite index is building, getProducts returns [] silently.
+        if (fetchedProducts.length > 0) setProducts(fetchedProducts);
+        if (fetchedCategories.length > 0) setCategories(fetchedCategories);
         if (fetchedSections.length > 0) setSections(fetchedSections);
       } catch (error) {
         console.error('Home data load error:', error);
