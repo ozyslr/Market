@@ -165,35 +165,39 @@ export function AdminSellerView() {
 
   useEffect(() => {
     if (!sellerId) return;
-    Promise.all([
-      getDoc(doc(db, 'sellers', sellerId)),
-      getProducts({ sellerId, includeNonApproved: true } as any),
-      getOrdersBySeller(sellerId),
-      calcSellerPerformance(sellerId),
-      getSellerCommissions(sellerId),
-      getPayoutHistory(sellerId),
-      getSellerBalance(sellerId),
-      // Fetch seller application (most recent for this userId)
-      getDocs(query(collection(db, 'sellerApplications'), where('userId', '==', sellerId))),
-    ])
-      .then(([snap, prods, ords, perf, comms, pays, bal, appSnap]) => {
-        if (snap.exists()) setSeller({ id: snap.id, ...snap.data() } as Seller);
-        setProducts(prods);
-        setOrders(ords);
-        setPerfScore(perf);
-        setCommissions(comms);
-        setPayouts(pays);
-        setSellerBal(bal);
-        if (!appSnap.empty) {
-          // Use the most recent application
-          const sorted = appSnap.docs
-            .map((d) => ({ id: d.id, ...d.data() }) as SellerApplication)
-            .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-          setApplication(sorted[0] ?? null);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    // Use allSettled so one failing query doesn't block the entire page
+    const loadSeller = async () => {
+      const results = await Promise.allSettled([
+        getDoc(doc(db, 'sellers', sellerId)),
+        getProducts({ sellerId, includeNonApproved: true } as any),
+        getOrdersBySeller(sellerId),
+        calcSellerPerformance(sellerId),
+        getSellerCommissions(sellerId),
+        getPayoutHistory(sellerId),
+        getSellerBalance(sellerId),
+        getDocs(query(collection(db, 'sellerApplications'), where('userId', '==', sellerId))),
+      ]);
+
+      const [snapR, prodsR, ordsR, perfR, commsR, paysR, balR, appSnapR] = results;
+
+      if (snapR.status === 'fulfilled' && snapR.value.exists())
+        setSeller({ id: snapR.value.id, ...snapR.value.data() } as Seller);
+      if (prodsR.status === 'fulfilled') setProducts(prodsR.value);
+      if (ordsR.status === 'fulfilled') setOrders(ordsR.value);
+      else console.warn('[AdminSellerView] Orders failed to load:', ordsR.reason);
+      if (perfR.status === 'fulfilled') setPerfScore(perfR.value);
+      if (commsR.status === 'fulfilled') setCommissions(commsR.value);
+      if (paysR.status === 'fulfilled') setPayouts(paysR.value);
+      if (balR.status === 'fulfilled') setSellerBal(balR.value);
+      if (appSnapR.status === 'fulfilled' && !appSnapR.value.empty) {
+        const sorted = appSnapR.value.docs
+          .map((d) => ({ id: d.id, ...d.data() }) as SellerApplication)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        setApplication(sorted[0] ?? null);
+      }
+      setLoading(false);
+    };
+    loadSeller();
   }, [sellerId]);
 
   const getAdminToken = async (): Promise<string> => {
