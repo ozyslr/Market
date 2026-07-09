@@ -60,10 +60,10 @@ interface ToastMsg {
 interface DocViewerCardProps {
   docType: string;
   storagePath: string;
-  adminToken: string;
+  getToken: () => Promise<string>;
 }
 
-function DocViewerCard({ docType, storagePath, adminToken }: DocViewerCardProps) {
+function DocViewerCard({ docType, storagePath, getToken }: DocViewerCardProps) {
   const [loading, setLoading] = useState(false);
   const [expired, setExpired] = useState(false);
 
@@ -77,9 +77,10 @@ function DocViewerCard({ docType, storagePath, adminToken }: DocViewerCardProps)
     setLoading(true);
     setExpired(false);
     try {
+      const token = await getToken();
       const encoded = encodeURIComponent(storagePath);
       const res = await fetch(`/api/kyc/signed-url/${encoded}`, {
-        headers: { Authorization: `Bearer ${adminToken}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         setExpired(true);
@@ -625,8 +626,7 @@ export function AdminSellerView() {
                       key={d.docType}
                       docType={d.docType}
                       storagePath={d.storagePath}
-                      adminToken=""
-                      // token fetched lazily inside the component via the outer closure
+                      getToken={getAdminToken}
                     />
                   ))}
                 </div>
