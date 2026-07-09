@@ -118,9 +118,9 @@ service cloud.firestore {
     }
 
     // --- EVENTS (analytics) ----------------------------------------------
-    // Only full (non-anonymous) users can create analytics events.
+    // Anonymous guests must be able to write analytics events (isSignedIn, not isFullUser).
     match /events/{eventId} {
-      allow create: if isFullUser();
+      allow create: if isSignedIn();
       allow read: if isAdmin();
     }
 
