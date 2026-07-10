@@ -8,6 +8,9 @@ async function verifyFirebaseToken(req: any, res: any, next: any) {
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Token gerekli' });
   }
+  if (!adminAuth) {
+    return res.status(503).json({ error: 'Auth servisi yapılandırılmadı' });
+  }
   try {
     const token = await adminAuth.verifyIdToken(authHeader.slice(7));
     (req as any).user = token;
