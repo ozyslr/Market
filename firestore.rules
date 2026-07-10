@@ -124,6 +124,20 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    // --- SELLER APPLICATIONS (KYC) -----------------------------------------
+    match /sellerApplications/{appId} {
+      allow read: if isSignedIn() && resource.data.userId == getUserId();
+      allow create: if isFullUser() && request.resource.data.userId == getUserId();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // --- KYC SETTINGS -------------------------------------------------------
+    match /settings/kyc {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
     // --- CHAT SESSIONS ---------------------------------------------------
     match /chat_sessions/{sessionId} {
       allow read: if isFullUser() && (resource.data.userId == getUserId() || isAdmin());
