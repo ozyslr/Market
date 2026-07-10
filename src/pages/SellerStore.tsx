@@ -36,16 +36,27 @@ import { getSellerStarSummary, type SellerStarSummary } from '@/services/sellerR
 import { getAllReviews } from '@/services/reviewService';
 import { getSellerBySlug, getSellerById } from '@/services/userService';
 import { getProducts } from '@/services/productService';
+import { getStoreConfig, type StoreConfig } from '@/services/sellerStoreService';
+import { BannerCarousel } from '@/components/seller/BannerCarousel';
 import { LoadingState, ErrorState, EmptyState } from '@/components/shared/DataStates';
 import type { Review, Seller, Product } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useFollows } from '@/context/FollowsContext';
 
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-brand-primary/5">
+      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{label}</p>
+      <p className="text-sm font-bold mt-1">{value}</p>
+    </div>
+  );
+}
+
 export function SellerStorePage() {
   const { id, slug: slugParam } = useParams();
-  const [activeTab, setActiveTab] = useState<'products' | 'all' | 'deals' | 'about' | 'reviews'>(
-    'products',
-  );
+  const [activeTab, setActiveTab] = useState<
+    'products' | 'all' | 'deals' | 'about' | 'reviews' | 'corporate'
+  >('products');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<
@@ -82,6 +93,7 @@ export function SellerStorePage() {
   // Real seller + products, loaded from Firestore (no MOCK fallback — ACC-03/ACC-04).
   const [sellerData, setSellerData] = useState<Seller | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [storeConfig, setStoreConfig] = useState<StoreConfig | null>(null);
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading');
 
   const loadStore = useCallback(async () => {
@@ -99,6 +111,9 @@ export function SellerStorePage() {
       }
       setSellerData(s);
       setProducts(await getProducts({ sellerId: s.id }));
+      getStoreConfig(s.id)
+        .then(setStoreConfig)
+        .catch(() => {});
       setStatus('ready');
     } catch {
       setStatus('error');
@@ -330,63 +345,67 @@ export function SellerStorePage() {
 
   return (
     <div className="min-h-screen bg-brand-secondary/30 pb-20">
-      {/* Hero Banner — compact */}
-      <div className="relative h-48 md:h-56 w-full overflow-hidden">
-        <img
-          src={seller.banner}
-          alt={seller.name}
-          className="w-full h-full object-cover"
-          referrerPolicy="no-referrer"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-secondary/80 to-transparent" />
-        <div className="absolute bottom-4 start-0 end-0">
-          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl shadow-lg p-3 ring-2 ring-white/20 overflow-hidden shrink-0">
-                <img
-                  src={seller.avatar}
-                  alt={seller.name}
-                  className="w-full h-full object-contain"
-                  referrerPolicy="no-referrer"
-                  loading="lazy"
-                />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg md:text-xl font-black text-white drop-shadow-md">
-                    {seller.name}
-                  </h1>
-                  {seller.isVerified && <CheckCircle size={14} className="text-accent" />}
+      {/* Hero Banner — carousel or single */}
+      {storeConfig?.banners && storeConfig.banners.length > 0 ? (
+        <BannerCarousel banners={storeConfig.banners} />
+      ) : (
+        <div className="relative h-48 md:h-56 w-full overflow-hidden">
+          <img
+            src={seller.banner}
+            alt={seller.name}
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-brand-secondary/80 to-transparent" />
+          <div className="absolute bottom-4 start-0 end-0">
+            <div className="max-w-7xl mx-auto px-4 flex items-end justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl shadow-lg p-3 ring-2 ring-white/20 overflow-hidden shrink-0">
+                  <img
+                    src={seller.avatar}
+                    alt={seller.name}
+                    className="w-full h-full object-contain"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                  />
                 </div>
-                <div className="flex items-center gap-3 text-[11px] text-white/80 mt-0.5">
-                  <span className="flex items-center gap-1">
-                    <Star size={11} className="text-yellow-400 fill-yellow-400" />
-                    {seller.rating} ({seller.reviewsCount})
-                  </span>
-                  <span>{seller.followers} Takipçi</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-lg md:text-xl font-black text-white drop-shadow-md">
+                      {seller.name}
+                    </h1>
+                    {seller.isVerified && <CheckCircle size={14} className="text-accent" />}
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] text-white/80 mt-0.5">
+                    <span className="flex items-center gap-1">
+                      <Star size={11} className="text-yellow-400 fill-yellow-400" />
+                      {seller.rating} ({seller.reviewsCount})
+                    </span>
+                    <span>{seller.followers} Takipçi</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleFollow}
-                disabled={followLoading}
-                className="px-4 py-2 bg-white text-brand-primary rounded-xl text-[11px] font-bold hover:bg-accent hover:text-white transition-all disabled:opacity-60"
-              >
-                {following ? 'Takibi Bırak' : 'Takip Et'}
-              </button>
-              <button
-                onClick={copyToClipboard}
-                className="p-2 bg-white/20 backdrop-blur rounded-xl text-white hover:bg-white/30 transition-all"
-                title="Paylaş"
-              >
-                {copied ? <Check size={14} /> : <Share2 size={14} />}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className="px-4 py-2 bg-white text-brand-primary rounded-xl text-[11px] font-bold hover:bg-accent hover:text-white transition-all disabled:opacity-60"
+                >
+                  {following ? 'Takibi Bırak' : 'Takip Et'}
+                </button>
+                <button
+                  onClick={copyToClipboard}
+                  className="p-2 bg-white/20 backdrop-blur rounded-xl text-white hover:bg-white/30 transition-all"
+                  title="Paylaş"
+                >
+                  {copied ? <Check size={14} /> : <Share2 size={14} />}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Store Info Bar */}
       <div className="bg-white border-b border-brand-primary/5">
@@ -519,6 +538,7 @@ export function SellerStorePage() {
               { id: 'all', label: 'Tüm Ürünler', count: sellerProducts.length },
               { id: 'deals', label: 'Fırsat Ürünleri', count: flashProducts.length },
               { id: 'reviews', label: 'Değerlendirmeler', count: seller.reviewsCount },
+              { id: 'corporate', label: 'Kurumsal', count: null },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1191,6 +1211,46 @@ export function SellerStorePage() {
                     )}
                   </div>
                 </motion.div>
+              ) : activeTab === 'corporate' && sellerData ? (
+                <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+                  <h3 className="text-lg font-black uppercase">Kurumsal Bilgiler</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {sellerData.companyName && (
+                      <InfoRow label="Şirket Ünvanı" value={sellerData.companyName} />
+                    )}
+                    {sellerData.taxOffice && (
+                      <InfoRow label="Vergi Dairesi" value={sellerData.taxOffice} />
+                    )}
+                    {sellerData.taxNumber && (
+                      <InfoRow label="Vergi No" value={sellerData.taxNumber} />
+                    )}
+                    {sellerData.mersisNo && (
+                      <InfoRow label="MERSİS No" value={sellerData.mersisNo} />
+                    )}
+                    {sellerData.tradeRegistryNo && (
+                      <InfoRow label="Ticaret Sicil No" value={sellerData.tradeRegistryNo} />
+                    )}
+                    {sellerData.companyType && (
+                      <InfoRow
+                        label="Şirket Türü"
+                        value={
+                          sellerData.companyType === 'individual'
+                            ? 'Şahıs'
+                            : sellerData.companyType === 'limited'
+                              ? 'Limited'
+                              : sellerData.companyType === 'joint_stock'
+                                ? 'Anonim'
+                                : sellerData.companyType
+                        }
+                      />
+                    )}
+                  </div>
+                  {sellerData.isVerified && (
+                    <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold">
+                      ✅ Bu bilgiler KYC onayı ile doğrulanmıştır
+                    </div>
+                  )}
+                </div>
               ) : (
                 <motion.div
                   key="reviews"
