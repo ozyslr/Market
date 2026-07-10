@@ -22,6 +22,7 @@ import {
   Check,
   Camera,
   Loader2,
+  Play,
 } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -259,6 +260,14 @@ export function SellerStorePage() {
     () => [...new Set(sellerProducts.map((p: any) => p.categoryId).filter(Boolean))] as string[],
     [sellerProducts],
   );
+
+  // Showcase categories: use storeConfig.showcaseCategories when populated, else fall back to all
+  const showcaseCategories = React.useMemo(() => {
+    if (storeConfig?.showcaseCategories && storeConfig.showcaseCategories.length > 0) {
+      return storeConfig.showcaseCategories;
+    }
+    return categories;
+  }, [storeConfig?.showcaseCategories, categories]);
 
   const displayProducts = React.useMemo(() => {
     let result = sellerProducts.filter((p: any) => {
@@ -835,40 +844,125 @@ export function SellerStorePage() {
                   </section>
 
                   {/* ── Seller Campaign Banner ── */}
-                  <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-accent via-brand-primary to-brand-primary p-8 md:p-12">
-                    <div className="relative z-10 max-w-md">
-                      <span className="px-3 py-1 bg-white/20 text-white text-[10px] font-black uppercase rounded-full">
-                        {seller.name} Kampanyası
-                      </span>
-                      <h3 className="text-2xl md:text-3xl font-black text-white uppercase mt-4 leading-tight">
-                        {seller.name} Özel Fırsatlar
-                      </h3>
-                      <p className="text-white/70 text-sm mt-2">
-                        Bu kampanya sadece {seller.name} mağazasında geçerlidir. Özel indirimler ve
-                        fırsatlar için hemen keşfedin.
-                      </p>
-                      <button className="mt-6 px-6 py-3 bg-white text-brand-primary rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/90 transition-all inline-flex items-center gap-2">
-                        Kampanyaları Keşfet <ArrowRight size={14} />
-                      </button>
-                    </div>
-                    <div className="absolute top-0 end-0 w-1/2 h-full opacity-10">
-                      <Package size={300} className="text-white absolute -top-20 -end-20" />
-                    </div>
-                  </section>
+                  {storeConfig?.campaignBanner?.active ? (
+                    <section
+                      className="relative overflow-hidden rounded-3xl p-8 md:p-12"
+                      style={{
+                        background: storeConfig.campaignBanner.imageUrl
+                          ? `url(${storeConfig.campaignBanner.imageUrl}) center/cover`
+                          : undefined,
+                        backgroundColor: storeConfig.campaignBanner.imageUrl
+                          ? undefined
+                          : undefined,
+                      }}
+                    >
+                      {storeConfig.campaignBanner.imageUrl && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/90 via-brand-primary/70 to-brand-primary/40" />
+                      )}
+                      {!storeConfig.campaignBanner.imageUrl && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-accent via-brand-primary to-brand-primary" />
+                      )}
+                      <div className="relative z-10 max-w-md">
+                        <span className="px-3 py-1 bg-white/20 text-white text-[10px] font-black uppercase rounded-full">
+                          {seller.name} Kampanyası
+                        </span>
+                        <h3 className="text-2xl md:text-3xl font-black text-white uppercase mt-4 leading-tight">
+                          {storeConfig.campaignBanner.title}
+                        </h3>
+                        {storeConfig.campaignBanner.description && (
+                          <p className="text-white/70 text-sm mt-2">
+                            {storeConfig.campaignBanner.description}
+                          </p>
+                        )}
+                        {storeConfig.campaignBanner.endDate && (
+                          <p className="text-white/50 text-[10px] font-bold mt-2">
+                            Son Tarih:{' '}
+                            {new Date(storeConfig.campaignBanner.endDate).toLocaleDateString(
+                              'tr-TR',
+                            )}
+                          </p>
+                        )}
+                        {storeConfig.campaignBanner.link && (
+                          <a
+                            href={storeConfig.campaignBanner.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-6 px-6 py-3 bg-white text-brand-primary rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/90 transition-all inline-flex items-center gap-2"
+                          >
+                            Kampanyayı Keşfet <ArrowRight size={14} />
+                          </a>
+                        )}
+                      </div>
+                      <div className="absolute top-0 end-0 w-1/2 h-full opacity-10">
+                        <Package size={300} className="text-white absolute -top-20 -end-20" />
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {/* ── Store Video ── */}
+                  {storeConfig?.videoUrl && (
+                    <section>
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                          <Play size={16} className="text-white" />
+                        </div>
+                        <h3 className="font-black text-lg text-brand-primary uppercase tracking-tight">
+                          Mağaza Videosu
+                        </h3>
+                      </div>
+                      <div className="relative w-full rounded-3xl overflow-hidden bg-black aspect-video">
+                        {storeConfig.videoUrl.includes('youtube.com') ||
+                        storeConfig.videoUrl.includes('youtu.be') ? (
+                          <iframe
+                            src={`https://www.youtube.com/embed/${(() => {
+                              const u = storeConfig.videoUrl;
+                              const m = u.match(
+                                /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?#]+)/,
+                              );
+                              return m?.[1] ?? '';
+                            })()}`}
+                            title="Mağaza Videosu"
+                            className="w-full h-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        ) : storeConfig.videoUrl.includes('vimeo.com') ? (
+                          <iframe
+                            src={`https://player.vimeo.com/video/${(() => {
+                              const m = storeConfig.videoUrl.match(/vimeo\.com\/(\d+)/);
+                              return m?.[1] ?? '';
+                            })()}`}
+                            title="Mağaza Videosu"
+                            className="w-full h-full"
+                            allow="autoplay; fullscreen; picture-in-picture"
+                            allowFullScreen
+                          />
+                        ) : (
+                          <video
+                            src={storeConfig.videoUrl}
+                            controls
+                            className="w-full h-full object-contain"
+                          />
+                        )}
+                      </div>
+                    </section>
+                  )}
 
                   {/* ── Category Navigation Cards ── */}
-                  {categories.length > 1 && (
+                  {showcaseCategories.length > 1 && (
                     <section>
                       <div className="flex items-center gap-2 mb-4">
                         <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center">
                           <Grid size={16} className="text-white" />
                         </div>
                         <h3 className="font-black text-lg text-brand-primary uppercase tracking-tight">
-                          Kategoriler
+                          {storeConfig?.showcaseCategories?.length
+                            ? 'Öne Çıkan Kategoriler'
+                            : 'Kategoriler'}
                         </h3>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        {categories.slice(0, 8).map((catId, idx) => (
+                        {showcaseCategories.slice(0, 8).map((catId, idx) => (
                           <button
                             key={catId}
                             onClick={() => setSelectedCategory(catId)}
@@ -1138,9 +1232,16 @@ export function SellerStorePage() {
                       <h2 className="text-3xl font-display font-black tracking-tight uppercase italic text-brand-primary">
                         Hikayemiz
                       </h2>
-                      <p className="text-brand-primary/60 leading-relaxed text-lg font-medium">
-                        {seller.description}
-                      </p>
+                      {storeConfig?.aboutHtml ? (
+                        <div
+                          className="text-brand-primary/60 leading-relaxed text-lg font-medium prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: storeConfig.aboutHtml }}
+                        />
+                      ) : (
+                        <p className="text-brand-primary/60 leading-relaxed text-lg font-medium">
+                          {seller.description}
+                        </p>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-8 py-8 border-y border-brand-primary/5">
@@ -1163,26 +1264,30 @@ export function SellerStorePage() {
                       </div>
                     </div>
 
-                    <div className="space-y-6">
-                      <h3 className="text-xl font-display font-black tracking-tight text-brand-primary">
-                        Sertifikalar
-                      </h3>
-                      <div className="flex flex-wrap gap-3">
-                        {[
-                          'B-Corp Sertifikalı',
-                          'CO2 Nötr Kargo',
-                          'Adil Ücret Garantisi',
-                          'Onarılabilir Tasarım',
-                        ].map((badge) => (
-                          <span
-                            key={badge}
-                            className="px-4 py-2 bg-brand-secondary rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/60 border border-brand-primary/5"
-                          >
-                            {badge}
-                          </span>
-                        ))}
+                    {storeConfig?.certifications && storeConfig.certifications.length > 0 && (
+                      <div className="space-y-6">
+                        <h3 className="text-xl font-display font-black tracking-tight text-brand-primary">
+                          Sertifikalar
+                        </h3>
+                        <div className="flex flex-wrap gap-3">
+                          {storeConfig.certifications.map((cert) => (
+                            <span
+                              key={cert.name}
+                              className="px-4 py-2 bg-brand-secondary rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-primary/60 border border-brand-primary/5 flex items-center gap-2"
+                            >
+                              {cert.imageUrl && (
+                                <img
+                                  src={cert.imageUrl}
+                                  alt={cert.name}
+                                  className="w-4 h-4 object-contain"
+                                />
+                              )}
+                              {cert.name}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Ek bilgiler: iade politikası + kargo notu */}
                     {(sellerData.returnPolicy || sellerData.shippingNote) && (
