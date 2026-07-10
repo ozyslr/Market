@@ -111,6 +111,13 @@ export interface Seller {
   iyzicoOnboardingStatus?: 'pending' | 'complete';
   /** Seller tier assigned by admin (overrides performance-based tier) */
   tier?: string;
+  // -- Corporate info (store customization) --
+  companyName?: string;
+  taxOffice?: string;
+  taxNumber?: string;
+  mersisNo?: string;
+  tradeRegistryNo?: string;
+  companyType?: 'individual' | 'limited' | 'joint_stock' | 'other';
 }
 
 export interface Order {

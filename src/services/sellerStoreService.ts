@@ -20,6 +20,21 @@ export interface StoreConfig {
   shippingNote: string;
   lowStockThreshold: number;
   updatedAt: string;
+  // -- Store customization v2 --
+  banners?: { imageUrl: string; link?: string; title?: string; order: number }[];
+  showcaseCategories?: string[];
+  campaignBanner?: {
+    title: string;
+    description?: string;
+    imageUrl: string;
+    link?: string;
+    active: boolean;
+    endDate?: string;
+  };
+  videoUrl?: string;
+  aboutHtml?: string;
+  certifications?: { name: string; imageUrl: string }[];
+  foundedYear?: number;
 }
 
 const DEFAULT_CONFIG: StoreConfig = {
@@ -35,6 +50,11 @@ const DEFAULT_CONFIG: StoreConfig = {
   shippingNote: '3-5 iş günü içinde kargo',
   lowStockThreshold: 5,
   updatedAt: '',
+  banners: [],
+  showcaseCategories: [],
+  videoUrl: '',
+  aboutHtml: '',
+  certifications: [],
 };
 
 export async function getStoreConfig(sellerId: string): Promise<StoreConfig> {
