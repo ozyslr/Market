@@ -27,3 +27,5 @@ design/
 public/*.cdr
 public/*.zip
 .gstack/
+
+.vercel
