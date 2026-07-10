@@ -450,16 +450,76 @@ export function SellerApplication() {
           <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
-          <h2 className="text-2xl font-black uppercase italic text-brand-primary dark:text-white mb-2">
+          <h2 className="text-2xl font-black uppercase italic text-brand-primary dark:text-white mb-6">
             Basvurunuz Alindi!
           </h2>
-          <p className="text-sm font-bold text-brand-primary/70 dark:text-white/70 mb-2">
-            Basvurunuz incelendikten sonra size e-posta ile bilgi verilecektir.
+
+          {/* Timeline Stepper */}
+          <div className="text-start space-y-0 mb-8">
+            {[
+              { key: 'submitted', label: 'Basvuru Alindi', icon: '📝' },
+              { key: 'documents_ok', label: 'Belgeler Yuklendi', icon: '📄' },
+              { key: 'auto_check', label: 'Otomatik Kontrol', icon: '🔍' },
+              { key: 'admin_review', label: 'Admin Incelemesi', icon: '👤' },
+              { key: 'approved', label: 'Magaza Acildi', icon: '🏪' },
+            ].map(({ key, label, icon }, i, arr) => {
+              const isDone = i <= 1; // first two always done after submit
+              const isCurrent = i === 2;
+              return (
+                <div key={key} className="flex items-start gap-3 pb-5 relative">
+                  {i < arr.length - 1 && (
+                    <div
+                      className={`absolute left-[17px] top-9 w-0.5 h-full ${
+                        isDone ? 'bg-emerald-500' : 'bg-zinc-200 dark:bg-zinc-700'
+                      }`}
+                    />
+                  )}
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-base shrink-0 ${
+                      isDone
+                        ? 'bg-emerald-500/20'
+                        : isCurrent
+                          ? 'bg-amber-500/20 animate-pulse'
+                          : 'bg-zinc-100 dark:bg-zinc-800'
+                    }`}
+                  >
+                    {icon}
+                  </div>
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <p
+                      className={`text-sm font-black uppercase ${
+                        isDone
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : isCurrent
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : 'text-zinc-400 dark:text-zinc-600'
+                      }`}
+                    >
+                      {label}
+                    </p>
+                    {isCurrent && (
+                      <p className="text-[10px] text-zinc-400 mt-0.5">Devam ediyor...</p>
+                    )}
+                  </div>
+                  <div className="shrink-0 pt-0.5">
+                    {isDone ? (
+                      <CheckCircle size={16} className="text-emerald-500" />
+                    ) : isCurrent ? (
+                      <Loader2 size={16} className="text-amber-500 animate-spin" />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-zinc-300 dark:border-zinc-600" />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="text-xs text-brand-primary/50 dark:text-white/50 mb-6">
+            Basvuru No: {storeSlug?.toUpperCase() || 'APP-' + Date.now().toString(36)} — 24 saat
+            icinde sonuclanir.
           </p>
-          <p className="text-xs text-brand-primary/50 dark:text-white/50 mb-8">
-            Ortalama inceleme suresi 1-3 is gunudur. Basvurunuz onaylandiktan sonra satici
-            panelinize erisebilirsiniz.
-          </p>
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => navigate('/')}
