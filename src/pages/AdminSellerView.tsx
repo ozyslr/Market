@@ -818,6 +818,83 @@ export function AdminSellerView() {
           </div>
         )}
 
+        {/* ── AutoCheck Result Panel ────────────────────────────────────── */}
+        {application?.autoCheck && (
+          <div className="bg-zinc-900 rounded-2xl p-6 mb-6 space-y-4">
+            <h2 className="text-base font-semibold text-zinc-300 flex items-center gap-2">
+              <ShieldCheck
+                size={18}
+                className={
+                  application.autoCheck.status === 'passed' ? 'text-emerald-400' : 'text-amber-400'
+                }
+              />
+              Otomatik Kontrol Sonucu
+            </h2>
+            <div className="space-y-2">
+              {(Object.entries(application.autoCheck.checks) as [string, any][]).map(
+                ([key, check]) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between bg-zinc-800 rounded-lg px-4 py-3"
+                  >
+                    <span className="text-sm font-medium text-zinc-300">
+                      {{
+                        documentOcr: 'Belge OCR',
+                        taxId: 'Vergi No',
+                        mersis: 'MERSİS',
+                        iban: 'IBAN',
+                        identity: 'Kimlik',
+                      }[key] || key}
+                    </span>
+                    <span
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        check.status === 'pass'
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : check.status === 'fail'
+                            ? 'bg-red-500/20 text-red-400'
+                            : check.status === 'error'
+                              ? 'bg-amber-500/20 text-amber-400'
+                              : 'bg-zinc-700 text-zinc-400'
+                      }`}
+                    >
+                      {check.status === 'pass'
+                        ? '✅'
+                        : check.status === 'fail'
+                          ? '❌'
+                          : check.status === 'error'
+                            ? '⚠️'
+                            : '—'}{' '}
+                      {check.message}
+                    </span>
+                  </div>
+                ),
+              )}
+            </div>
+            <div className="flex items-center justify-between bg-zinc-800 rounded-xl px-5 py-4">
+              <div>
+                <span className="text-xs text-zinc-500 font-semibold">Puan</span>
+                <p className="text-2xl font-bold text-white">{application.autoCheck.score}/100</p>
+              </div>
+              <div
+                className={`px-4 py-2 rounded-xl text-sm font-black uppercase ${
+                  application.autoCheck.status === 'passed'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-red-500/20 text-red-400'
+                }`}
+              >
+                {application.autoCheck.status === 'passed'
+                  ? 'OTOMATİK ONAYLANABİLİR'
+                  : 'MANUEL İNCELEME GEREKLİ'}
+              </div>
+            </div>
+            {application.autoCheck.failureReason && (
+              <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-4 py-3">
+                ⚠️ {application.autoCheck.failureReason}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Performance & Financial Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           {perfScore && (
