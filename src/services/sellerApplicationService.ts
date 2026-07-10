@@ -56,6 +56,15 @@ export interface SellerApplication {
   reviewedBy?: string;
   reviewedAt?: string;
   createdAt: string;
+  // -- KYC v2 fields --
+  taxOffice?: string;
+  businessType?: 'individual' | 'limited' | 'joint_stock' | 'other';
+  mersisNo?: string;
+  bankAccountHolder?: string;
+  kvkkConsent?: import('../types/kyc').KvkkConsent;
+  eSignature?: import('../types/kyc').ESignature;
+  autoCheck?: import('../types/kyc').AutoCheckResult;
+  timeline?: import('../types/kyc').ApplicationEvent[];
 }
 
 // ─── hasAllRequiredDocs ───────────────────────────────────────────────────────
