@@ -137,7 +137,7 @@ export function SearchBar() {
                     {t('search.products')}
                   </h4>
                   <div className="space-y-3">
-                    {(suggestions.length > 0 ? suggestions : MOCK_PRODUCTS.slice(0, 4)).map((p) => (
+                    {suggestions.map((p) => (
                       <Link
                         key={p.id}
                         to={`/product/${p.slug}`}
