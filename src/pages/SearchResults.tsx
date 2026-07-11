@@ -17,9 +17,14 @@ import {
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { getCategories } from '@/services/productService';
-import { getFacetedFilters, normalizeTR } from '@/services/searchService';
+import {
+  searchProducts,
+  getFacetedFilters,
+  normalizeTR,
+  type SearchResult,
+  type SearchParams,
+} from '@/services/searchService';
 import { Category, FilterAttribute, Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/commerce/ProductCard';
@@ -111,13 +116,42 @@ export function SearchResultsPage() {
   const [categoryFilterAttrs, setCategoryFilterAttrs] = useState<FilterAttribute[]>([]);
   const [searchLoading, setSearchLoading] = useState(true);
   const [facetCounts, setFacetCounts] = useState<FacetCounts>({});
+  const [searchResult, setSearchResult] = useState<SearchResult>({
+    products: [],
+    totalCount: 0,
+    hasMore: false,
+  });
 
   useEffect(() => {
     getCategories().then(setAllCategories);
-    // Simulate brief loading for MOCK_PRODUCTS filtering
-    const timer = setTimeout(() => setSearchLoading(false), 300);
-    return () => clearTimeout(timer);
-  }, [query, categoryId, tag, origin, delivery, sortBy, priceMin, priceMax, minRating]);
+    setSearchLoading(true);
+    searchProducts({
+      query: query || undefined,
+      categoryId: categoryId || undefined,
+      brand: searchParams.get('brand') || undefined,
+      minPrice: priceMin ? Number(priceMin) : undefined,
+      maxPrice: priceMax ? Number(priceMax) : undefined,
+      minRating: minRating ? Number(minRating) : undefined,
+      sortBy: (sortBy as SearchParams['sortBy']) || undefined,
+      inStock: searchParams.get('inStock') === '1' || undefined,
+      tags: tag ? [tag] : undefined,
+    })
+      .then((r) => setSearchResult(r))
+      .catch(() => setSearchResult({ products: [], totalCount: 0, hasMore: false }))
+      .finally(() => setSearchLoading(false));
+  }, [
+    query,
+    categoryId,
+    tag,
+    origin,
+    delivery,
+    sortBy,
+    priceMin,
+    priceMax,
+    minRating,
+    searchParams.get('brand'),
+    searchParams.get('inStock'),
+  ]);
 
   useEffect(() => {
     if (!categoryId) {
@@ -158,19 +192,8 @@ export function SearchResultsPage() {
   const selectedBrands = brandsParam ? brandsParam.split(',') : [];
   const inStockParam = searchParams.get('inStock') === '1';
 
-  let results = MOCK_PRODUCTS.filter((p) => {
-    if (p.status !== undefined && p.status !== 'approved') return false;
-    const nq = normalizeTR(query);
-    const matchesQuery =
-      !query ||
-      [p.title, p.description, p.brand, ...(p.tags ?? [])].some((field) =>
-        normalizeTR(field ?? '').includes(nq),
-      );
-    const matchesCategory = isProductInCategory(p, categoryId, allCategories);
-    const matchesTag =
-      !tag ||
-      (p.tags ?? []).includes(tag as any) ||
-      (tag === 'deals' && p.oldPrice && p.oldPrice > p.price);
+  // Apply additional client-side filters not supported by searchProducts (origin, delivery, attributes, freeShipping, advantageous)
+  const results = searchResult.products.filter((p) => {
     const matchesOrigin =
       !origin || (origin === 'global' ? p.originCountry !== 'UK' : p.originCountry === origin);
     const matchesDelivery =
@@ -189,17 +212,6 @@ export function SearchResultsPage() {
       return selectedValues.some((v) => productVal.toLowerCase().includes(v.toLowerCase()));
     });
 
-    const matchesPrice =
-      (!priceMin || p.price >= Number(priceMin)) && (!priceMax || p.price <= Number(priceMax));
-
-    const matchesRating = !minRating || p.rating >= Number(minRating);
-
-    // Brand filter (from FilterPanel)
-    const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(p.brand);
-
-    // In stock filter (from FilterPanel)
-    const matchesInStock = !inStockParam || (p.stock ?? 0) > 0;
-
     const matchesFreeShipping =
       searchParams.get('freeShipping') !== '1' ||
       (p.estimatedDeliveryDays != null && p.estimatedDeliveryDays <= 3);
@@ -207,32 +219,9 @@ export function SearchResultsPage() {
       searchParams.get('advantageous') !== '1' || (p.discountPercentage ?? 0) >= 10 || !!p.oldPrice;
 
     return (
-      matchesQuery &&
-      matchesCategory &&
-      matchesTag &&
-      matchesOrigin &&
-      matchesDelivery &&
-      matchesAttrs &&
-      matchesPrice &&
-      matchesRating &&
-      matchesBrand &&
-      matchesInStock &&
-      matchesFreeShipping &&
-      matchesAdvantageous
+      matchesOrigin && matchesDelivery && matchesAttrs && matchesFreeShipping && matchesAdvantageous
     );
   });
-
-  if (sortBy) {
-    const mappedSort = mapSortValue(sortBy);
-    results = [...results].sort((a, b) => {
-      if (mappedSort === 'price-asc') return a.price - b.price;
-      if (mappedSort === 'price-desc') return b.price - a.price;
-      if (mappedSort === 'rating') return b.rating - a.rating;
-      if (mappedSort === 'popular') return (b.reviewsCount ?? 0) - (a.reviewsCount ?? 0);
-      if (mappedSort === 'newest') return (b.createdAt ?? '').localeCompare(a.createdAt ?? '');
-      return 0;
-    });
-  }
 
   const categoryName = allCategories.find((c) => c.id === categoryId)?.name || tag || query;
   const hasActiveFilters = !!(

@@ -33,7 +33,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Hero } from '@/components/home/Hero';
 import { ProductCard } from '@/components/commerce/ProductCard';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
+
 import { CATEGORIES } from '@/data/mockCategories';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -41,7 +41,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/context/LanguageContext';
 import { Product, Category, HomepageSection, FeaturedDeal } from '@/types';
 import { SEO } from '@/components/common/SEO';
-import { getProducts, getCategories } from '@/services/productService';
+import { getProducts, getCategories, getProductsByIds } from '@/services/productService';
 import { getHomepageSections, DEFAULT_SECTIONS } from '@/services/cmsService';
 import { getFeaturedProducts, getFeaturedDeals } from '@/services/featuredService';
 import { getActiveDeals } from '@/services/dealService';
@@ -187,13 +187,13 @@ const ProductRow = ({
 export function Home() {
   const { t, lang } = useLanguage();
   const { user, firebaseUser } = useAuth();
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>(CATEGORIES);
   const [sections, setSections] = useState<HomepageSection[]>(DEFAULT_SECTIONS);
   const [activeDealIndex, setActiveDealIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [featuredFromFirestore, setFeaturedFromFirestore] = useState<Product[]>([]);
-  const [recentlyViewed, setRecentlyViewed] = useState<typeof MOCK_PRODUCTS>([]);
+  const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [recommendationGroups, setRecommendationGroups] = useState<RecommendationGroup[]>([]);
   const [recsLoading, setRecsLoading] = useState(false);
   const [deals, setDeals] = useState<FeaturedDeal[]>([]);
@@ -248,10 +248,14 @@ export function Home() {
         }
       }
 
-      const prods = ids
-        .map((id) => MOCK_PRODUCTS.find((p) => p.id === id))
-        .filter((p): p is (typeof MOCK_PRODUCTS)[0] => Boolean(p));
-      setRecentlyViewed(prods);
+      if (ids.length > 0) {
+        try {
+          const prods = await getProductsByIds(ids);
+          setRecentlyViewed(prods);
+        } catch {
+          setRecentlyViewed([]);
+        }
+      }
     }
     loadRecentlyViewed();
   }, [firebaseUser?.uid]);
@@ -278,9 +282,7 @@ export function Home() {
           getCategories(),
           getHomepageSections(),
         ]);
-        // Only replace MOCK_PRODUCTS if Firestore returned real data.
-        // When the composite index is building, getProducts returns [] silently.
-        if (fetchedProducts.length > 0) setProducts(fetchedProducts);
+        setProducts(fetchedProducts);
         if (fetchedCategories.length > 0) setCategories(fetchedCategories);
         if (fetchedSections.length > 0) setSections(fetchedSections);
       } catch (error) {
@@ -336,7 +338,7 @@ export function Home() {
   const displayFeatured =
     featuredFromFirestore.length > 0
       ? featuredFromFirestore
-      : MOCK_PRODUCTS.filter((p) => p.featured);
+      : products.filter((p) => (p as any).featured);
 
   const popularProducts = getSectionProducts(
     popularSection,
@@ -356,7 +358,7 @@ export function Home() {
   const featuredDealProducts =
     featuredDealData.length > 0
       ? products.filter((p) => featuredDealData.some((d) => d.productId === p.id))
-      : MOCK_PRODUCTS.filter((p) => p.featured);
+      : products.filter((p) => (p as any).featured);
 
   const categoryIconMap: Record<string, React.ReactNode> = {
     Smartphone: <Smartphone size={18} />,
@@ -842,7 +844,7 @@ export function Home() {
         </section>
 
         {/* Discovery Grid: Sizin İçin Seçtiklerimiz */}
-        <ProductRow title="Senin İçin Seçtiklerimiz" products={MOCK_PRODUCTS.slice(0, 20)} />
+        <ProductRow title="Senin İçin Seçtiklerimiz" products={products.slice(0, 20)} />
 
         {/* AI Recommendations */}
         <ProductRecommendations groups={recommendationGroups} loading={recsLoading} />

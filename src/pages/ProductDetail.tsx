@@ -24,9 +24,7 @@ import {
   Facebook,
   Twitter,
 } from 'lucide-react';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { isGpsrCompliant, getHsCodeLabel, getHsCode } from '@/services/complianceService';
-import { MOCK_SELLERS } from '@/data/mockSellers';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { useLocationStore } from '@/context/LocationContext';
@@ -35,7 +33,9 @@ import { ProductCard } from '@/components/commerce/ProductCard';
 import { SEO } from '@/components/common/SEO';
 import { ShieldCheck, AlertTriangle } from 'lucide-react';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
-import { getProductBySlug } from '@/services/productService';
+import { getProductBySlug, getProductsByIds, getProducts } from '@/services/productService';
+import { getSellerById } from '@/services/userService';
+import { getFeaturedProducts } from '@/services/featuredService';
 import { Product, Campaign, Coupon, ProductVariant } from '@/types';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { ReviewSection } from '@/components/product/ReviewSection';
@@ -157,6 +157,17 @@ export function ProductDetail() {
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [isFollowingSeller, setIsFollowingSeller] = useState(false);
+  const [relatedProds, setRelatedProds] = useState<Product[]>([]);
+  const [boughtTogetherProds, setBoughtTogetherProds] = useState<Product[]>([]);
+  const [sellerProds, setSellerProds] = useState<Product[]>([]);
+  const [categoryProds, setCategoryProds] = useState<Product[]>([]);
+  const [sellerInfo, setSellerInfo] = useState<{
+    storeName?: string;
+    rating?: number;
+    reviewsCount?: number;
+    followersCount?: number;
+  }>({});
+  const [featuredProds, setFeaturedProds] = useState<Product[]>([]);
   const {
     addItem: addToComparison,
     removeItem: removeFromComparison,
@@ -227,12 +238,15 @@ export function ProductDetail() {
       // Filter out current product id
       const filteredIds = viewedIds.filter((id) => id !== product.id);
 
-      // Map to MOCK_PRODUCTS
-      const products = filteredIds
-        .map((id) => MOCK_PRODUCTS.find((p) => p.id === id))
-        .filter((p): p is Product => !!p);
-
-      setRecentViewed(products.slice(0, 8));
+      // Fetch real products by IDs
+      if (filteredIds.length > 0) {
+        try {
+          const prods = await getProductsByIds(filteredIds);
+          setRecentViewed(prods.slice(0, 8));
+        } catch {
+          setRecentViewed([]);
+        }
+      }
     }
 
     loadRecentViewed();
@@ -255,6 +269,51 @@ export function ProductDetail() {
     }
     loadProduct();
   }, [slug]);
+
+  // Fetch related/recommendation products + seller info when product loads
+  useEffect(() => {
+    if (!product) return;
+    (async () => {
+      try {
+        const [related, bought, seller, category, sellerData, featured] = await Promise.all([
+          product.relatedProductIds?.length
+            ? getProductsByIds(product.relatedProductIds)
+            : Promise.resolve([]),
+          product.frequentlyBoughtTogetherIds?.length
+            ? getProductsByIds(product.frequentlyBoughtTogetherIds)
+            : Promise.resolve([]),
+          product.sellerId
+            ? getProducts({ sellerId: product.sellerId }).then((r) =>
+                r.filter((p) => p.id !== product.id),
+              )
+            : Promise.resolve([]),
+          product.categoryId
+            ? getProducts({ categoryId: product.categoryId }).then((r) =>
+                r.filter((p) => p.id !== product.id).slice(0, 10),
+              )
+            : Promise.resolve([]),
+          product.sellerId
+            ? getSellerById(product.sellerId).catch(() => null)
+            : Promise.resolve(null),
+          getFeaturedProducts().catch(() => [] as Product[]),
+        ]);
+        setRelatedProds(related);
+        setBoughtTogetherProds(bought);
+        setSellerProds(seller);
+        setCategoryProds(category);
+        if (sellerData)
+          setSellerInfo({
+            storeName: sellerData.storeName,
+            rating: sellerData.rating,
+            reviewsCount: sellerData.reviewsCount,
+            followersCount: sellerData.followersCount,
+          });
+        setFeaturedProds(featured.filter((p) => p.id !== product.id).slice(0, 10));
+      } catch {
+        // graceful fallback — keep empty arrays
+      }
+    })();
+  }, [product]);
 
   useEffect(() => {
     if (!product) return;
@@ -357,17 +416,11 @@ export function ProductDetail() {
     : 0;
   const cartPrice = product ? product.price - cartDiscount : 0;
 
-  // Recommendations logic
-  const relatedProducts = MOCK_PRODUCTS.filter((p) => product.relatedProductIds?.includes(p.id));
-  const boughtTogether = MOCK_PRODUCTS.filter((p) =>
-    product.frequentlyBoughtTogetherIds?.includes(p.id),
-  );
-  const sellerProducts = MOCK_PRODUCTS.filter(
-    (p) => p.sellerId === product.sellerId && p.id !== product.id,
-  );
-  const categoriesProducts = MOCK_PRODUCTS.filter(
-    (p) => p.categoryId === product.categoryId && p.id !== product.id,
-  ).slice(0, 10);
+  // Recommendations logic — fetched from Firestore via useEffect
+  const relatedProducts = relatedProds;
+  const boughtTogether = boughtTogetherProds;
+  const sellerProducts = sellerProds;
+  const categoriesProducts = categoryProds;
 
   const currentMarket = MARKETS[location.market] ?? MARKETS['UK'];
   const tax = calculateTotal(product.price, 12, currentMarket, product.originCountry === 'UK');
@@ -656,21 +709,10 @@ export function ProductDetail() {
               {/* Seller Card */}
               <SellerCard
                 sellerId={product.sellerId}
-                sellerName={
-                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.storeName ||
-                  product.brand ||
-                  'Mağaza'
-                }
-                sellerRating={
-                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.rating ?? product.rating
-                }
-                sellerReviewCount={
-                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.reviewsCount ??
-                  product.reviewsCount
-                }
-                sellerFollowersCount={
-                  MOCK_SELLERS.find((s) => s.id === product.sellerId)?.followersCount
-                }
+                sellerName={sellerInfo.storeName || product.brand || 'Mağaza'}
+                sellerRating={sellerInfo.rating ?? product.rating}
+                sellerReviewCount={sellerInfo.reviewsCount ?? product.reviewsCount}
+                sellerFollowersCount={sellerInfo.followersCount}
                 isFollowing={isFollowingSeller}
                 onToggleFollow={() => setIsFollowingSeller((f) => !f)}
                 onAskQuestion={() => {
@@ -1130,7 +1172,7 @@ export function ProductDetail() {
             <ProductCarousel
               title={t('product.rec.secilmis.title')}
               subtext={t('product.rec.secilmis.sub')}
-              products={MOCK_PRODUCTS.filter((p) => p.featured && p.id !== product.id).slice(0, 10)}
+              products={featuredProds}
             />
           </div>
 
