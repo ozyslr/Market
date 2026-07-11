@@ -287,6 +287,8 @@ export async function updateProduct(id: string, data: Partial<Product>, meta?: U
     // If stock is changing, snapshot old value first for audit trail
     let oldStock: number | undefined;
     let oldSellerId: string | undefined;
+    let prevTitle: string | undefined;
+    let prevSlug: string | undefined;
     if (data.stock !== undefined) {
       try {
         const snap = await getDoc(productRef);
@@ -294,6 +296,8 @@ export async function updateProduct(id: string, data: Partial<Product>, meta?: U
           const prev = snap.data() as Product;
           oldStock = prev.stock ?? 0;
           oldSellerId = prev.sellerId;
+          prevTitle = prev.title;
+          prevSlug = prev.slug;
         }
       } catch {
         /* non-blocking — proceed without recording */
@@ -310,14 +314,18 @@ export async function updateProduct(id: string, data: Partial<Product>, meta?: U
 
     // Record stock movement (fire-and-forget)
     if (data.stock !== undefined && oldStock !== undefined) {
+      const sellerId = meta?.sellerId || oldSellerId || '';
       recordStockChange(
         id,
-        meta?.sellerId || oldSellerId || '',
+        sellerId,
         oldStock,
         data.stock,
         meta?.reason || 'manual_update',
         meta?.userId || 'system',
       ).catch(() => {});
+      if (prevTitle && prevSlug) {
+        notifySellerLowStock(sellerId, id, data.stock, prevTitle, prevSlug).catch(() => {});
+      }
     }
 
     // Fire-and-forget Typesense sync
@@ -870,6 +878,8 @@ export async function batchUpdateProducts(
     sellerId: string;
     oldStock: number;
     newStock: number;
+    productTitle?: string;
+    productSlug?: string;
   }> = [];
   for (const { productId, stock } of updates) {
     if (stock !== undefined) {
@@ -882,6 +892,8 @@ export async function batchUpdateProducts(
             sellerId: prev.sellerId || '',
             oldStock: prev.stock ?? 0,
             newStock: stock,
+            productTitle: prev.title,
+            productSlug: prev.slug,
           });
         }
       } catch {
@@ -926,6 +938,15 @@ export async function batchUpdateProducts(
         'bulk_update',
         meta?.userId || 'system',
       ).catch(() => {});
+      if (sc.productTitle && sc.productSlug) {
+        notifySellerLowStock(
+          sc.sellerId,
+          sc.productId,
+          sc.newStock,
+          sc.productTitle,
+          sc.productSlug,
+        ).catch(() => {});
+      }
     }
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, 'products/batch');
