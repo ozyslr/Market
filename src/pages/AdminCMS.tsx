@@ -53,17 +53,15 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '@/context/LanguageContext';
 import { cn } from '@/lib/utils';
-import { CATEGORIES as MOCK_CATEGORIES } from '@/data/mockCategories';
-
 function normName(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9ğüşöçı]/g, '');
 }
 
-function getMockItems(parentId: string, subName: string) {
-  const parent = MOCK_CATEGORIES.find((c) => c.id === parentId);
+function getCategoryItems(categories: any[], parentId: string, subName: string) {
+  const parent = categories.find((c) => c.id === parentId);
   if (!parent?.subGroups) return [];
   const norm = normName(subName);
-  const group = parent.subGroups.find((g) => {
+  const group = parent.subGroups.find((g: any) => {
     const gn = normName(g.name);
     return gn === norm || gn.startsWith(norm) || norm.startsWith(gn);
   });
@@ -875,7 +873,7 @@ export function AdminCMS() {
                                   )}
                                   {subs.map((sub) => {
                                     const l3Items: { name: string; query: string }[] =
-                                      sub.items ?? getMockItems(cat.id, sub.name);
+                                      sub.items ?? getCategoryItems(categories, cat.id, sub.name);
                                     return (
                                       <div
                                         key={sub.id}

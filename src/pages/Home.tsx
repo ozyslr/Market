@@ -34,7 +34,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Hero } from '@/components/home/Hero';
 import { ProductCard } from '@/components/commerce/ProductCard';
 
-import { CATEGORIES } from '@/data/mockCategories';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Link, useLocation } from 'react-router-dom';
@@ -188,7 +187,7 @@ export function Home() {
   const { t, lang } = useLanguage();
   const { user, firebaseUser } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>(CATEGORIES);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [sections, setSections] = useState<HomepageSection[]>(DEFAULT_SECTIONS);
   const [activeDealIndex, setActiveDealIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -283,7 +282,7 @@ export function Home() {
           getHomepageSections(),
         ]);
         setProducts(fetchedProducts);
-        if (fetchedCategories.length > 0) setCategories(fetchedCategories);
+        setCategories(fetchedCategories);
         if (fetchedSections.length > 0) setSections(fetchedSections);
       } catch (error) {
         console.error('Home data load error:', error);
