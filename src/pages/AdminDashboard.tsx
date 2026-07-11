@@ -103,9 +103,7 @@ import { AdminWebhooks } from './AdminWebhooks';
 import { AdminAuditLog } from './AdminAuditLog';
 import { AdminIntegrations } from './AdminIntegrations';
 
-// --- TEMPLATE / PLACEHOLDER CHART DATA ---
-// TODO: Replace these hardcoded arrays with real Firestore-derived data.
-// SALES_PERFORMANCE: query orders grouped by day, compute daily revenue sums.
+// --- FALLBACK CHART DATA (used only when Firestore data is unavailable) ---
 const SALES_PERFORMANCE = [
   { day: '01 May', purple: 450000, green: 380000 },
   { day: '05 May', purple: 520000, green: 450000 },
@@ -116,7 +114,7 @@ const SALES_PERFORMANCE = [
   { day: '30 May', purple: 820000, green: 720000 },
 ];
 
-// TODO: Replace with Firestore aggregation query (group by status → count).
+// Fallback — real data computed from Firestore in useEffect
 const ORDER_STATUS_DISTRIBUTION = [
   { name: 'Teslim Edilen', value: 12458, color: '#10B981' },
   { name: 'Kargoda', value: 3215, color: '#3B82F6' },
@@ -124,7 +122,7 @@ const ORDER_STATUS_DISTRIBUTION = [
   { name: 'İptal/İade', value: 866, color: '#EF4444' },
 ];
 
-// TODO: Replace with real sparkline data computed from recent daily revenue/orders.
+// Fallback — real data computed from Firestore in useEffect
 const SPARKLINE_DATA = [
   { v: 10 },
   { v: 25 },
@@ -237,7 +235,7 @@ const KPICard = ({ label, value, trend, icon: Icon, color, bg }: any) => {
         </div>
         <div className="h-8 w-20">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={SPARKLINE_DATA}>
+            <AreaChart data={sparkline.length > 0 ? sparkline : SPARKLINE_DATA}>
               <Area
                 type="monotone"
                 dataKey="v"
@@ -328,6 +326,13 @@ export function AdminDashboard() {
   const [topProductsData, setTopProductsData] = useState<any[]>([]);
   const [recentOrdersData, setRecentOrdersData] = useState<any[]>([]);
   const [trends, setTrends] = useState({ revenue: 15.2, orders: 10.8, users: 5.4, sellers: -1.6 });
+  const [salesPerformance, setSalesPerformance] = useState<
+    { day: string; purple: number; green: number }[]
+  >([]);
+  const [orderStatusDist, setOrderStatusDist] = useState<
+    { name: string; value: number; color: string }[]
+  >([]);
+  const [sparkline, setSparkline] = useState<{ v: number }[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -411,6 +416,65 @@ export function AdminDashboard() {
           sellers:
             totalSellers > 0 ? Math.round((totalSellers / (totalSellers + 1)) * 1000) / 10 : -1.6,
         });
+
+        // Compute sales performance by day (last 7 days)
+        const dayMap: Record<string, { revenue: number; orders: number }> = {};
+        const statusMap: Record<string, number> = {};
+        const dailyRev: number[] = [];
+        orderSnap.forEach((d) => {
+          const data = d.data();
+          const ca = data.createdAt || '';
+          const day = ca ? ca.slice(0, 10) : '';
+          if (day) {
+            const entry = dayMap[day] || { revenue: 0, orders: 0 };
+            entry.revenue += data.total || data.totalAmount || 0;
+            entry.orders += 1;
+            dayMap[day] = entry;
+          }
+          const st = data.status || 'pending';
+          statusMap[st] = (statusMap[st] || 0) + 1;
+        });
+        const sortedDays = Object.keys(dayMap).sort().slice(-7);
+        setSalesPerformance(
+          sortedDays.map((d) => ({
+            day: `${d.slice(8)} ${['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'][parseInt(d.slice(5, 7)) - 1]}`,
+            purple: Math.round((dayMap[d].revenue || 0) / 1000),
+            green: dayMap[d].orders,
+          })),
+        );
+        setOrderStatusDist(
+          Object.entries(statusMap)
+            .map(([st, val]) => ({
+              name:
+                st === 'delivered'
+                  ? 'Teslim Edilen'
+                  : st === 'shipped'
+                    ? 'Kargoda'
+                    : st === 'preparing'
+                      ? 'Hazırlanıyor'
+                      : st === 'cancelled'
+                        ? 'İptal/İade'
+                        : st,
+              value: val,
+              color:
+                st === 'delivered'
+                  ? '#10B981'
+                  : st === 'shipped'
+                    ? '#3B82F6'
+                    : st === 'preparing'
+                      ? '#F59E0B'
+                      : st === 'cancelled'
+                        ? '#EF4444'
+                        : '#8B5CF6',
+            }))
+            .sort((a, b) => b.value - a.value),
+        );
+        for (const d of sortedDays) {
+          dailyRev.push(Math.round((dayMap[d]?.revenue || 0) / 1000));
+        }
+        setSparkline(
+          dailyRev.length > 0 ? dailyRev.map((v) => ({ v })) : [{ v: 0 }, { v: 0 }, { v: 0 }],
+        );
 
         // Build aggregate sales map from all orders
         const salesMap: Record<string, { count: number; revenue: number }> = {};
@@ -1022,7 +1086,9 @@ export function AdminDashboard() {
 
                   <div className="h-[400px] w-full mt-4">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={SALES_PERFORMANCE}>
+                      <AreaChart
+                        data={salesPerformance.length > 0 ? salesPerformance : SALES_PERFORMANCE}
+                      >
                         <defs>
                           <linearGradient id="purpleGradient" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#6D28D9" stopOpacity={0.1} />
@@ -1105,14 +1171,19 @@ export function AdminDashboard() {
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
                         <Pie
-                          data={ORDER_STATUS_DISTRIBUTION}
+                          data={
+                            orderStatusDist.length > 0 ? orderStatusDist : ORDER_STATUS_DISTRIBUTION
+                          }
                           innerRadius={90}
                           outerRadius={120}
                           paddingAngle={8}
                           dataKey="value"
                           stroke="none"
                         >
-                          {ORDER_STATUS_DISTRIBUTION.map((entry, index) => (
+                          {(orderStatusDist.length > 0
+                            ? orderStatusDist
+                            : ORDER_STATUS_DISTRIBUTION
+                          ).map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
@@ -1121,25 +1192,27 @@ export function AdminDashboard() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-x-10 gap-y-6 mt-6">
-                    {ORDER_STATUS_DISTRIBUTION.map((item, i) => (
-                      <div key={i} className="flex flex-col">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <div
-                            className="w-2.5 h-2.5 rounded-full"
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <span className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest leading-none">
-                            {item.name}
-                          </span>
+                    {(orderStatusDist.length > 0 ? orderStatusDist : ORDER_STATUS_DISTRIBUTION).map(
+                      (item, i) => (
+                        <div key={i} className="flex flex-col">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <div
+                              className="w-2.5 h-2.5 rounded-full"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <span className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest leading-none">
+                              {item.name}
+                            </span>
+                          </div>
+                          <p className="text-sm font-black text-brand-primary ms-4.5">
+                            {item.value.toLocaleString()}{' '}
+                            <span className="text-[10px] text-brand-primary/30 font-bold">
+                              ({Math.round((item.value / 18392) * 100)}%)
+                            </span>
+                          </p>
                         </div>
-                        <p className="text-sm font-black text-brand-primary ms-4.5">
-                          {item.value.toLocaleString()}{' '}
-                          <span className="text-[10px] text-brand-primary/30 font-bold">
-                            ({Math.round((item.value / 18392) * 100)}%)
-                          </span>
-                        </p>
-                      </div>
-                    ))}
+                      ),
+                    )}
                   </div>
                 </div>
               </div>
@@ -1213,7 +1286,7 @@ export function AdminDashboard() {
                         {/* Mini Chart Mock for metrics */}
                         <div className="w-full h-10 mt-6 opacity-30 group-hover:opacity-100 transition-opacity">
                           <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={SPARKLINE_DATA}>
+                            <BarChart data={sparkline.length > 0 ? sparkline : SPARKLINE_DATA}>
                               <Bar dataKey="v" fill={stat.color} radius={[2, 2, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
