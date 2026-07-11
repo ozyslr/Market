@@ -22,6 +22,7 @@ import { Product, Category } from '../types';
 import { MOCK_PRODUCTS, CATEGORIES } from '../mockData';
 import { recordPrice } from './priceHistoryService';
 import { recordStockChange } from './stockMovementService';
+import { notifySellerLowStock } from './stockAlertService';
 import { getTotalStock, getDefaultWarehouse, setWarehouseStock } from './warehouseService';
 
 export interface GetProductsOptions {
@@ -397,6 +398,8 @@ export async function decreaseProductStock(
     oldStock: number;
     newStock: number;
     quantity: number;
+    productTitle?: string;
+    productSlug?: string;
   }> = [];
 
   try {
@@ -444,6 +447,8 @@ export async function decreaseProductStock(
             oldStock: product.stock ?? 0,
             newStock: newTotal,
             quantity,
+            productTitle: product.title,
+            productSlug: product.slug,
           });
         } else {
           // Decrement product-level stock
@@ -506,6 +511,16 @@ export async function decreaseProductStock(
         meta?.userId || 'system',
         warehouseId,
       ).catch(() => {});
+      // Notify seller if stock dropped below threshold
+      if (m.productTitle && m.productSlug) {
+        notifySellerLowStock(
+          m.sellerId,
+          m.productId,
+          m.newStock,
+          m.productTitle,
+          m.productSlug,
+        ).catch(() => {});
+      }
     }
   } catch (error: any) {
     if (error?.message?.startsWith('STOCK_ERROR:')) {
@@ -532,6 +547,8 @@ export async function restoreProductStock(
     oldStock: number;
     newStock: number;
     quantity: number;
+    productTitle?: string;
+    productSlug?: string;
   }> = [];
 
   try {
@@ -564,6 +581,8 @@ export async function restoreProductStock(
             oldStock: product.stock ?? 0,
             newStock: newTotal,
             quantity,
+            productTitle: product.title,
+            productSlug: product.slug,
           });
         } else {
           const newStock = (product.stock ?? 0) + quantity;
@@ -577,6 +596,8 @@ export async function restoreProductStock(
             oldStock: product.stock ?? 0,
             newStock,
             quantity,
+            productTitle: product.title,
+            productSlug: product.slug,
           });
         }
       }
@@ -614,6 +635,15 @@ export async function restoreProductStock(
         meta?.userId || 'system',
         warehouseId,
       ).catch(() => {});
+      if (m.productTitle && m.productSlug) {
+        notifySellerLowStock(
+          m.sellerId,
+          m.productId,
+          m.newStock,
+          m.productTitle,
+          m.productSlug,
+        ).catch(() => {});
+      }
     }
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, 'products/stock');
