@@ -629,6 +629,67 @@ export function SellerStorePage() {
                   </button>
                 </div>
               </div>
+              {/* Social Links */}
+              {storeConfig?.socialLinks && Object.values(storeConfig.socialLinks).some(Boolean) && (
+                <div className="bg-white rounded-2xl p-3 shadow-sm border border-brand-primary/5">
+                  <h3 className="text-[10px] font-black uppercase text-brand-primary/30 mb-2">
+                    Sosyal Medya
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {storeConfig.socialLinks.website && (
+                      <a
+                        href={storeConfig.socialLinks.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-7 h-7 rounded-lg bg-brand-secondary flex items-center justify-center hover:bg-accent hover:text-white transition-colors text-brand-primary/50"
+                      >
+                        <Globe size={12} />
+                      </a>
+                    )}
+                    {storeConfig.socialLinks.instagram && (
+                      <a
+                        href={storeConfig.socialLinks.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-7 h-7 rounded-lg bg-brand-secondary flex items-center justify-center hover:bg-[#E4405F] hover:text-white transition-colors text-brand-primary/50"
+                      >
+                        <Camera size={12} />
+                      </a>
+                    )}
+                    {storeConfig.socialLinks.facebook && (
+                      <a
+                        href={storeConfig.socialLinks.facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-7 h-7 rounded-lg bg-brand-secondary flex items-center justify-center hover:bg-[#1877F2] hover:text-white transition-colors text-brand-primary/50"
+                      >
+                        <UserPlus size={12} />
+                      </a>
+                    )}
+                    {storeConfig.socialLinks.twitter && (
+                      <a
+                        href={storeConfig.socialLinks.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-7 h-7 rounded-lg bg-brand-secondary flex items-center justify-center hover:bg-[#1DA1F2] hover:text-white transition-colors text-brand-primary/50"
+                      >
+                        <Share2 size={12} />
+                      </a>
+                    )}
+                    {storeConfig.socialLinks.youtube && (
+                      <a
+                        href={storeConfig.socialLinks.youtube}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-7 h-7 rounded-lg bg-brand-secondary flex items-center justify-center hover:bg-[#FF0000] hover:text-white transition-colors text-brand-primary/50"
+                      >
+                        <Play size={12} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="bg-white rounded-2xl p-3 shadow-sm border border-brand-primary/5 space-y-3">
                 <h3 className="text-[10px] font-black uppercase text-brand-primary/30">Filtrele</h3>
                 <div>
@@ -1348,6 +1409,9 @@ export function SellerStorePage() {
                                 : sellerData.companyType
                         }
                       />
+                    )}
+                    {storeConfig?.foundedYear && (
+                      <InfoRow label="Kuruluş Yılı" value={String(storeConfig.foundedYear)} />
                     )}
                   </div>
                   {sellerData.isVerified && (
