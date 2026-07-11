@@ -19,7 +19,7 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Product, Category } from '../types';
-import { MOCK_PRODUCTS, CATEGORIES } from '../mockData';
+import { CATEGORIES } from '../mockData';
 import { recordPrice } from './priceHistoryService';
 import { recordStockChange } from './stockMovementService';
 import { notifySellerLowStock } from './stockAlertService';
@@ -216,44 +216,10 @@ export async function getProductBySlug(slug: string) {
       return ensureProductHasSlug(product);
     }
 
-    // Try to find in mock products by slug
-    let product = MOCK_PRODUCTS.find((p) => p.slug === slug);
-
-    // If not found, try by generated slug
-    if (!product) {
-      product = MOCK_PRODUCTS.find((p) => generateSlug(p.title) === slug);
-    }
-
-    // If still not found, try partial match (slug starts with or contains key words)
-    if (!product) {
-      const slugWords = slug.split('-').filter((w) => w.length > 2);
-      product = MOCK_PRODUCTS.find((p) => {
-        const productSlug = p.slug || generateSlug(p.title);
-        return (
-          slugWords.some((word) => productSlug.includes(word)) &&
-          slugWords.every((word) => productSlug.includes(word))
-        );
-      });
-    }
-
-    return product ? ensureProductHasSlug(product) : null;
+    return null;
   } catch (error) {
     console.error('Error fetching product:', error);
-    let product = MOCK_PRODUCTS.find((p) => p.slug === slug);
-    if (!product) {
-      product = MOCK_PRODUCTS.find((p) => generateSlug(p.title) === slug);
-    }
-    if (!product) {
-      const slugWords = slug.split('-').filter((w) => w.length > 2);
-      product = MOCK_PRODUCTS.find((p) => {
-        const productSlug = p.slug || generateSlug(p.title);
-        return (
-          slugWords.some((word) => productSlug.includes(word)) &&
-          slugWords.every((word) => productSlug.includes(word))
-        );
-      });
-    }
-    return product ? ensureProductHasSlug(product) : null;
+    return null;
   }
 }
 
@@ -788,56 +754,6 @@ export async function deleteCategory(id: string) {
     handleFirestoreError(error, OperationType.DELETE, `categories/${id}`);
     throw error;
   }
-}
-
-export interface SearchSuggestion {
-  type: 'product' | 'category' | 'brand';
-  label: string;
-  sublabel?: string;
-  href: string;
-  image?: string;
-}
-
-export function searchSuggestions(q: string, topN = 6): SearchSuggestion[] {
-  if (!q || q.trim().length < 2) return [];
-  const norm = q.toLowerCase().trim();
-
-  const results: SearchSuggestion[] = [];
-
-  // Product matches
-  const productMatches = MOCK_PRODUCTS.filter(
-    (p) => p.title.toLowerCase().includes(norm) || (p.brand ?? '').toLowerCase().includes(norm),
-  ).slice(0, 4);
-  for (const p of productMatches) {
-    results.push({
-      type: 'product',
-      label: p.title,
-      sublabel: p.brand,
-      href: `/product/${p.slug}`,
-      image: p.images[0],
-    });
-  }
-
-  // Category matches (L1 + L2)
-  const catMatches = CATEGORIES.filter((c) => c.name.toLowerCase().includes(norm)).slice(0, 3);
-  for (const c of catMatches) {
-    results.push({ type: 'category', label: c.name, href: `/category/${c.id}` });
-  }
-
-  // Brand dedup
-  const brands = new Set<string>();
-  for (const p of MOCK_PRODUCTS) {
-    if (p.brand && p.brand.toLowerCase().includes(norm)) brands.add(p.brand);
-  }
-  for (const brand of Array.from(brands).slice(0, 2)) {
-    results.push({
-      type: 'brand',
-      label: brand,
-      href: `/search?brand=${encodeURIComponent(brand)}`,
-    });
-  }
-
-  return results.slice(0, topN);
 }
 
 // ─── Batch Product Updates ──────────────────────────────────────────────────

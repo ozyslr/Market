@@ -1,19 +1,29 @@
 ﻿import React, { useState } from 'react';
-import { Search, ArrowRight, TrendingUp, Smartphone, Coffee, Package, Clock, Zap, Camera } from 'lucide-react';
+import {
+  Search,
+  ArrowRight,
+  TrendingUp,
+  Smartphone,
+  Coffee,
+  Package,
+  Clock,
+  Zap,
+  Camera,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { useLanguage } from '@/context/LanguageContext';
-import { searchSuggestions, searchProductsLegacy as searchProducts } from '@/services/searchService';
+import { searchSuggestions } from '@/services/searchService';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
+import type { Product } from '@/types';
 
 export function SearchBar() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [suggestions, setSuggestions] = useState<typeof MOCK_PRODUCTS>([]);
+  const [suggestions, setSuggestions] = useState<Product[]>([]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +33,12 @@ export function SearchBar() {
   };
 
   return (
-    <form onSubmit={handleSearch} className="flex-1 h-full flex items-center relative" role="search" aria-label="Ürün ara">
+    <form
+      onSubmit={handleSearch}
+      className="flex-1 h-full flex items-center relative"
+      role="search"
+      aria-label="Ürün ara"
+    >
       <input
         type="text"
         placeholder={t('nav.search_placeholder')}
@@ -31,10 +46,16 @@ export function SearchBar() {
         value={searchQuery}
         onFocus={() => setIsSearchFocused(true)}
         onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-        onChange={e => {
+        onChange={(e) => {
           const val = e.target.value;
           setSearchQuery(val);
-          setSuggestions(searchProducts(val));
+          if (val.trim().length >= 2) {
+            searchSuggestions(val, 6)
+              .then(setSuggestions)
+              .catch(() => setSuggestions([]));
+          } else {
+            setSuggestions([]);
+          }
         }}
         className="w-full h-full px-4 pe-14 rounded-xl text-sm font-bold bg-white dark:bg-zinc-900 border border-brand-primary/10 text-brand-primary dark:text-white placeholder:text-brand-primary/40 focus:border-accent focus:shadow-[0_0_20px_rgba(109,40,217,0.15)] outline-none transition-all"
       />
@@ -61,7 +82,9 @@ export function SearchBar() {
                   <div>
                     <div className="flex items-center gap-2 mb-6">
                       <TrendingUp size={14} className="text-accent" />
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30">{t('search.popular')}</h4>
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
+                        {t('search.popular')}
+                      </h4>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       {[
@@ -80,22 +103,39 @@ export function SearchBar() {
                           }}
                           className="flex items-center gap-2 px-3 py-2 bg-brand-secondary hover:bg-accent group rounded-xl transition-all text-start"
                         >
-                          <item.icon size={12} className="text-brand-primary/30 group-hover:text-white transition-colors" />
-                          <span className="text-[10px] font-bold text-brand-primary group-hover:text-white transition-colors truncate">{item.text}</span>
+                          <item.icon
+                            size={12}
+                            className="text-brand-primary/30 group-hover:text-white transition-colors"
+                          />
+                          <span className="text-[10px] font-bold text-brand-primary group-hover:text-white transition-colors truncate">
+                            {item.text}
+                          </span>
                         </button>
                       ))}
                     </div>
                     <div className="mt-8 p-4 bg-brand-secondary/50 rounded-2xl border border-brand-primary/5">
-                      <p className="text-[9px] font-black uppercase text-brand-primary/30 mb-2">{t('search.featured_category')}</p>
-                      <Link to="/search?categoryId=electronics" className="flex items-center justify-between group">
-                        <span className="text-xs font-black uppercase italic text-brand-primary group-hover:text-accent transition-colors">{t('category.electronics')}</span>
-                        <ArrowRight size={14} className="text-accent group-hover:translate-x-1 transition-all" />
+                      <p className="text-[9px] font-black uppercase text-brand-primary/30 mb-2">
+                        {t('search.featured_category')}
+                      </p>
+                      <Link
+                        to="/search?categoryId=electronics"
+                        className="flex items-center justify-between group"
+                      >
+                        <span className="text-xs font-black uppercase italic text-brand-primary group-hover:text-accent transition-colors">
+                          {t('category.electronics')}
+                        </span>
+                        <ArrowRight
+                          size={14}
+                          className="text-accent group-hover:translate-x-1 transition-all"
+                        />
                       </Link>
                     </div>
                   </div>
                 </div>
                 <div className="col-span-8">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-4">{t('search.products')}</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/30 mb-4">
+                    {t('search.products')}
+                  </h4>
                   <div className="space-y-3">
                     {(suggestions.length > 0 ? suggestions : MOCK_PRODUCTS.slice(0, 4)).map((p) => (
                       <Link
@@ -113,10 +153,17 @@ export function SearchBar() {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-black truncate text-brand-primary dark:text-white uppercase leading-tight">{p.title}</p>
-                          <p className="text-[10px] font-bold text-accent">{p.currency} {p.price}</p>
+                          <p className="text-[11px] font-black truncate text-brand-primary dark:text-white uppercase leading-tight">
+                            {p.title}
+                          </p>
+                          <p className="text-[10px] font-bold text-accent">
+                            {p.currency} {p.price}
+                          </p>
                         </div>
-                        <ArrowRight size={14} className="text-brand-primary/20 group-hover:text-accent group-hover:translate-x-1 transition-all" />
+                        <ArrowRight
+                          size={14}
+                          className="text-brand-primary/20 group-hover:text-accent group-hover:translate-x-1 transition-all"
+                        />
                       </Link>
                     ))}
                   </div>
@@ -134,7 +181,11 @@ export function SearchBar() {
       >
         <Camera size={18} strokeWidth={2} />
       </Link>
-      <button type="submit" className="absolute end-0 h-full px-6 bg-accent rounded-e-xl text-white hover:bg-accent-dark transition-all flex items-center justify-center shadow-lg shadow-accent/20" aria-label={t('nav.search') || 'Ara'}>
+      <button
+        type="submit"
+        className="absolute end-0 h-full px-6 bg-accent rounded-e-xl text-white hover:bg-accent-dark transition-all flex items-center justify-center shadow-lg shadow-accent/20"
+        aria-label={t('nav.search') || 'Ara'}
+      >
         <Search size={22} strokeWidth={3} />
       </button>
     </form>

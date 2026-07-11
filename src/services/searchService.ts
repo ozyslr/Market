@@ -9,8 +9,6 @@
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Product, Category, SponsoredSlot } from '@/types';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
-import { CATEGORIES } from '@/data/mockCategories';
 import { injectSponsoredProducts } from './adService';
 // Typesense lazy fallback — import inline to avoid top-level await (es2020 target)
 let typesenseSearch: any = null;
@@ -166,10 +164,9 @@ function computeFacets(products: Product[], categoryId?: string): SearchResult['
   for (const p of products) {
     // category facets
     if (!categoryMap.has(p.categoryId)) {
-      const cat = CATEGORIES.find((c) => c.id === p.categoryId);
       categoryMap.set(p.categoryId, {
         id: p.categoryId,
-        name: cat?.name ?? p.categoryId,
+        name: p.categoryId.replace(/-/g, ' '),
         count: 0,
       });
     }
@@ -320,30 +317,13 @@ async function searchFirestore(params: SearchParams): Promise<SearchResult | nul
     };
   } catch (error) {
     if (isOfflineError(error)) {
-      console.warn('[searchService] Firestore unavailable, falling back to MOCK_PRODUCTS', error);
+      console.warn('[searchService] Firestore unavailable, returning empty results', error);
       return null; // signal fallback
     }
     // For permission errors and other non-offline failures, still fall back
     console.warn('[searchService] Firestore query failed, falling back to MOCK_PRODUCTS', error);
     return null;
   }
-}
-
-// ─── Fallback: MOCK_PRODUCTS filtering ───────────────────────────────────────
-
-function searchMockProducts(params: SearchParams): SearchResult {
-  const filtered = applySearchFilters(MOCK_PRODUCTS, params);
-  const page = params.page ?? 1;
-  const pageSize = params.pageSize ?? 20;
-  const start = (page - 1) * pageSize;
-  const pageItems = filtered.slice(start, start + pageSize);
-
-  return {
-    products: pageItems,
-    totalCount: filtered.length,
-    hasMore: start + pageSize < filtered.length,
-    facets: computeFacets(filtered, params.categoryId),
-  };
 }
 
 // ─── Public API ──────────────────────────────────────────────────────────────
@@ -364,8 +344,7 @@ export async function searchProducts(params: SearchParams): Promise<SearchResult
   if (firestoreResult !== null) {
     result = firestoreResult;
   } else {
-    // Fallback to MOCK_PRODUCTS
-    result = searchMockProducts(params);
+    result = { products: [], totalCount: 0, hasMore: false };
   }
 
   // Inject sponsored products into search results
@@ -422,20 +401,11 @@ export async function searchSuggestions(searchQuery: string, maxResults = 6): Pr
     if (!snapshot.empty) {
       return snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as object) })) as Product[];
     }
+    return [];
   } catch (error) {
-    console.warn(
-      '[searchService] Firestore suggestions failed, falling back to MOCK_PRODUCTS',
-      error,
-    );
+    console.warn('[searchService] Firestore suggestions failed', error);
+    return [];
   }
-
-  // Fallback: client-side filter on MOCK_PRODUCTS
-  const nq = normalizeTR(searchQuery);
-  return MOCK_PRODUCTS.filter(
-    (p) =>
-      (p.status === undefined || p.status === 'approved') &&
-      [p.title, p.brand, ...(p.tags ?? [])].some((field) => normalizeTR(field ?? '').includes(nq)),
-  ).slice(0, maxResults);
 }
 
 /**
@@ -462,34 +432,8 @@ export async function getFacetedFilters(categoryId?: string): Promise<SearchResu
       return computeFacets(products, categoryId);
     }
   } catch (error) {
-    console.warn('[searchService] Firestore facets failed, falling back to MOCK_PRODUCTS', error);
+    console.warn('[searchService] Firestore facets failed', error);
   }
 
-  return getFacetedFiltersFallback(categoryId);
-}
-
-/**
- * Backward-compatible synchronous search — wraps the async searchProducts but
- * keeps the old signature (query: string, limitCount: number) for SearchBar.tsx.
- * Returns products directly without pagination/facets.
- */
-export function searchProductsLegacy(query: string, limitCount = 6): Product[] {
-  if (!query.trim() || query.trim().length < 2) return [];
-  const nq = normalizeTR(query);
-  return MOCK_PRODUCTS.filter(
-    (p) =>
-      (p.status === undefined || p.status === 'approved') &&
-      [p.title, p.description, p.brand, ...(p.tags ?? [])].some((field) =>
-        normalizeTR(field ?? '').includes(nq),
-      ),
-  ).slice(0, limitCount);
-}
-
-// ─── Internal fallbacks ──────────────────────────────────────────────────────
-
-function getFacetedFiltersFallback(categoryId?: string): SearchResult['facets'] {
-  const pool = categoryId
-    ? MOCK_PRODUCTS.filter((p) => p.categoryId === categoryId)
-    : MOCK_PRODUCTS;
-  return computeFacets(pool, categoryId);
+  return undefined;
 }

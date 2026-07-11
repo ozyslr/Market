@@ -9,18 +9,15 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product } from '../types';
-import { MOCK_PRODUCTS } from '../mockData';
 import { audit } from './auditLogService';
 
 export async function getPendingProducts(): Promise<Product[]> {
   try {
     const q = query(collection(db, 'products'), where('status', '==', 'pending'));
     const snap = await getDocs(q);
-    const firestoreProducts = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Product[];
-    if (firestoreProducts.length > 0) return firestoreProducts;
-    return MOCK_PRODUCTS.filter((p) => p.status === 'pending');
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Product[];
   } catch {
-    return MOCK_PRODUCTS.filter((p) => p.status === 'pending');
+    return [];
   }
 }
 
