@@ -808,6 +808,7 @@ export interface ProductBulkUpdate {
   productId: string;
   price?: number;
   stock?: number;
+  status?: string;
 }
 
 export interface BatchProductResult {
@@ -862,10 +863,11 @@ export async function batchUpdateProducts(
   const batch = writeBatch(db);
   const now = new Date().toISOString();
 
-  for (const { productId, price, stock } of updates) {
+  for (const { productId, price, stock, status } of updates) {
     const data: Record<string, any> = { updatedAt: now };
     if (price !== undefined) data.price = price;
     if (stock !== undefined) data.stock = stock;
+    if (status !== undefined) data.status = status;
     batch.update(doc(db, 'products', productId), data);
   }
 

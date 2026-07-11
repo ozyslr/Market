@@ -302,9 +302,26 @@ export function SellerInventoryPage() {
     setProducts(refreshedProducts);
   };
 
-  const handleBulkStatusUpdate = (status: string) => {
-    alert(`${selectedProducts.length} ${t('seller.inventory.bulkStatusUpdated')} ${status}.`);
-    setSelectedProducts([]);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+  const handleBulkStatusUpdate = async (status: string) => {
+    if (selectedProducts.length === 0) return;
+    setBulkUpdating(true);
+    try {
+      const result = await batchUpdateProducts(
+        selectedProducts.map((id) => ({ productId: id, status })),
+      );
+      if (result.failCount > 0) {
+        alert(`${result.successCount} ürün güncellendi, ${result.failCount} ürün güncellenemedi.`);
+      }
+      // Refresh products list
+      const refreshed = await getProducts({ sellerId });
+      if (refreshed.length > 0) setProducts(refreshed);
+      setSelectedProducts([]);
+    } catch (err: any) {
+      alert(`Güncelleme başarısız: ${err.message || 'Bilinmeyen hata'}`);
+    } finally {
+      setBulkUpdating(false);
+    }
   };
 
   const handleProductSubmit = async (data: ProductFormData, action: 'draft' | 'publish') => {
