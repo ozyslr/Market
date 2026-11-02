@@ -26,19 +26,22 @@ vi.mock('firebase-admin/auth', () => ({
 }));
 
 // firebase-admin.js needs FIREBASE_SERVICE_ACCOUNT_B64 to initialize adminDb
-// Set it before the module loads so adminDb is NOT null
-process.env.FIREBASE_SERVICE_ACCOUNT_B64 = Buffer.from(
-  JSON.stringify({
-    type: 'service_account',
-    project_id: 'test-project',
-    private_key_id: 'test-key-id',
-    private_key: '-----BEGIN PRIVATE KEY-----\nMOCK\n-----END PRIVATE KEY-----\n',
-    client_email: 'test@test-project.iam.gserviceaccount.com',
-    client_id: '123',
-    auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-    token_uri: 'https://oauth2.googleapis.com/token',
-  }),
-).toString('base64');
+// Set it before the module loads so adminDb is NOT null. ESM hoists imports above
+// plain statements, so this must run inside vi.hoisted() (CI has no .env fallback).
+vi.hoisted(() => {
+  process.env.FIREBASE_SERVICE_ACCOUNT_B64 = Buffer.from(
+    JSON.stringify({
+      type: 'service_account',
+      project_id: 'test-project',
+      private_key_id: 'test-key-id',
+      private_key: '-----BEGIN PRIVATE KEY-----\nMOCK\n-----END PRIVATE KEY-----\n',
+      client_email: 'test@test-project.iam.gserviceaccount.com',
+      client_id: '123',
+      auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+      token_uri: 'https://oauth2.googleapis.com/token',
+    }),
+  ).toString('base64');
+});
 
 // â”€â”€â”€ Now import the module under test â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
