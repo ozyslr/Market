@@ -228,6 +228,12 @@ export async function createProduct(data: Omit<Product, 'id'>) {
     const productsRef = collection(db, 'products');
     const docRef = await addDoc(productsRef, {
       ...data,
+      // New products enter moderation unless the caller chose draft/pending.
+      // A missing status used to be treated as approved (live with no review),
+      // and Firestore rules now reject seller creates without draft|pending.
+      status: data.status ?? 'pending',
+      rating: data.rating ?? 0,
+      reviewsCount: data.reviewsCount ?? 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });

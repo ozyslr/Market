@@ -9,7 +9,12 @@ export interface BulkEditBarProps {
   onBulkDelete: () => void;
 }
 
-export function BulkEditBar({ selectedIds, onClearSelection, onBulkStatusUpdate, onBulkDelete }: BulkEditBarProps) {
+export function BulkEditBar({
+  selectedIds,
+  onClearSelection,
+  onBulkStatusUpdate,
+  onBulkDelete,
+}: BulkEditBarProps) {
   return (
     <AnimatePresence>
       {selectedIds.length > 0 && (
@@ -19,19 +24,22 @@ export function BulkEditBar({ selectedIds, onClearSelection, onBulkStatusUpdate,
           exit={{ opacity: 0, x: 20 }}
           className="flex items-center gap-3 bg-brand-primary px-4 py-2 rounded-2xl shadow-xl ms-4"
         >
-          <span className="text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">{selectedIds.length} Selected</span>
+          <span className="text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">
+            {selectedIds.length} Selected
+          </span>
           <div className="w-px h-4 bg-white/10" />
+          {/* Sellers can't self-approve: 'approved' is set by admin moderation only. */}
           <button
-            onClick={() => onBulkStatusUpdate('Active')}
+            onClick={() => onBulkStatusUpdate('pending')}
             className="p-2 text-white/60 hover:text-green-400 transition-colors"
-            title="Active"
+            title="Onaya gönder"
           >
             <CheckCircle size={14} />
           </button>
           <button
-            onClick={() => onBulkStatusUpdate('Pending')}
+            onClick={() => onBulkStatusUpdate('draft')}
             className="p-2 text-white/60 hover:text-orange-400 transition-colors"
-            title="Pending"
+            title="Taslağa al"
           >
             <Clock size={14} />
           </button>

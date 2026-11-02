@@ -347,7 +347,8 @@ export class ShopifyConnector implements PlatformConnector {
         : undefined,
       rating: 0,
       reviewsCount: 0,
-      status: external.status === 'active' ? 'approved' : 'pending',
+      // Imported products always go through moderation, even if live on the source store
+      status: 'pending',
       visibility: 'public',
       isActive: external.status === 'active',
     };

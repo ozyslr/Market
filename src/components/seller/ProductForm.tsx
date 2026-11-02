@@ -20,6 +20,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { CategorySelect } from './CategorySelect';
 import { cn } from '../../lib/utils';
 import { uploadImage } from '../../lib/storage';
+import { auth } from '../../lib/firebase';
 import type { ProductVariant } from '../../types';
 import {
   generateProductDescription,
@@ -304,7 +305,8 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
           }, 250);
 
           try {
-            const url = await uploadImage(file, 'products');
+            // Storage rules only allow sellers to write under products/{uid}/
+            const url = await uploadImage(file, `products/${auth.currentUser?.uid ?? 'anon'}`);
             clearInterval(progressInterval);
             setUploadFiles((prev) =>
               prev.map((f) => (f.id === entry.id ? { ...f, progress: 100 } : f)),
