@@ -30,3 +30,8 @@ Adımlar: Dockerfile/başlatma (server.ts Vite middleware'i prod'da devre dış�
 (STRIPE\_\*, FIREBASE_SERVICE_ACCOUNT_B64, GEMINI_API_KEY → Secret Manager), firebase.json'a
 `/api/**` rewrite'ı catch-all'dan ÖNCE, Stripe webhook URL'i güncelle, cron'lar için Cloud Scheduler.
 Doğrulama: canlıda `/api/health` JSON dönsün; admin panelinden test satıcı onayla → ürün ekle → `pending`.
+
+Ek (mantik-yurutme incelemesi, 2026-11-02): ilk adım = host kararı + Stripe webhook cutover/rollback planı
+(yeni endpoint'i Stripe'a ekle → test event → eskisini kaldır; geçiş sırasında kaçan event'leri Stripe
+dashboard'dan yeniden gönder). Canlıya çıkmadan admin rotalarının auth'unu canlı istekle doğrula
+(token'sız / buyer token'lı istek 401/403 dönmeli).
