@@ -314,7 +314,9 @@ export function SellerInventoryPage() {
         alert(`${result.successCount} ürün güncellendi, ${result.failCount} ürün güncellenemedi.`);
       }
       // Refresh products list
-      const refreshed = await getProducts({ sellerId });
+      // `sellerId` was never declared here (ReferenceError → "update failed" alert even
+      // though the batch succeeded). Include non-approved so draft/pending stay visible.
+      const refreshed = await getProducts({ sellerId: user!.id, includeNonApproved: true });
       if (refreshed.length > 0) setProducts(refreshed);
       setSelectedProducts([]);
     } catch (err: any) {
