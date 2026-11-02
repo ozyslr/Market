@@ -296,7 +296,7 @@ async function searchFirestore(params: SearchParams): Promise<SearchResult | nul
         products: [],
         totalCount: 0,
         hasMore: false,
-        facets: await getFacetedFiltersFallback(params.categoryId),
+        facets: await getFacetedFilters(params.categoryId),
       };
     }
 
@@ -307,7 +307,7 @@ async function searchFirestore(params: SearchParams): Promise<SearchResult | nul
     }
 
     // Build facets from the full Firestore collection (lightweight count query)
-    const facets = await getFacetedFiltersFallback(params.categoryId);
+    const facets = await getFacetedFilters(params.categoryId);
 
     return {
       products,

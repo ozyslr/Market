@@ -195,7 +195,7 @@ const TOP_SELLING = [
 
 // --- COMPONENTS ---
 
-const KPICard = ({ label, value, trend, icon: Icon, color, bg }: any) => {
+const KPICard = ({ label, value, trend, icon: Icon, color, bg, sparkline = [] }: any) => {
   const effectiveTrend = trend ?? 0;
   const isUp = effectiveTrend >= 0;
   return (
@@ -1022,6 +1022,7 @@ export function AdminDashboard() {
                   label="Toplam Satış Hacmi (GMV)"
                   value={`${realRevenue.revenue.toLocaleString('tr-TR')} ₺`}
                   trend={trends.revenue}
+                  sparkline={sparkline}
                   icon={CreditCard}
                   color="#F9423A"
                   bg="bg-gradient-to-tr from-[#F9423A] to-orange-500"

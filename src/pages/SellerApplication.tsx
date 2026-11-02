@@ -413,6 +413,8 @@ export function SellerApplication() {
   };
 
   // ── Submit ────────────────────────────────────────────────────────────────
+  const storeSlug = form.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
   const handleSubmit = async () => {
     if (!user) return;
     setSubmitting(true);
@@ -423,7 +425,7 @@ export function SellerApplication() {
         userName: user.name || '',
         ...form,
         sellerTier: form.sellerTier,
-        slug: form.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        slug: storeSlug,
         socialMedia: [],
         kycDocuments,
         identityVerificationStatus: identityStatus === 'verified' ? 'verified' : 'pending',

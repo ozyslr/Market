@@ -365,7 +365,7 @@ export function SellerStorePage() {
         title={seoTitle}
         description={seoDesc}
         canonical={seoUrl}
-        ogImage={logoUrl || bannerUrl || undefined}
+        image={logoUrl || bannerUrl || undefined}
       />
       <div className="min-h-screen bg-brand-secondary/30 pb-20">
         {/* Hero Banner — carousel or single */}
