@@ -13,9 +13,13 @@ async function authedPost(url: string, body?: unknown): Promise<void> {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? `İstek başarısız (${res.status})`);
+  // A static host without the Express API answers /api/* with index.html (200),
+  // so a 2xx alone is not proof the claim was set — require the JSON ack.
+  const isJson = (res.headers.get('content-type') ?? '').includes('application/json');
+  const data = isJson ? await res.json().catch(() => ({})) : {};
+  if (!res.ok) throw new Error(data.error ?? `İstek başarısız (${res.status})`);
+  if (data.success !== true) {
+    throw new Error('API sunucusuna ulaşılamadı — satıcı yetkisi verilemedi.');
   }
 }
 
