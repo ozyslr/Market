@@ -128,7 +128,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           // Read adminRole from Firebase custom claims
           try {
-            const idTokenResult = await fUser.getIdTokenResult();
+            let idTokenResult = await fUser.getIdTokenResult();
+            // Claims change server-side on seller approval / role change, but a cached
+            // ID token keeps the old ones for up to 1h. If the profile says the user was
+            // promoted and the token disagrees, force-refresh once so Firestore rules
+            // (which read token.role / token.sellerId) see the new role immediately.
+            if (
+              resolvedUser &&
+              (resolvedUser.role === 'seller' || resolvedUser.role === 'admin') &&
+              idTokenResult.claims.role !== resolvedUser.role
+            ) {
+              idTokenResult = await fUser.getIdTokenResult(true);
+            }
             const claims = idTokenResult.claims;
             // Role claim takes precedence over profile-derived role (avoid regressions)
             if (claims.role && resolvedUser && claims.role !== resolvedUser.role) {
@@ -166,26 +177,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Without this, the user silently loses auth and sees permission errors
   // without knowing they need to re-login.
   useEffect(() => {
-    const unsub = onIdTokenChanged(auth, async (fUser) => {
-      if (fUser) {
-        // Token refreshed successfully — clear any previous error
-        setTokenError(null);
-      } else {
-        // No user after token refresh failure — token was revoked or user disabled
-        // onAuthStateChanged will pick up the sign-out shortly; surface the error
-      }
-    }, (error: any) => {
-      // Token refresh failed — user may need to re-login
-      console.error('[auth] Token refresh error:', error?.message || error);
-      if (error?.code === 'auth/user-token-expired' ||
+    const unsub = onIdTokenChanged(
+      auth,
+      async (fUser) => {
+        if (fUser) {
+          // Token refreshed successfully — clear any previous error
+          setTokenError(null);
+        } else {
+          // No user after token refresh failure — token was revoked or user disabled
+          // onAuthStateChanged will pick up the sign-out shortly; surface the error
+        }
+      },
+      (error: any) => {
+        // Token refresh failed — user may need to re-login
+        console.error('[auth] Token refresh error:', error?.message || error);
+        if (
+          error?.code === 'auth/user-token-expired' ||
           error?.code === 'auth/user-disabled' ||
           error?.code === 'auth/user-not-found' ||
-          error?.code === 'auth/network-request-failed') {
-        setTokenError(
-          'Oturumunuz yenilenemedi. Lütfen tekrar giriş yapın.',
-        );
-      }
-    });
+          error?.code === 'auth/network-request-failed'
+        ) {
+          setTokenError('Oturumunuz yenilenemedi. Lütfen tekrar giriş yapın.');
+        }
+      },
+    );
 
     return unsub;
   }, []);
@@ -230,7 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const resendVerificationEmail = async () => {
     const fbUser = auth.currentUser;
     if (!fbUser || fbUser.isAnonymous) {
-      throw new Error('Doğrulama email\'i göndermek için giriş yapmalısınız.');
+      throw new Error("Doğrulama email'i göndermek için giriş yapmalısınız.");
     }
     if (fbUser.emailVerified) {
       throw new Error('Email adresiniz zaten doğrulanmış.');

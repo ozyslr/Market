@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { audit } from '@/services/auditLogService';
+import { setUserRole } from '@/services/sellerAccessService';
 import { useAuth } from '@/context/AuthContext';
 import { getOrdersByUser } from '@/services/orderService';
 import type { Order } from '@/types/order';
@@ -88,19 +89,24 @@ export function AdminUsers() {
       setSelectedUser((prev) => (prev ? { ...prev, role: newRole } : null));
     if (id.startsWith('mock')) return;
     try {
-      await updateUser(id, { role: newRole });
-      audit(
-        actor?.uid ?? '',
-        actor?.email ?? '',
-        actor?.role ?? 'admin',
-        'admin.role_change',
-        'user',
-        id,
-        undefined,
-        `role: ${newRole}`,
-      );
-    } catch {
-      /* ignore */
+      if (newRole === 'admin' || newRole === 'seller' || newRole === 'buyer') {
+        // Server sets the custom claim (what Firestore rules check) + users.role, and audits.
+        await setUserRole(id, newRole);
+      } else {
+        await updateUser(id, { role: newRole });
+        audit(
+          actor?.uid ?? '',
+          actor?.email ?? '',
+          actor?.role ?? 'admin',
+          'admin.role_change',
+          'user',
+          id,
+          undefined,
+          `role: ${newRole}`,
+        );
+      }
+    } catch (err: any) {
+      alert(`Rol güncellenemedi: ${err?.message ?? 'Bilinmeyen hata'}`);
     }
   };
 

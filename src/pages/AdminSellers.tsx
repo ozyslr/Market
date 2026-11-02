@@ -4,6 +4,7 @@ import { getSellers, updateSeller } from '@/services/userService';
 import { createNotification } from '@/services/notificationService';
 import { getProducts } from '@/services/productService';
 import { getApplications, reviewApplication } from '@/services/sellerApplicationService';
+import { grantSellerAccess } from '@/services/sellerAccessService';
 import {
   getCommissionRules,
   saveCommissionRule,
@@ -243,6 +244,10 @@ export function AdminSellers() {
         status === 'approved' ? 'Onaylandı' : 'Reddedildi',
         'admin',
       );
+      if (status === 'approved' && app.userId) {
+        // Without the seller claim, Firestore rules reject every product write.
+        await grantSellerAccess(app.userId);
+      }
       audit(
         actor?.uid ?? '',
         actor?.email ?? '',
@@ -253,6 +258,8 @@ export function AdminSellers() {
         app.storeName ?? app.id,
       );
       setApplications((prev) => prev.map((a) => (a.id === app.id ? { ...a, status } : a)));
+    } catch (err: any) {
+      alert(`İşlem başarısız: ${err?.message ?? 'Bilinmeyen hata'}`);
     } finally {
       setReviewingId(null);
     }
@@ -284,6 +291,14 @@ export function AdminSellers() {
   };
 
   const setKyc = async (seller: Seller, status: 'verified' | 'rejected') => {
+    if (status === 'verified') {
+      try {
+        await grantSellerAccess(seller.userId ?? seller.id);
+      } catch (err: any) {
+        alert(`Satıcı yetkisi verilemedi: ${err?.message ?? 'Bilinmeyen hata'}`);
+        return;
+      }
+    }
     await update(seller.id, { kycStatus: status, isVerified: status === 'verified' });
     audit(
       actor?.uid ?? '',

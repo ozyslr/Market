@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { Seller, Product } from '@/types';
 import { updateSeller } from '@/services/userService';
+import { grantSellerAccess } from '@/services/sellerAccessService';
 import { Order } from '@/types/order';
 import {
   ArrowLeft,
@@ -218,24 +219,33 @@ export function AdminSellerView() {
           ? `/api/admin/seller/${sellerId}/approve-tr`
           : `/api/admin/seller/${sellerId}/approve-eu`;
 
-      // Call regional provisioning
+      // 1) Mark the application approved (application doc id is `app-<ts>`, not the uid)
+      await reviewApplication(application.id, 'approved', 'Approved', firebaseUser?.uid ?? 'admin');
+
+      // 2) Grant seller claims — required for Firestore product rules
+      await grantSellerAccess(sellerId);
+      setApplication((a) => (a ? { ...a, status: 'approved' } : a));
+      setSeller((prev) =>
+        prev ? ({ ...prev, kycStatus: 'verified', isVerified: true } as any) : prev,
+      );
+
+      // 3) Regional payment provisioning — a failure here does not revoke store access
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ adminNote: 'Approved by admin' }),
       });
 
-      // Also update Firestore application via client service
-      await reviewApplication(sellerId, 'approved', 'Approved', firebaseUser?.uid ?? 'admin');
-
       if (res.ok) {
         const data = await res.json();
         if (data.onboardingUrl) setOnboardingUrl(data.onboardingUrl);
         addToast('Seller approved. Payment account provisioning initiated.', 'success');
-        setApplication((a) => (a ? { ...a, status: 'approved' } : a));
       } else {
-        const err = await res.json().catch(() => ({ error: 'Approval failed' }));
-        addToast(err.error ?? 'Approval failed', 'error');
+        const err = await res.json().catch(() => ({ error: 'Provisioning failed' }));
+        addToast(
+          `Seller approved, but payment provisioning failed: ${err.error ?? 'unknown error'}`,
+          'error',
+        );
       }
     } catch (err: any) {
       addToast(err.message ?? 'Approval failed', 'error');
@@ -253,7 +263,12 @@ export function AdminSellerView() {
     }
     setRejecting(true);
     try {
-      await reviewApplication(sellerId, 'rejected', rejectionReason, firebaseUser?.uid ?? 'admin');
+      await reviewApplication(
+        application?.id ?? sellerId,
+        'rejected',
+        rejectionReason,
+        firebaseUser?.uid ?? 'admin',
+      );
       addToast('Application rejected. Seller has been notified.', 'error');
       setApplication((a) => (a ? { ...a, status: 'rejected', adminNote: rejectionReason } : a));
       setShowRejectForm(false);
@@ -570,10 +585,8 @@ export function AdminSellerView() {
                 onClick={async () => {
                   if (!sellerId) return;
                   try {
-                    await updateSeller(sellerId, {
-                      kycStatus: 'verified',
-                      isVerified: true,
-                    } as any);
+                    // Server sets claims + kycStatus/isVerified on sellers/{uid}
+                    await grantSellerAccess(sellerId);
                     setSeller((prev) =>
                       prev ? ({ ...prev, kycStatus: 'verified', isVerified: true } as any) : prev,
                     );
