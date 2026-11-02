@@ -83,6 +83,7 @@ See .planning/PROJECT.md Key Decisions for full log.
 | 260604-gxl                         | Firebase Anonymous Auth for guest analytics events + firestore.rules hardening                                                  | 2026-06-04 | 1c0f94f   |
 | 20260605-authcontext-test-mock-fix | Mock signInAnonymously in AuthContext.test.tsx                                                                                  | 2026-06-05 | (pending) |
 | 260708-v39                         | Add multi-warehouse infrastructure: types, service, UI, warehouse-aware stock ops                                               | 2026-07-08 | bdcdc22   |
+| 261102-ra8                         | Seller product flow + security: grant seller claims on approval, lock KYC/API-key routes, product/seller/storage rules          | 2026-11-02 | e94c6aa   |
 
 ## Deferred Items
 
