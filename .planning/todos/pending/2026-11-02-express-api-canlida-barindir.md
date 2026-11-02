@@ -24,6 +24,12 @@ Sıra: **2 (CI yeşile çekildikten sonra)**.
 
 ## Solution
 
+**KARAR (2026-11-02, kullanıcı): Cloud Run.** Proje Blaze planında. Gerekçe: 41 client çağrısı göreli `/api/...`
+→ Hosting `/api/**` rewrite ile aynı origin, frontend değişmez; Render ayrı origin + CORS + uyuyan free tier.
+Bilinen ihtiyaçlar: server.ts `PORT = 3000` sabit (Cloud Run `$PORT` veya container port 3000 ayarı);
+prod'da `npm start` = `NODE_ENV=production tsx server.ts`; cron rotaları `verifyCronSecret` (CRON_SECRET) → Cloud Scheduler;
+gcloud CLI yerelde kurulu değil (GitHub Actions ile deploy veya gcloud kurulumu).
+
 Karar gerekli: Cloud Run (aynı GCP projesi, Hosting rewrite `{"source":"/api/**","run":{"serviceId":...}}`)
 vs Render (kullanıcının Render hesabı açık — mevcut servis var mı kontrol et).
 Adımlar: Dockerfile/başlatma (server.ts Vite middleware'i prod'da devre dışı), secret'lar
