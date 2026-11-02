@@ -37,6 +37,7 @@ import { registerKycRoutes } from './server/routes/kyc.js';
 import { sendAbandonedCartEmail } from './server/services/emailService.js';
 import { logger, httpLogger } from './server/logger.js';
 import { audit } from './server/lib/auditLog.js';
+import { grantSellerAccess, buildClaims } from './server/lib/sellerAccess.js';
 
 dotenv.config();
 
@@ -354,6 +355,7 @@ async function startServer() {
     iyzicoProvider,
     adminDb,
     verifyFirebaseToken,
+    verifyAdmin,
     port: PORT,
   });
 
@@ -388,7 +390,14 @@ async function startServer() {
       if (!adminAuth) {
         return res.status(503).json({ error: 'Auth not configured' });
       }
-      await adminAuth.setCustomUserClaims(uid, claims);
+      // Whitelist claim keys — never persist arbitrary request-body fields.
+      // Sellers always get sellerId === uid (Firestore rules bind products to it).
+      const safeClaims = buildClaims(uid, claims.role, claims.adminRole);
+      await adminAuth.setCustomUserClaims(uid, safeClaims);
+      // Keep the Firestore profile role in sync (client UI reads it).
+      if (adminDb) {
+        await adminDb.collection('users').doc(uid).set({ role: claims.role }, { merge: true });
+      }
       audit(
         req.uid,
         req.userEmail ?? '',
@@ -407,6 +416,33 @@ async function startServer() {
       res.json({ success: true });
     } catch (err: any) {
       logger.error('admin', 'Failed to set custom claims', { error: (err as Error).message });
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
+  // POST /api/admin/seller/:uid/grant-access — approve applicant as seller (verifyAdmin)
+  // Sets claims {role:'seller', sellerId:uid}, users.role, sellers.kycStatus='verified'.
+  app.post('/api/admin/seller/:uid/grant-access', verifyAdmin, async (req: any, res) => {
+    try {
+      if (!adminAuth || !adminDb) {
+        return res.status(503).json({ error: 'Auth not configured' });
+      }
+      const uid = req.params.uid;
+      if (!isNonEmptyString(uid, 128)) return res.status(400).json({ error: 'uid is required' });
+      const result = await grantSellerAccess(adminAuth, adminDb, uid);
+      audit(
+        req.uid,
+        req.userEmail ?? '',
+        req.decodedToken?.role || 'admin',
+        'seller.approve',
+        'user',
+        uid,
+        'Seller access granted',
+        `claimsUpdated=${result.claimsUpdated}`,
+      );
+      res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('admin', 'grant-access failed', { error: (err as Error).message });
       res.status(500).json({ error: (err as Error).message });
     }
   });

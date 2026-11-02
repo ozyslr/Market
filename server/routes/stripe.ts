@@ -29,6 +29,7 @@ import {
   hasAllRequiredDocs,
   type KycDocumentRef,
 } from '../services/kycService.js';
+import { findApplicationRef } from '../lib/sellerAccess.js';
 import { StripeConnectProvider } from '../services/paymentProvider.js';
 import { validatePrices, type PriceCheckItem } from '../lib/priceValidator.js';
 
@@ -1015,14 +1016,15 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
     validate(approveSellerSchema),
     async (req: any, res: any) => {
       if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
-      const sellerId = req.params.id;
 
       try {
-        const appSnap = await adminDb.collection('sellerApplications').doc(sellerId).get();
-        if (!appSnap.exists) {
+        // :id may be the application id or the seller uid
+        const appSnap = await findApplicationRef(adminDb, req.params.id);
+        if (!appSnap) {
           return res.status(404).json({ error: 'Application not found' });
         }
         const appData = appSnap.data() as any;
+        const sellerId: string = appData.userId ?? req.params.id;
         const kycDocs: KycDocumentRef[] = appData.kycDocuments ?? [];
 
         // 3-doc gate (T-03-07)
@@ -1042,14 +1044,11 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         );
 
         // Update application status
-        await adminDb
-          .collection('sellerApplications')
-          .doc(sellerId)
-          .update({
-            status: 'approved',
-            reviewedAt: new Date().toISOString(),
-            adminNote: req.body.adminNote ?? '',
-          });
+        await appSnap.ref.update({
+          status: 'approved',
+          reviewedAt: new Date().toISOString(),
+          adminNote: req.body.adminNote ?? '',
+        });
 
         logger.info('kyc', 'EU seller approved — Stripe Connect provisioned', {
           sellerId,

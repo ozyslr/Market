@@ -18,6 +18,7 @@ import { recordEntry } from '../services/ledgerService.js';
 import { confirmStock } from '../services/stockService.js';
 import { sendOrderConfirmationEmail, sendNewSellerOrderEmail } from '../services/emailService.js';
 import { hasAllRequiredDocs, type KycDocumentRef } from '../services/kycService.js';
+import { findApplicationRef } from '../lib/sellerAccess.js';
 import { validatePrices, type PriceCheckItem } from '../lib/priceValidator.js';
 
 export interface IyzicoRouteDeps {
@@ -569,19 +570,22 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
   // Idempotent: checks iyzicoSubMerchantKey before calling subMerchantCreate (T-03-05).
   app.post(
     '/api/admin/seller/:id/approve-tr',
-    ...(verifyAdmin ? [verifyAdmin] : []),
+    // Fail closed: without verifyAdmin this route must never be reachable.
+    verifyAdmin ??
+      ((_req: any, res: any) => res.status(503).json({ error: 'Auth not configured' })),
     validate(approveSellerSchema),
     async (req: any, res: any) => {
       if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
-      const sellerId = req.params.id;
 
       try {
-        // Fetch application
-        const appSnap = await adminDb.collection('sellerApplications').doc(sellerId).get();
-        if (!appSnap.exists) {
+        // Fetch application — :id may be the application id or the seller uid
+        const appSnap = await findApplicationRef(adminDb, req.params.id);
+        if (!appSnap) {
           return res.status(404).json({ error: 'Application not found' });
         }
         const appData = appSnap.data() as any;
+        // sellers/{uid} + subMerchantExternalId are keyed by the seller uid
+        const sellerId: string = appData.userId ?? req.params.id;
         const kycDocs: KycDocumentRef[] = appData.kycDocuments ?? [];
 
         // 3-doc gate (T-03-07)
@@ -610,7 +614,7 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
         }
 
         const { subMerchantCreate } = await import('../iyzico.cjs');
-        const applicationId = sellerId;
+        const applicationId = appSnap.id;
         const request = {
           locale: 'tr',
           conversationId: applicationId,
@@ -651,14 +655,11 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
           },
           { merge: true },
         );
-        await adminDb
-          .collection('sellerApplications')
-          .doc(sellerId)
-          .update({
-            status: 'approved',
-            reviewedAt: new Date().toISOString(),
-            adminNote: req.body.adminNote ?? '',
-          });
+        await appSnap.ref.update({
+          status: 'approved',
+          reviewedAt: new Date().toISOString(),
+          adminNote: req.body.adminNote ?? '',
+        });
 
         logger.info('kyc', 'TR seller approved — Iyzico sub-merchant provisioned', {
           sellerId,

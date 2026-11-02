@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import { adminDb, adminAuth } from '../../src/lib/firebase-admin.js';
 import { getKycSettings } from '../lib/kycSettings.js';
+import { grantSellerAccess } from '../lib/sellerAccess.js';
 
 async function verifyFirebaseToken(req: any, res: any, next: any) {
   const authHeader = req.headers.authorization;
@@ -18,6 +19,43 @@ async function verifyFirebaseToken(req: any, res: any, next: any) {
   } catch {
     return res.status(401).json({ error: 'Geçersiz token' });
   }
+}
+
+// Must run AFTER verifyFirebaseToken. Role comes from custom claims only.
+function requireAdmin(req: any, res: any, next: any) {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin yetkisi gerekli' });
+  }
+  next();
+}
+
+const isAdminUser = (req: any) => req.user?.role === 'admin';
+
+/**
+ * Loads an application and enforces that the caller owns it (or is admin).
+ * Sends the error response itself and returns null when access is denied.
+ */
+async function loadOwnedApplication(req: any, res: any, applicationId: unknown) {
+  if (typeof applicationId !== 'string' || !applicationId || applicationId.includes('/')) {
+    res.status(400).json({ error: 'Geçersiz başvuru kimliği' });
+    return null;
+  }
+  if (!adminDb) {
+    res.status(503).json({ error: 'Veritabanı yapılandırılmadı' });
+    return null;
+  }
+  const appRef = adminDb.collection('sellerApplications').doc(applicationId);
+  const appSnap = await appRef.get();
+  if (!appSnap.exists) {
+    res.status(404).json({ error: 'Başvuru bulunamadı' });
+    return null;
+  }
+  const appData = appSnap.data()!;
+  if (appData.userId !== req.user.uid && !isAdminUser(req)) {
+    res.status(403).json({ error: 'Bu başvuruya erişim yetkiniz yok' });
+    return null;
+  }
+  return { appRef, appSnap, appData };
 }
 
 export function registerKycRoutes(app: any) {
@@ -40,12 +78,13 @@ export function registerKycRoutes(app: any) {
       } = req.body;
       const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
 
-      // Fetch application
-      const appRef = adminDb.collection('sellerApplications').doc(applicationId);
-      const appSnap = await appRef.get();
-      if (!appSnap.exists) return res.status(404).json({ error: 'Başvuru bulunamadı' });
-
-      const appData = appSnap.data()!;
+      // Fetch application (owner-only — prevents submitting/auto-approving others' applications)
+      const owned = await loadOwnedApplication(req, res, applicationId);
+      if (!owned) return;
+      const { appRef, appData } = owned;
+      if (appData.status === 'approved') {
+        return res.status(409).json({ error: 'Başvuru zaten onaylanmış' });
+      }
       const kycDocs = appData.kycDocuments || [];
       const timeline: any[] = appData.timeline || [];
 
@@ -163,6 +202,10 @@ export function registerKycRoutes(app: any) {
       }
 
       await appRef.update(updateData);
+      // Auto-approved → grant seller claims so Firestore rules let them list products.
+      if (updateData.status === 'approved' && adminAuth && adminDb) {
+        await grantSellerAccess(adminAuth, adminDb, appData.userId);
+      }
       res.json({
         autoCheck,
         timeline: timeline,
@@ -175,7 +218,7 @@ export function registerKycRoutes(app: any) {
   });
 
   // POST /api/kyc/admin/review — Admin manuel onay/red
-  router.post('/admin/review', verifyFirebaseToken, async (req: any, res: any) => {
+  router.post('/admin/review', verifyFirebaseToken, requireAdmin, async (req: any, res: any) => {
     try {
       const adminUid = req.user.uid;
       const { applicationId, action, note } = req.body;
@@ -186,6 +229,10 @@ export function registerKycRoutes(app: any) {
       if (action === 'reject' && (!note || note.trim().length < 10)) {
         return res.status(400).json({ error: 'Red sebebi en az 10 karakter olmalı' });
       }
+      if (typeof applicationId !== 'string' || !applicationId || applicationId.includes('/')) {
+        return res.status(400).json({ error: 'Geçersiz başvuru kimliği' });
+      }
+      if (!adminDb) return res.status(503).json({ error: 'Veritabanı yapılandırılmadı' });
 
       const appRef = adminDb.collection('sellerApplications').doc(applicationId);
       const appSnap = await appRef.get();
@@ -208,6 +255,10 @@ export function registerKycRoutes(app: any) {
         timeline,
       });
 
+      if (action === 'approve' && adminAuth && adminDb) {
+        await grantSellerAccess(adminAuth, adminDb, appSnap.data()!.userId);
+      }
+
       res.json({
         success: true,
         status: action === 'approve' ? 'approved' : 'rejected',
@@ -224,9 +275,9 @@ export function registerKycRoutes(app: any) {
       const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
       const ua = req.headers['user-agent'] || 'unknown';
 
-      const appRef = adminDb.collection('sellerApplications').doc(applicationId);
-      const appSnap = await appRef.get();
-      if (!appSnap.exists) return res.status(404).json({ error: 'Başvuru bulunamadı' });
+      const owned = await loadOwnedApplication(req, res, applicationId);
+      if (!owned) return;
+      const { appRef, appSnap } = owned;
 
       const consent = {
         accepted: true,
@@ -255,6 +306,8 @@ export function registerKycRoutes(app: any) {
   router.post('/contract-sign', verifyFirebaseToken, async (req: any, res: any) => {
     try {
       const { applicationId, edevletToken } = req.body;
+      const owned = await loadOwnedApplication(req, res, applicationId);
+      if (!owned) return;
       const { verifyEdevletToken } = await import('../lib/edevletService.js');
 
       const result = await verifyEdevletToken(edevletToken);
@@ -264,7 +317,7 @@ export function registerKycRoutes(app: any) {
         });
       }
 
-      const appRef = adminDb.collection('sellerApplications').doc(applicationId);
+      const { appRef } = owned;
       const eSignature = {
         signed: true,
         signedAt: new Date().toISOString(),
@@ -290,13 +343,13 @@ export function registerKycRoutes(app: any) {
   });
 
   // GET /api/kyc/admin/settings
-  router.get('/admin/settings', verifyFirebaseToken, async (_req: any, res: any) => {
+  router.get('/admin/settings', verifyFirebaseToken, requireAdmin, async (_req: any, res: any) => {
     const settings = await getKycSettings();
     res.json(settings);
   });
 
   // PUT /api/kyc/admin/settings
-  router.put('/admin/settings', verifyFirebaseToken, async (req: any, res: any) => {
+  router.put('/admin/settings', verifyFirebaseToken, requireAdmin, async (req: any, res: any) => {
     const { updateKycSettings } = await import('../lib/kycSettings.js');
     await updateKycSettings(req.body);
     const settings = await getKycSettings();
@@ -305,9 +358,9 @@ export function registerKycRoutes(app: any) {
 
   // GET /api/kyc/application/:id/status
   router.get('/application/:id/status', verifyFirebaseToken, async (req: any, res: any) => {
-    const snap = await adminDb.collection('sellerApplications').doc(req.params.id).get();
-    if (!snap.exists) return res.status(404).json({ error: 'Başvuru bulunamadı' });
-    const data = snap.data()!;
+    const owned = await loadOwnedApplication(req, res, req.params.id);
+    if (!owned) return;
+    const { appSnap: snap, appData: data } = owned;
     res.json({
       id: snap.id,
       status: data.status,
