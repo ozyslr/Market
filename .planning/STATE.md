@@ -67,8 +67,7 @@ See .planning/PROJECT.md Key Decisions for full log.
 
 ### Pending Todos
 
-- **[1]** CI type-check'i yeşile çek — `.planning/todos/pending/2026-11-02-ci-type-check-yesile-cek.md`
-- **[2]** Express API'yi canlıda barındır — `.planning/todos/pending/2026-11-02-express-api-canlida-barindir.md`
+- **[next]** Express API'yi canlıda barındır — `.planning/todos/pending/2026-11-02-express-api-canlida-barindir.md`
 - Phase 30: Verify shared component inventory before building new ones
 - Phase 33: Confirm iyzico route deps type signature before enforcing verifyAdmin non-optional
 
@@ -86,6 +85,7 @@ See .planning/PROJECT.md Key Decisions for full log.
 | 20260605-authcontext-test-mock-fix | Mock signInAnonymously in AuthContext.test.tsx                                                                                  | 2026-06-05 | (pending) |
 | 260708-v39                         | Add multi-warehouse infrastructure: types, service, UI, warehouse-aware stock ops                                               | 2026-07-08 | bdcdc22   |
 | 261102-ra8                         | Seller product flow + security: grant seller claims on approval, lock KYC/API-key routes, product/seller/storage rules          | 2026-11-02 | e94c6aa   |
+| 261102-vhw                         | CI green: fix search/admin-dashboard/seller-application ReferenceErrors, remove dead zustand stores, repair 3 test suites       | 2026-11-02 | a7feff3   |
 
 ## Deferred Items
 
