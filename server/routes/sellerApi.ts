@@ -15,6 +15,18 @@ import {
   triggerWebhooks,
 } from '../services/webhookService.js';
 
+// Mirrors ALL_PERMISSIONS in src/services/apiKeyService.ts
+const ALLOWED_PERMISSIONS = new Set([
+  'products:read',
+  'products:write',
+  'orders:read',
+  'orders:write',
+  'inventory:read',
+  'inventory:write',
+  'pricing:read',
+  'pricing:write',
+]);
+
 const API_RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
   'products:read': { max: 300, windowMs: 60000 },
   'products:write': { max: 100, windowMs: 60000 },
@@ -161,11 +173,18 @@ export function registerSellerApiRoutes(
     }
     const idToken = authHeader.slice(7);
     let uid: string;
+    let sellerId: string;
     try {
       // Use firebase-admin auth to verify the ID token
       const { getAuth } = await import('firebase-admin/auth');
       const decoded = await getAuth().verifyIdToken(idToken);
       uid = decoded.uid;
+      // API keys write products with Admin SDK (bypassing Firestore rules), so only
+      // KYC-approved sellers (custom claim) may mint them — never buyers/anonymous.
+      if (decoded.role !== 'seller') {
+        return res.status(403).json({ error: 'API anahtarı yalnızca onaylı satıcılar içindir.' });
+      }
+      sellerId = (decoded.sellerId as string) || uid;
     } catch {
       return res
         .status(401)
@@ -173,11 +192,15 @@ export function registerSellerApiRoutes(
     }
 
     const { name, permissions } = req.body || {};
-    if (!name || typeof name !== 'string' || name.trim().length < 1) {
+    if (!name || typeof name !== 'string' || name.trim().length < 1 || name.length > 100) {
       return res.status(400).json({ error: 'Anahtar adı gereklidir.' });
     }
-    if (!Array.isArray(permissions) || permissions.length === 0) {
-      return res.status(400).json({ error: 'En az bir izin seçilmelidir.' });
+    if (
+      !Array.isArray(permissions) ||
+      permissions.length === 0 ||
+      !permissions.every((p: unknown) => typeof p === 'string' && ALLOWED_PERMISSIONS.has(p))
+    ) {
+      return res.status(400).json({ error: 'Geçersiz veya eksik izin listesi.' });
     }
 
     try {
@@ -191,8 +214,9 @@ export function registerSellerApiRoutes(
         keyHash,
         keyPrefix,
         name: name.trim(),
-        permissions,
-        sellerId: uid,
+        permissions: [...new Set(permissions)],
+        sellerId,
+        createdBy: uid,
         isActive: true,
         usageCount: 0,
         createdAt: now,
@@ -362,6 +386,15 @@ export function registerSellerApiRoutes(
       const updates: Record<string, any> = { updatedAt: new Date().toISOString() };
       for (const key of allowed) {
         if (req.body[key] !== undefined) updates[key] = req.body[key];
+      }
+      // Content edits on a live product go back to moderation (prevents
+      // bait-and-switch after approval). Price/stock edits stay live.
+      const MODERATED_FIELDS = ['title', 'description', 'brand', 'categoryId', 'images'];
+      if (
+        snap.data()!.status === 'approved' &&
+        MODERATED_FIELDS.some((k) => updates[k] !== undefined)
+      ) {
+        updates.status = 'pending';
       }
       await docRef.update(updates);
 

@@ -223,10 +223,8 @@ export function registerCommissionRoutes(app: Express, deps: CommissionRouteDeps
       const orderData = orderSetSnap.data()!;
       // Check ownership — admin bypasses
       if (orderData.userId !== req.uid) {
-        // Check if admin
-        const userSnap = await adminDb.collection('users').doc(req.uid).get();
-        const role = userSnap.data()?.role;
-        if (role !== 'admin') {
+        // Check admin via custom claim — users.role is client-writable at profile creation
+        if (req.decodedToken?.role !== 'admin') {
           return res.status(403).json({ error: 'Forbidden' });
         }
       }
