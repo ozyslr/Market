@@ -67,6 +67,8 @@ See .planning/PROJECT.md Key Decisions for full log.
 
 ### Pending Todos
 
+- **[1]** CI type-check'i yeşile çek — `.planning/todos/pending/2026-11-02-ci-type-check-yesile-cek.md`
+- **[2]** Express API'yi canlıda barındır — `.planning/todos/pending/2026-11-02-express-api-canlida-barindir.md`
 - Phase 30: Verify shared component inventory before building new ones
 - Phase 33: Confirm iyzico route deps type signature before enforcing verifyAdmin non-optional
 
