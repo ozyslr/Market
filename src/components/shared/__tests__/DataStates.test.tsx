@@ -2,6 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ErrorState, EmptyState, LoadingState } from '../DataStates';
 
+// Components translate via useLanguage(); return the inline fallback text.
+vi.mock('@/context/LanguageContext', () => ({
+  useLanguage: () => ({ t: (_key: string, fallback?: string) => fallback ?? _key }),
+}));
+
 describe('DataStates', () => {
   it('LoadingState renders a status role', () => {
     render(<LoadingState />);

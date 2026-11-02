@@ -13,6 +13,7 @@ const { mockOnAuthStateChanged } = vi.hoisted(() => ({
 vi.mock('firebase/auth', () => ({
   getAuth: vi.fn(() => ({})),
   onAuthStateChanged: mockOnAuthStateChanged,
+  onIdTokenChanged: vi.fn(() => () => {}),
   signOut: vi.fn(),
   createUserWithEmailAndPassword: vi.fn(),
   signInWithEmailAndPassword: vi.fn(),
