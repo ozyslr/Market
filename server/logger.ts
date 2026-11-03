@@ -19,11 +19,19 @@ import { Writable } from 'stream';
 
 const isProd = process.env.NODE_ENV === 'production';
 
+// pino calls every key present in `formatters`, so a key set to `undefined`
+// crashes at startup ("formatter is not a function") — only add keys we define.
 const defaults = {
   level: process.env.LOG_LEVEL || (isProd ? 'info' : 'debug'),
-  formatters: {
-    bindings: isProd ? undefined : () => ({}),
-  },
+  formatters: isProd
+    ? {
+        // Cloud Logging reads `severity`; keep numeric `level` for other consumers.
+        level: (label: string, number: number) => ({
+          severity: label.toUpperCase(),
+          level: number,
+        }),
+      }
+    : { bindings: () => ({}) },
   timestamp: pino.stdTimeFunctions.isoTime,
 };
 
@@ -35,10 +43,14 @@ export function createLogger(destination?: Writable) {
   const dest = destination ?? pino.destination(1);
   const instance = pino(defaults, dest);
   return {
-    info:  (component: string, message: string, data?: Record<string, unknown>) => instance.info({ component, ...(data ? { data } : {}) }, message),
-    warn:  (component: string, message: string, data?: Record<string, unknown>) => instance.warn({ component, ...(data ? { data } : {}) }, message),
-    error: (component: string, message: string, data?: Record<string, unknown>) => instance.error({ component, ...(data ? { data } : {}) }, message),
-    debug: (component: string, message: string, data?: Record<string, unknown>) => instance.debug({ component, ...(data ? { data } : {}) }, message),
+    info: (component: string, message: string, data?: Record<string, unknown>) =>
+      instance.info({ component, ...(data ? { data } : {}) }, message),
+    warn: (component: string, message: string, data?: Record<string, unknown>) =>
+      instance.warn({ component, ...(data ? { data } : {}) }, message),
+    error: (component: string, message: string, data?: Record<string, unknown>) =>
+      instance.error({ component, ...(data ? { data } : {}) }, message),
+    debug: (component: string, message: string, data?: Record<string, unknown>) =>
+      instance.debug({ component, ...(data ? { data } : {}) }, message),
   };
 }
 
