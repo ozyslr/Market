@@ -51,8 +51,12 @@ export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Fir
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
-      logger.warn('stripe', 'Webhook secret not set â€” skipping verification');
-      return res.status(200).json({ received: true });
+      // Never process unsigned events. In production answer 503 so Stripe keeps
+      // retrying (up to 3 days) instead of treating the event as delivered.
+      logger.error('stripe', 'STRIPE_WEBHOOK_SECRET not set — event not processed');
+      return process.env.NODE_ENV === 'production'
+        ? res.status(503).json({ error: 'Webhook not configured' })
+        : res.status(200).json({ received: true });
     }
 
     let event: Stripe.Event;
