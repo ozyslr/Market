@@ -1,6 +1,6 @@
 ﻿import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import path from 'path';
+import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
@@ -78,7 +78,14 @@ async function getIyzico() {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  // Cloud Run injects PORT; local dev keeps 3000.
+  const PORT = Number(process.env.PORT) || 3000;
+
+  // Behind Firebase Hosting / Cloud Run the client IP arrives in X-Forwarded-For.
+  // Trust exactly the configured number of proxy hops so per-IP rate limits key on
+  // the real client (not the proxy) without letting clients spoof the header.
+  const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS ?? (process.env.K_SERVICE ? 1 : 0));
+  if (trustProxyHops > 0) app.set('trust proxy', trustProxyHops);
 
   // â”€â”€â”€ Security Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // CORS â€” allow our own origin for API calls
@@ -685,6 +692,8 @@ if (typeof firebase !== 'undefined') {
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     try {
+      // Dynamic import: vite is a devDependency and is absent from production images.
+      const { createServer: createViteServer } = await import('vite');
       const vite = await createViteServer({
         server: { middlewareMode: true },
         appType: 'spa',
@@ -699,10 +708,16 @@ if (typeof firebase !== 'undefined') {
     }
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (_req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    if (existsSync(path.join(distPath, 'index.html'))) {
+      app.use(express.static(distPath));
+      app.get('*', (_req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    } else {
+      // API-only deployment (Cloud Run behind Firebase Hosting): the SPA is served
+      // by Hosting, so unknown routes here are genuine 404s, not SPA fallbacks.
+      app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
+    }
   }
 
   // â”€â”€â”€ Centralized error handler (must be last middleware) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
