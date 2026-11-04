@@ -317,6 +317,7 @@ export function AdminDashboard() {
     totalOrders: 0,
     totalSellers: 0,
   });
+  const [pendingWork, setPendingWork] = useState({ approvals: 0, openTickets: 0 });
   const [realRevenue, setRealRevenue] = useState({ revenue: 0, completedOrders: 0 });
   const [loading, setLoading] = useState(true);
   const [topProductsData, setTopProductsData] = useState<any[]>([]);
@@ -341,6 +342,7 @@ export function AdminDashboard() {
           orderBy,
           limit: limitQ,
           getCountFromServer,
+          where,
         } = await import('firebase/firestore');
         const { db } = await import('@/lib/firebase');
         const [uCount, pCount, oCount, sCount] = await Promise.all([
@@ -355,6 +357,20 @@ export function AdminDashboard() {
         const totalOrders = oCount.data().count;
         const totalSellers = sCount.data().count;
         setRealKpis({ totalUsers, totalProducts, totalOrders, totalSellers });
+
+        const [appsPending, productsPending, ticketsOpen] = await Promise.all([
+          getCountFromServer(
+            query(collection(db, 'sellerApplications'), where('status', '==', 'pending')),
+          ),
+          getCountFromServer(query(collection(db, 'products'), where('status', '==', 'pending'))),
+          getCountFromServer(
+            query(collection(db, 'support_tickets'), where('status', '==', 'open')),
+          ),
+        ]);
+        setPendingWork({
+          approvals: appsPending.data().count + productsPending.data().count,
+          openTickets: ticketsOpen.data().count,
+        });
 
         // Fetch limited order docs for revenue/trends/sales map
         // (capped at 1000 for performance; consider moving to Firestore aggregations at scale)
@@ -1206,44 +1222,51 @@ export function AdminDashboard() {
                 <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-5 gap-6">
                   {[
                     {
-                      label: 'Aktif Kullanıcılar',
-                      value: '7,846',
-                      sub: 'Şu anda aktif',
+                      label: 'Kullanıcılar',
+                      value: realKpis.totalUsers.toLocaleString('tr-TR'),
+                      sub: 'Toplam kayıt',
                       icon: Users,
                       color: '#6D28D9',
+                      tab: 'users',
                     },
                     {
-                      label: 'Aktif Satıcılar',
-                      value: '1,253',
-                      sub: 'Şu anda aktif',
+                      label: 'Satıcılar',
+                      value: realKpis.totalSellers.toLocaleString('tr-TR'),
+                      sub: 'Toplam mağaza',
                       icon: ShoppingBasket,
                       color: '#10B981',
+                      tab: 'sellers',
                     },
                     {
-                      label: 'Stokta Olan Ürünler',
-                      value: '32,457',
+                      label: 'Ürünler',
+                      value: realKpis.totalProducts.toLocaleString('tr-TR'),
                       sub: 'Toplam ürün',
                       icon: Package,
                       color: '#3B82F6',
+                      tab: 'products',
                     },
                     {
                       label: 'Bekleyen Onaylar',
-                      value: '89',
-                      sub: 'Ürün & satıcı',
+                      value: pendingWork.approvals.toLocaleString('tr-TR'),
+                      sub: 'Satıcı başvurusu + ürün',
                       icon: Clock,
                       color: '#F59E0B',
+                      tab: 'sellers',
                     },
                     {
                       label: 'Destek Talepleri',
-                      value: '23',
+                      value: pendingWork.openTickets.toLocaleString('tr-TR'),
                       sub: 'Açık talepler',
                       icon: MessageCircle,
                       color: '#EF4444',
+                      tab: 'support',
                     },
-                  ].map((stat, i) => (
-                    <div
-                      key={i}
-                      className="bg-white p-8 rounded-[2.5rem] border border-[#F8F8FA] shadow-sm hover:shadow-xl transition-all group"
+                  ].map((stat) => (
+                    <button
+                      type="button"
+                      key={stat.label}
+                      onClick={() => setActiveTab(stat.tab)}
+                      className="bg-white p-8 rounded-[2.5rem] border border-[#F8F8FA] shadow-sm hover:shadow-xl transition-all group text-start"
                     >
                       <div className="flex flex-col items-center text-center">
                         <div
@@ -1275,7 +1298,7 @@ export function AdminDashboard() {
                           </ResponsiveContainer>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
 
@@ -1285,70 +1308,60 @@ export function AdminDashboard() {
                     <h3 className="text-xl lg:text-2xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
                       Son Aktiviteler
                     </h3>
-                    <button className="text-[10px] font-black uppercase text-accent hover:underline">
+                    <button
+                      onClick={() => setActiveTab('orders')}
+                      className="text-[10px] font-black uppercase text-accent hover:underline"
+                    >
                       Tümü →
                     </button>
                   </div>
                   <div className="flex-1 space-y-8 lg:space-y-10">
-                    {[
-                      {
+                    {recentOrdersData.length === 0 && !loading && (
+                      <p className="text-[11px] font-medium text-brand-primary/40">
+                        Henüz sipariş yok.
+                      </p>
+                    )}
+                    {recentOrdersData
+                      .map((o) => ({
                         icon: ShoppingBasket,
                         color: 'bg-green-100 text-green-600',
-                        title: 'Yeni sipariş #MRC-84562',
-                        desc: '₺2,599.00 tutarında sipariş oluşturuldu.',
-                        time: '2 dakika önce',
-                      },
-                      {
-                        icon: Users,
-                        color: 'bg-blue-100 text-blue-600',
-                        title: 'Yeni satıcı başvurusu',
-                        desc: 'TechStore başvurusu onay bekliyor.',
-                        time: '15 dakika önce',
-                      },
-                      {
-                        icon: Package,
-                        color: 'bg-purple-100 text-purple-600',
-                        title: 'Ürün onaylandı',
-                        desc: 'Kablosuz Kulaklık Pro ürünü onaylandı.',
-                        time: '1 saat önce',
-                      },
-                      {
-                        icon: RefreshCcw,
-                        color: 'bg-red-100 text-red-600',
-                        title: 'İade talebi',
-                        desc: '#MRC-84510 siparişi için iade talebi.',
-                        time: '2 saat önce',
-                      },
-                    ].map((activity, i) => (
-                      <div
-                        key={i}
-                        className="flex gap-6 group cursor-pointer transition-transform hover:translate-x-1"
-                      >
+                        title: `Yeni sipariş ${o.displayId}`,
+                        desc: `${o.amountFormatted} — ${o.customer}`,
+                        time: o.date,
+                      }))
+                      .map((activity, i) => (
                         <div
-                          className={cn(
-                            'w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm',
-                            activity.color,
-                          )}
+                          key={i}
+                          className="flex gap-6 group cursor-pointer transition-transform hover:translate-x-1"
                         >
-                          <activity.icon size={20} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start mb-1">
-                            <h5 className="text-[13px] font-black text-brand-primary leading-none tracking-tight">
-                              {activity.title}
-                            </h5>
-                            <span className="text-[9px] font-bold text-brand-primary/20 uppercase whitespace-nowrap ms-4">
-                              {activity.time}
-                            </span>
+                          <div
+                            className={cn(
+                              'w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm',
+                              activity.color,
+                            )}
+                          >
+                            <activity.icon size={20} />
                           </div>
-                          <p className="text-[11px] font-medium text-brand-primary/40 leading-relaxed italic">
-                            {activity.desc}
-                          </p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start mb-1">
+                              <h5 className="text-[13px] font-black text-brand-primary leading-none tracking-tight">
+                                {activity.title}
+                              </h5>
+                              <span className="text-[9px] font-bold text-brand-primary/20 uppercase whitespace-nowrap ms-4">
+                                {activity.time}
+                              </span>
+                            </div>
+                            <p className="text-[11px] font-medium text-brand-primary/40 leading-relaxed italic">
+                              {activity.desc}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
-                  <button className="w-full mt-12 py-5 bg-[#F8F8FA] text-brand-primary/40 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-brand-primary hover:text-white transition-all shadow-sm">
+                  <button
+                    onClick={() => setActiveTab('audit')}
+                    className="w-full mt-12 py-5 bg-[#F8F8FA] text-brand-primary/40 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-brand-primary hover:text-white transition-all shadow-sm"
+                  >
                     Tüm Aktiviteleri Görüntüle
                   </button>
                 </div>

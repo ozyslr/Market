@@ -479,13 +479,13 @@ export function UserProfilePage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-4 sm:gap-6 shrink-0">
+            <div className="grid grid-cols-3 gap-4 sm:gap-6 shrink-0">
               {[
                 {
                   label: t('profile.totalSpent'),
                   value: ordersLoading
                     ? '…'
-                    : `$${totalSpent.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    : totalSpent.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' }),
                   color: 'text-green-500',
                 },
                 {
@@ -498,10 +498,7 @@ export function UserProfilePage() {
                   value: String(wishlist.length),
                   color: 'text-red-400',
                 },
-                { label: t('profile.rewardPoints'), value: '0', color: 'text-accent' },
-                {
-                  /* TODO(scope: loyalty-phase): puan backend'i yok; ayrı fazda ele alınacak */
-                },
+                // Reward points stat hidden until the loyalty backend exists (it always showed 0).
               ].map((s, i) => (
                 <div key={i} className="text-center">
                   <p className={cn('text-xl font-black leading-none mb-0.5', s.color)}>{s.value}</p>
