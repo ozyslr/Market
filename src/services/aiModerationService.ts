@@ -6,6 +6,7 @@
  */
 
 import { logAudit } from './auditLogService';
+import { geminiFetch } from '@/lib/gemini';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -44,15 +45,13 @@ export interface ReviewModerationInput {
 
 async function callGemini(prompt: string): Promise<string | null> {
   try {
-    const res = await fetch('/api/gemini/text', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'gemini-3-flash-preview', prompt }),
-    });
+    const res = await geminiFetch('/api/gemini/text', { prompt });
     if (!res.ok) return null;
     const data = await res.json();
     return data.text ?? null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 // ─── Product Moderation ─────────────────────────────────────────────────────
@@ -83,8 +82,12 @@ Rules:
 - Be strict about illegal items, lenient about minor description issues
 - Price check: if price is 0 or >1,000,000 TRY, flag it`;
 
-export async function moderateProduct(input: ProductModerationInput): Promise<ModerationResult | null> {
-  const text = await callGemini(`${PRODUCT_POLICY}\n\nProduct to analyze:\n${JSON.stringify(input, null, 2)}`);
+export async function moderateProduct(
+  input: ProductModerationInput,
+): Promise<ModerationResult | null> {
+  const text = await callGemini(
+    `${PRODUCT_POLICY}\n\nProduct to analyze:\n${JSON.stringify(input, null, 2)}`,
+  );
   if (!text) return fallbackModeration(input);
 
   try {
@@ -124,8 +127,12 @@ Return ONLY valid JSON:
   "suggestedAction": "What to do in Turkish"
 }`;
 
-export async function moderateReview(input: ReviewModerationInput): Promise<ModerationResult | null> {
-  const text = await callGemini(`${REVIEW_POLICY}\n\nReview to analyze:\n${JSON.stringify(input, null, 2)}`);
+export async function moderateReview(
+  input: ReviewModerationInput,
+): Promise<ModerationResult | null> {
+  const text = await callGemini(
+    `${REVIEW_POLICY}\n\nReview to analyze:\n${JSON.stringify(input, null, 2)}`,
+  );
   if (!text) return fallbackReviewModeration(input);
 
   try {
@@ -179,15 +186,23 @@ export async function autoModerateProduct(
 
   if (result.verdict === 'rejected') {
     logAudit({
-      actorId: 'ai-moderation', actorEmail: 'ai@benimolan.com', actorRole: 'ai',
-      action: 'product.reject', entityType: 'product', entityId: product.id,
+      actorId: 'ai-moderation',
+      actorEmail: 'ai@benimolan.com',
+      actorRole: 'ai',
+      action: 'product.reject',
+      entityType: 'product',
+      entityId: product.id,
       entityLabel: product.title,
       details: `AI OTO-RED: ${result.reason} (güven: %${result.confidence})`,
     });
   } else if (result.verdict === 'approved' && result.confidence >= 85) {
     logAudit({
-      actorId: 'ai-moderation', actorEmail: 'ai@benimolan.com', actorRole: 'ai',
-      action: 'product.approve', entityType: 'product', entityId: product.id,
+      actorId: 'ai-moderation',
+      actorEmail: 'ai@benimolan.com',
+      actorRole: 'ai',
+      action: 'product.approve',
+      entityType: 'product',
+      entityId: product.id,
       entityLabel: product.title,
       details: `AI OTO-ONAY: ${result.reason} (güven: %${result.confidence})`,
     });
@@ -203,7 +218,9 @@ function extractJson(text: string): any {
     const match = text.match(/\{[\s\S]*\}/);
     if (match) return JSON.parse(match[0]);
     return null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function fallbackModeration(input: ProductModerationInput): ModerationResult {
@@ -225,7 +242,8 @@ function fallbackModeration(input: ProductModerationInput): ModerationResult {
 }
 
 function fallbackReviewModeration(input: ReviewModerationInput): ModerationResult {
-  const hasSpam = input.reviewText.length < 5 || /^(good|bad|ok|test|ü|a){1,3}$/i.test(input.reviewText);
+  const hasSpam =
+    input.reviewText.length < 5 || /^(good|bad|ok|test|ü|a){1,3}$/i.test(input.reviewText);
   return {
     verdict: hasSpam ? 'flagged' : 'approved',
     confidence: hasSpam ? 60 : 85,

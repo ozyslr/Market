@@ -1,17 +1,14 @@
 import { Product } from '@/types';
 import { collection, getDocs, limit, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { geminiFetch } from '@/lib/gemini';
 
 // ─── Gemini Vision: describe image ────────────────────────────────────────
 
 async function describeImage(imageBase64: string, mimeType: string): Promise<string | null> {
   try {
-    const res = await fetch('/api/gemini/vision', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'gemini-2.0-flash-exp',
-        prompt: `You are Benim Olan's visual search engine. Analyze this product image and return a JSON object with:
+    const res = await geminiFetch('/api/gemini/vision', {
+      prompt: `You are Benim Olan's visual search engine. Analyze this product image and return a JSON object with:
 1. "title" — a concise product title in Turkish (max 60 chars)
 2. "category" — the best matching category from: electronics, fashion, home, sports, beauty, automotive, baby, food, office, pet, books, other
 3. "keywords" — an array of 5-10 search keywords in Turkish for finding similar products
@@ -19,9 +16,8 @@ async function describeImage(imageBase64: string, mimeType: string): Promise<str
 5. "style" — style descriptors (e.g. modern, classic, sporty, minimalist)
 
 Return ONLY valid JSON, no markdown fences. Example: {"title":"Spor Ayakkabı","category":"fashion","keywords":["spor ayakkabı","koşu","beyaz"],"color":"beyaz","style":"sporty"}`,
-        imageBase64,
-        mimeType,
-      }),
+      imageBase64,
+      mimeType,
     });
 
     if (!res.ok) return null;
@@ -54,25 +50,32 @@ async function searchProductsByKeywords(keywords: string[]): Promise<Product[]> 
 
   const snap = await getDocs(query(collection(db, 'products'), limit(50)));
   const allProducts = snap.docs
-    .map(d => ({ id: d.id, ...d.data() }) as Product)
-    .filter(p => p.isActive !== false);
+    .map((d) => ({ id: d.id, ...d.data() }) as Product)
+    .filter((p) => p.isActive !== false);
 
   // Score by keyword match in title, description, tags, category
-  const lowerKw = keywords.map(k => k.toLowerCase().replace(/[şğüöıç]/g, c => ({ ş: 's', ğ: 'g', ü: 'u', ö: 'o', ı: 'i', ç: 'c' } as Record<string, string>)[c] || c));
+  const lowerKw = keywords.map((k) =>
+    k
+      .toLowerCase()
+      .replace(
+        /[şğüöıç]/g,
+        (c) =>
+          (({ ş: 's', ğ: 'g', ü: 'u', ö: 'o', ı: 'i', ç: 'c' }) as Record<string, string>)[c] || c,
+      ),
+  );
 
   const scored = allProducts
-    .map(p => {
-      const searchText = [
-        p.title,
-        p.description,
-        ...(p.tags || []),
-        p.categoryId,
-        p.brand,
-      ]
+    .map((p) => {
+      const searchText = [p.title, p.description, ...(p.tags || []), p.categoryId, p.brand]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
-        .replace(/[şğüöıç]/g, c => ({ ş: 's', ğ: 'g', ü: 'u', ö: 'o', ı: 'i', ç: 'c' } as Record<string, string>)[c] || c);
+        .replace(
+          /[şğüöıç]/g,
+          (c) =>
+            (({ ş: 's', ğ: 'g', ü: 'u', ö: 'o', ı: 'i', ç: 'c' }) as Record<string, string>)[c] ||
+            c,
+        );
 
       let score = 0;
       for (const kw of lowerKw) {
@@ -80,15 +83,15 @@ async function searchProductsByKeywords(keywords: string[]): Promise<Product[]> 
         // Bonus for title match
         if (p.title?.toLowerCase().includes(kw)) score += 2;
         // Bonus for tag match
-        if (p.tags?.some(t => t.toLowerCase().includes(kw))) score += 1.5;
+        if (p.tags?.some((t) => t.toLowerCase().includes(kw))) score += 1.5;
       }
 
       return { product: p, score };
     })
-    .filter(p => p.score > 0)
+    .filter((p) => p.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  return scored.slice(0, 20).map(s => s.product);
+  return scored.slice(0, 20).map((s) => s.product);
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────
@@ -123,7 +126,7 @@ export async function searchByImage(file: File): Promise<VisualSearchResult> {
       keywords = analysis?.keywords ?? [];
     } catch {
       // Fallback: use raw description as keywords
-      keywords = description.split(/[\s,]+/).filter(w => w.length > 2);
+      keywords = description.split(/[\s,]+/).filter((w) => w.length > 2);
     }
   }
 

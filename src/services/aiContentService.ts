@@ -1,12 +1,10 @@
 // ─── Server-proxied Gemini — API key stays server-side ────────────────────
+import { geminiFetch } from '@/lib/gemini';
 
-async function generateText(model: string, prompt: string): Promise<string | null> {
+// Model is chosen server-side; the argument is kept so call sites stay unchanged.
+async function generateText(_model: string, prompt: string): Promise<string | null> {
   try {
-    const res = await fetch('/api/gemini/text', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, prompt }),
-    });
+    const res = await geminiFetch('/api/gemini/text', { prompt });
     if (!res.ok) return null;
     const data = await res.json();
     return data.text ?? null;
@@ -91,23 +89,6 @@ Return ONLY the meta description text, no JSON, no quotes, no extra formatting.`
   return generateText('gemini-3-flash-preview', prompt);
 }
 
-// ─── Image generation via Imagen (server-proxied) ─────────────────────────
-
-export async function generateProductImage(prompt: string): Promise<string | null> {
-  try {
-    const res = await fetch('/api/gemini/image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.dataUrl ?? null;
-  } catch {
-    return null;
-  }
-}
-
 // ─── AI-powered tag suggestion ─────────────────────────────────────────────
 
 export async function suggestTags(attrs: {
@@ -144,10 +125,12 @@ export interface ProductInsights {
 export async function generateProductInsights(
   productTitle: string,
   description: string,
-  specs?: Record<string, string>
+  specs?: Record<string, string>,
 ): Promise<ProductInsights | null> {
   const specText = specs
-    ? Object.entries(specs).map(([k, v]) => `${k}: ${v}`).join(', ')
+    ? Object.entries(specs)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(', ')
     : '';
   const prompt = `Sen bir ürün analisti olarak çalışıyorsun. Aşağıdaki ürün için Türkçe içgörü üret.
 Ürün: ${productTitle}

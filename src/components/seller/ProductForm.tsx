@@ -5,7 +5,6 @@ import {
   Trash2,
   Upload,
   Sparkles,
-  ImageIcon,
   Loader2,
   AlertCircle,
   Zap,
@@ -25,7 +24,6 @@ import type { ProductVariant } from '../../types';
 import {
   generateProductDescription,
   generateMetaDescription,
-  generateProductImage,
   suggestTags,
 } from '../../services/aiContentService';
 
@@ -676,39 +674,6 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
               <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
                 Görseller
               </h3>
-              <AnimatePresence>
-                {!quickAdd && (
-                  <motion.div
-                    key="ai-image-btn"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <button
-                      onClick={async () => {
-                        setAiLoading('image');
-                        const imagePrompt = `${form.title}, ${form.brand}, ${form.tags.slice(0, 3).join(', ')}, ürün görseli, profesyonel fotoğraf, beyaz arka plan, yüksek kalite`;
-                        const dataUrl = await generateProductImage(imagePrompt);
-                        if (dataUrl) {
-                          update('images', [...form.images, dataUrl]);
-                        }
-                        setAiLoading(null);
-                      }}
-                      disabled={aiLoading === 'image' || !form.title}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-all"
-                    >
-                      {aiLoading === 'image' ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <ImageIcon size={14} />
-                      )}
-                      AI Görsel Oluştur
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
 
             {/* Drop zone wrapper */}

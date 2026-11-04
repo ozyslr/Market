@@ -2,15 +2,28 @@
  * Server-proxied Gemini AI — API key stays server-side.
  * Calls /api/gemini/text instead of using the SDK directly.
  */
+import { auth } from './firebase';
+
+/** POSTs to a Gemini proxy route with the current user's ID token (guests are anonymous users). */
+export async function geminiFetch(
+  path: '/api/gemini/text' | '/api/gemini/vision',
+  body: Record<string, unknown>,
+): Promise<Response> {
+  const token = await auth.currentUser?.getIdToken();
+  return fetch(path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+}
 
 export async function askShoppingAssistant(query: string, context?: any) {
   try {
-    const res = await fetch('/api/gemini/text', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'gemini-3-flash-preview',
-        prompt: `
+    const res = await geminiFetch('/api/gemini/text', {
+      prompt: `
           Sen Benim Olan alışveriş asistanısın. Benim Olan, Türkiye'nin yeni nesil e-ticaret platformudur.
 
           Platform özellikleri:
@@ -32,17 +45,16 @@ export async function askShoppingAssistant(query: string, context?: any) {
 
           Kullanıcı sorusu: ${query}
         `,
-      }),
     });
 
     if (!res.ok) {
-      return "AI asistanı şu an kullanılamıyor. Lütfen daha sonra tekrar deneyin.";
+      return 'AI asistanı şu an kullanılamıyor. Lütfen daha sonra tekrar deneyin.';
     }
 
     const data = await res.json();
-    return data.text || "Yanıt alınamadı, lütfen tekrar deneyin.";
+    return data.text || 'Yanıt alınamadı, lütfen tekrar deneyin.';
   } catch (error) {
-    console.error("AI Assistant Error:", error);
+    console.error('AI Assistant Error:', error);
     return "I'm sorry, I'm having trouble connecting to my knowledge base right now. How else can I help you?";
   }
 }

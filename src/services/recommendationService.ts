@@ -1,5 +1,6 @@
 import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { geminiFetch } from '@/lib/gemini';
 import { Product } from '@/types';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -117,11 +118,7 @@ export async function getContentBasedRecommendations(
 
 async function callGemini(prompt: string): Promise<string | null> {
   try {
-    const res = await fetch('/api/gemini/text', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'gemini-3-flash-preview', prompt }),
-    });
+    const res = await geminiFetch('/api/gemini/text', { prompt });
     if (!res.ok) return null;
     const data = await res.json();
     return data.text ?? null;

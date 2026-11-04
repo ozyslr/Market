@@ -344,6 +344,8 @@ async function startServer() {
   // MUST also register before express.json() for HMAC verification to work
   registerCarrierWebhook(app, { adminDb });
 
+  // Visual search posts a base64 photo; the 100kb default rejected every real image.
+  app.use('/api/gemini/vision', express.json({ limit: '6mb' }));
   // JSON parser for all other routes
   app.use(express.json());
 
@@ -369,7 +371,7 @@ async function startServer() {
   // â”€â”€â”€ Seller REST API (/api/v1) â†' server/routes/sellerApi.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   registerSellerApiRoutes(app, adminDb);
 
-  registerGeminiRoutes(app);
+  registerGeminiRoutes(app, { verifyFirebaseToken });
 
   // --- Custom Claims Admin API ---
   // POST /api/admin/set-claims — Set custom claims for a user (verifyAdmin)

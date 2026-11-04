@@ -119,20 +119,15 @@ export const iyzicoInstallmentsQuerySchema = z.object({
 
 // ─── Gemini Routes ────────────────────────────────────────────────────────
 
+// Caps bound the cost of a single call; the model is chosen server-side.
 export const geminiTextSchema = z.object({
-  model: z.string().min(1),
-  prompt: z.string().min(1),
+  prompt: z.string().min(1).max(12_000),
 });
 
 export const geminiVisionSchema = z.object({
-  model: z.string().min(1),
-  prompt: z.string().min(1),
-  imageBase64: z.string().min(1),
-  mimeType: z.string().optional(),
-});
-
-export const geminiImageSchema = z.object({
-  prompt: z.string().min(1),
+  prompt: z.string().min(1).max(4_000),
+  imageBase64: z.string().min(1).max(6_200_000),
+  mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']).optional(),
 });
 
 // ─── Seller API Routes ────────────────────────────────────────────────────
