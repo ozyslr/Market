@@ -25,11 +25,15 @@ export function registerFxRateRoutes(
   app.post('/api/fx-rates/refresh', deps.verifyCronSecret, async (_req, res) => {
     try {
       const { adminDb } = await import('../../src/lib/firebase-admin.js');
-      const API_URL = 'https://api.exchangerate.host/latest?base=TRY&symbols=EUR';
+      // Frankfurter: keyless ECB reference rates (exchangerate.host started requiring a key → 401).
+      const API_URL = 'https://api.frankfurter.dev/v1/latest?from=TRY&to=EUR';
       const apiRes = await fetch(API_URL);
       if (!apiRes.ok) throw new Error(`FX API error: ${apiRes.status}`);
       const data = await apiRes.json();
-      const eurRate = data.rates?.EUR || 0.028;
+      const eurRate = data.rates?.EUR;
+      // Never store a guessed rate: keep the last good one and let the job fail visibly.
+      if (typeof eurRate !== 'number' || eurRate <= 0)
+        throw new Error('FX API returned no EUR rate');
 
       await adminDb!
         .collection('fxRates')

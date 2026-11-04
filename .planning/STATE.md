@@ -90,7 +90,8 @@ See .planning/PROJECT.md Key Decisions for full log.
 | 261103-vpt                         | Cloud Run prep: prod logger crash, storage bucket/ADC, webhook 503, PORT/vite/trust-proxy, Dockerfile + deploy runbook              | 2026-11-03 | 9b9c4db   |
 | 261104-tga                         | Cloud Run benimolan-api deployed (runbook 1-4); /api/\*\* Hosting rewrite; APP_URL=benimolan.com                                    | 2026-11-04 | caf2de1   |
 | 261104-tvf                         | Lock Gemini proxy (auth, per-user limit, fixed model, size caps); remove AI product-image generation; fix visual search 100kb limit | 2026-11-04 | e42c58a   |
-| 261104-w16                         | Prod cleanup: Stripe pk in CI build, remove admin seed + mock import jobs + stock-photo fallbacks, wire admin quick actions         | 2026-11-04 | (this)    |
+| 261104-w16                         | Prod cleanup: Stripe pk in CI build, remove admin seed + mock import jobs + stock-photo fallbacks, wire admin quick actions         | 2026-11-04 | 9e041ed   |
+| 261104-wtk                         | Checkout post-payment error hotfix (stock/coupon non-blocking); FX → Frankfurter; Entegi subOrders index; P0 checkout findings      | 2026-11-04 | (this)    |
 
 ## Deferred Items
 

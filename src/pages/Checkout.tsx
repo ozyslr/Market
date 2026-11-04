@@ -475,12 +475,23 @@ export function CheckoutPage() {
         ...(selectedCarrier ? { carrier: selectedCarrier } : {}),
       });
 
-      // Decrement stock atomically (throws if any item has insufficient stock)
-      await decreaseProductStock(
-        cartProducts.map((p) => ({ productId: p.id, quantity: p.quantity })),
-      );
+      // The order is created and paid at this point, so a stock failure must not show the
+      // buyer an error (they would pay again). Buyers may not write products under the rules,
+      // so this fails for non-admins today.
+      // shortcut: stock is not decremented for buyers; move checkout to /api/orders/create (server reserves stock).
+      try {
+        await decreaseProductStock(
+          cartProducts.map((p) => ({ productId: p.id, quantity: p.quantity })),
+        );
+      } catch (stockErr) {
+        console.error('[Checkout] stock decrement failed after order', order?.id, stockErr);
+      }
 
-      if (appliedCoupon) await incrementCouponUsage(appliedCoupon.id);
+      if (appliedCoupon) {
+        await incrementCouponUsage(appliedCoupon.id).catch((e) =>
+          console.error('[Checkout] coupon usage update failed after order', order?.id, e),
+        );
+      }
       if (saveAddress && !selectedAddressId && firebaseUser && !firebaseUser.isAnonymous) {
         const addressLabel =
           addressType === 'home'

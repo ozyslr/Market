@@ -1,6 +1,15 @@
 {
   "indexes": [
     {
+      "collectionGroup": "subOrders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "carrier", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "shippedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "orders",
       "queryScope": "COLLECTION",
       "fields": [
