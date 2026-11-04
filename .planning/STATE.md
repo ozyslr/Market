@@ -68,7 +68,7 @@ See .planning/PROJECT.md Key Decisions for full log.
 ### Pending Todos
 
 - **[next]** Express API'yi canlıda barındır — `.planning/todos/pending/2026-11-02-express-api-canlida-barindir.md`
-  (kod hazır: 261103-vpt; kalan: gcloud kurulumu → `.planning/quick/261103-vpt-cloud-run-api-prep/DEPLOY-RUNBOOK.md`)
+  (Cloud Run `benimolan-api` canlı + /api/\*\* Hosting rewrite: 261104-tga; kalan: runbook adım 6 Stripe webhook, 7 Scheduler cron, 8 kabul → `.planning/quick/261103-vpt-cloud-run-api-prep/DEPLOY-RUNBOOK.md`)
 - Phase 30: Verify shared component inventory before building new ones
 - Phase 33: Confirm iyzico route deps type signature before enforcing verifyAdmin non-optional
 
@@ -88,6 +88,7 @@ See .planning/PROJECT.md Key Decisions for full log.
 | 261102-ra8                         | Seller product flow + security: grant seller claims on approval, lock KYC/API-key routes, product/seller/storage rules          | 2026-11-02 | e94c6aa   |
 | 261102-vhw                         | CI green: fix search/admin-dashboard/seller-application ReferenceErrors, remove dead zustand stores, repair 3 test suites       | 2026-11-02 | a7feff3   |
 | 261103-vpt                         | Cloud Run prep: prod logger crash, storage bucket/ADC, webhook 503, PORT/vite/trust-proxy, Dockerfile + deploy runbook          | 2026-11-03 | 9b9c4db   |
+| 261104-tga                         | Cloud Run benimolan-api deployed (runbook 1-4); /api/\*\* Hosting rewrite; APP_URL=benimolan.com                                | 2026-11-04 | (this)    |
 
 ## Deferred Items
 

@@ -46,7 +46,7 @@ RESEND_API_KEY, TWILIO*_, EASYPOST*WEBHOOK_SECRET, EDEVLET_API_KEY, GIB*_, SENTR
 gcloud run deploy benimolan-api --source . \
   --service-account="$SA" --allow-unauthenticated \
   --min-instances=0 --max-instances=3 --memory=1Gi --timeout=60 \
-  --set-env-vars="NODE_ENV=production,APP_URL=https://market-ecommerce-app.web.app,TRUST_PROXY_HOPS=1" \
+  --set-env-vars="NODE_ENV=production,APP_URL=https://benimolan.com,TRUST_PROXY_HOPS=1" \
   --set-secrets="STRIPE_SECRET_KEY=STRIPE_SECRET_KEY:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest,CRON_SECRET=CRON_SECRET:latest"
 URL=$(gcloud run services describe benimolan-api --format='value(status.url)')
 curl -s "$URL/api/health"            # expect {"status":"ok","environment":"production"}
