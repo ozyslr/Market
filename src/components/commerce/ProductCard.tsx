@@ -57,9 +57,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
   const [imgIdx, setImgIdx] = useState(0);
   const [quickViewImgIdx, setQuickViewImgIdx] = useState(0);
   const images =
-    product.images && product.images.length > 0
-      ? product.images
-      : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'];
+    product.images && product.images.length > 0 ? product.images : ['/placeholder-product.svg'];
   const imgCount = Math.min(images.length, 4);
 
   const handleImageMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {

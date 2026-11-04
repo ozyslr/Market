@@ -158,43 +158,6 @@ function detectXmlFields(xmlText: string): FeedField[] {
   }
 }
 
-const MOCK_JOBS: ImportJob[] = [
-  {
-    id: 'm1',
-    feedName: 'Örnek XML Feed',
-    type: 'xml',
-    status: 'completed',
-    total: 1247,
-    success: 1231,
-    failed: 16,
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 'm2',
-    feedName: 'CSV Toplu Yükleme',
-    type: 'csv',
-    status: 'completed',
-    total: 48,
-    success: 48,
-    failed: 0,
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-  },
-  {
-    id: 'm3',
-    feedName: 'Sezon Feed',
-    type: 'xml',
-    status: 'failed',
-    total: 200,
-    success: 87,
-    failed: 113,
-    createdAt: new Date(Date.now() - 259200000).toISOString(),
-    errors: [
-      { line: 45, message: 'Geçersiz fiyat formatı' },
-      { line: 88, message: 'Eksik kategori ID' },
-    ],
-  },
-];
-
 export function SellerImportCenter() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<ImportTab>('overview');
@@ -498,14 +461,10 @@ export function SellerImportCenter() {
       ),
     )
       .then((snap) => {
-        setJobs(
-          snap.empty
-            ? MOCK_JOBS
-            : snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<ImportJob, 'id'>) })),
-        );
+        setJobs(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<ImportJob, 'id'>) })));
       })
       .catch(() => {
-        setJobs(MOCK_JOBS);
+        setJobs([]);
       })
       .finally(() => setLoadingJobs(false));
   }, [user?.id]);

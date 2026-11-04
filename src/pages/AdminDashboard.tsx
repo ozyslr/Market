@@ -14,7 +14,6 @@ import {
   ArrowUpRight,
   Search,
   Filter,
-  Database,
   Plus,
   Edit,
   Trash2,
@@ -78,7 +77,6 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
-import { seedMarketplace } from '@/services/seedService';
 
 import { AdminCMS } from './AdminCMS';
 import { AdminUsers } from './AdminUsers';
@@ -312,8 +310,6 @@ export function AdminDashboard() {
   };
 
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [seeding, setSeeding] = useState(false);
-  const [seedResult, setSeedResult] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [realKpis, setRealKpis] = useState({
     totalUsers: 0,
@@ -544,20 +540,6 @@ export function AdminDashboard() {
     };
     load();
   }, []);
-
-  const handleSeed = async () => {
-    setSeeding(true);
-    setSeedResult(null);
-    try {
-      const res = await seedMarketplace();
-      setSeedResult(res.message);
-    } catch (err: any) {
-      setSeedResult(`Error: ${err.message}`);
-    } finally {
-      setSeeding(false);
-      setTimeout(() => setSeedResult(null), 5000);
-    }
-  };
 
   if (!user) {
     return (
@@ -1522,32 +1504,16 @@ export function AdminDashboard() {
                     </h3>
                     <div className="grid grid-cols-2 gap-6">
                       {[
-                        { icon: Plus, label: 'Ürün Ekle', color: 'accent' },
-                        { icon: Users, label: 'Satıcı Ekle', color: 'blue-500' },
-                        { icon: Megaphone, label: 'Kampanya Oluştur', color: 'purple-500' },
-                        { icon: Tag, label: 'Kupon Oluştur', color: 'orange-500' },
-                        {
-                          id: 'reports',
-                          icon: BarChart3,
-                          label: 'Rapor Oluştur',
-                          color: 'green-500',
-                        },
-                        {
-                          id: 'seed',
-                          icon: Database,
-                          label: seeding ? 'Seeding...' : 'Seed Data',
-                          color: 'pink-500',
-                          onClick: handleSeed,
-                        },
-                      ].map((action: any, i) => (
+                        { tab: 'products', icon: Plus, label: 'Ürünler' },
+                        { tab: 'sellers', icon: Users, label: 'Satıcılar' },
+                        { tab: 'campaigns', icon: Megaphone, label: 'Kampanya Oluştur' },
+                        { tab: 'coupons', icon: Tag, label: 'Kupon Oluştur' },
+                        { tab: 'reports', icon: BarChart3, label: 'Rapor Oluştur' },
+                      ].map((action) => (
                         <button
-                          key={i}
-                          onClick={action.onClick}
-                          disabled={action.id === 'seed' && seeding}
-                          className={cn(
-                            'group bg-[#F8F8FA] p-8 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 hover:bg-brand-primary transition-all duration-500 shadow-sm border border-brand-primary/5',
-                            action.id === 'seed' && seeding && 'opacity-50 cursor-not-allowed',
-                          )}
+                          key={action.tab}
+                          onClick={() => setActiveTab(action.tab)}
+                          className="group bg-[#F8F8FA] p-8 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 hover:bg-brand-primary transition-all duration-500 shadow-sm border border-brand-primary/5"
                         >
                           <div
                             className={cn(
@@ -1566,28 +1532,6 @@ export function AdminDashboard() {
                   </div>
                 </div>
               </div>
-
-              {/* Notification Overlay */}
-              <AnimatePresence>
-                {seedResult && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 50 }}
-                    className="fixed bottom-12 end-12 z-50 bg-brand-primary text-white p-6 rounded-[2rem] shadow-2xl flex items-center gap-4 min-w-[300px]"
-                  >
-                    <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
-                      <Database size={20} />
-                    </div>
-                    <p className="text-[11px] font-black uppercase tracking-widest flex-1">
-                      {seedResult}
-                    </p>
-                    <button onClick={() => setSeedResult(null)}>
-                      <X size={16} />
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               {/* Final Bottom Spacing & Disclaimer */}
               <div className="py-20 flex flex-col items-center justify-center text-center opacity-20 hover:opacity-100 transition-opacity">

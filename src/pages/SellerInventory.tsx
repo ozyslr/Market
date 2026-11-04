@@ -403,11 +403,7 @@ export function SellerInventoryPage() {
           categoryId: row['categoryid'] || row['kategori'] || 'cat-1-audio',
           brand: row['brand'] || row['marka'] || '',
           description: row['description'] || row['aciklama'] || '',
-          images: row['image']
-            ? [row['image']]
-            : [
-                'https://images.unsplash.com/photo-1542382257-80dedb725088?auto=format&fit=crop&q=80&w=800',
-              ],
+          images: row['image'] ? [row['image']] : [],
           currency: 'TRY',
           featured: false,
         };

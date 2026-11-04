@@ -1,9 +1,17 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Camera, Upload, ImageIcon, Search, X,
-  Sparkles, Loader2, AlertCircle, ChevronRight,
-  Package, TrendingUp
+  Camera,
+  Upload,
+  ImageIcon,
+  Search,
+  X,
+  Sparkles,
+  Loader2,
+  AlertCircle,
+  ChevronRight,
+  Package,
+  TrendingUp,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Product } from '@/types';
@@ -52,17 +60,23 @@ export function VisualSearch() {
     }
   }, []);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processFile(file);
-  }, [processFile]);
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) processFile(file);
+    },
+    [processFile],
+  );
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
-  }, [processFile]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(false);
+      const file = e.dataTransfer.files?.[0];
+      if (file) processFile(file);
+    },
+    [processFile],
+  );
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -156,7 +170,10 @@ export function VisualSearch() {
                     </span>
                   </div>
                   <button
-                    onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileRef.current?.click();
+                    }}
                     className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:from-purple-500 hover:to-pink-400 transition-all shadow-xl shadow-purple-500/20"
                   >
                     <Upload size={16} /> Görsel Seç
@@ -174,13 +191,21 @@ export function VisualSearch() {
               {/* Tips */}
               <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                  { icon: Camera, text: 'Net ve iyi aydınlatılmış fotoğraflar daha iyi sonuç verir' },
+                  {
+                    icon: Camera,
+                    text: 'Net ve iyi aydınlatılmış fotoğraflar daha iyi sonuç verir',
+                  },
                   { icon: TrendingUp, text: 'Tek ürün odaklı görseller en doğru eşleşmeyi sağlar' },
                   { icon: Package, text: 'Beyaz veya sade arka planlı ürün görselleri önerilir' },
                 ].map((tip, i) => (
-                  <div key={i} className="flex items-center gap-3 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-brand-primary/5">
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-brand-primary/5"
+                  >
                     <tip.icon size={18} className="text-purple-500 shrink-0" />
-                    <p className="text-[11px] font-bold text-brand-primary/50 dark:text-white/50 leading-tight">{tip.text}</p>
+                    <p className="text-[11px] font-bold text-brand-primary/50 dark:text-white/50 leading-tight">
+                      {tip.text}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -267,7 +292,12 @@ export function VisualSearch() {
                   <div className="flex flex-col md:flex-row items-start gap-6">
                     {previewUrl && (
                       <div className="w-24 h-24 rounded-2xl overflow-hidden border border-brand-primary/10 shrink-0">
-                        <img src={previewUrl} alt="Aranan görsel" className="w-full h-full object-cover" loading="lazy" />
+                        <img
+                          src={previewUrl}
+                          alt="Aranan görsel"
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -286,7 +316,7 @@ export function VisualSearch() {
                         {result.analysis.title}
                       </h3>
                       <div className="flex flex-wrap gap-1.5 mt-3">
-                        {result.analysis.keywords.map(kw => (
+                        {result.analysis.keywords.map((kw) => (
                           <Link
                             key={kw}
                             to={`/search?q=${encodeURIComponent(kw)}`}
@@ -327,11 +357,15 @@ export function VisualSearch() {
                       transition={{ delay: i * 0.05 }}
                     >
                       <Link to={`/product/${product.slug || product.id}`}>
-                        <ProductCard product={{
-                          ...product,
-                          images: product.images?.length ? product.images : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'],
-                          slug: product.slug || product.id,
-                        }} />
+                        <ProductCard
+                          product={{
+                            ...product,
+                            images: product.images?.length
+                              ? product.images
+                              : ['/placeholder-product.svg'],
+                            slug: product.slug || product.id,
+                          }}
+                        />
                       </Link>
                     </motion.div>
                   ))}

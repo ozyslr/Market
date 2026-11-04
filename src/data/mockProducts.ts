@@ -1,5 +1,5 @@
 /**
- * KARANTİNA: Bu mock veri YALNIZCA seedService ve testler tarafından kullanılır.
+ * KARANTİNA: Bu mock veri YALNIZCA testler tarafından kullanılır.
  * Runtime/UI kodundan (sayfalar, servisler) import ETMEYİN. Gerçek veri için
  * productService fonksiyonlarını kullanın. (ACC-03)
  */

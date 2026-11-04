@@ -61,7 +61,12 @@ export function ProductRecommendations({ groups, loading }: Props) {
             {/* Section header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center", colorClass)}>
+                <div
+                  className={cn(
+                    'w-12 h-12 rounded-2xl flex items-center justify-center',
+                    colorClass,
+                  )}
+                >
                   <Icon size={22} strokeWidth={2.5} />
                 </div>
                 <div>
@@ -93,7 +98,9 @@ export function ProductRecommendations({ groups, loading }: Props) {
                   <ProductCard
                     product={{
                       ...product,
-                      images: product.images?.length ? product.images : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'],
+                      images: product.images?.length
+                        ? product.images
+                        : ['/placeholder-product.svg'],
                       slug: product.slug || product.id,
                     }}
                   />
@@ -124,7 +131,7 @@ export function RecommendationStrip({ title, products, source = 'content_based' 
   return (
     <section className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", colorClass)}>
+        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', colorClass)}>
           <Icon size={18} strokeWidth={2.5} />
         </div>
         <h3 className="text-lg font-display font-black uppercase tracking-tight text-brand-primary">
@@ -133,7 +140,7 @@ export function RecommendationStrip({ title, products, source = 'content_based' 
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory no-scrollbar">
-        {products.slice(0, 10).map(product => (
+        {products.slice(0, 10).map((product) => (
           <Link
             key={product.id}
             to={`/product/${product.slug || product.id}`}
@@ -144,7 +151,7 @@ export function RecommendationStrip({ title, products, source = 'content_based' 
             <div className="bg-white rounded-2xl border border-brand-primary/5 overflow-hidden hover:shadow-lg transition-all group">
               <div className="aspect-square bg-zinc-50 overflow-hidden">
                 <img
-                  src={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'}
+                  src={product.images?.[0] || '/placeholder-product.svg'}
                   alt={product.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
