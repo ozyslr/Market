@@ -186,7 +186,7 @@ export function ReturnManagementSection({ sellerId, uid, show }: Props) {
                     </p>
                   )}
                   <p className="text-[10px] font-mono text-brand-primary/30">
-                    Sipariş: {r.subOrderId.slice(-8).toUpperCase()}
+                    Sipariş: {(r.subOrderId ?? (r as any).orderId ?? '').slice(-8).toUpperCase()}
                   </p>
                 </div>
                 <span className="shrink-0 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-600">

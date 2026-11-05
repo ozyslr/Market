@@ -25,9 +25,20 @@ export const cartItemSchema = z.object({
 // ─── Stripe Routes ────────────────────────────────────────────────────────
 
 export const createPaymentIntentSchema = z.object({
+  /** Total the buyer saw; compared against the server quote, never charged as-is. */
   amount: z.number().finite().positive(),
-  currency: z.string().length(3).optional(),
-  orderId: z.string().min(1).optional(),
+  items: z
+    .array(
+      z.object({
+        productId: z.string().min(1).max(128),
+        quantity: z.number().int().positive().max(999),
+      }),
+    )
+    .min(1)
+    .max(50),
+  couponCode: z.string().max(64).optional(),
+  shipping: z.number().finite().nonnegative().optional(),
+  /** Saved card (pm_…) of the authenticated user. */
   paymentMethodId: z.string().min(1).optional(),
 });
 
@@ -54,27 +65,10 @@ export const refundSchema = z.object({
 
 // ─── iyzico Routes ────────────────────────────────────────────────────────
 
+/** Amount, basket and buyer come from the server-created order, never from the client. */
 export const iyzicoInitSchema = z.object({
-  userId: z.string().min(1),
-  userEmail: z.string().email(),
-  userName: z.string().min(1),
-  total: z.number().finite().positive(),
-  currency: z.string().length(3),
-  installment: z.number().int().min(1).optional(),
-  orderId: z.string().min(1),
-  items: z
-    .array(
-      z.object({
-        id: z.string().min(1),
-        name: z.string().min(1),
-        category: z.string().optional(),
-        price: z.number().finite().nonnegative(),
-        quantity: z.number().int().positive().optional(),
-      }),
-    )
-    .min(1),
-  shippingAddress: addressSchema,
-  buyerPhone: z.string().min(1).optional(),
+  orderId: z.string().min(1).max(128),
+  installment: z.number().int().min(1).max(12).optional(),
 });
 
 // ─── iyzico Marketplace Init Schema (OrderSet-based) ─────────────────────────

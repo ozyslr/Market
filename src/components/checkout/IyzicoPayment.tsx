@@ -1,31 +1,14 @@
-import React, { useState, useCallback } from 'react';
-import {
-  Loader2,
-  CreditCard,
-  ChevronRight,
-  ExternalLink,
-  AlertCircle,
-  CheckCircle2,
-} from 'lucide-react';
-import { getActiveProvidersForRegion } from '@/services/paymentProviderService';
+import React, { useState, useCallback, useRef } from 'react';
+import { Loader2, CreditCard, ChevronRight, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { auth } from '@/lib/firebase';
 import type { InstallmentOption } from '@/types/payment';
 
 interface IyzicoPaymentProps {
   total: number;
   currency: string;
-  orderId: string;
-  userId: string;
-  userEmail: string;
-  userName: string;
-  buyerPhone: string;
   region: string;
-  shippingAddress: {
-    fullName: string;
-    line1: string;
-    city: string;
-    country: string;
-  };
-  onSuccess: () => void;
+  /** Creates the pending order on the server; returns its id (null = error already shown). */
+  createOrder: () => Promise<string | null>;
   onBack: () => void;
   onError: (msg: string) => void;
 }
@@ -33,17 +16,13 @@ interface IyzicoPaymentProps {
 export function IyzicoPayment({
   total,
   currency,
-  orderId,
-  userId,
-  userEmail,
-  userName,
-  buyerPhone,
   region,
-  shippingAddress,
-  onSuccess,
+  createOrder,
   onBack,
   onError,
 }: IyzicoPaymentProps) {
+  // One pending order per visit: "tıklayın" retries reuse it instead of creating another.
+  const orderIdRef = useRef<string | null>(null);
   const [installment, setInstallment] = useState(1);
   const [installmentOptions, setInstallmentOptions] = useState<InstallmentOption[]>([]);
   const [loadingInstallments, setLoadingInstallments] = useState(false);
@@ -71,40 +50,25 @@ export function IyzicoPayment({
   const handlePay = async () => {
     setInitializing(true);
     try {
+      orderIdRef.current ??= await createOrder();
+      const orderId = orderIdRef.current;
+      if (!orderId) return;
+
+      const token = await auth.currentUser?.getIdToken();
       const res = await fetch('/api/iyzico/init', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          userEmail,
-          userName,
-          total,
-          currency: currency === 'TRY' ? 'TRY' : 'GBP',
-          installment,
-          orderId,
-          items: [],
-          shippingAddress,
-          buyerPhone,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ orderId, installment }),
       });
 
       const data = await res.json();
 
       if (data.paymentPageUrl) {
         setStatus('redirecting');
-        // Store order reference then redirect to iyzico
-        sessionStorage.setItem(
-          `iyzico_order_${orderId}`,
-          JSON.stringify({
-            orderId,
-            token: data.token,
-            total,
-            currency,
-          }),
-        );
-
-        // Start polling for payment completion after redirect
-        // The callback URL will redirect back to /checkout?iyzico_status=...
+        // iyzico redirects back to /checkout?iyzico_status=…&orderId=…
         window.location.href = data.paymentPageUrl;
       } else if (data.isMock) {
         onError('iyzico henüz yapılandırılmamış. Lütfen stripe veya havale/EFT kullanın.');

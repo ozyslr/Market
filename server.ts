@@ -17,6 +17,7 @@ import { IyzicoProvider } from './server/services/paymentProvider.js';
 import { registerStripeWebhook, registerStripeRoutes } from './server/routes/stripe.js';
 import { registerGeminiRoutes } from './server/routes/gemini.js';
 import { registerOrderRoutes } from './server/routes/orders.js';
+import { registerCheckoutRoutes } from './server/routes/checkout.js';
 import { registerReviewRoutes } from './server/routes/reviews.js';
 import { registerCommissionRoutes } from './server/routes/commission.js';
 import { registerComplianceRoutes } from './server/routes/compliance.js';
@@ -356,6 +357,7 @@ async function startServer() {
 
   // â”€â”€â”€ Stripe payment endpoints â†' server/routes/stripe.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   registerStripeRoutes(app, { stripe, adminDb, verifyFirebaseToken, verifyAdmin, port: PORT });
+  registerCheckoutRoutes(app, { stripe, adminDb, verifyFirebaseToken });
 
   // â”€â”€â”€ iyzico API â†' server/routes/iyzico.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const iyzicoProvider = new IyzicoProvider({ getIyzico });

@@ -26,6 +26,7 @@ import {
   subscribeOrdersBySeller,
   updateOrderStatus,
   batchUpdateOrders,
+  addTracking,
 } from '@/services/orderService';
 import { createNotification } from '@/services/notificationService';
 import { getTrackingStatus, CargoProviderName } from '@/services/cargoService';
@@ -55,8 +56,8 @@ export function SellerOrdersPage() {
   const [realtimeActive, setRealtimeActive] = useState(false);
   const [shipResult, setShipResult] = useState<{
     trackingNumber: string;
-    labelUrl: string;
-    estimatedDelivery: string;
+    labelUrl: string | null;
+    estimatedDelivery: string | null;
   } | null>(null);
   const [shipError, setShipError] = useState<string | null>(null);
 
@@ -192,9 +193,40 @@ export function SellerOrdersPage() {
     setShipError(null);
     setShipResult(null);
     try {
+      // Checkout orders live in `orders` (no orderSetId): the label API works on subOrders only,
+      // so the seller enters the carrier's tracking number until carrier APIs are contracted.
+      if (!(shipTarget as any).orderSetId) {
+        const tracking = trackingNumber.trim();
+        if (!tracking) {
+          setShipError('Kargo firmasının verdiği takip numarasını girin.');
+          return;
+        }
+        await addTracking(shipTarget.id, carrier, tracking);
+        setShipResult({ trackingNumber: tracking, labelUrl: null, estimatedDelivery: null });
+        setTrackingNumber('');
+        setOrderNote('');
+        autoGenerateInvoice(
+          shipTarget.id,
+          firebaseUser.uid,
+          shipTarget.createdAt,
+          shipTarget.items.map((i) => ({
+            name: i.name,
+            quantity: i.quantity,
+            price: i.price,
+            subtotal: i.subtotal,
+          })),
+          shipTarget.shippingAddress?.fullName || shipTarget.userEmail,
+          shipTarget.shippingAddress
+            ? `${shipTarget.shippingAddress.line1}, ${shipTarget.shippingAddress.city}`
+            : '',
+          shipTarget.total,
+          shipTarget.currency || 'TRY',
+        );
+        return;
+      }
+
       const token = await firebaseUser.getIdToken();
-      // shipTarget is an Order (old model); orderSetId may live on the doc or equal the id
-      const orderSetId = (shipTarget as any).orderSetId ?? shipTarget.id;
+      const orderSetId = (shipTarget as any).orderSetId;
       const subOrderId = shipTarget.id;
 
       const res = await fetch(`/api/orders/${orderSetId}/subOrders/${subOrderId}/ship`, {
@@ -819,14 +851,16 @@ export function SellerOrdersPage() {
                     {new Date(shipResult.estimatedDelivery).toLocaleDateString('tr-TR')}
                   </p>
                 )}
-                <a
-                  href={shipResult.labelUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-1 px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
-                >
-                  <ExternalLink size={12} /> Etiketi Görüntüle
-                </a>
+                {shipResult.labelUrl && (
+                  <a
+                    href={shipResult.labelUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-1 px-4 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
+                  >
+                    <ExternalLink size={12} /> Etiketi Görüntüle
+                  </a>
+                )}
               </div>
             )}
 
@@ -856,7 +890,7 @@ export function SellerOrdersPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
-                    Takip Numarası (opsiyonel)
+                    Takip Numarası
                   </label>
                   <input
                     value={trackingNumber}

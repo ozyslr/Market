@@ -31,7 +31,7 @@ import {
 } from '../services/kycService.js';
 import { findApplicationRef } from '../lib/sellerAccess.js';
 import { StripeConnectProvider } from '../services/paymentProvider.js';
-import { validatePrices, type PriceCheckItem } from '../lib/priceValidator.js';
+import { cartSignature, quoteCheckout, QuoteError } from '../services/checkoutQuote.js';
 
 type Middleware = (req: any, res: any, next: any) => any;
 
@@ -366,101 +366,68 @@ export function registerStripeWebhook(app: Express, stripe: Stripe, adminDb: Fir
 export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
   const { stripe, adminDb, verifyFirebaseToken, verifyAdmin, port: PORT } = deps;
 
-  // Stripe Payment Intent
-  app.post('/api/create-payment-intent', validate(createPaymentIntentSchema), async (req, res) => {
-    const { amount, currency = 'try', orderId, paymentMethodId } = req.body;
+  // ─── Stripe PaymentIntent (server-quoted, TRY only) ──────────────────────
+  // The amount is the server quote (DB prices, coupon, campaign, VAT); the client total is only
+  // compared so the buyer is never charged something different from what they saw.
+  // metadata.uid + cartSig bind the PaymentIntent to this buyer and cart for /api/checkout/complete.
+  app.post(
+    '/api/create-payment-intent',
+    verifyFirebaseToken,
+    validate(createPaymentIntentSchema),
+    async (req: any, res: any) => {
+      if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
+      const { amount, items, couponCode, shipping, paymentMethodId } = req.body;
 
-    // â”€â”€ Input validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    if (!isFiniteNumber(amount) || amount <= 0 || amount > 1_000_000) {
-      return res.status(400).json({ error: 'Invalid amount' });
-    }
-    const validCurrency =
-      typeof currency === 'string' &&
-      (currency.toLowerCase() === 'eur' || currency.toLowerCase() === 'try')
-        ? currency.toLowerCase()
-        : 'try';
-    if (orderId !== undefined && !isNonEmptyString(orderId, 128)) {
-      return res.status(400).json({ error: 'Invalid orderId' });
-    }
-
-    // ── Server-side price validation (prevents client price manipulation) ──
-    const items: PriceCheckItem[] | undefined = req.body.items;
-    if (items && items.length > 0 && adminDb) {
-      const priceCheck = await validatePrices(adminDb, items);
-      if (!priceCheck.valid) {
-        logger.warn('stripe', 'Price validation failed', {
-          reason: priceCheck.reason,
-          clientTotal: priceCheck.clientTotal,
-          serverTotal: priceCheck.serverTotal,
-          orderId,
-        });
-        return res.status(400).json({
-          error: 'Price mismatch detected. Please refresh and try again.',
-          detail: priceCheck.reason,
-        });
+      let quote;
+      try {
+        quote = await quoteCheckout(adminDb, { items, couponCode, shipping });
+      } catch (e) {
+        if (e instanceof QuoteError) return res.status(e.status).json({ error: e.message });
+        throw e;
       }
-      // If items were provided, use server-computed total for the actual charge
-      // (defense-in-depth: even if the client amount somehow passed the check,
-      // we charge the server-verified amount)
-      if (Math.abs(amount - priceCheck.serverTotal) > 0.5) {
-        logger.info('stripe', 'Correcting payment amount to server-verified total', {
+      if (Math.abs(quote.total - amount) > 1) {
+        logger.warn('stripe', 'Client total differs from server quote', {
           clientAmount: amount,
-          serverAmount: priceCheck.serverTotal,
+          serverTotal: quote.total,
         });
-        req.body.amount = priceCheck.serverTotal;
+        return res.status(409).json({
+          error: 'Sepet tutarı güncellendi. Lütfen sayfayı yenileyip tekrar deneyin.',
+          total: quote.total,
+        });
       }
-    } else if (items && items.length > 0 && !adminDb) {
-      logger.warn('stripe', 'Price validation skipped — adminDb not configured');
-    }
 
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
+      const stripeKey = process.env.STRIPE_SECRET_KEY;
+      if (!stripeKey || stripeKey === 'YOUR_STRIPE_SECRET_KEY') {
+        return res.status(503).json({ error: 'Kartla ödeme şu anda kullanılamıyor.' });
+      }
 
-    if (!stripeKey || stripeKey === 'YOUR_STRIPE_SECRET_KEY') {
-      logger.warn('stripe', 'Secret key not set, using mock response');
-      return res.json({
-        clientSecret: 'mock_secret_' + Math.random().toString(36).substring(7),
-        isMock: true,
-      });
-    }
+      const params = {
+        amount: Math.round(quote.total * 100),
+        currency: 'try',
+        metadata: {
+          uid: req.uid,
+          cartSig: cartSignature(items),
+          couponId: quote.couponId ?? '',
+          discount: String(quote.discount),
+          shipping: String(quote.shipping),
+          tax: String(quote.tax),
+        },
+      };
 
-    try {
-      // ── Saved card (authenticated) vs Express wallet (guest) ──
-      if (paymentMethodId) {
-        const authHeader = req.headers.authorization as string | undefined;
-
-        // ── Saved card: authenticated user, off-session charge ──
-        if (authHeader?.startsWith('Bearer ')) {
-          if (!adminDb) return res.status(503).json({ error: 'DB not configured' });
-          const token = authHeader.slice(7);
-          let uid: string;
-          try {
-            const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
-            uid = decoded.user_id || decoded.sub;
-            if (!uid) throw new Error('No uid in token');
-            (req as any).uid = uid;
-          } catch {
-            return res.status(401).json({ error: 'Invalid token' });
-          }
-
-          const userDoc = await adminDb.collection('users').doc(uid).get();
+      try {
+        // ── Saved card: the verified token's uid decides whose Stripe customer is charged ──
+        if (paymentMethodId) {
+          const userDoc = await adminDb.collection('users').doc(req.uid).get();
           const customerId: string = userDoc.data()?.stripeCustomerId || '';
-          if (!customerId) {
-            return res.status(400).json({ error: 'No Stripe customer found' });
-          }
+          if (!customerId) return res.status(400).json({ error: 'No Stripe customer found' });
 
-          const pi = await stripe.paymentIntents.create(
-            {
-              amount: Math.round(amount * 100),
-              currency,
-              customer: customerId,
-              payment_method: paymentMethodId,
-              confirm: true,
-              off_session: true,
-              metadata: { orderId: orderId || '' },
-            },
-            orderId ? { idempotencyKey: `pi_${orderId}` } : undefined,
-          );
-
+          const pi = await stripe.paymentIntents.create({
+            ...params,
+            customer: customerId,
+            payment_method: paymentMethodId,
+            confirm: true,
+            off_session: true,
+          });
           if (pi.status === 'requires_action') {
             return res.json({ clientSecret: pi.client_secret, requiresAction: true });
           }
@@ -470,41 +437,16 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
           return res.json({ clientSecret: pi.client_secret, status: 'succeeded' });
         }
 
-        // ── Express wallet (Apple Pay / Google Pay): no auth required ──
-        // Payment method was already tokenized by the native browser sheet.
-        const pi = await stripe.paymentIntents.create(
-          {
-            amount: Math.round(amount * 100),
-            currency,
-            payment_method: paymentMethodId,
-            automatic_payment_methods: { enabled: true },
-            confirm: true,
-            metadata: { orderId: orderId || '' },
-          },
-          orderId ? { idempotencyKey: `pi_${orderId}` } : undefined,
-        );
-
-        if (pi.status === 'succeeded') {
-          return res.json({ clientSecret: pi.client_secret, status: 'succeeded' });
-        }
-        return res.status(400).json({ error: 'Payment did not succeed', status: pi.status });
-      }
-
-      const paymentIntent = await stripe.paymentIntents.create(
-        {
-          amount: Math.round(amount * 100),
-          currency,
+        const paymentIntent = await stripe.paymentIntents.create({
+          ...params,
           automatic_payment_methods: { enabled: true },
-          metadata: { orderId: orderId || '' },
-        },
-        orderId ? { idempotencyKey: `pi_${orderId}` } : undefined,
-      );
-
-      res.json({ clientSecret: paymentIntent.client_secret });
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
-    }
-  });
+        });
+        res.json({ clientSecret: paymentIntent.client_secret, total: quote.total });
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    },
+  );
 
   // â”€â”€â”€ Save Card: Create SetupIntent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post('/api/create-setup-intent', verifyFirebaseToken, async (req: any, res) => {

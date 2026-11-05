@@ -11,6 +11,8 @@ import { createSetupIntent, setupPaymentMethod } from '@/services/oneClickChecko
 import { useAuth } from '@/context/AuthContext';
 
 interface StripePaymentFormProps {
+  /** Secret of the server-quoted PaymentIntent; wallets confirm this one instead of creating another. */
+  clientSecret: string;
   total: number;
   currency: string;
   shippingAddress: ShippingAddress;
@@ -19,6 +21,7 @@ interface StripePaymentFormProps {
 }
 
 export function StripePaymentForm({
+  clientSecret,
   total,
   currency,
   shippingAddress: _shippingAddress,
@@ -39,12 +42,10 @@ export function StripePaymentForm({
   const prInitialised = useRef(false);
 
   // Stable refs for closure safety inside event listener
-  const totalRef = useRef(total);
-  totalRef.current = total;
-  const currencyRef = useRef(currency);
-  currencyRef.current = currency;
   const onSuccessRef = useRef(onSuccess);
   onSuccessRef.current = onSuccess;
+  const clientSecretRef = useRef(clientSecret);
+  clientSecretRef.current = clientSecret;
 
   useEffect(() => {
     if (!stripe || prInitialised.current) return;
@@ -88,28 +89,32 @@ export function StripePaymentForm({
     if (!paymentRequest) return;
 
     const handlePaymentMethod = async (ev: any) => {
+      if (!stripe) return;
       try {
-        const res = await fetch('/api/create-payment-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: totalRef.current,
-            currency: currencyRef.current.toLowerCase(),
-            paymentMethodId: ev.paymentMethod.id,
-          }),
-        });
-        const data = await res.json();
-
-        if (!res.ok || data.error) {
+        // Confirm the server-quoted PaymentIntent with the wallet card (Stripe's wallet pattern).
+        const first = await stripe.confirmCardPayment(
+          clientSecretRef.current,
+          { payment_method: ev.paymentMethod.id },
+          { handleActions: false },
+        );
+        if (first.error) {
           ev.complete('fail');
-          setError(data.error || 'Ödeme başarısız oldu');
+          setError(first.error.message || 'Ödeme başarısız oldu');
           return;
         }
-
-        // Extract PaymentIntent ID from clientSecret (format: pi_xxx_secret_yyy)
-        const piId = (data.clientSecret as string).split('_secret_')[0];
         ev.complete('success');
-        onSuccessRef.current(piId);
+
+        let pi = first.paymentIntent;
+        if (pi?.status === 'requires_action') {
+          const next = await stripe.confirmCardPayment(clientSecretRef.current);
+          if (next.error) {
+            setError(next.error.message || '3DS doğrulaması başarısız');
+            return;
+          }
+          pi = next.paymentIntent;
+        }
+        if (pi?.status === 'succeeded') onSuccessRef.current(pi.id);
+        else setError('Ödeme tamamlanamadı');
       } catch (err: unknown) {
         ev.complete('fail');
         setError((err as Error)?.message || 'Ödeme başarısız oldu');

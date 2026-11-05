@@ -12,7 +12,7 @@ import {
   onSnapshot,
   writeBatch,
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Order, OrderStatus } from '../types/order';
 import { createNotification } from './notificationService';
 import { restoreProductStock } from './productService';
@@ -46,7 +46,10 @@ export function subscribeOrdersBySeller(
   return onSnapshot(
     q,
     (snap) => {
-      const orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
+      const orders = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }) as Order)
+        // An iyzico order exists before payment; the seller sees it only once it is paid.
+        .filter((o) => !(o.paymentMethod === 'iyzico' && o.paymentStatus !== 'succeeded'));
       onOrders(orders);
     },
     (error) => {
@@ -111,21 +114,32 @@ export function subscribeOrdersByUser(
   );
 }
 
-export async function createOrder(
-  orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>,
-): Promise<Order> {
-  const now = new Date().toISOString();
-  try {
-    const docRef = await addDoc(collection(db, ORDERS_COLLECTION), {
-      ...orderData,
-      createdAt: now,
-      updatedAt: now,
-    });
-    return { ...orderData, id: docRef.id, createdAt: now, updatedAt: now };
-  } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, ORDERS_COLLECTION);
-    throw error;
-  }
+export interface CompleteCheckoutInput {
+  paymentMethod: 'stripe' | 'manual' | 'iyzico';
+  paymentIntentId?: string;
+  items: Array<{ productId: string; quantity: number }>;
+  couponCode?: string;
+  shipping?: number;
+  carrier?: string;
+  guestEmail?: string;
+  shippingAddress: Order['shippingAddress'];
+}
+
+/**
+ * Orders are created only by the server (firestore.rules deny client creates): it verifies the
+ * payment, prices the cart from the database and updates stock/coupon usage.
+ */
+export async function completeCheckout(input: CompleteCheckoutInput): Promise<Order> {
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) throw new Error('Oturum bulunamadı');
+  const res = await fetch('/api/checkout/complete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(input),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'Sipariş oluşturulamadı');
+  return data.order as Order;
 }
 
 export async function getOrderById(orderId: string): Promise<Order | null> {

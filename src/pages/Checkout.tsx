@@ -20,12 +20,8 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { createOrder, getOrderById } from '@/services/orderService';
-import {
-  decreaseProductStock,
-  validateCartStock,
-  getProductsByIds,
-} from '@/services/productService';
+import { completeCheckout, getOrderById } from '@/services/orderService';
+import { getProductsByIds } from '@/services/productService';
 import { LoadingState, ErrorState } from '@/components/shared/DataStates';
 import { addAddress, MAX_ADDRESSES } from '@/services/userService';
 import { sendOrderConfirmationEmail } from '@/services/emailService';
@@ -41,7 +37,6 @@ import { listPaymentMethods } from '@/services/oneClickCheckoutService';
 import { trackFunnelEvent } from '@/services/analyticsService';
 import type { Order, PaymentMethod, ShippingAddress } from '@/types/order';
 import type { SavedCard } from '@/types';
-import { validateCoupon, incrementCouponUsage, calcDiscount } from '@/services/couponService';
 import {
   getActiveCartCampaigns,
   calcCartCampaigns,
@@ -54,7 +49,6 @@ import { cn } from '@/lib/utils';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { getAllShippingRates } from '@/services/cargoService';
 import type { ShippingRate, CargoProviderName } from '@/services/cargoService';
-import { useExchangeRate } from '@/hooks/useExchangeRate';
 
 const CURRENCY_SYMBOLS: Record<string, string> = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
 
@@ -182,8 +176,9 @@ export function CheckoutPage() {
     phone: '',
   });
 
-  const currency = user?.currency ?? 'GBP';
-  const market = MARKETS[user?.country ?? 'UK'] ?? MARKETS['UK'];
+  // TRY only for now (multi-currency deferred); the server quotes and charges in TRY too.
+  const currency = 'TRY';
+  const market = MARKETS.TR;
 
   // ─── Resolve cart products from Firestore (real data, not mock) ──────────
   const [products, setProducts] = useState<Product[]>([]);
@@ -229,21 +224,11 @@ export function CheckoutPage() {
   );
   const allFreeShipping = cartProducts.length > 0 && billableShippingUnits === 0;
 
-  // ─── Dinamik kargo ücreti (market para birimine çevrilir) ────────────────────
-  // useExchangeRate `${currency}/TRY` → 1 birim para biriminin kaç TL olduğu.
-  const { rate: tryPerUnit } = useExchangeRate(`${currency}/TRY`);
+  // ─── Dinamik kargo ücreti (TL) ───────────────────────────────────────────────
   const [shipRates, setShipRates] = useState<ShippingRate[]>([]);
   const [selectedCarrier, setSelectedCarrier] = useState<CargoProviderName | null>(null);
   const [ratesLoading, setRatesLoading] = useState(false);
   const curSym = CURRENCY_SYMBOLS[currency] ?? currency + ' ';
-
-  // Kargo ücretleri TL bazlıdır → market para birimine çevir.
-  const convertTRY = (tryAmount: number) =>
-    currency === 'TRY'
-      ? tryAmount
-      : tryPerUnit && tryPerUnit > 0
-        ? tryAmount / tryPerUnit
-        : tryAmount;
 
   useEffect(() => {
     const destCity = address.city.trim();
@@ -281,11 +266,7 @@ export function CheckoutPage() {
   const selectedRate = shipRates.find((r) => r.provider === selectedCarrier) ?? shipRates[0];
   // Tüm ürünler ücretsiz kargoluysa bedel 0; aksi halde seçili taşıyıcı ücreti
   // (kargo henüz yüklenmediyse önceki sabit değere (12) düş).
-  const shippingInCurrency = allFreeShipping
-    ? 0
-    : selectedRate
-      ? convertTRY(selectedRate.cost)
-      : 12;
+  const shippingInCurrency = allFreeShipping ? 0 : selectedRate ? selectedRate.cost : 12;
   const totals = calculateTotal(
     Math.max(0, subtotal - totalDiscount),
     shippingInCurrency,
@@ -293,42 +274,32 @@ export function CheckoutPage() {
     true,
   );
 
+  // The server checks the code (buyers cannot read coupons) and returns the coupon discount.
   const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) return;
+    const code = couponCode.trim();
+    if (!code) return;
     setCouponLoading(true);
     setCouponError('');
     try {
-      // Calculate subtotal for seller-scoped coupons
-      const effectiveSubtotal = subtotal;
-      const result = await validateCoupon(couponCode, effectiveSubtotal);
-      if (result.valid && result.coupon) {
-        // If coupon is seller-scoped, verify cart has products from that seller
-        if (result.coupon.sellerId) {
-          const sellerItems = cartProducts.filter((p) => p.sellerId === result.coupon!.sellerId);
-          if (sellerItems.length === 0) {
-            setCouponError('Bu kupon sepetinizdeki ürünler için geçerli değil.');
-            setCouponLoading(false);
-            return;
-          }
-          const sellerSubtotal = sellerItems.reduce((s, p) => s + p.price * p.quantity, 0);
-          if (result.coupon.minOrderAmount && sellerSubtotal < result.coupon.minOrderAmount) {
-            setCouponError('Bu kupon için minimum satıcı ürün tutarı karşılanmıyor.');
-            setCouponLoading(false);
-            return;
-          }
-          setDiscountAmount(calcDiscount(result.coupon, sellerSubtotal));
-        } else {
-          setDiscountAmount(calcDiscount(result.coupon, effectiveSubtotal));
-        }
-        setAppliedCoupon(result.coupon);
-        setCouponCode('');
-      } else {
-        setCouponError(
-          result.error === 'coupon.min_order'
-            ? 'Minimum sipariş tutarı karşılanmıyor'
-            : 'Geçersiz veya süresi dolmuş kupon',
-        );
+      const token = await firebaseUser?.getIdToken();
+      const res = await fetch('/api/checkout/quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ items: checkoutItems(), couponCode: code }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.couponId) {
+        setCouponError(data?.error || 'Geçersiz veya süresi dolmuş kupon');
+        return;
       }
+      setDiscountAmount(data.couponDiscount);
+      setAppliedCoupon({ id: data.couponId, code: code.toUpperCase() } as Coupon);
+      setCouponCode('');
+    } catch {
+      setCouponError('Kupon kontrol edilemedi, tekrar deneyin');
     } finally {
       setCouponLoading(false);
     }
@@ -375,6 +346,15 @@ export function CheckoutPage() {
     }));
   };
 
+  // The server re-prices this cart (DB prices, coupon, campaigns, VAT) and refuses if it differs.
+  const checkoutItems = () => cartProducts.map((p) => ({ productId: p.id, quantity: p.quantity }));
+  const paymentQuoteBody = () => ({
+    amount: totals.total,
+    items: checkoutItems(),
+    couponCode: appliedCoupon?.code,
+    shipping: totals.shipping,
+  });
+
   const proceedToPayment = async () => {
     // Funnel event: delivery_filled (step 1 → 2)
     trackFunnelEvent('delivery_filled', {
@@ -385,21 +365,14 @@ export function CheckoutPage() {
 
     setIsFetchingIntent(true);
     try {
-      // Build items for server-side price validation
-      const priceItems = cartProducts.map((p) => ({
-        productId: p.id,
-        quantity: p.quantity,
-        price: p.price,
-      }));
-
+      const token = await firebaseUser?.getIdToken();
       const res = await fetch('/api/create-payment-intent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: totals.total,
-          currency: currency.toLowerCase(),
-          items: priceItems,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(paymentQuoteBody()),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -423,76 +396,29 @@ export function CheckoutPage() {
     }
   };
 
-  // Shared order processing — validates stock, creates order, decrements stock
+  // Creates the order on the server (/api/checkout/complete): it verifies the payment, prices the
+  // cart from the database and updates stock + coupon usage. Retrying a paid order is safe.
   const processOrder = async (
-    status: 'paid' | 'pending',
-    paymentIntentId: string,
+    method: 'stripe' | 'manual' | 'iyzico',
+    paymentIntentId?: string,
   ): Promise<Order | null> => {
     if (!firebaseUser) return null;
     setStockError(null);
     setStockValidating(true);
 
-    const orderItems = cartProducts.map((p) => ({
-      productId: p.id,
-      sellerId: p.sellerId,
-      name: p.title,
-      image: p.images[0],
-      price: p.price,
-      quantity: p.quantity,
-      subtotal: p.price * p.quantity,
-    }));
-
-    // Validate stock BEFORE creating order
-    const stockCheck = await validateCartStock(
-      cartProducts.map((p) => ({ productId: p.id, quantity: p.quantity })),
-    );
-
-    if (!stockCheck.passed) {
-      const failureMsgs = stockCheck.failures.map(
-        (f) => `"${f.productId.slice(0, 8)}..." — mevcut: ${f.available}, istenen: ${f.requested}`,
-      );
-      setStockError(`Stok yetersiz! ${failureMsgs.join(' | ')}`);
-      setStockValidating(false);
-      return null;
-    }
-
     try {
-      const order = await createOrder({
-        userId: firebaseUser.uid,
-        userEmail: firebaseUser.email || guestEmail || '',
-        items: orderItems,
-        sellerIds: [...new Set(orderItems.map((i) => i.sellerId))],
-        subtotal: totals.subtotal,
+      const order = await completeCheckout({
+        paymentMethod: method,
+        paymentIntentId,
+        items: checkoutItems(),
+        couponCode: appliedCoupon?.code,
         shipping: totals.shipping,
-        tax: totals.vat,
-        total: totals.total,
-        currency,
-        paymentMethod: paymentIntentId.startsWith('mock_pi') ? 'manual' : 'stripe',
-        status,
-        paymentStatus: status === 'paid' ? 'succeeded' : 'pending',
-        stripePaymentIntentId: paymentIntentId,
+        carrier: selectedCarrier ?? undefined,
+        guestEmail: firebaseUser.email ? undefined : guestEmail || undefined,
         shippingAddress: address,
-        ...(selectedCarrier ? { carrier: selectedCarrier } : {}),
       });
 
-      // The order is created and paid at this point, so a stock failure must not show the
-      // buyer an error (they would pay again). Buyers may not write products under the rules,
-      // so this fails for non-admins today.
-      // shortcut: stock is not decremented for buyers; move checkout to /api/orders/create (server reserves stock).
-      try {
-        await decreaseProductStock(
-          cartProducts.map((p) => ({ productId: p.id, quantity: p.quantity })),
-        );
-      } catch (stockErr) {
-        console.error('[Checkout] stock decrement failed after order', order?.id, stockErr);
-      }
-
-      if (appliedCoupon) {
-        await incrementCouponUsage(appliedCoupon.id).catch((e) =>
-          console.error('[Checkout] coupon usage update failed after order', order?.id, e),
-        );
-      }
-      if (saveAddress && !selectedAddressId && firebaseUser && !firebaseUser.isAnonymous) {
+      if (saveAddress && !selectedAddressId && !firebaseUser.isAnonymous) {
         const addressLabel =
           addressType === 'home'
             ? 'Ev Adresim'
@@ -515,7 +441,7 @@ export function CheckoutPage() {
             postalCode: address.postalCode,
             country: address.country,
             phone: address.phone,
-          });
+          }).catch((e) => console.warn('[Checkout] address not saved', e));
         }
       }
       sendOrderConfirmationEmail(order);
@@ -523,11 +449,11 @@ export function CheckoutPage() {
       setStockValidating(false);
       return order;
     } catch (err: any) {
-      if (err?.message?.startsWith('STOCK_ERROR:')) {
-        setStockError(err.message.replace('STOCK_ERROR:', '').trim());
-      } else {
-        setStockError('Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
-      }
+      setStockError(
+        method === 'stripe'
+          ? `Ödemeniz alındı ancak sipariş kaydı tamamlanamadı (${err?.message || 'bağlantı hatası'}). Lütfen "Tekrar dene"ye basın; ikinci kez ücret alınmaz.`
+          : err?.message || 'Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.',
+      );
       setStockValidating(false);
       return null;
     }
@@ -541,24 +467,13 @@ export function CheckoutPage() {
     setPaymentError(null);
     try {
       const token = await firebaseUser.getIdToken();
-      const priceItems = cartProducts.map((p) => ({
-        productId: p.id,
-        quantity: p.quantity,
-        price: p.price,
-      }));
-
       const res = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          amount: totals.total,
-          currency: currency.toLowerCase(),
-          paymentMethodId: selectedCardId,
-          items: priceItems,
-        }),
+        body: JSON.stringify({ ...paymentQuoteBody(), paymentMethodId: selectedCardId }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -595,7 +510,11 @@ export function CheckoutPage() {
     setSavedCardPaying(false);
   };
 
+  // Set once Stripe has charged; lets the buyer retry order creation without paying again.
+  const [paidIntentId, setPaidIntentId] = useState<string | null>(null);
+
   const handlePaymentSuccess = async (paymentIntentId: string) => {
+    setPaidIntentId(paymentIntentId);
     // Funnel event: payment_completed
     trackFunnelEvent('payment_completed', {
       paymentMethod,
@@ -605,7 +524,7 @@ export function CheckoutPage() {
       userId: firebaseUser?.uid ?? null,
     }).catch(() => {});
 
-    const order = await processOrder('paid', paymentIntentId);
+    const order = await processOrder('stripe', paymentIntentId);
     if (order) {
       setConfirmedOrderId(order.id);
       setConfirmedOrder(order);
@@ -917,6 +836,7 @@ export function CheckoutPage() {
                   {paymentMethod === 'stripe' && clientSecret && (
                     <Elements stripe={stripePromise} options={elementsOptions}>
                       <StripePaymentForm
+                        clientSecret={clientSecret ?? ''}
                         total={totals.total}
                         currency={currency}
                         shippingAddress={address}
@@ -953,19 +873,8 @@ export function CheckoutPage() {
                     <IyzicoPayment
                       total={totals.total}
                       currency={currency}
-                      orderId={crypto.randomUUID()}
-                      userId={firebaseUser.uid}
-                      userEmail={firebaseUser.email || ''}
-                      userName={address.fullName}
-                      buyerPhone={address.phone}
-                      region={user?.country || 'UK'}
-                      shippingAddress={{
-                        fullName: address.fullName,
-                        line1: address.line1,
-                        city: address.city,
-                        country: address.country,
-                      }}
-                      onSuccess={() => {}}
+                      region="TR"
+                      createOrder={async () => (await processOrder('iyzico'))?.id ?? null}
                       onBack={() => setStep(1)}
                       onError={(msg) => setPaymentError(msg)}
                     />
@@ -982,7 +891,7 @@ export function CheckoutPage() {
                           paymentMethod: 'manual',
                           userId: firebaseUser?.uid ?? null,
                         }).catch(() => {});
-                        const order = await processOrder('pending', '');
+                        const order = await processOrder('manual');
                         if (order) {
                           setConfirmedOrderId(order.id);
                           setConfirmedOrder(order);
@@ -1010,9 +919,19 @@ export function CheckoutPage() {
                       role="alert"
                     >
                       <p className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1">
-                        Stok Hatası
+                        {paidIntentId ? 'Sipariş Kaydı' : 'Sipariş Hatası'}
                       </p>
                       <p className="text-xs font-bold text-red-700">{stockError}</p>
+                      {paidIntentId && (
+                        <button
+                          type="button"
+                          onClick={() => handlePaymentSuccess(paidIntentId)}
+                          disabled={stockValidating}
+                          className="mt-3 px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                        >
+                          Tekrar dene
+                        </button>
+                      )}
                     </div>
                   )}
                   {paymentError && (
@@ -1277,7 +1196,7 @@ export function CheckoutPage() {
                   shipRates={shipRates}
                   selectedCarrier={selectedCarrier}
                   onSelectCarrier={setSelectedCarrier}
-                  convertTRY={convertTRY}
+                  convertTRY={(tryAmount: number) => tryAmount}
                 />
               </div>
             </div>

@@ -20,6 +20,16 @@ import { sendOrderConfirmationEmail, sendNewSellerOrderEmail } from '../services
 import { hasAllRequiredDocs, type KycDocumentRef } from '../services/kycService.js';
 import { findApplicationRef } from '../lib/sellerAccess.js';
 import { validatePrices, type PriceCheckItem } from '../lib/priceValidator.js';
+import { markIyzicoOrderPaid, iyzicoBasket } from './checkout.js';
+
+/** iyzico wants +90… GSM numbers. */
+function toGsm(phone: unknown): string {
+  const d = String(phone ?? '').replace(/\D/g, '');
+  if (d.startsWith('90')) return '+' + d;
+  if (d.startsWith('0')) return '+9' + d;
+  if (d.length === 10) return '+90' + d;
+  return d ? '+' + d : '+905000000000';
+}
 
 export interface IyzicoRouteDeps {
   /** Legacy lazy loader — kept for installment helper and legacy init. */
@@ -205,6 +215,21 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
             const transactions = verification.transactions as any[];
             const orderSetId: string | undefined =
               (body.basketId as string) || transactions?.[0]?.basketId;
+
+            // Checkout orders (/api/checkout/complete): same idempotent path as the browser callback.
+            if (
+              orderSetId &&
+              adminDb &&
+              (await adminDb.collection('orders').doc(orderSetId).get()).exists
+            ) {
+              const outcome = await markIyzicoOrderPaid(adminDb, orderSetId, {
+                paidPrice: verification.paidPrice ?? 0,
+                token,
+                paymentId: verification.paymentId,
+              });
+              logger.info('iyzico', 'Order payment callback', { orderId: orderSetId, outcome });
+              return res.json({ status: 'success', outcome });
+            }
 
             if (orderSetId && adminDb) {
               // ── Webhook dedup check (D-07) — idempotent processing ────────
@@ -419,8 +444,8 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
   );
 
   // ─── Browser redirect callback (user lands here after payment) ──────────
-  // Uses iyzicoProvider when available (consistent with server callback);
-  // falls back to legacy getIyzico() for backwards compatibility.
+  // Verifies the payment with iyzico, then marks the server-created `orders` doc paid
+  // (basketId = order id). Unknown ids belong to the OrderSet flow, handled by the POST callback.
   app.get('/api/iyzico/callback', async (req: any, res: any) => {
     const token = req.query.token as string;
     const frontendUrl = process.env.APP_URL || `http://localhost:${PORT}`;
@@ -430,45 +455,68 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
     }
 
     try {
-      let orderSetId = '';
+      let basketId = '';
       let paymentStatus = '';
+      let paidPrice = 0;
+      let paymentId: string | undefined;
 
-      // Prefer iyzicoProvider (standardized verifyPayment flow)
       if (iyzicoProvider) {
-        const verification = await iyzicoProvider.verifyPayment(token);
-        paymentStatus = verification.status;
-        orderSetId = (verification as any).orderSetId || '';
-        logger.info('iyzico', 'Browser callback verified via iyzicoProvider', {
-          token: token.slice(0, 8) + '***',
-          status: paymentStatus,
-          orderSetId,
-        });
+        const v = await iyzicoProvider.verifyPayment(token);
+        paymentStatus = v.status;
+        basketId = v.basketId || '';
+        paidPrice = v.paidPrice ?? 0;
+        paymentId = v.paymentId;
       } else {
-        // Legacy fallback
         const iyzico = await getIyzico();
         if (!iyzico) {
           logger.error('iyzico', 'Browser callback — iyzico not configured');
           return res.redirect(`${frontendUrl}/checkout?iyzico_status=error&reason=not_configured`);
         }
         const result = await iyzico.retrieveCheckoutForm(iyzico.client, { locale: 'tr', token });
-        orderSetId = (result.basketId || '') as string;
+        basketId = (result.basketId || '') as string;
         paymentStatus = result.paymentStatus === 'SUCCESS' ? 'SUCCESS' : result.status || '';
-        logger.info('iyzico', 'Browser callback verified via legacy', {
-          token: token.slice(0, 8) + '***',
-          status: paymentStatus,
-          orderSetId,
-        });
+        paidPrice = Number(result.paidPrice ?? 0);
+        paymentId = result.paymentId;
+      }
+      logger.info('iyzico', 'Browser callback verified', {
+        token: token.slice(0, 8) + '***',
+        status: paymentStatus,
+        basketId,
+      });
+
+      const ids = `orderId=${encodeURIComponent(basketId)}&orderSetId=${encodeURIComponent(basketId)}`;
+      if (paymentStatus === 'SUCCESS' || paymentStatus === 'success') {
+        if (adminDb && basketId) {
+          const outcome = await markIyzicoOrderPaid(adminDb, basketId, {
+            paidPrice,
+            token,
+            paymentId,
+          });
+          if (outcome === 'mismatch') {
+            logger.error('iyzico', 'Paid amount does not match order total', {
+              basketId,
+              paidPrice,
+            });
+            return res.redirect(
+              `${frontendUrl}/checkout?iyzico_status=error&reason=amount_mismatch&${ids}`,
+            );
+          }
+        }
+        return res.redirect(`${frontendUrl}/checkout?iyzico_status=success&${ids}`);
       }
 
-      if (paymentStatus === 'SUCCESS' || paymentStatus === 'success') {
-        res.redirect(
-          `${frontendUrl}/checkout?iyzico_status=success&orderSetId=${encodeURIComponent(orderSetId)}&token=${encodeURIComponent(token)}`,
-        );
-      } else {
-        res.redirect(
-          `${frontendUrl}/checkout?iyzico_status=failed&orderSetId=${encodeURIComponent(orderSetId)}&reason=payment_failed`,
-        );
+      if (adminDb && basketId) {
+        const ref = adminDb.collection('orders').doc(basketId);
+        const snap = await ref.get();
+        if (snap.exists && snap.data()?.paymentStatus === 'pending') {
+          await ref.update({
+            status: 'cancelled',
+            paymentStatus: 'failed',
+            updatedAt: new Date().toISOString(),
+          });
+        }
       }
+      res.redirect(`${frontendUrl}/checkout?iyzico_status=failed&${ids}&reason=payment_failed`);
     } catch (err: any) {
       logger.error('iyzico', 'Browser callback error', {
         error: err.message,
@@ -480,90 +528,89 @@ export function registerIyzicoRoutes(app: Express, deps: IyzicoRouteDeps) {
     }
   });
 
-  // ─── Legacy init (kept for backwards compatibility) ──────────────────────
-  app.post('/api/iyzico/init', validate(iyzicoInitSchema), async (req: any, res: any) => {
-    try {
-      const iyzico = await getIyzico();
-      if (!iyzico) {
-        return res.status(503).json({ error: 'iyzico not configured', isMock: true });
-      }
+  // ─── Checkout form for a server-created order (POST /api/checkout/complete) ──
+  // Amount, basket and buyer come from orders/{orderId}; the client only sends the id.
+  app.post(
+    '/api/iyzico/init',
+    verifyFirebaseToken ??
+      ((_req: any, res: any) => res.status(503).json({ error: 'Auth not configured' })),
+    validate(iyzicoInitSchema),
+    async (req: any, res: any) => {
+      try {
+        if (!adminDb) return res.status(503).json({ error: 'Database not configured' });
+        const iyzico = await getIyzico();
+        if (!iyzico) {
+          return res.status(503).json({ error: 'iyzico not configured', isMock: true });
+        }
 
-      const {
-        userId,
-        userEmail,
-        userName,
-        total,
-        currency,
-        installment,
-        orderId,
-        items,
-        shippingAddress,
-        buyerPhone,
-      } = req.body;
+        const { orderId, installment } = req.body;
+        const snap = await adminDb.collection('orders').doc(orderId).get();
+        if (!snap.exists) return res.status(404).json({ error: 'Order not found' });
+        const order = snap.data()!;
+        if (order.userId !== req.uid) return res.status(403).json({ error: 'Forbidden' });
+        if (order.paymentMethod !== 'iyzico' || order.paymentStatus !== 'pending') {
+          return res.status(409).json({ error: 'Bu sipariş için ödeme başlatılamaz' });
+        }
+        if (!order.userEmail) return res.status(400).json({ error: 'E-posta adresi gerekli' });
 
-      const basketItems = (items || []).map((item: any, i: number) => ({
-        id: item.productId || String(i),
-        name: item.name,
-        category1: item.category || 'General',
-        itemType: 'PHYSICAL',
-        price: String(item.price),
-      }));
+        const addr = order.shippingAddress || {};
+        const [firstName, ...rest] = String(addr.fullName || 'Alıcı')
+          .trim()
+          .split(/\s+/);
+        const address = {
+          contactName: addr.fullName,
+          city: addr.city,
+          country: 'Turkey',
+          address: [addr.line1, addr.line2].filter(Boolean).join(' '),
+        };
+        const total = Number(order.total).toFixed(2);
+        const appUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
 
-      const request = {
-        locale: 'tr',
-        conversationId: orderId,
-        price: String(total),
-        paidPrice: String(total),
-        currency: currency === 'TRY' ? 'TRY' : 'GBP',
-        installment: String(installment || 1),
-        basketId: orderId,
-        paymentGroup: 'PRODUCT',
-        callbackUrl: `${req.protocol}://${req.get('host')}/api/iyzico/callback`,
-        buyer: {
-          id: userId,
-          name: userName?.split(' ')[0] || 'Buyer',
-          surname: userName?.split(' ').slice(1).join(' ') || 'Unknown',
-          gsmNumber: buyerPhone || '+905555555555',
-          email: userEmail,
-          identityNumber: '11111111111',
-          registrationAddress: shippingAddress?.line1 || 'Address',
-          city: shippingAddress?.city || 'Istanbul',
-          country: shippingAddress?.country || 'Turkey',
-        },
-        shippingAddress: {
-          contactName: shippingAddress?.fullName || userName,
-          city: shippingAddress?.city || 'Istanbul',
-          country: shippingAddress?.country || 'Turkey',
-          address: shippingAddress?.line1 || 'Address',
-        },
-        billingAddress: {
-          contactName: shippingAddress?.fullName || userName,
-          city: shippingAddress?.city || 'Istanbul',
-          country: shippingAddress?.country || 'Turkey',
-          address: shippingAddress?.line1 || 'Address',
-        },
-        basketItems,
-      };
-
-      const result = await iyzico.createCheckoutForm(iyzico.client, request);
-
-      if (result.status === 'success') {
-        res.json({
-          token: result.token,
-          checkoutFormContent: result.checkoutFormContent,
-          paymentPageUrl: result.paymentPageUrl,
+        const result = await iyzico.createCheckoutForm(iyzico.client, {
+          locale: 'tr',
+          conversationId: orderId,
+          price: total,
+          paidPrice: total,
+          currency: 'TRY',
+          installment: String(installment || 1),
+          basketId: orderId,
+          paymentGroup: 'PRODUCT',
+          callbackUrl: `${appUrl}/api/iyzico/callback`,
+          buyer: {
+            id: req.uid,
+            name: firstName,
+            surname: rest.join(' ') || firstName,
+            gsmNumber: toGsm(addr.phone),
+            email: order.userEmail,
+            // shortcut: placeholder TCKN (accepted by iyzico); collect real TCKN when e-Fatura goes live.
+            identityNumber: '11111111111',
+            registrationAddress: address.address,
+            city: addr.city,
+            country: 'Turkey',
+            ip: req.ip,
+          },
+          shippingAddress: address,
+          billingAddress: address,
+          basketItems: iyzicoBasket(order.items ?? [], Number(order.total)),
         });
-      } else {
+
+        if (result.status === 'success') {
+          return res.json({
+            token: result.token,
+            checkoutFormContent: result.checkoutFormContent,
+            paymentPageUrl: result.paymentPageUrl,
+          });
+        }
         res.status(400).json({
           error: result.errorMessage || 'iyzico initialization failed',
           errorCode: result.errorCode,
         });
+      } catch (err: any) {
+        logger.error('iyzico', 'Init error', { error: (err as Error).message });
+        res.status(500).json({ error: err.message });
       }
-    } catch (err: any) {
-      logger.error('iyzico', 'Init error', { error: (err as Error).message });
-      res.status(500).json({ error: err.message });
-    }
-  });
+    },
+  );
 
   // ─── Admin: Approve TR seller — provision Iyzico sub-merchant ───────────
   // POST /api/admin/seller/:id/approve-tr (T-03-02, D-03)

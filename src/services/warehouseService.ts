@@ -13,7 +13,11 @@ import {
   serverTimestamp,
   writeBatch,
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
+
+// warehouseStock docs carry sellerId (= the seller's uid, see sellerAccess claims) so rules and
+// queries can scope them to their owner.
+const currentSellerId = () => auth.currentUser?.uid ?? '';
 import type { Warehouse, WarehouseStock } from '../types';
 
 /**
@@ -91,7 +95,11 @@ export async function deleteWarehouse(id: string): Promise<void> {
     await deleteDoc(doc(db, 'warehouses', id));
 
     // Delete all warehouseStock docs for this warehouse
-    const stockQ = query(collection(db, 'warehouseStock'), where('warehouseId', '==', id));
+    const stockQ = query(
+      collection(db, 'warehouseStock'),
+      where('sellerId', '==', currentSellerId()),
+      where('warehouseId', '==', id),
+    );
     const stockSnap = await getDocs(stockQ);
     if (stockSnap.size > 0) {
       const batch = writeBatch(db);
@@ -137,6 +145,7 @@ export async function setWarehouseStock(
   try {
     const docId = `${warehouseId}_${productId}`;
     const data: Record<string, any> = {
+      sellerId: currentSellerId(),
       warehouseId,
       productId,
       quantity,
@@ -155,7 +164,11 @@ export async function setWarehouseStock(
  */
 export async function getWarehouseStock(productId: string): Promise<WarehouseStock[]> {
   try {
-    const q = query(collection(db, 'warehouseStock'), where('productId', '==', productId));
+    const q = query(
+      collection(db, 'warehouseStock'),
+      where('sellerId', '==', currentSellerId()),
+      where('productId', '==', productId),
+    );
     const snapshot = await getDocs(q);
     return snapshot.docs.map((d) => d.data() as WarehouseStock);
   } catch (error) {

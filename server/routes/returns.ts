@@ -143,8 +143,103 @@ export function registerReturnsRoutes(app: Express, deps: ReturnsRouteDeps): voi
   );
 
   /**
+   * POST /api/orders/:orderId/return-request
+   * Buyer return for a checkout order (`orders` collection). One returns doc per seller, so each
+   * seller sees only their own lines in ReturnManagementSection.
+   */
+  app.post(
+    '/api/orders/:orderId/return-request',
+    verifyFirebaseToken,
+    async (req: any, res: any) => {
+      try {
+        if (!adminDb) return res.status(503).json({ error: 'Database not configured' });
+        const db = adminDb;
+        const orderRef = db.collection('orders').doc(req.params.orderId);
+        const snap = await orderRef.get();
+        if (!snap.exists) return res.status(404).json({ error: 'Order not found' });
+        const order = snap.data() as any;
+        if (order.userId !== req.uid) return res.status(403).json({ error: 'Forbidden' });
+        if (order.status !== 'delivered') {
+          return res
+            .status(409)
+            .json({ error: 'Yalnızca teslim edilen siparişler iade edilebilir' });
+        }
+        const deliveredAt = order.deliveredAt || order.updatedAt;
+        if (Date.now() - new Date(deliveredAt).getTime() > WINDOW_MS) {
+          return res.status(409).json({ error: 'return_window_expired' });
+        }
+
+        const { items, reason, details } = req.body ?? {};
+        if (typeof reason !== 'string' || !reason.trim() || reason.length > 200) {
+          return res.status(400).json({ error: 'reason is required (max 200 chars)' });
+        }
+        if (details !== undefined && (typeof details !== 'string' || details.length > 1000)) {
+          return res.status(400).json({ error: 'details must be a string max 1000 chars' });
+        }
+        if (!Array.isArray(items) || items.length === 0) {
+          return res.status(400).json({ error: 'items required' });
+        }
+
+        // Only lines of this order, never more than was bought.
+        const bySeller = new Map<string, any[]>();
+        for (const sel of items) {
+          const line = (order.items ?? []).find((i: any) => i.productId === sel?.productId);
+          const qty = Number(sel?.quantity);
+          if (!line || !Number.isInteger(qty) || qty < 1 || qty > line.quantity) {
+            return res.status(400).json({ error: `Geçersiz iade kalemi: ${sel?.productId}` });
+          }
+          const sellerId = line.sellerId || order.sellerIds?.[0] || '';
+          bySeller.set(sellerId, [
+            ...(bySeller.get(sellerId) ?? []),
+            { productId: line.productId, name: line.name, quantity: qty, price: line.price },
+          ]);
+        }
+
+        const now = new Date().toISOString();
+        const windowExpiresAt = new Date(new Date(deliveredAt).getTime() + WINDOW_MS).toISOString();
+        const batch = db.batch();
+        const returnIds: string[] = [];
+        for (const [sellerId, lines] of bySeller) {
+          const returnId = crypto.randomUUID();
+          returnIds.push(returnId);
+          batch.set(db.collection('returns').doc(returnId), {
+            id: returnId,
+            orderId: snap.id,
+            buyerId: req.uid,
+            sellerId,
+            userEmail: order.userEmail || '',
+            items: lines,
+            reason: reason.trim(),
+            notes: details?.trim() || '',
+            status: 'pending',
+            createdAt: now,
+            updatedAt: now,
+            windowExpiresAt,
+          });
+          batch.set(db.collection('notifications').doc(), {
+            userId: sellerId,
+            type: 'order_status',
+            title: 'Yeni İade Talebi',
+            message: `#${snap.id.slice(0, 8).toUpperCase()} siparişi için iade talebi: ${reason.trim()}`,
+            link: '/seller/orders',
+            read: false,
+            createdAt: now,
+          });
+        }
+        batch.update(orderRef, { status: 'return_requested', updatedAt: now });
+        await batch.commit();
+        return res.status(201).json({ returnIds });
+      } catch (err: any) {
+        return res.status(500).json({ error: err.message || 'Failed to create return request' });
+      }
+    },
+  );
+
+  /**
    * POST /api/returns/:returnId/approve
    * Seller or admin approves a pending return, generates label and triggers refund.
+   * Checkout-order returns (`orderId`, no subOrder) are approved only: carrier labels and
+   * automatic refunds exist for the OrderSet model; the admin refunds via /api/refund.
    */
   app.post('/api/returns/:returnId/approve', verifyFirebaseToken, async (req: any, res: any) => {
     const { returnId } = req.params;
@@ -170,6 +265,27 @@ export function registerReturnsRoutes(app: Express, deps: ReturnsRouteDeps): voi
       // Pending guard (T-05-04-04 — double-approval prevention)
       if (returnData.status !== 'pending') {
         return res.status(409).json({ error: 'Return is not in pending status' });
+      }
+
+      const checkoutOrderId = (returnData as any).orderId as string | undefined;
+      if (checkoutOrderId && !returnData.subOrderId) {
+        // shortcut: no return label / auto refund for checkout orders; the admin refunds via /api/refund once carrier + iyzico refund APIs are wired.
+        const now = new Date().toISOString();
+        await db.collection('returns').doc(returnId).update({
+          status: 'approved',
+          approvedBy: req.uid,
+          updatedAt: now,
+        });
+        await db.collection('notifications').add({
+          userId: (returnData as any).buyerId,
+          type: 'order_status',
+          title: 'İade Talebiniz Onaylandı',
+          message: `#${checkoutOrderId.slice(0, 8).toUpperCase()} siparişi için iadeniz onaylandı. Ürünü satıcıya gönderin; geri ödeme ürün ulaşınca yapılır.`,
+          link: `/orders/${checkoutOrderId}`,
+          read: false,
+          createdAt: now,
+        });
+        return res.json({ returnId, status: 'approved' });
       }
 
       // Determine buyer country for carrier routing
@@ -299,6 +415,25 @@ export function registerReturnsRoutes(app: Express, deps: ReturnsRouteDeps): voi
         rejectionReason,
         updatedAt: now,
       });
+
+      const checkoutOrderId = (returnData as any).orderId as string | undefined;
+      if (checkoutOrderId && !returnData.subOrderId) {
+        const orderRef = db.collection('orders').doc(checkoutOrderId);
+        const orderSnap = await orderRef.get();
+        if (orderSnap.exists && orderSnap.data()?.status === 'return_requested') {
+          await orderRef.update({ status: 'delivered', updatedAt: now });
+        }
+        await db.collection('notifications').add({
+          userId: (returnData as any).buyerId,
+          type: 'order_status',
+          title: 'İade Talebiniz Reddedildi',
+          message: `Sebep: ${rejectionReason}`,
+          link: `/orders/${checkoutOrderId}`,
+          read: false,
+          createdAt: now,
+        });
+        return res.json({ returnId, status: 'rejected' });
+      }
 
       // Transition SubOrder back: return_requested -> delivered (reject_return)
       const subOrderSnap = await db.collection('subOrders').doc(returnData.subOrderId).get();

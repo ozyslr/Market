@@ -10,6 +10,7 @@ import {
   collection,
   doc,
   getDocs,
+  getCountFromServer,
   addDoc,
   updateDoc,
   query,
@@ -202,33 +203,19 @@ export function generateUblTrXml(invoice: InvoiceData): string {
 
 // ─── Invoice Number Generator ────────────────────────────────────────────────
 
-let _counter: number | null = null;
-
-async function getNextInvoiceNumber(): Promise<string> {
-  if (_counter === null) {
-    // Load from Firestore counter or start from 1
-    const snap = await getDocs(
-      query(
-        collection(db, 'invoices'),
-        orderBy('invoiceNumber', 'desc'),
-        where('invoiceNumber', '>=', 'BEN'),
-        where('invoiceNumber', '<', 'BEO'),
-      ),
-    );
-    // Fallback: count existing invoices
-    _counter = snap.size + 1;
-  }
-  _counter++;
-  const prefix = 'BEN'; // Benim Olan prefix
+// The seller is the issuer, so the sequence is per seller (rules let a seller read only its own).
+// shortcut: count-based, two simultaneous invoices of one seller can collide; the e-Fatura integrator assigns legal numbers when it goes live.
+async function getNextInvoiceNumber(sellerId: string): Promise<string> {
+  const count = await getCountFromServer(
+    query(collection(db, 'invoices'), where('sellerId', '==', sellerId)),
+  );
   const year = new Date().getFullYear().toString().slice(2);
-  return `${prefix}${year}${String(_counter).padStart(6, '0')}`;
+  return `BEN${year}${String(count.data().count + 1).padStart(6, '0')}`;
 }
 
 // ─── GİB Submission (via server API) ─────────────────────────────────────────
 
-async function sendToGibViaApi(
-  invoiceId: string,
-): Promise<{
+async function sendToGibViaApi(invoiceId: string): Promise<{
   success: boolean;
   ettn?: string;
   envelopeId?: string;
@@ -286,7 +273,7 @@ export async function createInvoice(
 ): Promise<InvoiceData> {
   try {
     const now = new Date().toISOString();
-    const invoiceNumber = await getNextInvoiceNumber();
+    const invoiceNumber = await getNextInvoiceNumber(sellerId);
     const invoice: InvoiceData = {
       ...data,
       invoiceNumber,

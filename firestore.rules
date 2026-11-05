@@ -222,10 +222,31 @@ service cloud.firestore {
     }
 
     // --- ORDERS (backward compat) ----------------------------------------
+    // Orders are created only by the server (/api/checkout/complete verifies payment + prices).
+    // Guests (anonymous auth) read their own order; sellers read orders that contain their items.
     match /orders/{oid} {
-      allow read: if isFullUser() && (resource.data.userId == getUserId() || resource.data.buyerId == getUserId() || isAdmin());
-      allow create: if isFullUser() && (request.resource.data.userId == getUserId() || request.resource.data.buyerId == getUserId());
-      allow update: if isAdmin();
+      function ordersSeller() {
+        return isSeller() && request.auth.token.sellerId in resource.data.sellerIds;
+      }
+      function onlyChanges(keys) {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+      }
+      allow read: if isAdmin() || (isSignedIn() && (
+        resource.data.userId == getUserId()
+        || resource.data.get('buyerId', '') == getUserId()
+        || ordersSeller()
+      ));
+      allow create: if false;
+      allow update: if isAdmin()
+        // Seller fulfilment: processing / shipped (tracking) / delivered
+        || (ordersSeller()
+            && onlyChanges(['status', 'trackingNumber', 'carrier', 'shippedAt', 'deliveredAt', 'updatedAt'])
+            && request.resource.data.status in ['processing', 'shipped', 'delivered'])
+        // Buyer confirms delivery of a shipped order
+        || (resource.data.userId == getUserId()
+            && resource.data.status == 'shipped'
+            && request.resource.data.status == 'delivered'
+            && onlyChanges(['status', 'deliveredAt', 'updatedAt']));
       allow delete: if false;
     }
 
@@ -352,8 +373,108 @@ service cloud.firestore {
         request.auth.uid == resource.data.buyerId ||
         request.auth.uid == resource.data.sellerId
       );
-      allow create: if isFullUser() && request.auth.uid == request.resource.data.buyerId;
-      allow update, delete: if false;
+      // Created by the server (/api/orders/:orderId/return-request) after ownership/window checks.
+      allow create, update, delete: if false;
+    }
+
+    // --- Owner helpers for the collections below ---------------------------
+    function ownsDoc() { return isSignedIn() && resource.data.userId == getUserId(); }
+    function createsOwnDoc() { return isSignedIn() && request.resource.data.userId == getUserId(); }
+    function sellerOwnsDoc() { return isSeller() && resource.data.sellerId == request.auth.token.sellerId; }
+    function sellerCreatesOwnDoc() { return isSeller() && request.resource.data.sellerId == request.auth.token.sellerId; }
+    function changesOnly(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+
+    // --- SUPPORT TICKETS: buyer opens + replies; status/priority = admin ---
+    match /support_tickets/{ticketId} {
+      allow read: if ownsDoc();
+      allow create: if createsOwnDoc();
+      allow update: if ownsDoc() && changesOnly(['messages', 'updatedAt']);
+    }
+
+    // --- NOTIFICATIONS: any signed-in user may notify another (orders, Q&A, reviews);
+    //     only the recipient reads, marks read or deletes. ---
+    match /notifications/{notificationId} {
+      allow read, delete: if ownsDoc();
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['userId', 'type', 'title', 'message', 'link', 'read', 'createdAt'])
+        && request.resource.data.read == false
+        && request.resource.data.title is string && request.resource.data.title.size() <= 200
+        && request.resource.data.message is string && request.resource.data.message.size() <= 1000;
+      allow update: if ownsDoc() && changesOnly(['read']);
+    }
+
+    // --- PER-USER ALERTS (doc id = {uid}_{productId}) ----------------------
+    match /priceAlerts/{alertId} {
+      allow read, delete: if ownsDoc();
+      allow create, update: if createsOwnDoc() && alertId.matches(getUserId() + '_.*');
+    }
+    match /priceTracks/{trackId} {
+      allow read, delete: if ownsDoc();
+      allow create, update: if createsOwnDoc() && trackId.matches(getUserId() + '_.*');
+    }
+    match /stockAlerts/{alertId} {
+      allow read, delete: if ownsDoc();
+      allow create, update: if createsOwnDoc() && alertId.matches(getUserId() + '_.*');
+    }
+
+    // --- SELLER-OWNED DATA ---------------------------------------------------
+    // Coupons: buyers never read them (codes would leak); checkout checks codes on the server.
+    match /coupons/{couponId} {
+      allow read, delete: if sellerOwnsDoc();
+      allow create: if sellerCreatesOwnDoc();
+      allow update: if sellerOwnsDoc() && request.resource.data.sellerId == resource.data.sellerId;
+    }
+    match /sellerCoupons/{couponId} {
+      allow read, delete: if sellerOwnsDoc();
+      allow create: if sellerCreatesOwnDoc();
+      allow update: if sellerOwnsDoc() && request.resource.data.sellerId == resource.data.sellerId;
+    }
+    match /warehouses/{warehouseId} {
+      allow read, delete: if sellerOwnsDoc();
+      allow create: if sellerCreatesOwnDoc();
+      allow update: if sellerOwnsDoc() && request.resource.data.sellerId == resource.data.sellerId;
+    }
+    match /warehouseStock/{stockId} {
+      allow read, delete: if sellerOwnsDoc();
+      allow create, update: if sellerCreatesOwnDoc()
+        && get(/databases/$(database)/documents/warehouses/$(request.resource.data.warehouseId)).data.sellerId == request.auth.token.sellerId;
+    }
+    match /stockMovements/{movementId} {
+      allow read: if sellerOwnsDoc();
+      allow create: if sellerCreatesOwnDoc();
+    }
+    match /invoices/{invoiceId} {
+      allow read: if sellerOwnsDoc();
+      allow create: if sellerCreatesOwnDoc();
+      allow update: if sellerOwnsDoc() && request.resource.data.sellerId == resource.data.sellerId;
+    }
+    match /pricingRules/{ruleId} {
+      allow read, delete: if sellerOwnsDoc();
+      allow create: if sellerCreatesOwnDoc();
+      allow update: if sellerOwnsDoc() && request.resource.data.sellerId == resource.data.sellerId;
+    }
+    // Third-party store API keys: owner only.
+    match /sellerIntegrations/{integrationId} {
+      allow read, delete: if sellerOwnsDoc();
+      allow create: if sellerCreatesOwnDoc();
+      allow update: if sellerOwnsDoc() && request.resource.data.sellerId == resource.data.sellerId;
+    }
+    // Seller API keys are issued by the server; the seller may only revoke.
+    match /apiKeys/{keyId} {
+      allow read: if sellerOwnsDoc();
+      allow update: if sellerOwnsDoc() && changesOnly(['isActive']) && request.resource.data.isActive == false;
+    }
+
+    // --- PRODUCT CERTIFICATES: publicly verifiable; issued by the product's seller ---
+    match /productCertificates/{certId} {
+      allow read: if true;
+      allow create: if sellerCreatesOwnDoc();
+      allow update: if isSignedIn() && changesOnly(['lastVerifiedAt']);
+    }
+
+    // --- SELLER TIERS: tier definitions (commission/benefits), admin-managed ---
+    match /sellerTiers/{tierId} {
+      allow read: if isSignedIn();
     }
   }
 }

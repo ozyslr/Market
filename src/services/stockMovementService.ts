@@ -8,7 +8,7 @@ import {
   serverTimestamp,
   limit,
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 
 export interface StockMovement {
   id?: string;
@@ -79,14 +79,17 @@ export async function getStockMovements(
   maxResults = 50,
 ): Promise<StockMovement[]> {
   try {
+    // Scoped to the signed-in seller (rules); equality-only, sorted here to avoid a composite index.
     const q = query(
       collection(db, 'stockMovements'),
+      where('sellerId', '==', auth.currentUser?.uid ?? ''),
       where('productId', '==', productId),
-      orderBy('createdAt', 'desc'),
-      limit(maxResults),
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as StockMovement[];
+    const millis = (m: any) => m.createdAt?.toMillis?.() ?? 0;
+    return (snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as StockMovement[])
+      .sort((a, b) => millis(b) - millis(a))
+      .slice(0, maxResults);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, `stockMovements/${productId}`);
     return [];

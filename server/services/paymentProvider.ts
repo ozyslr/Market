@@ -46,9 +46,18 @@ export interface CheckoutResult {
   checkoutFormContent?: string;
 }
 
+export interface VerifiedPayment {
+  status: string;
+  transactions: unknown[];
+  /** iyzico basketId = our order / orderSet id. */
+  basketId?: string;
+  paidPrice?: number;
+  paymentId?: string;
+}
+
 export interface IPaymentProvider {
   initCheckout(params: CheckoutParams): Promise<CheckoutResult>;
-  verifyPayment(token: string): Promise<{ status: string; transactions: unknown[] }>;
+  verifyPayment(token: string): Promise<VerifiedPayment>;
   processRefund(params: {
     paymentId: string;
     paymentTransactionId?: string;
@@ -173,7 +182,7 @@ export class IyzicoProvider implements IPaymentProvider {
     };
   }
 
-  async verifyPayment(token: string): Promise<{ status: string; transactions: unknown[] }> {
+  async verifyPayment(token: string): Promise<VerifiedPayment> {
     const { retrieveCheckoutForm } = await import('../../server/iyzico.cjs');
     const iyzico = await this.getIyzico();
     const result = (await retrieveCheckoutForm(iyzico.client, {
@@ -184,6 +193,9 @@ export class IyzicoProvider implements IPaymentProvider {
     return {
       status: (result.paymentStatus as string) ?? (result.status as string),
       transactions: (result.paymentTransactions as unknown[]) ?? [],
+      basketId: (result.basketId as string) || undefined,
+      paidPrice: result.paidPrice !== undefined ? Number(result.paidPrice) : undefined,
+      paymentId: (result.paymentId as string) || undefined,
     };
   }
 
