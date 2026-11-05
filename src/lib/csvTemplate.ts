@@ -98,8 +98,11 @@ const EXAMPLE_2 = [
 ];
 
 export function generateCsvTemplate(): string {
+  // Quote values with commas/quotes (tags are comma-separated) so columns stay aligned.
+  const row = (vals: readonly string[]) =>
+    vals.map((v) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)).join(',');
   const header = CSV_COLUMNS.map((c) => c.key).join(',');
-  return [header, EXAMPLE_1.join(','), EXAMPLE_2.join(',')].join('\n');
+  return [header, row(EXAMPLE_1), row(EXAMPLE_2)].join('\n');
 }
 
 export function downloadCsvTemplate() {
