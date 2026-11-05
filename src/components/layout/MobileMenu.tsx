@@ -209,7 +209,8 @@ export function MobileMenu({ isOpen, onClose, categories, onOpenAuth }: MobileMe
                                 />
                                 <span className="text-sm font-black dark:text-white truncate">
                                   {cat.name ||
-                                    (t(`category.${cat.id}`) !== `category.${cat.id}`
+                                    ((t(`category.${cat.id}`) ?? `category.${cat.id}`) !==
+                                    `category.${cat.id}`
                                       ? t(`category.${cat.id}`)
                                       : cat.slug || `Kat. ${cat.id.slice(-4)}`)}
                                 </span>

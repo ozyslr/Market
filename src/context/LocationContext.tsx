@@ -9,12 +9,13 @@ export interface DeliveryLocation {
   currency: string; // 'GBP' | 'TRY' | 'EUR' | 'USD'
 }
 
+// TRY/Türkiye-only for now (multi-currency deferred).
 const DEFAULT_LOCATION: DeliveryLocation = {
-  country: 'GB',
-  city: 'London',
-  displayText: 'London, UK',
-  market: 'UK',
-  currency: 'GBP',
+  country: 'TR',
+  city: 'İstanbul',
+  displayText: 'İstanbul, Türkiye',
+  market: 'TR',
+  currency: 'TRY',
 };
 
 function loadSavedLocation(): DeliveryLocation {

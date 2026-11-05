@@ -124,7 +124,7 @@ export function Hero() {
             </div>
             {/* Dark overlay for contrast if text is visible, but in TR e-commerce, the image ITSELF contains the campaign text usually.
                 We'll keep a soft gradient and text here for dynamic usage. */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent p-8 md:p-16 flex flex-col justify-center">
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent px-5 py-4 md:p-16 flex flex-col justify-center">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -134,24 +134,24 @@ export function Hero() {
                 <span className="px-3 py-1 bg-mercora-red text-white text-[10px] md:text-xs font-bold uppercase rounded w-fit">
                   {t('hero.featured_campaign')}
                 </span>
-                <h1 className="text-3xl md:text-5xl lg:text-7xl font-black text-white leading-none uppercase tracking-tight drop-shadow-md">
+                <h1 className="text-2xl md:text-5xl lg:text-7xl font-black text-white leading-none uppercase tracking-tight drop-shadow-md">
                   {SLIDES[current].title} <br />
                   <span className="text-yellow-400">{SLIDES[current].subtitle}</span>
                 </h1>
-                <p className="text-white/90 text-sm md:text-base font-medium leading-relaxed drop-shadow-md">
+                <p className="hidden sm:block text-white/90 text-sm md:text-base font-medium leading-relaxed drop-shadow-md">
                   {SLIDES[current].desc}
                 </p>
-                <div className="flex gap-3 mt-4 md:mt-6">
+                <div className="flex gap-2 md:gap-3 mt-3 md:mt-6">
                   <Link
                     to={`/search?category=${SLIDES[current].category}`}
-                    className="px-5 py-2.5 bg-mercora-red text-white text-xs font-bold uppercase rounded-xl hover:bg-red-600 transition-all shadow-lg inline-flex items-center gap-2"
+                    className="px-4 md:px-5 py-2 md:py-2.5 bg-mercora-red text-white text-[11px] md:text-xs font-bold uppercase rounded-xl hover:bg-red-600 transition-all shadow-lg inline-flex items-center gap-1.5 whitespace-nowrap"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {t('hero.cta') || 'Alışverişe Başla'} <ChevronRight size={14} />
                   </Link>
                   <Link
                     to="/campaigns"
-                    className="px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white text-xs font-bold uppercase rounded-xl border border-white/30 hover:bg-white/30 transition-all inline-flex items-center gap-2"
+                    className="px-4 md:px-5 py-2 md:py-2.5 bg-white/20 backdrop-blur-sm text-white text-[11px] md:text-xs font-bold uppercase rounded-xl border border-white/30 hover:bg-white/30 transition-all inline-flex items-center gap-1.5 whitespace-nowrap"
                     onClick={(e) => e.stopPropagation()}
                   >
                     Kampanyalar <Percent size={14} />
@@ -164,7 +164,7 @@ export function Hero() {
       </AnimatePresence>
 
       {/* Nav Controls - Dots */}
-      <div className="absolute bottom-4 start-1/2 -translate-x-1/2 flex items-center gap-2">
+      <div className="absolute bottom-2 md:bottom-4 end-4 md:end-auto md:start-1/2 md:-translate-x-1/2 flex items-center gap-2">
         {SLIDES.map((_, i) => (
           <button
             key={i}

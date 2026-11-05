@@ -108,7 +108,7 @@ export function ShoppingAssistant() {
   };
 
   return (
-    <div className="fixed bottom-8 end-8 z-[100] flex flex-col items-end">
+    <div className="fixed bottom-20 end-3 md:bottom-8 md:end-8 z-[100] flex flex-col items-end">
       <AnimatePresence>
         {isOpen && !isMinimized && (
           <motion.div

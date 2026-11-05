@@ -62,7 +62,6 @@ import { getCategories } from '@/services/productService';
 import { getOrdersByUser } from '@/services/orderService';
 import { Category } from '@/types';
 
-import { TopTicker } from './TopTicker';
 import { SearchBar } from './SearchBar';
 import { MegaMenu } from './MegaMenu';
 import { MobileMenu } from './MobileMenu';
@@ -128,20 +127,15 @@ export function Navbar() {
   };
 
   return (
-    <nav
-      className="fixed top-0 start-0 end-0 z-50 transition-all duration-300"
-      aria-label="Ana navigasyon"
-    >
-      <TopTicker />
-
+    <nav className="sticky top-0 z-50 transition-all duration-300" aria-label="Ana navigasyon">
       {/* Main Header */}
       <div
         className={cn(
           'transition-all duration-300 border-b border-brand-primary/5 bg-white dark:bg-zinc-950',
-          isScrolled ? 'shadow-xl py-3' : 'py-4',
+          isScrolled ? 'shadow-xl py-2 sm:py-3' : 'py-2 sm:py-4',
         )}
       >
-        <div className="max-w-[1700px] mx-auto px-4 lg:px-8 flex items-center gap-8">
+        <div className="max-w-[1700px] mx-auto px-3 sm:px-4 lg:px-8 flex items-center gap-2 sm:gap-8">
           {/* Hamburger (Mobile) */}
           <button
             onClick={() => setIsMenuOpen(true)}
@@ -165,36 +159,6 @@ export function Navbar() {
               className="h-7 sm:h-9 w-auto object-contain group-hover:scale-105 transition-transform dark:brightness-0 dark:invert"
             />
           </Link>
-
-          {/* Mobile Header Icons (Right side) */}
-          <div className="flex sm:hidden items-center gap-1 md:gap-3 ms-auto">
-            <div className="flex items-center gap-1 xl:gap-2 me-2">
-              <div
-                className="relative p-2"
-                onClick={() => setIsMenuOpen(true)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setIsMenuOpen(true);
-                  }
-                }}
-                aria-label={t('nav.language') || 'Dil'}
-              >
-                <Globe size={20} className="text-brand-primary dark:text-white" />
-                <span className="absolute -top-1 -end-1 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-brand-primary shadow-lg">
-                  {lang.toUpperCase()}
-                </span>
-              </div>
-            </div>
-            <Link to="/cart" className="relative p-2" aria-label={t('nav.cart') || 'Sepet'}>
-              <ShoppingBag size={22} className="text-brand-primary dark:text-white" />
-              <span className="absolute -top-1 -end-1 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-brand-primary shadow-lg">
-                3
-              </span>
-            </Link>
-          </div>
 
           {/* Desktop Search */}
           <div className="flex-1 max-w-4xl h-11 group hidden sm:flex items-center gap-3">
@@ -226,7 +190,7 @@ export function Navbar() {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-4 lg:gap-6 shrink-0 ms-auto">
+          <div className="flex items-center gap-1 sm:gap-4 lg:gap-6 shrink-0 ms-auto">
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent flex items-center justify-center text-brand-primary dark:text-white"
@@ -719,17 +683,8 @@ export function Navbar() {
         </div>
 
         {/* Mobile Search */}
-        <div className="px-4 pb-3 sm:hidden transition-all duration-300 bg-white dark:bg-zinc-950">
-          <div className="flex items-center gap-2 mb-3">
-            <div
-              onClick={() => setIsLocationModalOpen(true)}
-              className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold border whitespace-nowrap overflow-hidden transition-all bg-brand-secondary/30 border-brand-primary/5 text-brand-primary dark:text-white"
-            >
-              <MapPin size={14} className="text-accent shrink-0" />
-              <span className="truncate">{selectedLocation}</span>
-              <ChevronRight size={14} className="ms-auto opacity-40 shrink-0" />
-            </div>
-          </div>
+        {/* Location row removed on phones: TRY/Türkiye-only for now, it only cost header height. */}
+        <div className="px-3 pb-2 sm:hidden transition-all duration-300 bg-white dark:bg-zinc-950">
           <form
             onSubmit={(e) => {
               e.preventDefault();

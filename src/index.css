@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
+/* dark: utilities follow the site's theme toggle (<html class="dark">, ThemeContext), not the OS. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Benim Olan brand/logo font */
 @font-face {

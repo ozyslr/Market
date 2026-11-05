@@ -117,7 +117,6 @@ const SellOnBenimOlan = named(() => import('./pages/SellOnBenimOlan'), 'SellOnBe
 
 import { ShoppingAssistant } from './components/ai/ShoppingAssistant';
 import { LiveChatWidget } from './components/chat/LiveChatWidget';
-import { BotSalesEngine } from './components/commerce/BotSalesEngine';
 import { EmailVerificationBanner } from './components/common/EmailVerificationBanner';
 import { TokenErrorBanner } from './components/common/TokenErrorBanner';
 
@@ -151,14 +150,14 @@ function MainLayout() {
       <Navbar />
       <TokenErrorBanner />
       <EmailVerificationBanner />
-      <main id="main-content" role="main" className="pt-[144px] md:pt-[156px]" tabIndex={-1}>
+      {/* Navbar is sticky (in flow), so no fixed top offset: content always starts below it. */}
+      <main id="main-content" role="main" tabIndex={-1}>
         <Suspense fallback={<PageLoader />}>
           <Outlet />
         </Suspense>
       </main>
       <Footer />
       <ShoppingAssistant />
-      <BotSalesEngine />
       <LiveChatWidget />
       <CookieConsent />
     </div>
@@ -194,11 +193,14 @@ export default function App() {
                             <Suspense fallback={<PageLoader />}>
                               <Routes>
                                 {/* Seller panel — full-screen, no Navbar/Footer */}
-                                <Route path="/seller" element={
-                                  <SellerRoute>
-                                    <SellerLayout />
-                                  </SellerRoute>
-                                }>
+                                <Route
+                                  path="/seller"
+                                  element={
+                                    <SellerRoute>
+                                      <SellerLayout />
+                                    </SellerRoute>
+                                  }
+                                >
                                   <Route element={<SellerSuspense />}>
                                     <Route path="dashboard" element={<SellerDashboard />} />
                                     <Route path="inventory" element={<SellerInventoryPage />} />
@@ -238,7 +240,14 @@ export default function App() {
                                   <Route path="/cart" element={<CartPage />} />
                                   <Route path="/campaigns" element={<Campaigns />} />
                                   <Route path="/checkout" element={<CheckoutPage />} />
-                                  <Route path="/moderator" element={<ModeratorRoute><ModeratorDashboard /></ModeratorRoute>} />
+                                  <Route
+                                    path="/moderator"
+                                    element={
+                                      <ModeratorRoute>
+                                        <ModeratorDashboard />
+                                      </ModeratorRoute>
+                                    }
+                                  />
                                   <Route path="/seller/:id" element={<SellerStorePage />} />
                                   <Route path="/store/:slug" element={<SellerStorePage />} />
                                   <Route path="/search" element={<SearchResultsPage />} />

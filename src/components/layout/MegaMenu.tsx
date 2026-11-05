@@ -140,7 +140,7 @@ export function MegaMenu({
                             className={activeCategory === cat.id ? 'text-accent' : ''}
                           />
                         </span>
-                        {t(`category.${cat.id}`) !== `category.${cat.id}`
+                        {(t(`category.${cat.id}`) ?? `category.${cat.id}`) !== `category.${cat.id}`
                           ? t(`category.${cat.id}`)
                           : cat.name || cat.slug || `Kategori ${cat.id.slice(-4)}`}
                       </div>
@@ -162,7 +162,8 @@ export function MegaMenu({
                 <div className="flex flex-col gap-12">
                   <div className="flex justify-between items-end border-b border-brand-primary/10 pb-4">
                     <h2 className="text-3xl font-display font-black uppercase italic tracking-tighter text-brand-primary dark:text-white">
-                      {t(`category.${activeCategory}`) !== `category.${activeCategory}`
+                      {(t(`category.${activeCategory}`) ?? `category.${activeCategory}`) !==
+                      `category.${activeCategory}`
                         ? t(`category.${activeCategory}`)
                         : categories.find((c) => c.id === activeCategory)?.name ||
                           categories.find((c) => c.id === activeCategory)?.slug ||
@@ -228,7 +229,8 @@ export function MegaMenu({
                           {t('home.new_arrivals') || 'New Collection'}
                         </span>
                         <h3 className="text-white text-2xl font-display font-black uppercase italic tracking-tight">
-                          {t(`category.${activeCategory}`) !== `category.${activeCategory}`
+                          {(t(`category.${activeCategory}`) ?? `category.${activeCategory}`) !==
+                          `category.${activeCategory}`
                             ? t(`category.${activeCategory}`)
                             : categories.find((c) => c.id === activeCategory)?.name}{' '}
                           Dünyasını Keşfet

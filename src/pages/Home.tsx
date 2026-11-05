@@ -418,37 +418,38 @@ export function Home() {
               id="iconic-menu-scroll"
               className="flex gap-4 md:gap-8 overflow-x-auto no-scrollbar pb-2 scroll-smooth"
             >
-              {((topCategories) => [...topCategories, ...topCategories.slice(0, 5)])(
-                categories.filter((c) => !c.parentId),
-              ).map((menu, i) => (
-                <Link
-                  key={i}
-                  to={`/search?categoryId=${menu.id}`}
-                  className="flex flex-col items-center gap-2 group cursor-pointer shrink-0 w-[72px] md:w-[90px]"
-                >
-                  <div className="relative">
-                    <div className="w-[64px] h-[64px] md:w-[80px] md:h-[80px] rounded-full p-[3px] bg-gradient-to-tr from-accent via-[#FF8A00] to-yellow-400">
-                      <div className="w-full h-full rounded-full overflow-hidden border-2 border-white dark:border-zinc-900 bg-white">
-                        <img
-                          src={
-                            menu.image ||
-                            `https://api.dicebear.com/7.x/identicon/svg?seed=${menu.id}`
-                          }
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                          alt={menu.name}
-                          referrerPolicy="no-referrer"
-                          loading="lazy"
-                        />
+              {categories
+                .filter((c) => !c.parentId)
+                .map((menu, i) => (
+                  <Link
+                    key={i}
+                    to={`/search?categoryId=${menu.id}`}
+                    className="flex flex-col items-center gap-2 group cursor-pointer shrink-0 w-[72px] md:w-[90px]"
+                  >
+                    <div className="relative">
+                      <div className="w-[64px] h-[64px] md:w-[80px] md:h-[80px] rounded-full p-[3px] bg-gradient-to-tr from-accent via-[#FF8A00] to-yellow-400">
+                        <div className="w-full h-full rounded-full overflow-hidden border-2 border-white dark:border-zinc-900 bg-white">
+                          <img
+                            src={menu.image || '/placeholder-product.svg'}
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = '/placeholder-product.svg';
+                            }}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            alt=""
+                            referrerPolicy="no-referrer"
+                            loading="lazy"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <span className="text-[10px] md:text-xs font-semibold text-[#333] dark:text-zinc-300 text-center leading-tight line-clamp-2">
-                    {t(`category.${menu.id}`) !== `category.${menu.id}`
-                      ? t(`category.${menu.id}`)
-                      : menu.name}
-                  </span>
-                </Link>
-              ))}
+                    <span className="text-[10px] md:text-xs font-semibold text-[#333] dark:text-zinc-300 text-center leading-tight line-clamp-2">
+                      {(t(`category.${menu.id}`) ?? `category.${menu.id}`) !== `category.${menu.id}`
+                        ? t(`category.${menu.id}`)
+                        : menu.name}
+                    </span>
+                  </Link>
+                ))}
             </div>
           </div>
         </div>
@@ -540,7 +541,7 @@ export function Home() {
                   {categoryIconMap[cat.icon || ''] || <Sparkles size={18} />}
                 </span>
                 <span className="text-xs font-bold text-brand-primary dark:text-white whitespace-nowrap">
-                  {t(`category.${cat.id}`) !== `category.${cat.id}`
+                  {(t(`category.${cat.id}`) ?? `category.${cat.id}`) !== `category.${cat.id}`
                     ? t(`category.${cat.id}`)
                     : cat.name}
                 </span>
@@ -726,7 +727,9 @@ export function Home() {
           <section className="bg-accent-soft/30 dark:bg-zinc-800/20 rounded-[2.5rem] p-8 border border-accent-soft dark:border-zinc-800 relative group overflow-hidden">
             <div className="relative z-10">
               <span className="px-3 py-1 bg-white text-accent text-[9px] font-black uppercase tracking-[0.2em] rounded-full inline-block shadow-sm mb-4">
-                {t('category.baby') !== 'category.baby' ? t('category.baby') : 'Anne Bebek'}
+                {(t('category.baby') ?? 'category.baby') !== 'category.baby'
+                  ? t('category.baby')
+                  : 'Anne Bebek'}
               </span>
               <h2 className="text-2xl font-display font-black text-brand-primary dark:text-white uppercase italic tracking-tighter mb-6 leading-tight">
                 {t('hero.deals_every_day') || 'YENİ SEZON BEBEK MODASI'}
@@ -747,7 +750,9 @@ export function Home() {
           <section className="bg-brand-secondary/50 dark:bg-zinc-800/20 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800 relative group overflow-hidden">
             <div className="relative z-10">
               <span className="px-3 py-1 bg-white text-accent text-[9px] font-black uppercase tracking-[0.2em] rounded-full inline-block shadow-sm mb-4">
-                {t('category.fashion') !== 'category.fashion' ? t('category.fashion') : 'Moda'}
+                {(t('category.fashion') ?? 'category.fashion') !== 'category.fashion'
+                  ? t('category.fashion')
+                  : 'Moda'}
               </span>
               <h2 className="text-2xl font-display font-black text-brand-primary dark:text-white uppercase italic tracking-tighter mb-6 leading-tight">
                 {t('home.promo_fashion_title') || 'MODADA DÜNYA MARKALARI'}
@@ -760,7 +765,9 @@ export function Home() {
           <section className="bg-brand-primary dark:bg-zinc-900 rounded-[2.5rem] p-8 relative group overflow-hidden text-white border dark:border-white/10">
             <div className="relative z-10">
               <span className="px-3 py-1 bg-white/10 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full inline-block mb-4">
-                {t('category.sport') !== 'category.sport' ? t('category.sport') : 'Spor'}
+                {(t('category.sport') ?? 'category.sport') !== 'category.sport'
+                  ? t('category.sport')
+                  : 'Spor'}
               </span>
               <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter mb-6 leading-tight">
                 {t('home.promo_sport_title') || 'OUTDOOR MACERASI BAŞLASIN'}
