@@ -14,6 +14,81 @@ async function generateText(_model: string, prompt: string): Promise<string | nu
   }
 }
 
+// ─── Product draft from a photo ("fotoğraftan doldur") ─────────────────────
+
+export interface PhotoDraft {
+  title: string;
+  description: string;
+  categoryId: string;
+  brand: string;
+  tags: string[];
+}
+
+/** Parses the model reply; categoryId is kept only if it is one of ours. */
+export function parsePhotoDraft(text: string, validCategoryIds: string[]): PhotoDraft | null {
+  const json = text.match(/\{[\s\S]*\}/)?.[0];
+  if (!json) return null;
+  try {
+    const d = JSON.parse(json);
+    const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+    return {
+      title: str(d.title, 120),
+      description: str(d.description, 1000),
+      categoryId: validCategoryIds.includes(d.categoryId) ? d.categoryId : '',
+      brand: str(d.brand, 60),
+      tags: Array.isArray(d.tags)
+        ? d.tags
+            .filter((t: unknown) => typeof t === 'string')
+            .slice(0, 8)
+            .map((t: string) => t.toLowerCase().trim())
+        : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fileToBase64(file: Blob): Promise<string> {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < buf.length; i += 0x8000)
+    bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+export async function analyzeProductPhoto(
+  photo: File,
+  categories: Array<{ id: string; label: string }>,
+): Promise<PhotoDraft | null> {
+  const prompt = `Bu bir pazaryeri satıcısının ürün fotoğrafı. Ürünü tanımla ve SADECE şu JSON'u döndür (markdown yok):
+{"title":"Türkçe ürün adı, en fazla 70 karakter","description":"Türkçe, 2-3 cümlelik satış açıklaması; fotoğrafta görünmeyen özellik uydurma","categoryId":"aşağıdaki listeden en uygun id","brand":"görünüyorsa marka, yoksa boş","tags":["5-8 Türkçe arama etiketi"]}
+Kategoriler (id: ad):
+${categories
+  .slice(0, 150)
+  .map((c) => `${c.id}: ${c.label}`)
+  .join('\n')}`;
+  try {
+    const res = await geminiFetch('/api/gemini/vision', {
+      prompt,
+      imageBase64: await fileToBase64(photo),
+      mimeType: ['image/jpeg', 'image/png', 'image/webp'].includes(photo.type)
+        ? photo.type
+        : 'image/jpeg',
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.text
+      ? parsePhotoDraft(
+          data.text,
+          categories.map((c) => c.id),
+        )
+      : null;
+  } catch (err) {
+    console.error('[AI Content] analyzeProductPhoto error:', err);
+    return null;
+  }
+}
+
 // ─── Input types ──────────────────────────────────────────────────────────
 
 interface ProductAttrs {

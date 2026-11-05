@@ -18,13 +18,15 @@ import { SortableContext, useSortable, rectSortingStrategy, arrayMove } from '@d
 import { CSS } from '@dnd-kit/utilities';
 import { CategorySelect } from './CategorySelect';
 import { cn } from '../../lib/utils';
-import { uploadImage } from '../../lib/storage';
+import { uploadImage, compressImage } from '../../lib/storage';
+import { getCategories } from '../../services/productService';
 import { auth } from '../../lib/firebase';
 import type { ProductVariant } from '../../types';
 import {
   generateProductDescription,
   generateMetaDescription,
   suggestTags,
+  analyzeProductPhoto,
 } from '../../services/aiContentService';
 
 export interface ProductFormData {
@@ -195,7 +197,13 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
   const [tagInput, setTagInput] = useState('');
   const [specKey, setSpecKey] = useState('');
   const [specVal, setSpecVal] = useState('');
-  const [aiLoading, setAiLoading] = useState<'desc' | 'meta' | 'image' | 'tags' | null>(null);
+  const [aiLoading, setAiLoading] = useState<'desc' | 'meta' | 'image' | 'tags' | 'photo' | null>(
+    null,
+  );
+  // First photo of this session: drives "fotoğraftan doldur" (auto when the title is still empty).
+  const [aiPhoto, setAiPhoto] = useState<File | null>(null);
+  const [photoNote, setPhotoNote] = useState('');
+  const photoAutoRan = useRef(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [quickAdd, setQuickAdd] = useState(true);
@@ -257,6 +265,41 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
     setForm((prev) => ({ ...prev, [key]: val }));
   }
 
+  // Fills only empty fields, so nothing the seller typed is overwritten.
+  async function fillFromPhoto(photo: File) {
+    setAiLoading('photo');
+    setPhotoNote('');
+    try {
+      const cats = (await getCategories()).map((c) => ({
+        id: c.id,
+        label: (typeof c.name === 'string' && c.name) || c.slug || c.id,
+      }));
+      const draft = await analyzeProductPhoto(await compressImage(photo), cats);
+      if (!draft) {
+        setPhotoNote('Fotoğraftan bilgi çıkarılamadı; alanları elle doldurun.');
+        return;
+      }
+      setForm((prev) => ({
+        ...prev,
+        title: prev.title || draft.title,
+        description: prev.description || draft.description,
+        categoryId: prev.categoryId || draft.categoryId,
+        brand: prev.brand || draft.brand,
+        tags: [...new Set([...prev.tags, ...draft.tags])],
+      }));
+      setPhotoNote('Yapay zekâ boş alanları doldurdu — fiyat ve stoğu girip kontrol edin.');
+    } finally {
+      setAiLoading(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!aiPhoto || photoAutoRan.current || form.title.trim()) return;
+    photoAutoRan.current = true;
+    void fillFromPhoto(aiPhoto);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiPhoto]);
+
   // ── Multi-file upload with per-file progress ──────────────────────────────
 
   const handleImageUpload = useCallback(
@@ -266,6 +309,7 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
 
       // Reset the file input value so re-selecting the same files works
       if (fileRef.current) fileRef.current.value = '';
+      setAiPhoto((prev) => prev ?? fileArray.find((f) => f.type.startsWith('image/')) ?? null);
 
       // Create upload entries with blob preview URLs
       const entries: UploadFileState[] = fileArray.map((file, i) => {
@@ -675,6 +719,25 @@ export function ProductForm({ initial, onSubmit, onClose, isOpen }: ProductFormP
                 Görseller
               </h3>
             </div>
+
+            {aiPhoto && (
+              <div className="mb-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => fillFromPhoto(aiPhoto)}
+                  disabled={aiLoading === 'photo'}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600/20 text-purple-300 text-xs font-bold hover:bg-purple-600/30 disabled:opacity-50"
+                >
+                  {aiLoading === 'photo' ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={14} />
+                  )}
+                  {aiLoading === 'photo' ? 'Fotoğraf inceleniyor…' : 'Fotoğraftan Doldur'}
+                </button>
+                {photoNote && <span className="text-[11px] text-zinc-400">{photoNote}</span>}
+              </div>
+            )}
 
             {/* Drop zone wrapper */}
             <div

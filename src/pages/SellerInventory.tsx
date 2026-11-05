@@ -82,15 +82,6 @@ export function SellerInventoryPage() {
     null,
   );
 
-  // CSV import state (legacy)
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [csvProgress, setCsvProgress] = useState(0);
-  const [csvStatus, setCsvStatus] = useState<'idle' | 'parsing' | 'uploading' | 'done' | 'error'>(
-    'idle',
-  );
-  const [csvMessage, setCsvMessage] = useState('');
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
   // Warehouse state
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseForm, setWarehouseForm] = useState({
@@ -276,6 +267,7 @@ export function SellerInventoryPage() {
         status: 'draft' as const,
         rating: 0,
         reviewsCount: 0,
+        featured: false, // only admins feature products (firestore.rules)
       };
       const newId = await createProduct(payload as any);
       setProducts((prev) => [{ id: newId, ...payload } as Product, ...prev]);
@@ -375,104 +367,6 @@ export function SellerInventoryPage() {
     setIsFormOpen(false);
     setEditingProduct(null);
   };
-
-  function parseCSV(text: string): Partial<Product>[] {
-    const lines = text
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean);
-    if (lines.length < 2) return [];
-    const headers = lines[0].split(',').map((h) =>
-      h
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z]/g, ''),
-    );
-    return lines
-      .slice(1)
-      .map((line) => {
-        const vals = line.split(',').map((v) => v.trim().replace(/^"|"$/g, ''));
-        const row: Record<string, string> = {};
-        headers.forEach((h, i) => {
-          row[h] = vals[i] || '';
-        });
-        return {
-          title: row['title'] || row['urunad'] || row['name'] || '',
-          price: parseFloat(row['price'] || row['fiyat'] || '0') || 0,
-          stock: parseInt(row['stock'] || row['stok'] || '0', 10) || 0,
-          categoryId: row['categoryid'] || row['kategori'] || 'cat-1-audio',
-          brand: row['brand'] || row['marka'] || '',
-          description: row['description'] || row['aciklama'] || '',
-          images: row['image'] ? [row['image']] : [],
-          currency: 'TRY',
-          featured: false,
-        };
-      })
-      .filter((p) => p.title);
-  }
-
-  function downloadCSVTemplate() {
-    const csv =
-      'title,brand,categoryId,price,stock,description,image\nÖrnek Ürün,Örnek Marka,cat-1-audio,199.90,50,Ürün açıklaması,https://example.com/image.jpg';
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'mercora-urun-sablonu.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  async function handleCSVUpload() {
-    if (!csvFile) return;
-    setCsvStatus('parsing');
-    setCsvProgress(0);
-    setCsvMessage('CSV okunuyor...');
-    try {
-      const text = await csvFile.text();
-      const rows = parseCSV(text);
-      if (rows.length === 0) {
-        setCsvStatus('error');
-        setCsvMessage('CSV boş veya geçersiz format.');
-        return;
-      }
-      setCsvStatus('uploading');
-      setCsvMessage(`${rows.length} ürün yükleniyor...`);
-      const BATCH = 5;
-      const newProducts: Product[] = [];
-      for (let i = 0; i < rows.length; i += BATCH) {
-        const chunk = rows.slice(i, i + BATCH);
-        const created = await Promise.all(
-          chunk.map(async (p) => {
-            const slug =
-              (p.title || 'urun')
-                .toLowerCase()
-                .replace(/\s+/g, '-')
-                .replace(/[^a-z0-9-]/g, '') +
-              '-' +
-              Math.random().toString(36).slice(2, 6);
-            const id = await createProduct({
-              ...p,
-              sellerId: user?.uid,
-              slug,
-              hsCode: '8518.21.00',
-              originCountry: 'Turkey',
-            } as any);
-            return { id, ...p, sellerId: user?.uid, slug } as Product;
-          }),
-        );
-        newProducts.push(...created);
-        setCsvProgress(Math.round(((i + chunk.length) / rows.length) * 100));
-      }
-      setProducts((prev) => [...newProducts, ...prev]);
-      setCsvStatus('done');
-      setCsvMessage(`${newProducts.length} ürün başarıyla eklendi.`);
-      setCsvFile(null);
-    } catch {
-      setCsvStatus('error');
-      setCsvMessage('Yükleme sırasında hata oluştu.');
-    }
-  }
 
   return (
     <div className="flex min-h-screen bg-brand-secondary/30 pt-24">
@@ -868,7 +762,7 @@ export function SellerInventoryPage() {
                                       />
                                     </div>
                                     <span className="text-[10px] font-black text-brand-primary">
-                                      {product.stock ?? 0} units
+                                      {product.stock ?? 0} adet
                                     </span>
                                   </div>
                                 )}
@@ -894,7 +788,10 @@ export function SellerInventoryPage() {
                                   />
                                 ) : (
                                   <span className="font-black text-brand-primary">
-                                    ${product.price}
+                                    {product.price.toLocaleString('tr-TR', {
+                                      style: 'currency',
+                                      currency: 'TRY',
+                                    })}
                                   </span>
                                 )}
                               </td>

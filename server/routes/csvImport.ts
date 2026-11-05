@@ -73,7 +73,8 @@ async function fetchImageToStorage(imageUrl: string, destPath: string): Promise<
 
   const bucket = getStorage().bucket();
   await bucket.file(destPath).save(Buffer.from(arrayBuffer), { contentType });
-  return destPath;
+  // products/** is public-read in storage.rules, so the token-less media URL works in <img>.
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(destPath)}?alt=media`;
 }
 
 /** Read a multipart/form-data request body and return the first file field as a Buffer. */
@@ -144,13 +145,32 @@ function splitBuffer(buf: Buffer, delimiter: Buffer): Buffer[] {
   return out;
 }
 
+const TR_CHARS: Record<string, string> = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u' };
+
+/** Turkish-aware slug + short random suffix (titles repeat across sellers). */
 function slugify(value: string): string {
-  return value
-    .toLowerCase()
+  const base = value
+    .toLocaleLowerCase('tr-TR')
+    .replace(/[çğıöşü]/g, (c) => TR_CHARS[c])
     .trim()
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
-    .slice(0, 80);
+    .slice(0, 72);
+  return `${base || 'urun'}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+/** Template columns (categoryId, images) and older names (category, image_url) are both accepted. */
+function normalizeRow(raw: Record<string, string>): Record<string, string> {
+  return {
+    ...raw,
+    category: raw.category || raw.categoryid || raw.kategori || '',
+    image_url: raw.image_url || raw.images || raw.image || raw.gorsel || '',
+    title: raw.title || raw.urunadi || raw.name || '',
+    price: raw.price || raw.fiyat || '',
+    stock: raw.stock || raw.stok || '',
+    description: raw.description || raw.aciklama || '',
+    brand: raw.brand || raw.marka || '',
+  };
 }
 
 export function registerCsvImportRoutes(app: Express, deps: CsvImportRouteDeps) {
@@ -166,6 +186,10 @@ export function registerCsvImportRoutes(app: Express, deps: CsvImportRouteDeps) 
       const sellerId: string = req.uid;
       if (!sellerId) {
         return res.status(401).json({ error: 'Unauthenticated' });
+      }
+      const role = req.decodedToken?.role;
+      if (role !== 'seller' && role !== 'admin') {
+        return res.status(403).json({ error: 'Yalnızca onaylı satıcılar ürün yükleyebilir' });
       }
 
       // 1-2. Read + size guard.
@@ -185,13 +209,16 @@ export function registerCsvImportRoutes(app: Express, deps: CsvImportRouteDeps) 
       const csvString = file.buffer.toString('utf-8').replace(/^\uFEFF/, '');
 
       // 3. Build platform category set once (D-09 / T-03-14).
-      const platformCategorySet = new Set<string>();
+      // id / slug / name (lowercased) → category doc id, so products always store the real id.
+      const categoryIdByKey = new Map<string, string>();
       const catSnap = await adminDb.collection('categories').get();
       catSnap.forEach((doc) => {
         const data = doc.data() as Record<string, any>;
-        platformCategorySet.add(doc.id.toLowerCase());
-        if (typeof data.slug === 'string') platformCategorySet.add(data.slug.toLowerCase());
-        if (typeof data.name === 'string') platformCategorySet.add(data.name.toLowerCase());
+        categoryIdByKey.set(doc.id.toLowerCase(), doc.id);
+        if (typeof data.slug === 'string') categoryIdByKey.set(data.slug.toLowerCase(), doc.id);
+        if (typeof data.name === 'string') {
+          categoryIdByKey.set(data.name.toLocaleLowerCase('tr-TR'), doc.id);
+        }
       });
 
       // 4. Parse.
@@ -206,7 +233,7 @@ export function registerCsvImportRoutes(app: Express, deps: CsvImportRouteDeps) 
 
       for (let i = 0; i < parsed.data.length; i++) {
         const rowNum = i + 2; // +1 for header, +1 for 1-based
-        const raw = parsed.data[i];
+        const raw = normalizeRow(parsed.data[i]);
 
         // 5. Per-row Zod validation.
         const result = csvRowSchema.safeParse(raw);
@@ -222,12 +249,14 @@ export function registerCsvImportRoutes(app: Express, deps: CsvImportRouteDeps) 
         }
 
         // 6. Category taxonomy check (D-09).
-        const categoryValue = result.data.category;
-        if (!platformCategorySet.has(categoryValue.toLowerCase())) {
+        const categoryValue =
+          categoryIdByKey.get(result.data.category.toLocaleLowerCase('tr-TR')) ??
+          categoryIdByKey.get(result.data.category.toLowerCase());
+        if (!categoryValue) {
           errors.push({
             row: rowNum,
             field: 'category',
-            reason: `Unknown category: "${categoryValue}"`,
+            reason: `Bilinmeyen kategori: "${result.data.category}"`,
           });
           continue;
         }
@@ -265,6 +294,14 @@ export function registerCsvImportRoutes(app: Express, deps: CsvImportRouteDeps) 
           images: storedImages,
           description: result.data.description ?? '',
           brand: result.data.brand ?? '',
+          ...(raw.sku ? { sku: raw.sku.trim() } : {}),
+          ...(Number(raw.oldprice) > 0 ? { oldPrice: Number(raw.oldprice) } : {}),
+          tags: (raw.tags || '')
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean),
+          currency: 'TRY',
+          featured: false,
           sellerId,
           status: 'pending',
           rating: 0,

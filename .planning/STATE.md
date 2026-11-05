@@ -92,7 +92,8 @@ See .planning/PROJECT.md Key Decisions for full log.
 | 261104-tvf                         | Lock Gemini proxy (auth, per-user limit, fixed model, size caps); remove AI product-image generation; fix visual search 100kb limit | 2026-11-04 | e42c58a   |
 | 261104-w16                         | Prod cleanup: Stripe pk in CI build, remove admin seed + mock import jobs + stock-photo fallbacks, wire admin quick actions         | 2026-11-04 | 9e041ed   |
 | 261104-wtk                         | Checkout post-payment error hotfix (stock/coupon non-blocking); FX → Frankfurter; Entegi subOrders index; P0 checkout findings      | 2026-11-04 | 2662882   |
-| 261105-d2x                         | Server-side checkout (quote, stripe/EFT/iyzico orders), saved-card token fix, TRY-only, seller ship/returns, rules for 16 colls     | 2026-11-05 | (this)    |
+| 261105-d2x                         | Server-side checkout (quote, stripe/EFT/iyzico orders), saved-card token fix, TRY-only, seller ship/returns, rules for 16 colls     | 2026-11-05 | 702c8b1   |
+| 261105-s0f                         | Seller quick-add: single server CSV import (fixed columns/images/role), import-center rules, image compression, AI fill from photo  | 2026-11-05 | (this)    |
 
 ## Deferred Items
 
