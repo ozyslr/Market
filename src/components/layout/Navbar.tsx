@@ -360,21 +360,8 @@ export function Navbar() {
                           </div>
                         )}
                         <div className="flex-1 relative z-10">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-bold text-lg leading-none">{user.name}</h4>
-                            <span className="px-2 py-0.5 bg-brand-primary text-white text-[8px] font-black uppercase tracking-widest rounded-lg">
-                              Elite
-                            </span>
-                          </div>
-                          <p className="text-xs opacity-60 line-clamp-1 mb-2">{user.email}</p>
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-1.5 bg-brand-primary/10 rounded-full overflow-hidden">
-                              <div className="h-full bg-accent rounded-full w-[5%]" />
-                            </div>
-                            <span className="text-[9px] font-bold text-brand-primary/60">
-                              0 Puan
-                            </span>
-                          </div>
+                          <h4 className="font-bold text-lg leading-none mb-1">{user.name}</h4>
+                          <p className="text-xs opacity-60 line-clamp-1">{user.email}</p>
                         </div>
                       </Link>
 

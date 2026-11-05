@@ -63,7 +63,7 @@ export function OrderSummary({
   return (
     <>
       <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary mb-6">
-        Order Summary
+        Sipariş Özeti
       </h3>
 
       <div className="space-y-3 mb-6">
@@ -153,8 +153,11 @@ export function OrderSummary({
 
       <div className="space-y-4 mb-6 pt-4 border-t border-brand-primary/5">
         <div className="flex justify-between text-sm">
-          <span className="text-brand-primary/40 font-bold">Subtotal</span>
-          <span className="font-black text-brand-primary">&pound;{totals.subtotal.toFixed(2)}</span>
+          <span className="text-brand-primary/40 font-bold">Ara Toplam</span>
+          <span className="font-black text-brand-primary">
+            {curSym}
+            {totals.subtotal.toFixed(2)}
+          </span>
         </div>
         {discountAmount > 0 && (
           <div className="flex justify-between text-sm">
@@ -171,21 +174,24 @@ export function OrderSummary({
           </div>
         )}
         <div className="flex justify-between text-sm">
-          <span className="text-brand-primary/40 font-bold">Logistics</span>
+          <span className="text-brand-primary/40 font-bold">Kargo</span>
           <span className="font-black text-brand-primary">
             {curSym}
             {totals.shipping.toFixed(2)}
           </span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-brand-primary/40 font-bold">VAT</span>
-          <span className="font-black text-brand-primary">&pound;{totals.vat.toFixed(2)}</span>
+          <span className="text-brand-primary/40 font-bold">KDV (%20)</span>
+          <span className="font-black text-brand-primary">
+            {curSym}
+            {totals.vat.toFixed(2)}
+          </span>
         </div>
       </div>
 
       <div className="pt-6 border-t border-brand-primary/5 flex justify-between items-center mb-8">
         <span className="text-xs font-black uppercase tracking-widest text-brand-primary">
-          Total
+          Toplam
         </span>
         <span className="text-2xl font-display font-black text-accent">
           {curSym}
@@ -196,7 +202,7 @@ export function OrderSummary({
       <div className="flex items-center gap-3 bg-[#F8F8FA] p-4 rounded-xl">
         <ShieldCheck className="text-brand-primary/30 shrink-0" size={20} />
         <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 leading-relaxed">
-          256-bit Node Encryption active. Multi-sig escrow holding.
+          Ödemeler 3D Secure ile korunur. Kart bilgileriniz saklanmaz.
         </p>
       </div>
     </>

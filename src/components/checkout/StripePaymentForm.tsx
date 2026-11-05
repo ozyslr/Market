@@ -166,7 +166,7 @@ export function StripePaymentForm({
     });
 
     if (stripeError) {
-      setError(stripeError.message ?? 'Payment failed. Please try again.');
+      setError(stripeError.message ?? 'Ödeme başarısız oldu. Lütfen tekrar deneyin.');
       setIsProcessing(false);
       return;
     }
@@ -186,7 +186,7 @@ export function StripePaymentForm({
       }
       onSuccess(paymentIntent.id);
     } else {
-      setError('Unexpected payment status. Please contact support.');
+      setError('Ödeme durumu doğrulanamadı. Lütfen destek ile iletişime geçin.');
       setIsProcessing(false);
     }
   };
@@ -245,7 +245,7 @@ export function StripePaymentForm({
           onClick={onBack}
           className="px-6 py-4 bg-[#F8F8FA] text-brand-primary rounded-2xl font-black uppercase text-[11px] hover:bg-brand-primary/5 transition-all"
         >
-          Back
+          Geri
         </button>
         <button
           type="submit"
@@ -254,18 +254,10 @@ export function StripePaymentForm({
         >
           {isProcessing ? (
             <>
-              <Loader2 size={16} className="animate-spin" /> Processing...
+              <Loader2 size={16} className="animate-spin" /> İşleniyor...
             </>
           ) : (
-            <>
-              Pay{' '}
-              {currency.toUpperCase() === 'GBP'
-                ? '£'
-                : currency.toUpperCase() === 'USD'
-                  ? '$'
-                  : '₺'}
-              {total.toFixed(2)} Securely
-            </>
+            <>{total.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })} Öde</>
           )}
         </button>
       </div>

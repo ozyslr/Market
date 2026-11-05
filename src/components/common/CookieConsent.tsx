@@ -54,8 +54,8 @@ export function CookieConsent() {
           {euRegion && (
             <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800 px-5 py-3 text-center">
               <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
-                AB kullanicisi olarak cerez tercihleriniz varsayilan olarak kabul etmemektedir
-                (opt-in). Istemediginiz cerezleri devre disi birakabilirsiniz.
+                AB kullanıcısı olarak çerez tercihleriniz varsayilan olarak kabul etmemektedir
+                (opt-in). İstemediğiniz çerezleri devre dışı bırakabilirsiniz.
               </p>
             </div>
           )}
@@ -68,11 +68,11 @@ export function CookieConsent() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-sm font-black text-brand-primary dark:text-white uppercase tracking-tight">
-                    Cerez Tercihleri
+                    Çerez Tercihleri
                   </h3>
                   <p className="text-[11px] text-brand-primary/60 dark:text-white/60 mt-1 leading-relaxed max-w-xl">
-                    Sitemizde alisveris deneyiminizi iyilestirmek ve trafik analizi yapmak icin
-                    cerezler kullaniyoruz. Lutfen tercihlerinizi secin.
+                    Sitemizde alışveriş deneyiminizi iyileştirmek ve trafik analizi yapmak için
+                    çerezler kullanıyoruz. Lütfen tercihlerinizi seçin.
                   </p>
                 </div>
                 <button
@@ -92,15 +92,15 @@ export function CookieConsent() {
                     <Shield size={16} className="text-brand-primary/40" />
                     <div>
                       <p className="text-[11px] font-black text-brand-primary dark:text-white">
-                        Zorunlu Cerezler
+                        Zorunlu Çerezler
                       </p>
                       <p className="text-[9px] text-brand-primary/40 dark:text-zinc-500">
-                        Oturum, sepet, guvenlik — her zaman aktif
+                        Oturum, sepet, güvenlik — her zaman aktif
                       </p>
                     </div>
                   </div>
                   <span className="px-2 py-0.5 bg-brand-primary/10 dark:bg-zinc-800 text-brand-primary/50 dark:text-zinc-400 rounded-full text-[9px] font-black uppercase">
-                    Hep Acik
+                    Hep Açık
                   </span>
                 </div>
 
@@ -110,10 +110,10 @@ export function CookieConsent() {
                     <BarChart3 size={16} className="text-brand-primary/40" />
                     <div>
                       <p className="text-[11px] font-black text-brand-primary dark:text-white">
-                        Analitik Cerezler
+                        Analitik Çerezler
                       </p>
                       <p className="text-[9px] text-brand-primary/40 dark:text-zinc-500">
-                        GA4 ile sayfa goruntuleme, urun etkilesimi takibi
+                        GA4 ile sayfa görüntüleme, ürün etkileşimi takibi
                       </p>
                     </div>
                   </div>
@@ -122,7 +122,7 @@ export function CookieConsent() {
                     className={`relative w-9 h-5 rounded-full transition-colors ${
                       toggles.analytics ? 'bg-accent' : 'bg-zinc-300 dark:bg-zinc-700'
                     }`}
-                    aria-label="Analitik cerezler"
+                    aria-label="Analitik çerezler"
                   >
                     <span
                       className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
@@ -138,10 +138,10 @@ export function CookieConsent() {
                     <Megaphone size={16} className="text-brand-primary/40" />
                     <div>
                       <p className="text-[11px] font-black text-brand-primary dark:text-white">
-                        Pazarlama Cerezleri
+                        Pazarlama Çerezleri
                       </p>
                       <p className="text-[9px] text-brand-primary/40 dark:text-zinc-500">
-                        Meta Pixel, TikTok — kisisellestirme ve reklam
+                        Meta Pixel, TikTok — kişiselleştirme ve reklam
                       </p>
                     </div>
                   </div>
@@ -150,7 +150,7 @@ export function CookieConsent() {
                     className={`relative w-9 h-5 rounded-full transition-colors ${
                       toggles.marketing ? 'bg-accent' : 'bg-zinc-300 dark:bg-zinc-700'
                     }`}
-                    aria-label="Pazarlama cerezleri"
+                    aria-label="Pazarlama çerezleri"
                   >
                     <span
                       className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
@@ -165,33 +165,33 @@ export function CookieConsent() {
                 <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-2xl text-[10px] text-brand-primary/50 dark:text-white/50 leading-relaxed space-y-2">
                   <p>
                     <strong className="font-black text-brand-primary dark:text-white">
-                      Zorunlu Cerezler:
+                      Zorunlu Çerezler:
                     </strong>{' '}
-                    Site islevselligi icin gerekli (oturum, sepet, guvenlik). Devre disi
-                    birakilamaz.
+                    Site işlevselliği için gerekli (oturum, sepet, güvenlik). Devre dışı
+                    bırakılamaz.
                   </p>
                   <p>
                     <strong className="font-black text-brand-primary dark:text-white">
-                      Analitik Cerezler:
+                      Analitik Çerezler:
                     </strong>{' '}
-                    Google Analytics (GA4) — kullanim istatistikleri, urun etkilesimi, sayfa
-                    goruntuleme. Kisisel veri icermez.
+                    Google Analytics (GA4) — kullanım istatistikleri, ürün etkileşimi, sayfa
+                    görüntüleme. Kişisel veri içermez.
                   </p>
                   <p>
                     <strong className="font-black text-brand-primary dark:text-white">
-                      Pazarlama Cerezleri:
+                      Pazarlama Çerezleri:
                     </strong>{' '}
-                    Meta Pixel, TikTok Pixel — reklam kisisellestirme, donusum takibi. 3. taraf
-                    cerezleridir.
+                    Meta Pixel, TikTok Pixel — reklam kişiselleştirme, dönüşüm takibi. 3. taraf
+                    çerezleridir.
                   </p>
                   <p className="text-[9px] text-brand-primary/30 mt-2">
-                    Detayli bilgi icin{' '}
+                    Detaylı bilgi için{' '}
                     <a href="/cookies" className="underline hover:text-accent">
-                      Cerez Politikamizi
+                      Çerez Politikamızı
                     </a>{' '}
                     ve{' '}
                     <a href="/privacy" className="underline hover:text-accent">
-                      Gizlilik Politikamizi
+                      Gizlilik Politikamızı
                     </a>{' '}
                     inceleyebilirsiniz.
                   </p>
@@ -203,21 +203,21 @@ export function CookieConsent() {
                   onClick={handleAcceptAll}
                   className="px-5 py-2.5 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-accent/90 transition-all shadow-lg shadow-accent/20"
                 >
-                  Tumunu Kabul Et
+                  Tümünü Kabul Et
                 </button>
                 {euRegion && (
                   <button
                     onClick={handleSave}
                     className="px-5 py-2.5 border border-accent text-accent rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-accent/10 transition-all"
                   >
-                    Secimleri Kaydet
+                    Seçimleri Kaydet
                   </button>
                 )}
                 <button
                   onClick={handleEssentialsOnly}
                   className="px-5 py-2.5 border border-brand-primary/10 dark:border-white/10 text-brand-primary dark:text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-secondary/50 dark:hover:bg-zinc-900 transition-all"
                 >
-                  Yalnizca Zorunlu
+                  Yalnızca Zorunlu
                 </button>
                 <button
                   onClick={() => setShowDetails((d) => !d)}
@@ -229,8 +229,8 @@ export function CookieConsent() {
               </div>
 
               <p className="text-[9px] text-brand-primary/25 dark:text-zinc-600 mt-3">
-                Tercihleriniz 6 ay sureyle saklanir. Dilediginiz zaman tarayici ayarlarinizdan
-                cerezleri temizleyerek tercihlerinizi sifirlayabilirsiniz.
+                Tercihleriniz 6 ay süreyle saklanır. Dilediğiniz zaman tarayıcı ayarlarınızdan
+                çerezleri temizleyerek tercihlerinizi sıfırlayabilirsiniz.
               </p>
             </div>
           </div>

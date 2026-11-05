@@ -613,7 +613,7 @@ export function CheckoutPage() {
               <ChevronRight size={20} className="rotate-180 text-brand-primary" />
             </button>
             <h1 className="text-4xl font-display font-black uppercase italic tracking-tighter text-brand-primary">
-              Secure Checkout
+              Güvenli Ödeme
             </h1>
           </div>
 
@@ -639,9 +639,9 @@ export function CheckoutPage() {
           {/* Progress Bar */}
           <div className="flex items-center justify-between mb-12 relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-0 before:w-full before:h-1 before:bg-brand-primary/5 before:-z-10">
             {[
-              { num: 1, label: 'Delivery' },
-              { num: 2, label: 'Payment' },
-              { num: 3, label: 'Confirmation' },
+              { num: 1, label: 'Teslimat' },
+              { num: 2, label: 'Ödeme' },
+              { num: 3, label: 'Onay' },
             ].map((s) => (
               <div key={s.num} className="flex flex-col items-center gap-2">
                 <div
@@ -673,7 +673,7 @@ export function CheckoutPage() {
                       <Truck size={24} />
                     </div>
                     <h2 className="text-2xl font-display font-black uppercase tracking-tight text-brand-primary">
-                      Shipping Address
+                      Teslimat Adresi
                     </h2>
                   </div>
                   <form
@@ -764,7 +764,7 @@ export function CheckoutPage() {
                       <CreditCard size={24} />
                     </div>
                     <h2 className="text-2xl font-display font-black uppercase tracking-tight text-brand-primary">
-                      Secure Payment
+                      Ödeme Yöntemi
                     </h2>
                   </div>
 
@@ -772,11 +772,11 @@ export function CheckoutPage() {
                   <div className="bg-[#F8F8FA] p-6 rounded-2xl mb-6 border border-brand-primary/5 relative overflow-hidden">
                     <ShieldCheck className="absolute -end-4 -bottom-4 text-accent/5 size-32" />
                     <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2">
-                      Escrow Protection
+                      Güvenli Ödeme
                     </p>
                     <p className="text-sm font-medium text-brand-primary/60 relative z-10">
-                      Your funds are held securely until the artifact is delivered and verified by
-                      you.
+                      Kart bilgileriniz sitemizde saklanmaz; ödeme 3D Secure ile banka altyapısı
+                      üzerinden alınır.
                     </p>
                   </div>
 

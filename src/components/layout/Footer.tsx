@@ -1,5 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+// Doc id = lower-cased e-mail, so re-subscribing is idempotent; rules allow create only.
+async function subscribeNewsletter(raw: string): Promise<void> {
+  const email = raw.trim().toLowerCase();
+  await setDoc(doc(db, 'newsletterSubscribers', email), {
+    email,
+    source: 'footer',
+    createdAt: new Date().toISOString(),
+  });
+}
 import {
   Globe,
   ShieldCheck,
@@ -18,6 +30,7 @@ import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { cn } from '@/lib/utils';
 
 export function Footer() {
+  const [newsletterMsg, setNewsletterMsg] = useState('');
   const { t } = useLanguage();
 
   return (
@@ -129,16 +142,16 @@ export function Footer() {
                 { label: 'Benim Olan Akademi', to: '/' },
                 { label: 'Reklam Ver', to: '/' },
                 { label: 'İş Ortaklığı', to: '/' },
-                { label: 'Seller Center', to: '/seller/dashboard' },
+                { label: 'Satıcı Paneli', to: '/seller/dashboard' },
               ],
             },
             {
               title: 'Yasal',
               links: [
-                { label: 'Gizlilik Politikasi', to: '/privacy' },
-                { label: 'Kullanici Sozlesmesi', to: '/terms' },
-                { label: 'KVKK Aydinlatma Metni', to: '/kvkk' },
-                { label: 'Cerez Politikasi', to: '/cookies' },
+                { label: 'Gizlilik Politikası', to: '/privacy' },
+                { label: 'Kullanıcı Sözleşmesi', to: '/terms' },
+                { label: 'KVKK Aydınlatma Metni', to: '/kvkk' },
+                { label: 'Çerez Politikası', to: '/cookies' },
                 { label: 'VERBIS', to: '/verbis' },
               ],
             },
@@ -179,14 +192,26 @@ export function Footer() {
               Kampanya ve fırsatlardan ilk siz haberdar olun.
             </p>
             <form
-              onSubmit={(e) => e.preventDefault()}
-              className="flex gap-2"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const input = e.currentTarget.elements.namedItem('email') as HTMLInputElement;
+                try {
+                  await subscribeNewsletter(input.value);
+                  setNewsletterMsg('Teşekkürler, aboneliğiniz alındı.');
+                  input.value = '';
+                } catch {
+                  setNewsletterMsg('Bu adresle zaten abonesiniz ya da bir hata oluştu.');
+                }
+              }}
+              className="flex flex-col sm:flex-row gap-2"
               role="form"
               aria-label="E-bülten aboneliği"
             >
               <input
                 type="email"
+                name="email"
                 required
+                maxLength={254}
                 placeholder="E-posta adresiniz"
                 aria-label="E-posta adresiniz"
                 className="flex-1 min-w-0 px-3 py-2 text-xs rounded-lg border border-brand-primary/10 dark:border-white/10 bg-white dark:bg-zinc-800 text-brand-primary dark:text-white placeholder:text-brand-primary/30 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-mercora-red/50"
@@ -198,32 +223,16 @@ export function Footer() {
                 Abone Ol
               </button>
             </form>
+            <p className="mt-2 text-[10px] text-brand-primary/40 dark:text-white/40">
+              {newsletterMsg ||
+                'Abone olarak kampanya ve duyurular için ticari elektronik ileti almayı kabul edersiniz.'}
+            </p>
           </div>
         </div>
 
         {/* Bottom Banner */}
         <div className="pt-8 border-t border-brand-primary/5 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex gap-4">
-            <span className="text-xs font-bold text-brand-primary/50 dark:text-white/50">
-              Bizi Takip Edin:
-            </span>
-            <div className="flex gap-4">
-              {[Twitter, Instagram, Facebook, Youtube].map((Icon, i) => {
-                const names = ['Twitter/X', 'Instagram', 'Facebook', 'Youtube'];
-                return (
-                  <a
-                    href="#"
-                    key={i}
-                    className="text-brand-primary/40 hover:text-mercora-red dark:text-white/40 dark:hover:text-mercora-red transition-colors"
-                    aria-label={names[i]}
-                  >
-                    <Icon size={18} />
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-
+          {/* Social links: add back once the accounts exist (they were all href="#"). */}
           {/* Payment Providers Mock */}
           <div className="flex gap-2 opacity-60 grayscale hover:grayscale-0 transition-all flex-wrap justify-center">
             <div className="w-10 h-6 bg-blue-700 rounded border border-brand-primary/10 flex items-center justify-center text-white text-[7px] font-black italic">
@@ -246,9 +255,6 @@ export function Footer() {
 
         <div className="mt-8 text-center text-[10px] text-brand-primary/40 dark:text-white/40 font-medium pb-20 md:pb-0">
           <p>© 2026 Benim Olan. Tüm hakları saklıdır.</p>
-          <p className="mt-1">
-            Kayıtlı Elektronik Posta Adresi: benimolan@hs01.kep.tr | Mersis No: 0123456789000001
-          </p>
         </div>
       </div>
     </footer>

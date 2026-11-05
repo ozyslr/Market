@@ -33,9 +33,18 @@ export function OneClickSuccessModal({ orderId, total, currency, onClose }: Prop
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-      role="dialog" aria-modal="true" aria-label="Sipariş onayı"
-      onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}>
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Sipariş onayı"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          onClose();
+        }
+      }}
+    >
       <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl relative animate-in fade-in zoom-in-95">
         <button
           onClick={onClose}
@@ -55,8 +64,7 @@ export function OneClickSuccessModal({ orderId, total, currency, onClose }: Prop
           </h2>
 
           <p className="text-sm text-gray-500">
-            {t('checkout.success.orderNumber', 'Sipariş No:')}
-            {' '}
+            {t('checkout.success.orderNumber', 'Sipariş No:')}{' '}
             <span className="font-mono font-semibold text-gray-800">
               #{orderId.slice(0, 8).toUpperCase()}
             </span>

@@ -453,17 +453,17 @@ export function SellerApplication() {
             <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
           <h2 className="text-2xl font-black uppercase italic text-brand-primary dark:text-white mb-6">
-            Basvurunuz Alindi!
+            Başvurunuz Alındı!
           </h2>
 
           {/* Timeline Stepper */}
           <div className="text-start space-y-0 mb-8">
             {[
-              { key: 'submitted', label: 'Basvuru Alindi', icon: '📝' },
-              { key: 'documents_ok', label: 'Belgeler Yuklendi', icon: '📄' },
+              { key: 'submitted', label: 'Başvuru Alındı', icon: '📝' },
+              { key: 'documents_ok', label: 'Belgeler Yüklendi', icon: '📄' },
               { key: 'auto_check', label: 'Otomatik Kontrol', icon: '🔍' },
-              { key: 'admin_review', label: 'Admin Incelemesi', icon: '👤' },
-              { key: 'approved', label: 'Magaza Acildi', icon: '🏪' },
+              { key: 'admin_review', label: 'Admin İncelemesi', icon: '👤' },
+              { key: 'approved', label: 'Mağaza Açıldı', icon: '🏪' },
             ].map(({ key, label, icon }, i, arr) => {
               const isDone = i <= 1; // first two always done after submit
               const isCurrent = i === 2;
@@ -518,8 +518,8 @@ export function SellerApplication() {
           </div>
 
           <p className="text-xs text-brand-primary/50 dark:text-white/50 mb-6">
-            Basvuru No: {storeSlug?.toUpperCase() || 'APP-' + Date.now().toString(36)} — 24 saat
-            icinde sonuclanir.
+            Başvuru No: {storeSlug?.toUpperCase() || 'APP-' + Date.now().toString(36)} — 24 saat
+            içinde sonuçlanır.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -533,7 +533,7 @@ export function SellerApplication() {
               onClick={() => navigate('/seller/dashboard')}
               className="px-8 py-3 border-2 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400 font-black text-sm rounded-xl hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors uppercase tracking-widest"
             >
-              Satici Paneli
+              Satıcı Paneli
             </button>
           </div>
         </motion.div>
@@ -549,7 +549,7 @@ export function SellerApplication() {
           onClick={() => (step > 1 ? setStep((s) => s - 1) : navigate('/'))}
           className="flex items-center gap-2 text-sm font-bold text-brand-primary/50 hover:text-brand-primary transition-colors mb-6"
         >
-          <ArrowLeft size={16} /> {step > 1 ? 'Back' : 'Home'}
+          <ArrowLeft size={16} /> {step > 1 ? 'Geri' : 'Ana Sayfa'}
         </button>
 
         <div className="flex items-center gap-4 mb-8">
@@ -558,9 +558,9 @@ export function SellerApplication() {
           </div>
           <div>
             <h1 className="text-2xl font-black uppercase italic text-brand-primary dark:text-white">
-              Seller Application
+              Satıcı Başvurusu
             </h1>
-            <p className="text-xs text-brand-primary/50 font-bold">Start selling on Mercora</p>
+            <p className="text-xs text-brand-primary/50 font-bold">Benim Olan'da satışa başlayın</p>
           </div>
         </div>
 
@@ -602,7 +602,7 @@ export function SellerApplication() {
           <div className="flex items-center gap-2">
             <Percent size={16} className="text-violet-600" />
             <span className="text-sm font-bold text-brand-primary dark:text-white">
-              Komisyon Oranlari ve Satici Kademeleri
+              Komisyon Oranları ve Satıcı Kademeleri
             </span>
           </div>
           {showCommissionInfo ? (
@@ -618,9 +618,9 @@ export function SellerApplication() {
             className="mt-3 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-brand-primary/5 p-5 space-y-4"
           >
             <p className="text-xs text-brand-primary/50 dark:text-white/50 leading-relaxed">
-              Mercora, satici kademenize gore degisen komisyon oranlari uygular. Baslangic kademesi
-              ucretsizdir. Daha yuksek kademelerde komisyon orani duser ve daha fazla ozellik
-              acilir.
+              Benim Olan, satıcı kademenize göre değişen komisyon oranları uygular. Başlangıç
+              kademesi ücretsizdir. Daha yüksek kademelerde komisyon oranı düşer ve daha fazla
+              özellik açılır.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {tierOptions.map(({ tier, config }) => {
@@ -675,7 +675,7 @@ export function SellerApplication() {
               })}
             </div>
             <p className="text-[10px] text-brand-primary/30 dark:text-white/30 text-center">
-              * Kademeniz performans puaniniza gore zamanla otomatik olarak yukselebilir.
+              * Kademeniz performans puanınıza göre zamanla otomatik olarak yükselebilir.
             </p>
           </motion.div>
         )}
@@ -693,24 +693,24 @@ export function SellerApplication() {
           {step === 1 && (
             <div className="space-y-5">
               <h2 className="text-lg font-black uppercase italic text-brand-primary dark:text-white">
-                Store Information
+                Mağaza Bilgileri
               </h2>
 
               <div>
                 <label className="block text-xs font-bold text-brand-primary/60 mb-1.5">
-                  Store Name *
+                  Mağaza Adı *
                 </label>
                 <input
                   value={form.storeName}
                   onChange={(e) => set('storeName', e.target.value)}
-                  placeholder="e.g. TechStore"
+                  placeholder="ör. Benim Mağazam"
                   className="w-full px-4 py-3 rounded-xl border border-brand-primary/10 bg-white dark:bg-zinc-800 text-sm font-bold text-brand-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-brand-primary/60 mb-1.5">
-                  Phone *
+                  Telefon *
                 </label>
                 <div className="flex gap-2">
                   <select
@@ -727,26 +727,26 @@ export function SellerApplication() {
                     value={form.phone}
                     onChange={(e) => set('phone', e.target.value)}
                     placeholder="5XX XXX XX XX"
-                    className="flex-1 px-4 py-3 rounded-xl border border-brand-primary/10 bg-white dark:bg-zinc-800 text-sm font-bold text-brand-primary focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="flex-1 min-w-0 px-4 py-3 rounded-xl border border-brand-primary/10 bg-white dark:bg-zinc-800 text-sm font-bold text-brand-primary focus:outline-none focus:ring-2 focus:ring-violet-500"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-brand-primary/60 mb-1.5">
-                    Tax Number (optional)
+                    Vergi Numarası (opsiyonel)
                   </label>
                   <input
                     value={form.taxId}
                     onChange={(e) => set('taxId', e.target.value)}
-                    placeholder="Tax number"
+                    placeholder="Vergi numarası"
                     className="w-full px-4 py-3 rounded-xl border border-brand-primary/10 bg-white dark:bg-zinc-800 text-sm font-bold text-brand-primary focus:outline-none focus:ring-2 focus:ring-violet-500"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-brand-primary/60 mb-1.5">
-                    Website (optional)
+                    Web Sitesi (opsiyonel)
                   </label>
                   <input
                     value={form.website}
@@ -763,7 +763,7 @@ export function SellerApplication() {
                   disabled={!form.storeName.trim() || !form.phone.trim()}
                   className="w-full py-3.5 bg-violet-600 text-white font-black text-sm rounded-xl hover:bg-violet-700 transition-colors uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Continue <ChevronRight size={16} />
+                  Devam <ChevronRight size={16} />
                 </button>
               </div>
             </div>
@@ -773,12 +773,12 @@ export function SellerApplication() {
           {step === 2 && (
             <div className="space-y-5">
               <h2 className="text-lg font-black uppercase italic text-brand-primary dark:text-white">
-                Categories & Experience
+                Kategoriler ve Deneyim
               </h2>
 
               <div>
                 <label className="block text-xs font-bold text-brand-primary/60 mb-2">
-                  Categories You Want to Sell In *
+                  Satış Yapmak İstediğiniz Kategoriler *
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {CATEGORIES.map((cat) => (
@@ -800,7 +800,7 @@ export function SellerApplication() {
 
               <div>
                 <label className="block text-xs font-bold text-brand-primary/60 mb-1.5">
-                  Sales Experience
+                  Satış Deneyimi
                 </label>
                 <select
                   value={form.experience}
@@ -818,7 +818,7 @@ export function SellerApplication() {
 
               <div>
                 <label className="block text-xs font-bold text-brand-primary/60 mb-1.5">
-                  Monthly Sales Target
+                  Aylık Satış Hedefi
                 </label>
                 <select
                   value={form.monthlySalesTarget}
@@ -837,7 +837,7 @@ export function SellerApplication() {
               {/* ── Seller Tier Selection ─────────────────────────────────── */}
               <div>
                 <label className="block text-xs font-bold text-brand-primary/60 mb-1.5">
-                  Satici Kademesi
+                  Satıcı Kademesi
                 </label>
                 <div className="grid grid-cols-1 gap-2">
                   {tierOptions.map(({ tier, config }) => {
@@ -886,7 +886,7 @@ export function SellerApplication() {
                   })}
                 </div>
                 <p className="text-[10px] text-brand-primary/30 dark:text-white/30 mt-1.5">
-                  Kademeniz performans puaniniza gore zamanla otomatik olarak yukselebilir.
+                  Kademeniz performans puanınıza göre zamanla otomatik olarak yükselebilir.
                 </p>
               </div>
 
@@ -895,14 +895,14 @@ export function SellerApplication() {
                   onClick={() => setStep(1)}
                   className="flex-1 py-3.5 border border-brand-primary/10 text-brand-primary font-black text-sm rounded-xl hover:bg-zinc-50 transition-colors uppercase tracking-widest"
                 >
-                  Back
+                  Geri
                 </button>
                 <button
                   onClick={() => setStep(3)}
                   disabled={form.productCategories.length === 0}
                   className="flex-1 py-3.5 bg-violet-600 text-white font-black text-sm rounded-xl hover:bg-violet-700 transition-colors uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Continue <ChevronRight size={16} />
+                  Devam <ChevronRight size={16} />
                 </button>
               </div>
             </div>
@@ -912,13 +912,13 @@ export function SellerApplication() {
           {step === 3 && (
             <div className="space-y-6">
               <h2 className="text-lg font-black uppercase italic text-brand-primary dark:text-white">
-                Identity Verification
+                Kimlik Doğrulama
               </h2>
 
               {/* 3-doc upload slots */}
               <div>
                 <p className="text-xs font-bold text-brand-primary/60 mb-3">
-                  Upload all 3 required documents to continue
+                  Devam etmek için 3 zorunlu belgeyi yükleyin
                 </p>
                 <div className="space-y-3">
                   {DOC_SLOTS.map((slot) => (
@@ -944,15 +944,15 @@ export function SellerApplication() {
                   <div className="flex items-center gap-2 mb-2">
                     <ShieldCheck size={18} className="text-violet-600" />
                     <p className="text-sm font-black text-brand-primary dark:text-white">
-                      Identity Verification
+                      Kimlik Doğrulama
                     </p>
                   </div>
 
                   {identityStatus === 'not_started' && (
                     <>
                       <p className="text-xs text-brand-primary/60 dark:text-white/60 mb-3">
-                        We use Stripe Identity to verify your ID document and selfie. This takes
-                        about 2 minutes and strengthens trust with buyers.
+                        Kimlik belgenizi ve özçekiminizi Stripe Identity ile doğruluyoruz. Bu işlem
+                        yaklaşık 2 dakika sürer ve alıcıların size güvenini artırır.
                       </p>
                       <button
                         onClick={handleStartIdentityVerification}
@@ -972,14 +972,14 @@ export function SellerApplication() {
                   {identityStatus === 'pending' && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-bold">
                       <Loader2 size={12} className="animate-spin" />
-                      Identity check in progress — we'll notify you by email
+                      Kimlik kontrolü sürüyor — sonucu e-postayla bildireceğiz
                     </span>
                   )}
 
                   {identityStatus === 'verified' && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-bold">
                       <CheckCircle size={12} />
-                      Identity verified
+                      Kimlik doğrulandı
                     </span>
                   )}
 
@@ -987,7 +987,7 @@ export function SellerApplication() {
                     <div className="space-y-2">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs font-bold">
                         <AlertCircle size={12} />
-                        Verification needs attention — please retry
+                        Doğrulamada sorun var — lütfen tekrar deneyin
                       </span>
                       <button
                         onClick={handleStartIdentityVerification}
@@ -995,7 +995,7 @@ export function SellerApplication() {
                         className="w-full py-2.5 border border-violet-300 text-violet-600 font-black text-xs rounded-xl hover:bg-violet-50 transition-colors uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
                       >
                         {identityLoading ? <Loader2 size={14} className="animate-spin" /> : null}
-                        Retry Verification
+                        Doğrulamayı Tekrarla
                       </button>
                     </div>
                   )}
@@ -1036,8 +1036,8 @@ export function SellerApplication() {
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4 flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <p className="text-xs font-bold text-amber-700 dark:text-amber-300">
-                  Your application will be reviewed after submission. Average review time is 1–3
-                  business days.
+                  Başvurunuz gönderildikten sonra incelenir. Ortalama inceleme süresi 1–3 iş
+                  günüdür.
                 </p>
               </div>
 
@@ -1046,7 +1046,7 @@ export function SellerApplication() {
                   onClick={() => setStep(2)}
                   className="flex-1 py-3.5 border border-brand-primary/10 text-brand-primary font-black text-sm rounded-xl hover:bg-zinc-50 transition-colors uppercase tracking-widest"
                 >
-                  Back
+                  Geri
                 </button>
                 {/* 3-doc gate: disabled until all 3 docs uploaded (D-06) */}
                 <div
@@ -1071,7 +1071,7 @@ export function SellerApplication() {
                     ) : (
                       <CheckCircle size={16} />
                     )}
-                    {submitting ? 'Submitting…' : 'Submit Application'}
+                    {submitting ? 'Gönderiliyor…' : 'Başvuruyu Gönder'}
                   </button>
                 </div>
               </div>

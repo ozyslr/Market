@@ -52,7 +52,7 @@ export function CartPage() {
     successOrder,
     clearSuccess,
   } = useOneClickCheckout();
-  const { items, removeItem, updateQuantity, clearCart } = useCart();
+  const { items, addItem, removeItem, updateQuantity, clearCart } = useCart();
   const { location } = useLocationStore();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -410,50 +410,58 @@ export function CartPage() {
               )}
             </div>
 
-            {/* AI Cross Sell Segment */}
-            <div className="bg-brand-primary rounded-[3.5rem] p-10 text-white relative overflow-hidden">
-              <Sparkles
-                size={300}
-                className="absolute -bottom-20 -end-20 text-white/5 pointer-events-none"
-              />
-              <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
-                    <Sparkles size={20} className="text-white fill-white" />
-                  </div>
-                  <h3 className="text-xl font-black uppercase tracking-widest italic">
-                    Navigator Upsells
-                  </h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {suggested.map((product) => (
-                    <div
-                      key={product.id}
-                      className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 flex gap-6 items-center group cursor-pointer hover:bg-white/20 transition-all"
-                    >
-                      <div className="w-20 h-20 bg-white/10 rounded-xl overflow-hidden p-2 shrink-0">
-                        <img
-                          src={product.images[0]}
-                          referrerPolicy="no-referrer"
-                          loading="lazy"
-                          className="w-full h-full object-contain brightness-110"
-                          alt={product.title}
-                        />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">
-                          {product.brand}
-                        </p>
-                        <h4 className="font-bold text-sm line-clamp-1 mb-2">{product.title}</h4>
-                        <button className="text-[10px] font-black uppercase tracking-widest text-accent flex items-center gap-1 group-hover:gap-2 transition-all">
-                          Add to Bay <ArrowRight size={10} />
-                        </button>
-                      </div>
+            {/* Cross-sell — hidden when there is nothing to suggest */}
+            {suggested.length > 0 && (
+              <div className="bg-brand-primary rounded-[2rem] md:rounded-[3.5rem] p-6 md:p-10 text-white relative overflow-hidden">
+                <Sparkles
+                  size={300}
+                  className="absolute -bottom-20 -end-20 text-white/5 pointer-events-none"
+                />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
+                      <Sparkles size={20} className="text-white fill-white" />
                     </div>
-                  ))}
+                    <h3 className="text-lg md:text-xl font-black uppercase tracking-widest italic">
+                      Bunlar da ilginizi çekebilir
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {suggested.map((product) => (
+                      <div
+                        key={product.id}
+                        className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 flex gap-6 items-center group cursor-pointer hover:bg-white/20 transition-all"
+                      >
+                        <div className="w-20 h-20 bg-white/10 rounded-xl overflow-hidden p-2 shrink-0">
+                          <img
+                            src={product.images[0]}
+                            referrerPolicy="no-referrer"
+                            loading="lazy"
+                            className="w-full h-full object-contain brightness-110"
+                            alt={product.title}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">
+                            {product.brand}
+                          </p>
+                          <h4 className="font-bold text-sm line-clamp-1 mb-2">{product.title}</h4>
+                          <button
+                            type="button"
+                            onClick={() => addItem(product.id)}
+                            disabled={product.isDemo}
+                            className="text-[10px] font-black uppercase tracking-widest text-accent flex items-center gap-1 group-hover:gap-2 transition-all disabled:opacity-40"
+                          >
+                            {product.isDemo ? 'Vitrin ürünü' : 'Sepete Ekle'}{' '}
+                            <ArrowRight size={10} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Checkout Strategy Sidebar */}

@@ -478,6 +478,15 @@ service cloud.firestore {
         && sub in ['importJobs', 'fieldMappings', 'feedConfigs'];
     }
 
+    // --- NEWSLETTER: footer sign-up (doc id = e-mail); create once, never read from clients ---
+    match /newsletterSubscribers/{email} {
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['email', 'source', 'createdAt'])
+        && request.resource.data.email == email
+        && email.size() <= 254
+        && email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+    }
+
     // --- SELLER TIERS: tier definitions (commission/benefits), admin-managed ---
     match /sellerTiers/{tierId} {
       allow read: if isSignedIn();

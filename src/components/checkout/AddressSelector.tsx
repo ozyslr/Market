@@ -150,7 +150,7 @@ export function AddressSelector({
             })}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-bold text-brand-primary uppercase tracking-widest mb-2">
                 Ad Soyad
@@ -189,7 +189,7 @@ export function AddressSelector({
               autoComplete="address-line1"
               value={address.line1}
               onChange={(e) => onAddressChange({ line1: e.target.value })}
-              placeholder="123 Node Ave"
+              placeholder="Mahalle, cadde, bina no, daire"
               className="w-full px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none"
             />
           </div>
@@ -201,41 +201,22 @@ export function AddressSelector({
             </label>
             <div className="flex gap-2">
               <input
-                required
                 type="text"
+                inputMode="numeric"
+                maxLength={5}
                 autoComplete="postal-code"
                 value={address.postalCode}
                 onChange={(e) => {
                   onAddressChange({ postalCode: e.target.value });
                   onPostcodeErrorClear();
                 }}
-                placeholder="SW1A 1AA"
+                placeholder="34000 (opsiyonel)"
                 className="flex-1 px-4 py-3 bg-[#F8F8FA] rounded-xl text-sm font-bold border border-transparent focus:border-accent/20 outline-none uppercase"
               />
-              <button
-                type="button"
-                onClick={onPostcodeLookup}
-                disabled={postcodeLookupLoading || !address.postalCode.trim()}
-                title="Adresi otomatik doldur"
-                className="px-4 py-3 bg-accent text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-accent/90 disabled:opacity-40 transition-colors flex items-center gap-1.5 shrink-0"
-              >
-                {postcodeLookupLoading ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Search size={14} />
-                )}
-                Bul
-              </button>
             </div>
-            {postcodeLookupError && (
-              <p className="text-[10px] text-red-500 font-bold mt-1">{postcodeLookupError}</p>
-            )}
-            <p className="text-[9px] text-brand-primary/30 font-bold mt-1 uppercase tracking-widest">
-              UK posta kodu &rarr; şehir/bölge otomatik dolar
-            </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-bold text-brand-primary uppercase tracking-widest mb-2">
                 Şehir
