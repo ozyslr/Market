@@ -830,9 +830,15 @@ export function ProductDetail() {
                     : undefined;
                   const allSelected =
                     !hasVariants || product.variantAttributes!.every((attr) => selectedAttrs[attr]);
-                  const canAdd = allSelected && (!hasVariants || !!selectedVariant);
+                  const canAdd =
+                    !product.isDemo && allSelected && (!hasVariants || !!selectedVariant);
                   return (
                     <div className="space-y-2.5">
+                      {product.isDemo && (
+                        <p className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs font-semibold text-amber-800">
+                          Bu ürün vitrin örneğidir, şu an satışta değil.
+                        </p>
+                      )}
                       <div className="py-4 space-y-2.5">
                         {/* Quantity selector — inline, compact */}
                         <div className="flex items-center justify-between">

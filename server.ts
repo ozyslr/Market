@@ -18,6 +18,7 @@ import { registerStripeWebhook, registerStripeRoutes } from './server/routes/str
 import { registerGeminiRoutes } from './server/routes/gemini.js';
 import { registerOrderRoutes } from './server/routes/orders.js';
 import { registerCheckoutRoutes } from './server/routes/checkout.js';
+import { registerFeedRoutes } from './server/routes/feeds.js';
 import { registerReviewRoutes } from './server/routes/reviews.js';
 import { registerCommissionRoutes } from './server/routes/commission.js';
 import { registerComplianceRoutes } from './server/routes/compliance.js';
@@ -558,6 +559,7 @@ async function startServer() {
 
   // ─── FX Rate routes → server/routes/fxRates.ts ──────────────────────────
   registerFxRateRoutes(app, { verifyCronSecret });
+  registerFeedRoutes(app, { adminDb, verifyFirebaseToken, verifyCronSecret });
   registerVerificationRoutes(app);
 
   // ─── GIB E-Fatura routes → server/routes/gib.ts ─────────────────────────────

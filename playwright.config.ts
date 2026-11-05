@@ -24,6 +24,6 @@ export default defineConfig({
         command: 'npm run build && npm run preview',
         port: 4173,
         reuseExistingServer: !process.env.CI,
-        timeout: 30000,
+        timeout: 240_000, // includes the production build (~40–90 s)
       },
 });

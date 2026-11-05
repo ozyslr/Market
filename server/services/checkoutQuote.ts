@@ -67,6 +67,13 @@ export async function quoteLines(db: Firestore, items: QuoteItemInput[]): Promis
     const snap = snaps[idx];
     if (!snap.exists) throw new QuoteError(`Ürün bulunamadı: ${item.productId}`, 409);
     const p = snap.data()!;
+    // Demo showcase products (seed data, no real seller) are visible but never sold.
+    if (p.isDemo === true) {
+      throw new QuoteError(
+        `"${p.title || p.name || 'Ürün'}" vitrin örneğidir, satışta değil.`,
+        409,
+      );
+    }
     const price = p.price ?? p.basePrice;
     if (typeof price !== 'number' || price <= 0) {
       throw new QuoteError(`Ürün fiyatı geçersiz: ${item.productId}`, 409);

@@ -94,6 +94,13 @@ describe('quoteCheckout', () => {
     expect(q.total).toBe(162); // (150 - 15) * 1.2, no shipping sent
   });
 
+  it('refuses demo showcase products', async () => {
+    const db = fakeDb({ products: { d: { price: 10, title: 'Demo', isDemo: true } } });
+    await expect(quoteCheckout(db, { items: [{ productId: 'd', quantity: 1 }] })).rejects.toThrow(
+      /vitrin/,
+    );
+  });
+
   it('rejects unknown products and used-up coupons', async () => {
     const db = fakeDb({
       products,

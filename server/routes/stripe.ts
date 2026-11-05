@@ -673,6 +673,11 @@ export function registerStripeRoutes(app: Express, deps: StripeRouteDeps) {
         const productDoc = await adminDb.collection('products').doc(item.productId).get();
         const product = productDoc.data();
         if (!product) return res.status(404).json({ error: `Product ${item.productId} not found` });
+        if (product.isDemo === true) {
+          return res
+            .status(409)
+            .json({ status: 'failed', errorMessage: 'Bu ürün vitrin örneğidir, satışta değil.' });
+        }
 
         let price: number = product.price;
         if (item.variantId && product.variants) {

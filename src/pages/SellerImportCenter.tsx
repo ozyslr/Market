@@ -13,7 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import Papa from 'papaparse';
 import { CSV_COLUMNS, downloadCsvTemplate } from '@/lib/csvTemplate';
 import { askShoppingAssistant } from '@/lib/gemini';
-import { createProduct } from '@/services/productService';
+import { createProduct, getCategories } from '@/services/productService';
 import { Product } from '@/types';
 import {
   BarChart3,
@@ -174,11 +174,18 @@ export function SellerImportCenter() {
     updatePrice: true,
     updateStock: true,
     createNew: true,
-    disableMissing: false,
-    autoPublish: false,
   });
   const [savingFeed, setSavingFeed] = useState(false);
   const [feedSaved, setFeedSaved] = useState(false);
+  const [feedMessage, setFeedMessage] = useState('');
+  // Used when a feed item has no category we recognise.
+  const [feedCategoryId, setFeedCategoryId] = useState('');
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  useEffect(() => {
+    getCategories()
+      .then((cs) => setCategories(cs.map((c) => ({ id: c.id, name: c.name || c.slug || c.id }))))
+      .catch(() => setCategories([]));
+  }, []);
 
   // Field mapping state
   const [sampleType, setSampleType] = useState<'xml' | 'csv'>('xml');
@@ -523,31 +530,48 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
   async function handleSaveFeed() {
     if (!user?.id) return;
     setSavingFeed(true);
+    setFeedMessage('');
     try {
-      await addDoc(collection(db, 'sellers', user.id, 'feedConfigs'), {
+      const ref = await addDoc(collection(db, 'sellers', user.id, 'feedConfigs'), {
         name: xmlFeedName || 'XML Feed',
         type: 'xml',
-        url: xmlUrl,
+        url: xmlUrl.trim(),
         syncInterval,
         options: xmlOpts,
+        defaultCategoryId: feedCategoryId,
         enabled: true,
         createdAt: serverTimestamp(),
       });
-      const newJob: ImportJob = {
-        id: Date.now().toString(),
+      // First run now; afterwards the hourly server job keeps it in sync (unless 'manual').
+      const token = await getAuthToken();
+      const resp = await fetch(`/api/feeds/${ref.id}/run`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const r = await resp.json().catch(() => ({}));
+      const job: ImportJob = {
+        id: ref.id,
         feedName: xmlFeedName || 'XML Feed',
         type: 'xml',
-        status: 'queued',
-        total: 0,
-        success: 0,
-        failed: 0,
+        status: resp.ok && (r.created || r.updated) ? 'completed' : 'failed',
+        total: r.total ?? 0,
+        success: (r.created ?? 0) + (r.updated ?? 0),
+        failed: r.failed ?? 0,
         createdAt: new Date().toISOString(),
       };
-      setJobs((prev) => [newJob, ...prev]);
+      setJobs((prev) => [job, ...prev]);
+      setFeedMessage(
+        resp.ok
+          ? `${r.created ?? 0} yeni ürün onaya gönderildi, ${r.updated ?? 0} ürün güncellendi, ${r.failed ?? 0} atlandı.` +
+              (r.errors?.length ? ` İlk sorun: ${r.errors[0]}` : '')
+          : r.error || 'Feed çalıştırılamadı.',
+      );
       setFeedSaved(true);
       setTimeout(() => setFeedSaved(false), 2000);
       setXmlFeedName('');
       setXmlUrl('');
+    } catch (err: any) {
+      setFeedMessage(err?.message || 'Feed kaydedilemedi.');
     } finally {
       setSavingFeed(false);
     }
@@ -850,10 +874,27 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
                   placeholder="https://yourstore.com/feed.xml"
                   className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
                 />
-                <button className="px-3 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded-lg text-xs transition-colors">
-                  Test
-                </button>
               </div>
+              <p className="text-[11px] text-zinc-500 mt-1">
+                Google Shopping (g:id, g:title, g:price…) ve urun/product XML biçimleri desteklenir.
+              </p>
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">
+                Varsayılan kategori (feed'de kategori yoksa)
+              </label>
+              <select
+                value={feedCategoryId}
+                onChange={(e) => setFeedCategoryId(e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+              >
+                <option value="">— Seçilmedi (kategorisiz ürünler atlanır) —</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -883,9 +924,7 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
               [
                 ['updatePrice', 'Fiyatları güncelle'],
                 ['updateStock', 'Stoku güncelle'],
-                ['createNew', 'Yeni ürün oluştur'],
-                ['disableMissing', "Feed'de olmayan ürünleri gizle"],
-                ['autoPublish', 'Otomatik yayınla (onay atla)'],
+                ['createNew', 'Yeni ürün oluştur (onaya gönderilir)'],
               ] as [keyof typeof xmlOpts, string][]
             ).map(([key, label]) => (
               <label key={String(key)} className="flex items-center gap-3 cursor-pointer">
@@ -909,9 +948,10 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
             {feedSaved
               ? 'Kaydedildi ✓'
               : savingFeed
-                ? 'Kaydediliyor...'
-                : 'Feed Kaydet & Kuyruğa Al'}
+                ? 'Feed çekiliyor...'
+                : 'Feed Kaydet & Şimdi Çalıştır'}
           </button>
+          {feedMessage && <p className="text-sm text-zinc-300">{feedMessage}</p>}
 
           {/* Coming Soon integrations */}
           <div className="grid grid-cols-2 gap-3 pt-4 border-t border-zinc-700">

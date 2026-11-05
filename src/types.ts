@@ -248,6 +248,8 @@ export interface Product {
   rating: number;
   reviewsCount: number;
   featured?: boolean;
+  /** Seed/showcase product without a real seller: visible, never sold (server refuses). */
+  isDemo?: boolean;
   bestSeller?: boolean;
   newArrival?: boolean;
   isFlashDeal?: boolean;
