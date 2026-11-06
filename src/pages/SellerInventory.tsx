@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Plus,
   Upload,
-  Download,
   Search,
-  Filter,
   MoreVertical,
   Edit,
   Trash2,
@@ -15,9 +13,6 @@ import {
   AlertTriangle,
   Package,
   ArrowRight,
-  Globe,
-  Zap,
-  BarChart3,
   Database,
   X,
   Loader2,
@@ -59,12 +54,17 @@ import {
   getDefaultWarehouse,
 } from '@/services/warehouseService';
 
+const TABS = [
+  { id: 'inventory', label: 'Ürünler', title: 'Ürünlerim', icon: Database },
+  { id: 'lowStock', label: 'Düşük Stok', title: 'Düşük Stoklu Ürünler', icon: AlertTriangle },
+  { id: 'bulk', label: 'Toplu Yükleme', title: 'Toplu Ürün Yükleme', icon: Upload },
+  { id: 'depolar', label: 'Depolar', title: 'Depo Yönetimi', icon: WarehouseIcon },
+] as const;
+
 export function SellerInventoryPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<
-    'inventory' | 'lowStock' | 'bulk' | 'analytics' | 'depolar'
-  >('inventory');
+  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
@@ -230,16 +230,18 @@ export function SellerInventoryPage() {
   }, [user, activeTab]);
 
   const handleBulkDelete = async () => {
-    if (confirm(`Are you sure you want to delete ${selectedProducts.length} items?`)) {
+    if (confirm(`${selectedProducts.length} ürünü silmek istediğinize emin misiniz?`)) {
+      const deleted: string[] = [];
       for (const id of selectedProducts) {
-        // In real app maybe show a loading toast
         try {
           await deleteProduct(id);
+          deleted.push(id);
         } catch (e) {
           console.error('Failed to delete', id);
         }
       }
-      setProducts(products.filter((p) => !selectedProducts.includes(p.id)));
+      // Only drop what was really deleted, so the list never hides products that still exist.
+      setProducts(products.filter((p) => !deleted.includes(p.id)));
       setSelectedProducts([]);
     }
   };
@@ -322,8 +324,8 @@ export function SellerInventoryPage() {
     // Tier limit enforcement for new products (not editing)
     if (!editingProduct && tierStatus?.atCap) {
       alert(
-        `Urun limitine ulastiniz! Mevcut paketiniz ${tierStatus.tierConfig.maxProducts} urunle sinirli.\n\n` +
-          `Daha fazla urun eklemek icin ${tierStatus.nextTier ? tierStatus.nextTier + ' paketine yukseltin.' : 'yoneticiyle iletisime gecin.'}`,
+        `Ürün limitine ulaştınız! Mevcut paketiniz ${tierStatus.tierConfig.maxProducts} ürünle sınırlı.\n\n` +
+          `Daha fazla ürün eklemek için ${tierStatus.nextTier ? tierStatus.nextTier + ' paketine yükseltin.' : 'yöneticiyle iletişime geçin.'}`,
       );
       return;
     }
@@ -369,76 +371,48 @@ export function SellerInventoryPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-brand-secondary/30 pt-6">
-      {/* Mini Sidebar */}
-      <div className="w-20 bg-brand-primary flex flex-col items-center py-8 gap-8 hidden lg:flex">
-        <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white shadow-lg">
-          <Zap size={20} fill="currentColor" />
-        </div>
-        <nav className="flex flex-col gap-6">
-          {[
-            { icon: Database, id: 'inventory' },
-            { icon: AlertTriangle, id: 'lowStock' },
-            { icon: Upload, id: 'bulk' },
-            { icon: BarChart3, id: 'analytics' },
-            { icon: WarehouseIcon, id: 'depolar' },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id as any)}
-              className={cn(
-                'w-12 h-12 rounded-2xl flex items-center justify-center transition-all',
-                activeTab === item.id
-                  ? 'bg-accent text-white'
-                  : 'text-white/40 hover:bg-white/10 hover:text-white',
-              )}
-            >
-              <item.icon size={20} />
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className="flex-1 p-8">
+    <div className="min-h-screen bg-brand-secondary pt-6">
+      <div className="p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="px-3 py-1 bg-accent/10 text-accent text-[10px] font-black uppercase tracking-widest rounded-full">
-                  Inventory Engine v4.2
-                </span>
-                <span className="flex items-center gap-1 text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
-                  <Globe size={10} /> Multi-Market Sync Active
-                </span>
-              </div>
-              <h1 className="text-4xl font-display font-black tracking-tighter text-brand-primary uppercase italic">
-                {activeTab === 'inventory'
-                  ? 'Global Artifact Inventory'
-                  : activeTab === 'lowStock'
-                    ? 'Dusuk Stok Urunleri'
-                    : activeTab === 'bulk'
-                      ? 'Mass Ingestion'
-                      : activeTab === 'depolar'
-                        ? 'Depo Yonetimi'
-                        : 'Demand Dynamics'}
-              </h1>
-            </div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <h1 className="text-2xl md:text-4xl font-display font-black tracking-tighter text-brand-primary uppercase italic">
+              {TABS.find((tab) => tab.id === activeTab)?.title}
+            </h1>
+            <button
+              onClick={() => {
+                setEditingProduct(null);
+                setIsFormOpen(true);
+              }}
+              className="self-start px-6 py-3 bg-brand-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-2xl shadow-brand-primary/20 hover:bg-accent transition-all flex items-center gap-2"
+            >
+              <Plus size={14} /> Ürün Ekle
+            </button>
+          </div>
 
-            <div className="flex items-center gap-4">
-              <button className="px-6 py-3 bg-white text-brand-primary border border-brand-primary/5 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-sm hover:shadow-xl transition-all flex items-center gap-2">
-                <Download size={14} /> Export Report
-              </button>
+          {/* Tabs (the old icon-only side bar was hidden on phones, so these tabs were unreachable there) */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar mb-8" role="tablist">
+            {TABS.map((tab) => (
               <button
-                onClick={() => {
-                  setEditingProduct(null);
-                  setIsFormOpen(true);
-                }}
-                className="px-6 py-3 bg-brand-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-2xl shadow-brand-primary/20 hover:bg-accent transition-all flex items-center gap-2"
+                key={tab.id}
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all',
+                  activeTab === tab.id
+                    ? 'bg-accent text-white'
+                    : 'bg-white text-brand-primary/60 border border-brand-primary/5 hover:text-brand-primary',
+                )}
               >
-                <Plus size={14} /> Add Artifact
+                <tab.icon size={14} /> {tab.label}
+                {tab.id === 'lowStock' && lowStockProducts.length > 0 && (
+                  <span className="px-1.5 rounded-full bg-red-500 text-white text-[10px]">
+                    {lowStockProducts.length}
+                  </span>
+                )}
               </button>
-            </div>
+            ))}
           </div>
 
           <AnimatePresence mode="wait">
@@ -451,17 +425,22 @@ export function SellerInventoryPage() {
                 className="space-y-6"
               >
                 {/* Stats Bar */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
                   {[
-                    { label: 'Total Stock', value: '1,420', icon: Package, status: 'Healthy' },
+                    { label: 'Toplam Ürün', value: products.length, icon: Package },
                     {
-                      label: 'Low Stock Alerts',
-                      value: '12',
-                      icon: AlertTriangle,
-                      status: 'Urgent',
+                      label: 'Yayında',
+                      value: products.filter((p) => (p.status ?? 'approved') === 'approved').length,
+                      icon: CheckCircle,
                     },
-                    { label: 'Global Orders', value: '84', icon: Globe, status: '+15%' },
-                    { label: 'Merchant Level', value: 'Top-Rated', icon: Zap, status: 'Verified' },
+                    {
+                      label: 'Toplam Stok',
+                      value: products
+                        .reduce((sum, p) => sum + (p.stock ?? 0), 0)
+                        .toLocaleString('tr-TR'),
+                      icon: Database,
+                    },
+                    { label: 'Düşük Stok', value: lowStockProducts.length, icon: AlertTriangle },
                   ].map((stat, i) => (
                     <div
                       key={i}
@@ -471,14 +450,6 @@ export function SellerInventoryPage() {
                         <div className="p-2 bg-brand-secondary rounded-lg text-brand-primary">
                           <stat.icon size={16} />
                         </div>
-                        <span
-                          className={cn(
-                            'text-[9px] font-black uppercase tracking-widest',
-                            stat.status === 'Urgent' ? 'text-red-500' : 'text-green-500',
-                          )}
-                        >
-                          {stat.status}
-                        </span>
                       </div>
                       <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
                         {stat.label}
@@ -499,7 +470,7 @@ export function SellerInventoryPage() {
                     />
                     <input
                       type="text"
-                      placeholder="Search inventory by serial, name, or HS code..."
+                      placeholder="Ürün adı veya SKU ile ara..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full ps-12 pe-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium focus:ring-2 focus:ring-accent/20 outline-none placeholder:text-brand-primary/20"
@@ -546,9 +517,6 @@ export function SellerInventoryPage() {
                         <Edit3 size={14} /> Toplu Düzenle
                       </button>
                     )}
-                    <button className="p-3 bg-brand-secondary text-brand-primary/60 rounded-xl hover:text-brand-primary transition-colors">
-                      <Filter size={18} />
-                    </button>
                     <BulkEditBar
                       selectedIds={selectedProducts}
                       onClearSelection={() => setSelectedProducts([])}
@@ -579,10 +547,10 @@ export function SellerInventoryPage() {
                               }
                             />
                           </th>
-                          <th className="px-8 py-6">Artifact Detail</th>
-                          <th className="px-8 py-6">Compliance</th>
-                          <th className="px-8 py-6">Stock Level</th>
-                          <th className="px-8 py-6 text-end">Pricing</th>
+                          <th className="px-8 py-6">Ürün</th>
+                          <th className="px-8 py-6">Durum</th>
+                          <th className="px-8 py-6">Stok</th>
+                          <th className="px-8 py-6 text-end">Fiyat</th>
                           <th className="px-8 py-6"></th>
                         </tr>
                       </thead>
@@ -595,7 +563,7 @@ export function SellerInventoryPage() {
                             >
                               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-accent" />
                               <p className="text-[10px] uppercase tracking-widest font-black">
-                                Syncing Node Data...
+                                Ürünler yükleniyor…
                               </p>
                             </td>
                           </tr>
@@ -604,9 +572,13 @@ export function SellerInventoryPage() {
                             <td colSpan={6} className="px-8 py-8">
                               <div className="bg-gray-100 rounded-xl h-40 flex flex-col items-center justify-center gap-2 text-center">
                                 <Package size={48} className="text-gray-300" />
-                                <p className="font-semibold text-brand-primary">No products yet</p>
+                                <p className="font-semibold text-brand-primary">
+                                  {activeTab === 'lowStock'
+                                    ? 'Düşük stoklu ürün yok'
+                                    : 'Henüz ürününüz yok'}
+                                </p>
                                 <p className="text-sm text-brand-primary/50">
-                                  Add your first product to start selling.
+                                  Satışa başlamak için ilk ürününüzü ekleyin.
                                 </p>
                                 <button
                                   onClick={() => {
@@ -615,7 +587,7 @@ export function SellerInventoryPage() {
                                   }}
                                   className="mt-2 px-5 py-2.5 bg-accent text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-1.5"
                                 >
-                                  <Plus size={14} /> Add Product
+                                  <Plus size={14} /> Ürün Ekle
                                 </button>
                               </div>
                             </td>
@@ -739,7 +711,7 @@ export function SellerInventoryPage() {
                                   <div className="flex items-center gap-3">
                                     {(product.stock ?? 0) === 0 ? (
                                       <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-red-200">
-                                        Tukendi
+                                        Tükendi
                                       </span>
                                     ) : (product.stock ?? 0) <= getProductThreshold(product) ? (
                                       <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-lg text-[9px] font-black uppercase tracking-widest border border-yellow-200">
@@ -847,19 +819,10 @@ export function SellerInventoryPage() {
                       </tbody>
                     </table>
                   </div>
-                  <div className="px-8 py-6 bg-brand-secondary/10 flex items-center justify-between border-t border-brand-primary/5">
+                  <div className="px-8 py-6 bg-brand-secondary/10 border-t border-brand-primary/5">
                     <p className="text-[10px] font-bold text-brand-primary/40 uppercase tracking-widest">
-                      Showing {Math.min(10, displayProducts.length)} of {displayProducts.length}{' '}
-                      Inventory Items
+                      {displayProducts.length} ürün
                     </p>
-                    <div className="flex items-center gap-2">
-                      <button className="px-4 py-2 bg-white rounded-xl text-[10px] font-black border border-brand-primary/5 opacity-50 cursor-not-allowed">
-                        Previous
-                      </button>
-                      <button className="px-4 py-2 bg-white rounded-xl text-[10px] font-black border border-brand-primary/5 hover:bg-brand-primary hover:text-white transition-all shadow-sm">
-                        Next Page
-                      </button>
-                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -881,10 +844,10 @@ export function SellerInventoryPage() {
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
-                        Depo Yonetimi
+                        Depo Yönetimi
                       </p>
                       <p className="text-xs text-brand-primary/60">
-                        Depo bazli stok yonetimi ve atama
+                        Depo bazlı stok yönetimi ve atama
                       </p>
                     </div>
                   </div>
@@ -913,7 +876,7 @@ export function SellerInventoryPage() {
                   <div className="flex flex-col items-center justify-center py-16 gap-4">
                     <Loader2 className="w-8 h-8 animate-spin text-accent" />
                     <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
-                      Depolar yukleniyor...
+                      Depolar yükleniyor…
                     </p>
                   </div>
                 ) : warehouses.length === 0 ? (
@@ -921,11 +884,11 @@ export function SellerInventoryPage() {
                     <div className="flex flex-col items-center justify-center gap-4 text-center">
                       <WarehouseIcon size={64} className="text-brand-primary/20" />
                       <h3 className="text-xl font-display font-black text-brand-primary">
-                        Henuz depo eklenmemis
+                        Henüz depo eklenmemiş
                       </h3>
                       <p className="text-sm text-brand-primary/40 max-w-sm">
-                        Urunlerinizi depolamak icin bir depo ekleyin. Her depo icin ozel stok
-                        atamasi yapabilirsiniz.
+                        Ürünlerinizi depolamak için bir depo ekleyin. Her depo için özel stok
+                        ataması yapabilirsiniz.
                       </p>
                       <button
                         onClick={() => {
@@ -956,7 +919,7 @@ export function SellerInventoryPage() {
                       >
                         {wh.isDefault && (
                           <span className="absolute top-0 end-0 px-3 py-1 bg-accent text-white text-[8px] font-black uppercase tracking-widest rounded-bl-2xl">
-                            Varsayilan Depo
+                            Varsayılan Depo
                           </span>
                         )}
                         <div className="flex items-start justify-between mb-4">
@@ -1020,11 +983,11 @@ export function SellerInventoryPage() {
                             {wh.address.line2 ? `, ${wh.address.line2}` : ''}
                           </p>
                           <p className="text-brand-primary/70">
-                            <span className="font-bold text-brand-primary/40">Sehir: </span>
+                            <span className="font-bold text-brand-primary/40">Şehir: </span>
                             {wh.address.city}, {wh.address.state} {wh.address.postalCode}
                           </p>
                           <p className="text-brand-primary/70">
-                            <span className="font-bold text-brand-primary/40">Ulke: </span>
+                            <span className="font-bold text-brand-primary/40">Ülke: </span>
                             {wh.address.country}
                           </p>
                         </div>
@@ -1041,106 +1004,21 @@ export function SellerInventoryPage() {
                     </div>
                     <div>
                       <p className="font-bold text-brand-primary text-sm">
-                        Depo Bazli Stok Atamasi
+                        Depo Bazlı Stok Ataması
                       </p>
                       <p className="text-[10px] text-brand-primary/40">
-                        Her urun icin depo bazli stok miktarlarini ayarlayin
+                        Her ürün için depo bazlı stok miktarlarını ayarlayın
                       </p>
                     </div>
                   </div>
                   <p className="text-xs text-brand-primary/50 leading-relaxed bg-brand-secondary/30 rounded-2xl p-4">
-                    Depo bazli stok atamasi, her bir urunun hangi depoda ne kadar stogu oldugunu
-                    belirlemenizi saglar. Su an icin depo bazli stok atamasi urun duzenleme
-                    formundan yapilabilir. Her urune varsayilan depo uzerinden stok atanir.
+                    Depo bazlı stok ataması, her bir ürünün hangi depoda ne kadar stoğu olduğunu
+                    belirlemenizi sağlar. Şu an için depo bazlı stok ataması ürün düzenleme
+                    formundan yapılabilir. Her ürüne varsayılan depo üzerinden stok atanır.
                   </p>
                 </div>
               </motion.div>
-            ) : (
-              <motion.div
-                key="analytics"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-8"
-              >
-                <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-brand-primary/5">
-                  <h3 className="text-xl font-display font-black mb-6">Regional Sales Forecast</h3>
-                  <div className="h-64 bg-brand-secondary rounded-2xl flex items-end justify-between p-6 gap-2">
-                    {[60, 40, 80, 50, 90, 70, 100].map((h, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ height: 0 }}
-                        animate={{ height: `${h}%` }}
-                        className="flex-1 bg-brand-primary rounded-t-lg relative group cursor-pointer"
-                      >
-                        <div className="absolute -top-10 start-1/2 -translate-x-1/2 px-2 py-1 bg-brand-primary text-white text-[9px] font-black rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                          {h}k
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  <div className="flex justify-between mt-4 text-[10px] font-black uppercase tracking-widest text-brand-primary/30">
-                    <span>Mon</span>
-                    <span>Tue</span>
-                    <span>Wed</span>
-                    <span>Thu</span>
-                    <span>Fri</span>
-                    <span>Sat</span>
-                    <span>Sun</span>
-                  </div>
-                </div>
-
-                <div className="bg-brand-primary text-white rounded-[3rem] p-10 overflow-hidden relative">
-                  <Zap size={100} className="absolute -top-10 -end-10 text-white/5" />
-                  <h3 className="text-xl font-display font-black mb-12 uppercase italic">
-                    AI Demand Pulse
-                  </h3>
-                  <div className="space-y-8">
-                    {[
-                      {
-                        country: 'United Kingdom',
-                        growth: '+24%',
-                        demand: 'High',
-                        color: 'bg-green-500',
-                      },
-                      {
-                        country: 'Saudi Arabia',
-                        growth: '+18%',
-                        demand: 'Surging',
-                        color: 'bg-accent',
-                      },
-                      {
-                        country: 'Germany',
-                        growth: '+12%',
-                        demand: 'Moderate',
-                        color: 'bg-blue-500',
-                      },
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={cn('w-3 h-3 rounded-full', item.color)} />
-                          <div>
-                            <p className="font-bold">{item.country}</p>
-                            <p className="text-[10px] text-white/40 uppercase tracking-widest">
-                              {item.demand} Demand
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-end">
-                          <p className="text-xl font-display font-black">{item.growth}</p>
-                          <p className="text-[9px] text-white/40 uppercase tracking-widest text-accent">
-                            MoM Projection
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <button className="w-full py-4 bg-white text-brand-primary rounded-2xl mt-12 font-black text-xs uppercase tracking-widest hover:bg-accent hover:text-white transition-all">
-                    Unlock Full Prediction Data
-                  </button>
-                </div>
-              </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
         </div>
       </div>
@@ -1172,7 +1050,7 @@ export function SellerInventoryPage() {
               <div className="flex-1 bg-brand-secondary/50 p-12 flex items-center justify-center relative">
                 <div className="absolute top-8 start-8">
                   <span className="px-3 py-1 bg-white border border-brand-primary/5 text-brand-primary/40 text-[9px] font-black uppercase tracking-widest rounded-full">
-                    Artifact Render
+                    Ürün Görseli
                   </span>
                 </div>
                 <img
@@ -1187,7 +1065,7 @@ export function SellerInventoryPage() {
                 <div className="space-y-8">
                   <div className="space-y-2">
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">
-                      Artifact ID: {viewingProduct.id}
+                      Ürün No: {viewingProduct.id}
                     </p>
                     <h2 className="text-3xl font-display font-black leading-tight uppercase italic">
                       {viewingProduct.title}
@@ -1197,53 +1075,51 @@ export function SellerInventoryPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-brand-secondary/50 p-4 rounded-2xl border border-brand-primary/5">
                       <p className="text-[9px] font-bold text-brand-primary/30 uppercase mb-1">
-                        Pricing (USD)
+                        Fiyat
                       </p>
-                      <p className="text-xl font-display font-black">${viewingProduct.price}</p>
+                      <p className="text-xl font-display font-black">
+                        {viewingProduct.price.toLocaleString('tr-TR', {
+                          style: 'currency',
+                          currency: 'TRY',
+                        })}
+                      </p>
                     </div>
                     <div className="bg-brand-secondary/50 p-4 rounded-2xl border border-brand-primary/5">
                       <p className="text-[9px] font-bold text-brand-primary/30 uppercase mb-1">
-                        Current Stock
+                        Stok
                       </p>
                       <p className="text-xl font-display font-black">
-                        {viewingProduct.stock || 0} Unit
+                        {viewingProduct.stock || 0} adet
                       </p>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary border-b border-brand-primary/5 pb-2">
-                      Compliance Metrics
-                    </h4>
+                  {(viewingProduct.hsCode || viewingProduct.originCountry) && (
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center bg-green-50 p-3 rounded-xl border border-green-100">
-                        <div className="flex items-center gap-2 text-green-700">
-                          <CheckCircle size={14} />
-                          <span className="text-[10px] font-black uppercase tracking-widest">
-                            HS Code Certified
+                      {viewingProduct.hsCode && (
+                        <div className="flex justify-between items-center bg-brand-secondary/50 p-3 rounded-xl border border-brand-primary/5">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/50">
+                            GTİP Kodu
+                          </span>
+                          <span className="text-xs font-mono font-bold">
+                            {viewingProduct.hsCode}
                           </span>
                         </div>
-                        <span className="text-xs font-mono font-bold text-green-700">
-                          {viewingProduct.hsCode || '8518.21.00'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center bg-blue-50 p-3 rounded-xl border border-blue-100">
-                        <div className="flex items-center gap-2 text-blue-700">
-                          <Globe size={14} />
-                          <span className="text-[10px] font-black uppercase tracking-widest">
-                            Origin Market
+                      )}
+                      {viewingProduct.originCountry && (
+                        <div className="flex justify-between items-center bg-brand-secondary/50 p-3 rounded-xl border border-brand-primary/5">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary/50">
+                            Menşe Ülke
                           </span>
+                          <span className="text-xs font-bold">{viewingProduct.originCountry}</span>
                         </div>
-                        <span className="text-xs font-bold text-blue-700">
-                          {viewingProduct.originCountry}
-                        </span>
-                      </div>
+                      )}
                     </div>
-                  </div>
+                  )}
 
                   <div className="space-y-4">
                     <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary border-b border-brand-primary/5 pb-2">
-                      Description Feed
+                      Açıklama
                     </h4>
                     <p className="text-xs leading-relaxed text-brand-primary/60 font-medium italic">
                       {viewingProduct.description}
@@ -1259,7 +1135,7 @@ export function SellerInventoryPage() {
                       }}
                       className="flex-1 py-4 bg-brand-primary text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-accent transition-all flex items-center justify-center gap-2"
                     >
-                      <Edit size={14} /> Update Artifact
+                      <Edit size={14} /> Ürünü Düzenle
                     </button>
                   </div>
                 </div>
@@ -1456,7 +1332,7 @@ export function SellerInventoryPage() {
                     Depo
                   </p>
                   <h2 className="text-lg font-display font-black text-brand-primary">
-                    {editingWarehouse ? 'Depo Duzenle' : 'Yeni Depo Ekle'}
+                    {editingWarehouse ? 'Depo Düzenle' : 'Yeni Depo Ekle'}
                   </h2>
                 </div>
                 <button
@@ -1471,13 +1347,13 @@ export function SellerInventoryPage() {
               <div className="p-8 space-y-5">
                 <div>
                   <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
-                    Depo Adi *
+                    Depo Adı *
                   </label>
                   <input
                     type="text"
                     value={warehouseForm.name}
                     onChange={(e) => setWarehouseForm({ ...warehouseForm, name: e.target.value })}
-                    placeholder="Ornegin: Merkez Depo, Ikinci Depo"
+                    placeholder="Örneğin: Merkez Depo, İkinci Depo"
                     className="w-full px-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-brand-primary/20"
                   />
                 </div>
@@ -1489,26 +1365,26 @@ export function SellerInventoryPage() {
                     type="text"
                     value={warehouseForm.line1}
                     onChange={(e) => setWarehouseForm({ ...warehouseForm, line1: e.target.value })}
-                    placeholder="Ornegin: Ataturk Cad. No:123"
+                    placeholder="Örneğin: Atatürk Cad. No:123"
                     className="w-full px-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-brand-primary/20"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
-                      Sehir *
+                      Şehir *
                     </label>
                     <input
                       type="text"
                       value={warehouseForm.city}
                       onChange={(e) => setWarehouseForm({ ...warehouseForm, city: e.target.value })}
-                      placeholder="Istanbul"
+                      placeholder="İstanbul"
                       className="w-full px-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-brand-primary/20"
                     />
                   </div>
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
-                      Ilce / Eyalet
+                      İlçe / Eyalet
                     </label>
                     <input
                       type="text"
@@ -1516,7 +1392,7 @@ export function SellerInventoryPage() {
                       onChange={(e) =>
                         setWarehouseForm({ ...warehouseForm, state: e.target.value })
                       }
-                      placeholder="Kadikoy"
+                      placeholder="Kadıköy"
                       className="w-full px-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-brand-primary/20"
                     />
                   </div>
@@ -1538,7 +1414,7 @@ export function SellerInventoryPage() {
                   </div>
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1.5">
-                      Ulke *
+                      Ülke *
                     </label>
                     <input
                       type="text"
@@ -1546,7 +1422,7 @@ export function SellerInventoryPage() {
                       onChange={(e) =>
                         setWarehouseForm({ ...warehouseForm, country: e.target.value })
                       }
-                      placeholder="Turkiye"
+                      placeholder="Türkiye"
                       className="w-full px-4 py-3 bg-brand-secondary/30 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-brand-primary/20"
                     />
                   </div>
@@ -1565,7 +1441,7 @@ export function SellerInventoryPage() {
                     htmlFor="isDefault"
                     className="text-xs font-bold text-brand-primary cursor-pointer"
                   >
-                    Varsayilan depo yap
+                    Varsayılan depo yap
                   </label>
                 </div>
               </div>
@@ -1576,7 +1452,7 @@ export function SellerInventoryPage() {
                   onClick={() => setShowWarehouseForm(false)}
                   className="flex-1 py-3.5 bg-brand-secondary rounded-2xl font-black text-[10px] uppercase tracking-widest text-brand-primary/60 hover:text-brand-primary transition-all"
                 >
-                  Iptal
+                  İptal
                 </button>
                 <button
                   onClick={async () => {
