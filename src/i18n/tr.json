@@ -144,6 +144,7 @@
   "search.empty_title": "Aradığınız ürünü bulamadık",
   "search.empty_hint": "Farklı bir kelime deneyin ya da filtreleri azaltın.",
   "search.result_count": "sonuç",
+  "search.min_discount": "ve üzeri indirim",
   "global.filter": "Filtrele",
   "nav.popular_brands": "Popüler Markalar",
   "footer.tagline": "Zanaatkarları yapay zeka destekli uyumluluk ve lojistik yoluyla dünyaya bağlayan yeni nesil küresel ticaret ekosistemi.",

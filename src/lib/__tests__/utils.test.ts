@@ -1,5 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import { cn } from '../utils';
+import { cn, discountPercent } from '../utils';
+
+describe('discountPercent', () => {
+  it('computes from oldPrice, rounded', () => {
+    expect(discountPercent({ price: 70, oldPrice: 100 })).toBe(30);
+    expect(discountPercent({ price: 199, oldPrice: 269 })).toBe(26);
+  });
+  it('prefers prices over a stale stored percentage, falls back to it otherwise', () => {
+    expect(discountPercent({ price: 50, oldPrice: 100, discountPercentage: 10 })).toBe(50);
+    expect(discountPercent({ price: 50, discountPercentage: 15 })).toBe(15);
+  });
+  it('is 0 without a discount', () => {
+    expect(discountPercent({ price: 50 })).toBe(0);
+    expect(discountPercent({ price: 50, oldPrice: 40 })).toBe(0);
+  });
+});
 
 describe('cn', () => {
   it('merges class names', () => {

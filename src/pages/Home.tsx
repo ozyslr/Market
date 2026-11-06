@@ -29,13 +29,14 @@
   Baby,
   Dog,
   Home as HomeIcon,
+  Tag,
 } from 'lucide-react';
 import React, { useRef, useState, useEffect } from 'react';
 import { Hero } from '@/components/home/Hero';
 import { ProductCard } from '@/components/commerce/ProductCard';
 
 import { motion } from 'motion/react';
-import { cn } from '@/lib/utils';
+import { cn, discountPercent } from '@/lib/utils';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/context/LanguageContext';
 import { Product, Category, HomepageSection, FeaturedDeal } from '@/types';
@@ -111,12 +112,15 @@ const ProductRow = ({
   products,
   showViewAll = true,
   viewAllTo = '/search',
+  tone,
 }: {
   title: string;
   products: Product[];
   showViewAll?: boolean;
   /** Where "Tümünü Gör" leads: the full list behind this row. */
   viewAllTo?: string;
+  /** Coloured band around the row for highlighted sections. */
+  tone?: 'brand' | 'deal';
 }) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -136,17 +140,34 @@ const ProductRow = ({
   };
 
   return (
-    <section className="space-y-6 relative">
-      <div className="flex items-center justify-between px-4 md:px-0">
+    <section
+      className={cn(
+        'relative',
+        tone
+          ? 'space-y-4 rounded-[2rem] p-4 md:p-6 mx-4 md:mx-0 bg-gradient-to-br shadow-xl'
+          : 'space-y-6',
+        tone === 'brand' && 'from-accent to-accent-dark shadow-accent/20',
+        tone === 'deal' && 'from-[#F9423A] to-rose-700 shadow-red-500/20',
+      )}
+    >
+      <div className={cn('flex items-center justify-between', !tone && 'px-4 md:px-0')}>
         <div className="flex items-center gap-3">
-          <h2 className="text-xl md:text-2xl font-display font-black tracking-tight text-brand-primary uppercase italic">
+          <h2
+            className={cn(
+              'text-xl md:text-2xl font-display font-black tracking-tight uppercase italic',
+              tone ? 'text-white' : 'text-brand-primary',
+            )}
+          >
             {title}
           </h2>
         </div>
         {showViewAll && (
           <Link
             to={viewAllTo}
-            className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 hover:text-accent transition-colors flex items-center gap-1"
+            className={cn(
+              'text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1',
+              tone ? 'text-white/80 hover:text-white' : 'text-brand-primary/40 hover:text-accent',
+            )}
           >
             {t('global.see_all')} <ChevronRight size={14} />
           </Link>
@@ -173,7 +194,10 @@ const ProductRow = ({
         <div
           ref={rowRef}
           onScroll={handleScroll}
-          className="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar pb-8 px-4 md:px-0"
+          className={cn(
+            'flex gap-4 md:gap-6 overflow-x-auto no-scrollbar',
+            tone ? 'pb-1' : 'pb-8 px-4 md:px-0',
+          )}
         >
           {products.map((product) => (
             <div key={product.id} className="w-[180px] md:w-[240px] shrink-0">
@@ -185,6 +209,36 @@ const ProductRow = ({
     </section>
   );
 };
+
+/** "İndirimleri İncele": one tile per discount tier that has products. */
+// shortcut: tiers are judged from the 50 home products; the linked search lists the whole catalog.
+const DiscountTiles = ({ tiers }: { tiers: { pct: number }[] }) =>
+  tiers.length === 0 ? null : (
+    <section className="space-y-4" aria-label="İndirimleri İncele">
+      <h2 className="flex items-center gap-2 px-4 md:px-0 text-xl md:text-2xl font-display font-black tracking-tight text-brand-primary uppercase italic">
+        <Tag size={20} className="text-accent" aria-hidden="true" /> İndirimleri İncele
+      </h2>
+      <div className="grid grid-cols-2 md:flex gap-3 md:gap-6 px-4 md:px-0">
+        {tiers.map(({ pct }) => (
+          <Link
+            key={pct}
+            to={`/search?minDiscount=${pct}`}
+            className="md:flex-1 [&:last-child:nth-child(odd)]:col-span-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent to-accent-dark p-4 md:p-6 text-white shadow-lg shadow-accent/20 hover:-translate-y-0.5 transition-transform"
+          >
+            <Tag
+              size={80}
+              className="absolute -end-4 -bottom-4 rotate-12 text-white/10"
+              aria-hidden="true"
+            />
+            <span className="block font-display font-black italic text-4xl md:text-5xl leading-none">
+              %{pct}
+            </span>
+            <span className="block mt-1 text-sm md:text-base font-bold">ve üzeri indirim</span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
 
 export function Home() {
   const { t, lang } = useLanguage();
@@ -231,6 +285,25 @@ export function Home() {
       })
       .catch(() => {});
   }, []);
+
+  // "Sana Özel": other products from the (up to 2) categories this visitor looked at.
+  // Loaded separately: the 50 home products rarely cover those categories. Hidden without history.
+  const [forYouProducts, setForYouProducts] = useState<Product[]>([]);
+  useEffect(() => {
+    const categories = [...new Set(recentlyViewed.map((p) => p.categoryId).filter(Boolean))];
+    if (categories.length === 0) return;
+    const viewed = new Set(recentlyViewed.map((p) => p.id));
+    Promise.all(categories.slice(0, 2).map((categoryId) => getProducts({ categoryId, limit: 12 })))
+      .then((lists) =>
+        setForYouProducts(
+          lists
+            .flat()
+            .filter((p) => !viewed.has(p.id))
+            .slice(0, 20),
+        ),
+      )
+      .catch(() => {});
+  }, [recentlyViewed]);
 
   useEffect(() => {
     async function loadRecentlyViewed() {
@@ -297,6 +370,13 @@ export function Home() {
   }, []);
 
   const flashDeals = products.filter((p) => p.oldPrice && p.oldPrice > p.price).slice(0, 20);
+  const dealTiers = [10, 20, 30, 50]
+    .map((pct) => ({ pct, count: products.filter((p) => discountPercent(p) >= pct).length }))
+    .filter((tier) => tier.count > 0);
+  const advantageProducts = products
+    .filter((p) => discountPercent(p) >= 10)
+    .sort((a, b) => discountPercent(b) - discountPercent(a))
+    .slice(0, 20);
 
   const nextDeal = () => {
     if (flashDeals.length === 0) return;
@@ -611,6 +691,15 @@ export function Home() {
         className="max-w-[1700px] mx-auto px-4 md:px-6 space-y-16 pb-20"
         aria-label="Ürün listesi"
       >
+        {forYouProducts.length >= 4 && (
+          <ProductRow
+            title="Sana Özel Ürünler"
+            products={forYouProducts}
+            tone="brand"
+            showViewAll={false}
+          />
+        )}
+
         {/* Swipable Popular Products Section */}
         {loading ? (
           <ProductGridSkeleton count={8} />
@@ -622,12 +711,23 @@ export function Home() {
           />
         )}
 
+        <DiscountTiles tiers={dealTiers} />
+
         {/* Trending Now Section */}
         <ProductRow
           title="Yükselenler"
           products={trendingProducts}
           viewAllTo="/search?sortBy=rating"
         />
+
+        {advantageProducts.length > 0 && (
+          <ProductRow
+            title="Avantajlı Ürünler"
+            products={advantageProducts}
+            tone="deal"
+            viewAllTo="/search?minDiscount=10"
+          />
+        )}
 
         {/* Öne Çıkan Kampanyalar Section */}
         {featuredDealProducts.length > 0 && (
@@ -872,8 +972,8 @@ export function Home() {
           </div>
         </section>
 
-        {/* Discovery Grid: Sizin İçin Seçtiklerimiz */}
-        <ProductRow title="Senin İçin Seçtiklerimiz" products={products.slice(0, 20)} />
+        {/* Discovery row (not personalised: "Sana Özel Ürünler" above is) */}
+        <ProductRow title="Keşfetmeye Değer" products={products.slice(0, 20)} />
 
         {/* AI Recommendations */}
         <ProductRecommendations groups={recommendationGroups} loading={recsLoading} />

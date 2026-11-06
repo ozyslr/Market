@@ -25,7 +25,7 @@ import {
   type SearchParams,
 } from '@/services/searchService';
 import { Category, FilterAttribute, Product } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, discountPercent } from '@/lib/utils';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { FilterPanel, ActiveFilters, FacetCounts } from '@/components/commerce/FilterPanel';
 import { useLanguage } from '@/context/LanguageContext';
@@ -190,6 +190,7 @@ export function SearchResultsPage() {
   const brandsParam = searchParams.get('brand') || '';
   const selectedBrands = brandsParam ? brandsParam.split(',') : [];
   const inStockParam = searchParams.get('inStock') === '1';
+  const minDiscount = Number(searchParams.get('minDiscount')) || 0;
 
   // Apply additional client-side filters not supported by searchProducts (origin, delivery, attributes, freeShipping, advantageous)
   const results = searchResult.products.filter((p) => {
@@ -215,15 +216,24 @@ export function SearchResultsPage() {
       searchParams.get('freeShipping') !== '1' ||
       (p.estimatedDeliveryDays != null && p.estimatedDeliveryDays <= 3);
     const matchesAdvantageous =
-      searchParams.get('advantageous') !== '1' || (p.discountPercentage ?? 0) >= 10 || !!p.oldPrice;
+      searchParams.get('advantageous') !== '1' || discountPercent(p) >= 10;
+    const matchesDiscount = !minDiscount || discountPercent(p) >= minDiscount;
 
     return (
-      matchesOrigin && matchesDelivery && matchesAttrs && matchesFreeShipping && matchesAdvantageous
+      matchesOrigin &&
+      matchesDelivery &&
+      matchesAttrs &&
+      matchesFreeShipping &&
+      matchesAdvantageous &&
+      matchesDiscount
     );
   });
 
-  const categoryName = allCategories.find((c) => c.id === categoryId)?.name || tag || query;
+  const discountLabel = minDiscount ? `%${minDiscount} ${t('search.min_discount')}` : '';
+  const categoryName =
+    allCategories.find((c) => c.id === categoryId)?.name || tag || query || discountLabel;
   const hasActiveFilters = !!(
+    minDiscount ||
     priceMin ||
     priceMax ||
     minRating ||
@@ -309,6 +319,8 @@ export function SearchResultsPage() {
     if (searchParams.get('advantageous') === '1')
       filters.push({ key: 'advantageous', value: '1', label: t('filter.advantageous') });
     if (inStockParam) filters.push({ key: 'inStock', value: '1', label: t('product.inStock') });
+    if (minDiscount)
+      filters.push({ key: 'minDiscount', value: String(minDiscount), label: discountLabel });
     if (selectedBrands.length > 0) {
       selectedBrands.forEach((b) => filters.push({ key: 'brand', value: b, label: b }));
     }
@@ -333,6 +345,7 @@ export function SearchResultsPage() {
         'rating',
         'freeShipping',
         'advantageous',
+        'minDiscount',
         'inStock',
         'brand',
       ].includes(key)
