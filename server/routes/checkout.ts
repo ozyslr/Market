@@ -61,6 +61,43 @@ export function registerCheckoutRoutes(
 ) {
   const { stripe, adminDb, verifyFirebaseToken } = deps;
 
+  // Coupons advertised on a product page: global + that seller's, valid only, display fields only.
+  // (The `coupons` collection itself is seller/admin-only, so used-up or inactive codes never leak.)
+  app.get('/api/coupons/active', async (req: any, res: any) => {
+    if (!adminDb) return res.status(503).json({ error: 'Database not configured' });
+    try {
+      const sellerId =
+        typeof req.query.sellerId === 'string' ? req.query.sellerId.slice(0, 128) : '';
+      const snap = await adminDb
+        .collection('coupons')
+        .where('isActive', '==', true)
+        .limit(100)
+        .get();
+      const now = new Date();
+      const coupons = snap.docs
+        .map((d) => d.data())
+        .filter(
+          (c) =>
+            (!c.sellerId || c.sellerId === sellerId) &&
+            (!c.expiresAt || new Date(c.expiresAt) > now) &&
+            !(typeof c.maxUses === 'number' && (c.usedCount ?? 0) >= c.maxUses),
+        )
+        .slice(0, 3)
+        .map((c) => ({
+          code: c.code,
+          discountType: c.discountType,
+          discountValue: c.discountValue,
+          minOrderAmount: c.minOrderAmount ?? null,
+          expiresAt: c.expiresAt ?? null,
+          sellerId: c.sellerId ?? null,
+        }));
+      res.set('Cache-Control', 'public, max-age=300');
+      return res.json({ coupons });
+    } catch {
+      return res.json({ coupons: [] });
+    }
+  });
+
   // Coupon preview: buyers cannot read `coupons` (rules), so the code is checked here.
   app.post(
     '/api/checkout/quote',

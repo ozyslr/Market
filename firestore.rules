@@ -478,6 +478,14 @@ service cloud.firestore {
         && sub in ['importJobs', 'fieldMappings', 'feedConfigs'];
     }
 
+    // --- PRICE HISTORY: prices are public; written when a seller/admin changes a price ---
+    match /price_history/{entryId} {
+      allow read: if true;
+      allow create: if (isSeller() || isAdmin())
+        && request.resource.data.keys().hasOnly(['productId', 'price', 'recordedAt'])
+        && request.resource.data.price is number;
+    }
+
     // --- NEWSLETTER: footer sign-up (doc id = e-mail); create once, never read from clients ---
     match /newsletterSubscribers/{email} {
       allow create: if isSignedIn()

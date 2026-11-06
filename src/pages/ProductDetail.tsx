@@ -55,7 +55,6 @@ import { UnitPrice } from '@/components/product/UnitPrice';
 import { StockAlertButton } from '@/components/product/StockAlertButton';
 import { PriceTrackButton } from '@/components/product/PriceTrackButton';
 import { getActiveCampaigns, calcCampaignDiscount } from '@/services/campaignService';
-import { getCoupons } from '@/services/couponService';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -329,17 +328,14 @@ export function ProductDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.categoryId, product?.brand]);
 
+  // Valid coupons come from the server (buyers cannot read the coupons collection).
   useEffect(() => {
-    getCoupons().then((all) => {
-      const valid = all.filter(
-        (c) =>
-          c.isActive &&
-          (!c.expiresAt || new Date(c.expiresAt) > new Date()) &&
-          (!c.maxUses || c.usedCount < c.maxUses),
-      );
-      setActiveCoupons(valid.slice(0, 3));
-    });
-  }, []);
+    if (!product?.sellerId) return;
+    fetch(`/api/coupons/active?sellerId=${encodeURIComponent(product.sellerId)}`)
+      .then((r) => (r.ok ? r.json() : { coupons: [] }))
+      .then((d) => setActiveCoupons(d.coupons ?? []))
+      .catch(() => setActiveCoupons([]));
+  }, [product?.sellerId]);
 
   useEffect(() => {
     if (!product?.id) return;
