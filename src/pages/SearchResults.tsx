@@ -13,7 +13,6 @@ import {
   SlidersHorizontal,
   Grid,
   List as ListIcon,
-  ArrowRight,
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -371,8 +370,8 @@ export function SearchResultsPage() {
   return (
     <div className="min-h-screen bg-brand-secondary/20 pt-24 sm:pt-32 pb-10 sm:pb-20">
       <SEO
-        title={`${results.length} Artifacts Found ${categoryName ? `- ${categoryName}` : ''}`}
-        description={`Search results for ${categoryName || query}. Find the best deals and global artifacts on Benim Olan.`}
+        title={`${categoryName || query || t('search.results')} (${results.length})`}
+        description={`${categoryName || query || t('search.all_products')} – Benim Olan`}
       />
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6">
         {/* Search Header / Breadcrumb */}
@@ -380,16 +379,15 @@ export function SearchResultsPage() {
           <div>
             <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-2 sm:mb-4">
               <Link to="/" className="hover:text-accent">
-                Benim Olan Global
+                Benim Olan
               </Link>
               <span>/</span>
-              <span className="text-brand-primary">Search Results</span>
+              <span className="text-brand-primary">{t('search.results')}</span>
             </div>
             <h1 className="text-xl sm:text-4xl font-display font-black tracking-tighter text-brand-primary uppercase italic leading-tight">
-              <span className="text-accent">{results.length}</span> Artifacts Found
-              <span className="hidden sm:inline">
-                {' '}
-                within &quot;{categoryName || 'Global Catalog'}&quot;
+              {categoryName || query || t('search.all_products')}
+              <span className="block text-sm sm:text-base font-bold normal-case not-italic tracking-normal text-brand-primary/50 mt-1">
+                <span className="text-accent">{results.length}</span> {t('search.found')}
               </span>
             </h1>
           </div>
@@ -412,7 +410,7 @@ export function SearchResultsPage() {
                     : 'text-brand-primary/40 hover:text-brand-primary',
                 )}
               >
-                <Grid size={14} /> Grid
+                <Grid size={14} /> {t('search.view_grid')}
               </button>
               <button
                 onClick={() => setViewMode('list')}
@@ -423,7 +421,7 @@ export function SearchResultsPage() {
                     : 'text-brand-primary/40 hover:text-brand-primary',
                 )}
               >
-                <ListIcon size={14} /> List
+                <ListIcon size={14} /> {t('search.view_list')}
               </button>
             </div>
           </div>
@@ -450,7 +448,7 @@ export function SearchResultsPage() {
                 >
                   <div className="flex items-center justify-between mb-8 pb-4 border-b border-brand-primary/5">
                     <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                      <Filter size={16} /> Curated Filters
+                      <Filter size={16} /> {t('global.filter')}
                     </h3>
                     <button
                       onClick={() => setIsMobileFilterOpen(false)}
@@ -485,7 +483,7 @@ export function SearchResultsPage() {
                     onClick={() => setIsMobileFilterOpen(false)}
                     className="w-full py-4 bg-brand-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] mt-4"
                   >
-                    Apply Filters
+                    {t('search.apply_filters')}
                   </button>
                 </motion.div>
               </>
@@ -495,12 +493,6 @@ export function SearchResultsPage() {
           {/* Advanced Filters Sidebar */}
           <aside className="lg:col-span-3 space-y-6 sm:space-y-8 hidden lg:block">
             <div className="bg-white dark:bg-zinc-950 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-brand-primary/5">
-              <div className="flex items-center justify-between mb-6 sm:mb-8">
-                <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-accent">
-                  Curated Filters
-                </h3>
-                <SlidersHorizontal size={14} className="text-brand-primary/20" />
-              </div>
               <FilterPanel
                 filters={panelFilters}
                 onChange={handleFilterPanelChange}
@@ -521,25 +513,6 @@ export function SearchResultsPage() {
                   filteredCount={results.length}
                 />
               )}
-            </div>
-
-            {/* Strategic Banner */}
-            <div className="bg-brand-primary rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
-              <Zap
-                size={100}
-                className="absolute -top-10 -end-10 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-700"
-              />
-              <TrendingUp size={24} className="text-accent mb-4" />
-              <h4 className="text-xl font-display font-black tracking-tight leading-tight mb-4 uppercase italic">
-                Global <br /> Dynamic <br /> Insights
-              </h4>
-              <p className="text-xs text-white/60 font-medium leading-relaxed">
-                We&apos;ve identified a 15% increase in demand for these artifacts in your region.
-                Act fast.
-              </p>
-              <button className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-accent hover:gap-4 transition-all">
-                View Market Pulse <ArrowRight size={14} />
-              </button>
             </div>
           </aside>
 
@@ -566,27 +539,12 @@ export function SearchResultsPage() {
                     <div className="w-24 h-24 bg-brand-secondary rounded-full flex items-center justify-center mb-8 animate-bounce">
                       <SearchIcon size={40} className="text-brand-primary/10" />
                     </div>
-                    <h3 className="text-3xl font-display font-black text-brand-primary opacity-20 uppercase italic">
-                      The global archives are silent.
+                    <h3 className="text-2xl font-display font-black text-brand-primary opacity-40">
+                      {t('search.empty_title')}
                     </h3>
-                    <p className="text-brand-primary/40 mt-4 max-w-sm">
-                      No artifacts matched your query. Try searching for broader artisan categories
-                      or use the AI Assistant.
-                    </p>
+                    <p className="text-brand-primary/40 mt-4 max-w-sm">{t('search.empty_hint')}</p>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Pagination / Load More */}
-            {!searchLoading && results.length > 0 && (
-              <div className="mt-20 flex flex-col items-center gap-6">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/20">
-                  Archiving artifacts 1 - {results.length} of {results.length}
-                </p>
-                <button className="px-12 py-5 bg-white border border-brand-primary/5 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.3em] hover:bg-brand-primary hover:text-white transition-all shadow-xl shadow-brand-primary/5">
-                  Load Global Feed
-                </button>
               </div>
             )}
           </main>
@@ -608,6 +566,7 @@ const CategoryAwareFilters: React.FC<{
   advantageous: boolean;
   filteredCount: number;
 }> = ({ filterAttributes, searchParams, setSearchParams, toggleFilter, filteredCount }) => {
+  const { t } = useLanguage();
   if (filterAttributes.length === 0) return null;
 
   return (
@@ -705,7 +664,7 @@ const CategoryAwareFilters: React.FC<{
                     {Array.from({ length: r }).map((_, i) => (
                       <Star key={i} size={10} className="fill-amber-400 text-amber-400" />
                     ))}
-                    <span className="text-[10px]">& up</span>
+                    <span className="text-[10px]">{t('filter.andAbove')}</span>
                   </span>
                 </label>
               ))}
@@ -725,7 +684,7 @@ const CategoryAwareFilters: React.FC<{
             className="accent-accent rounded"
           />
           <Zap size={12} className="text-green-500" />
-          <span className="text-brand-primary/70">Free Shipping</span>
+          <span className="text-brand-primary/70">{t('filter.freeShipping')}</span>
         </label>
         <label className="flex items-center gap-2 py-1 cursor-pointer text-xs">
           <input
@@ -735,11 +694,13 @@ const CategoryAwareFilters: React.FC<{
             className="accent-accent rounded"
           />
           <TrendingUp size={12} className="text-red-500" />
-          <span className="text-brand-primary/70">Advantageous (10%+ discount)</span>
+          <span className="text-brand-primary/70">{t('filter.advantageous')} (%10+)</span>
         </label>
       </div>
 
-      <p className="text-[10px] text-brand-primary/30 mt-4">{filteredCount} results</p>
+      <p className="text-[10px] text-brand-primary/30 mt-4">
+        {filteredCount} {t('search.result_count')}
+      </p>
     </div>
   );
 };
