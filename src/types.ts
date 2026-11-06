@@ -363,8 +363,10 @@ export interface Coupon {
   expiresAt?: string;
   isActive: boolean;
   description?: string;
-  /** If set, coupon only applies to this seller's products */
-  sellerId?: string;
+  /** If set, coupon only applies to this seller's products; null = platform coupon */
+  sellerId?: string | null;
+  /** Owner opted in to advertise the code on product pages (codes are private by default) */
+  showOnProduct?: boolean;
   createdAt: string;
 }
 

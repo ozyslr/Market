@@ -11,6 +11,7 @@ const EMPTY: Omit<Coupon, 'id' | 'usedCount' | 'createdAt'> = {
   discountType: 'percentage',
   discountValue: 10,
   isActive: true,
+  showOnProduct: false,
   description: '',
 };
 
@@ -33,7 +34,12 @@ export function AdminCoupons() {
     if (!form.code.trim()) return;
     setSaving(true);
     try {
-      const newCoupon = await createCoupon({ ...form, code: form.code.toUpperCase() });
+      // sellerId: null marks a platform coupon, so the product-page query can find it.
+      const newCoupon = await createCoupon({
+        ...form,
+        code: form.code.toUpperCase(),
+        sellerId: null,
+      });
       audit(
         user?.uid ?? '',
         user?.email ?? '',
@@ -65,6 +71,16 @@ export function AdminCoupons() {
     setCoupons((prev) =>
       prev.map((c) => (c.id === coupon.id ? { ...c, isActive: !c.isActive } : c)),
     );
+  };
+
+  const handleShowToggle = async (coupon: Coupon) => {
+    const showOnProduct = !coupon.showOnProduct;
+    // Older platform coupons have no sellerId field; null makes them findable when shown.
+    await updateCoupon(coupon.id, {
+      showOnProduct,
+      ...(coupon.sellerId ? {} : { sellerId: null }),
+    });
+    setCoupons((prev) => prev.map((c) => (c.id === coupon.id ? { ...c, showOnProduct } : c)));
   };
 
   const handleDelete = async (id: string) => {
@@ -187,7 +203,15 @@ export function AdminCoupons() {
             />
           </div>
         </div>
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <label className="flex items-center gap-2 text-xs font-bold text-brand-primary/60">
+            <input
+              type="checkbox"
+              checked={!!form.showOnProduct}
+              onChange={(e) => setForm((f) => ({ ...f, showOnProduct: e.target.checked }))}
+            />
+            Tüm ürün sayfalarında göster
+          </label>
           <button
             type="submit"
             disabled={saving}
@@ -236,6 +260,19 @@ export function AdminCoupons() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleShowToggle(coupon)}
+                title="Ürün sayfalarında gösterilsin mi?"
+                className={cn(
+                  'text-[10px] font-bold px-2 py-1 rounded-lg',
+                  coupon.showOnProduct
+                    ? 'bg-accent/10 text-accent'
+                    : 'bg-white text-brand-primary/40',
+                )}
+              >
+                {coupon.showOnProduct ? 'Ürün sayfasında' : 'Gizli kod'}
+              </button>
               <button onClick={() => handleToggle(coupon)} className="transition-colors">
                 {coupon.isActive ? (
                   <ToggleRight size={24} className="text-accent" />

@@ -15,6 +15,7 @@ const EMPTY_FORM: Omit<Coupon, 'id' | 'usedCount' | 'createdAt' | 'sellerId'> = 
   discountType: 'percentage',
   discountValue: 10,
   isActive: true,
+  showOnProduct: false,
   description: '',
 };
 
@@ -54,6 +55,14 @@ export function SellerCoupons() {
     await updateSellerCoupon(firebaseUser.uid, coupon.id, { isActive: !coupon.isActive });
     setCoupons((prev) =>
       prev.map((c) => (c.id === coupon.id ? { ...c, isActive: !c.isActive } : c)),
+    );
+  };
+
+  const handleShowToggle = async (coupon: Coupon) => {
+    if (!firebaseUser) return;
+    await updateSellerCoupon(firebaseUser.uid, coupon.id, { showOnProduct: !coupon.showOnProduct });
+    setCoupons((prev) =>
+      prev.map((c) => (c.id === coupon.id ? { ...c, showOnProduct: !c.showOnProduct } : c)),
     );
   };
 
@@ -244,7 +253,15 @@ export function SellerCoupons() {
               />
             </div>
           </div>
-          <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <label className="flex items-center gap-2 text-xs font-bold text-brand-primary/60">
+              <input
+                type="checkbox"
+                checked={!!form.showOnProduct}
+                onChange={(e) => setForm((f) => ({ ...f, showOnProduct: e.target.checked }))}
+              />
+              Ürün sayfalarımda göster (kapalıysa kodu yalnızca paylaştığınız kişiler bilir)
+            </label>
             <button
               type="submit"
               disabled={saving}
@@ -295,6 +312,19 @@ export function SellerCoupons() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleShowToggle(coupon)}
+                  title="Ürün sayfalarında gösterilsin mi?"
+                  className={cn(
+                    'text-[10px] font-bold px-2 py-1 rounded-lg',
+                    coupon.showOnProduct
+                      ? 'bg-accent/10 text-accent'
+                      : 'bg-[#F8F8FA] text-brand-primary/40',
+                  )}
+                >
+                  {coupon.showOnProduct ? 'Ürün sayfasında' : 'Gizli kod'}
+                </button>
                 <button onClick={() => handleToggle(coupon)} className="transition-colors">
                   {coupon.isActive ? (
                     <ToggleRight size={24} className="text-accent" />

@@ -48,6 +48,37 @@ export class QuoteError extends Error {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/**
+ * Coupons a product page may advertise. Codes can be private, so only coupons the owner opted in
+ * with `showOnProduct`; this seller's first, then platform ones (admin coupons store sellerId: null).
+ */
+export async function productPageCoupons(db: Firestore, sellerId: string, now = new Date()) {
+  const shown = db
+    .collection('coupons')
+    .where('isActive', '==', true)
+    .where('showOnProduct', '==', true);
+  const [own, platform] = await Promise.all([
+    sellerId ? shown.where('sellerId', '==', sellerId).limit(10).get() : null,
+    shown.where('sellerId', '==', null).limit(10).get(),
+  ]);
+  return [...(own?.docs ?? []), ...platform.docs]
+    .map((d) => d.data())
+    .filter(
+      (c) =>
+        (!c.expiresAt || new Date(c.expiresAt) > now) &&
+        !(typeof c.maxUses === 'number' && (c.usedCount ?? 0) >= c.maxUses),
+    )
+    .slice(0, 3)
+    .map((c) => ({
+      code: c.code,
+      discountType: c.discountType,
+      discountValue: c.discountValue,
+      minOrderAmount: c.minOrderAmount ?? null,
+      expiresAt: c.expiresAt ?? null,
+      sellerId: c.sellerId ?? null,
+    }));
+}
+
 /** Order-independent fingerprint of the cart, stored on the PaymentIntent and re-checked on completion. */
 export function cartSignature(items: QuoteItemInput[]): string {
   const canon = items

@@ -22,6 +22,10 @@ const get = (auth, path) => ({ auth, path: P + path, method: 'get' });
 const list = (auth, path) => ({ auth, path: P + path, method: 'list' });
 const write = (method, auth, path, data) => ({ auth, path: P + path, method, resource: { data } });
 
+const NOW = '2026-11-06T10:00:00Z';
+const priceWrite = (auth, data) => ({ ...write('create', auth, '/price_history/h1', data), time: NOW });
+const productOfS1 = [{ function: 'get', args: [{ anyValue: {} }], result: { value: { data: { sellerId: 's1' } } } }];
+
 const cases = [
   T('guest reads own order', 'ALLOW', get(anon('b1'), '/orders/o1'), order),
   T('other user reads order', 'DENY', get(user('x'), '/orders/o1'), order),
@@ -74,9 +78,11 @@ const cases = [
 
   T('price history public read', 'ALLOW', get(null, '/price_history/h1'), { productId: 'p1', price: 10 }),
   T('buyer writes price history', 'DENY', write('create', user('b1'), '/price_history/h1', { productId: 'p1', price: 1, recordedAt: 'x' })),
-  T('seller writes price history', 'ALLOW', write('create', seller('s1'), '/price_history/h1', { productId: 'p1', price: 10, recordedAt: 'x' })),
-  T('price history extra field', 'DENY', write('create', seller('s1'), '/price_history/h1', { productId: 'p1', price: 10, recordedAt: 'x', note: 'y' })),
-  T('price history non-number price', 'DENY', write('create', seller('s1'), '/price_history/h1', { productId: 'p1', price: '10', recordedAt: 'x' })),
+  T('seller writes own product price history', 'ALLOW', priceWrite(seller('s1'), { productId: 'p1', price: 10, recordedAt: NOW }), null, productOfS1),
+  T('competitor writes fake price history', 'DENY', priceWrite(seller('s2'), { productId: 'p1', price: 1, recordedAt: NOW }), null, productOfS1),
+  T('price history with backdated time', 'DENY', priceWrite(seller('s1'), { productId: 'p1', price: 10, recordedAt: '2020-01-01T00:00:00Z' }), null, productOfS1),
+  T('price history extra field', 'DENY', priceWrite(seller('s1'), { productId: 'p1', price: 10, recordedAt: NOW, note: 'y' }), null, productOfS1),
+  T('price history non-number price', 'DENY', priceWrite(seller('s1'), { productId: 'p1', price: '10', recordedAt: NOW }), null, productOfS1),
 ];
 
 const res = await fetch(

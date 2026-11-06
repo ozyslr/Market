@@ -12,6 +12,7 @@ import { validate } from '../lib/validate.js';
 import { logger } from '../logger.js';
 import {
   cartSignature,
+  productPageCoupons,
   quoteCheckout,
   quoteLines,
   QuoteError,
@@ -68,29 +69,7 @@ export function registerCheckoutRoutes(
     try {
       const sellerId =
         typeof req.query.sellerId === 'string' ? req.query.sellerId.slice(0, 128) : '';
-      const snap = await adminDb
-        .collection('coupons')
-        .where('isActive', '==', true)
-        .limit(100)
-        .get();
-      const now = new Date();
-      const coupons = snap.docs
-        .map((d) => d.data())
-        .filter(
-          (c) =>
-            (!c.sellerId || c.sellerId === sellerId) &&
-            (!c.expiresAt || new Date(c.expiresAt) > now) &&
-            !(typeof c.maxUses === 'number' && (c.usedCount ?? 0) >= c.maxUses),
-        )
-        .slice(0, 3)
-        .map((c) => ({
-          code: c.code,
-          discountType: c.discountType,
-          discountValue: c.discountValue,
-          minOrderAmount: c.minOrderAmount ?? null,
-          expiresAt: c.expiresAt ?? null,
-          sellerId: c.sellerId ?? null,
-        }));
+      const coupons = await productPageCoupons(adminDb, sellerId);
       res.set('Cache-Control', 'public, max-age=300');
       return res.json({ coupons });
     } catch {

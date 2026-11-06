@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { quoteCheckout, cartSignature, QuoteError } from './checkoutQuote';
+import { quoteCheckout, cartSignature, QuoteError, productPageCoupons } from './checkoutQuote';
 import { iyzicoBasket } from '../routes/checkout';
 
 // Minimal Firestore fake: doc().get() and where()/limit()/get() equality queries.
@@ -146,5 +146,29 @@ describe('iyzicoBasket', () => {
     expect(basket.map((b) => b.id)).toEqual(['a', 'b']);
     const sum = basket.reduce((s, b) => s + Number(b.price), 0);
     expect(sum.toFixed(2)).toBe('191.99');
+  });
+});
+
+describe('productPageCoupons', () => {
+  const on = { isActive: true, showOnProduct: true };
+  const db = fakeDb({
+    coupons: {
+      private: { code: 'VIP50', isActive: true, sellerId: 's1' },
+      platform: { code: 'HERKES10', ...on, sellerId: null },
+      own: { code: 'S1OZEL', ...on, sellerId: 's1' },
+      other: { code: 'S2OZEL', ...on, sellerId: 's2' },
+      expired: { code: 'ESKI', ...on, sellerId: 's1', expiresAt: '2020-01-01T00:00:00Z' },
+      usedUp: { code: 'BITTI', ...on, sellerId: 's1', maxUses: 5, usedCount: 5 },
+    },
+  });
+
+  it('shows only opted-in, valid coupons of this seller first, then platform ones', async () => {
+    const coupons = await productPageCoupons(db, 's1');
+    expect(coupons.map((c) => c.code)).toEqual(['S1OZEL', 'HERKES10']);
+  });
+
+  it('without a seller shows platform coupons only', async () => {
+    const coupons = await productPageCoupons(db, '');
+    expect(coupons.map((c) => c.code)).toEqual(['HERKES10']);
   });
 });
