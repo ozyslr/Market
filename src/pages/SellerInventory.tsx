@@ -369,7 +369,7 @@ export function SellerInventoryPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-brand-secondary/30 pt-24">
+    <div className="flex min-h-screen bg-brand-secondary/30 pt-6">
       {/* Mini Sidebar */}
       <div className="w-20 bg-brand-primary flex flex-col items-center py-8 gap-8 hidden lg:flex">
         <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white shadow-lg">

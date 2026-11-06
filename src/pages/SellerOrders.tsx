@@ -317,7 +317,7 @@ export function SellerOrdersPage() {
   });
 
   return (
-    <div className="min-h-screen bg-brand-secondary/30 pt-24 pb-20 px-8">
+    <div className="min-h-screen bg-brand-secondary/30 pt-8 pb-20 px-8">
       <div className="max-w-[1600px] mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">

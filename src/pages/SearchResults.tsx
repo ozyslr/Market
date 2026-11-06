@@ -381,7 +381,7 @@ export function SearchResultsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-secondary/20 pt-24 sm:pt-32 pb-10 sm:pb-20">
+    <div className="min-h-screen bg-brand-secondary/20 pt-6 sm:pt-10 pb-10 sm:pb-20">
       <SEO
         title={`${categoryName || query || t('search.results')} (${results.length})`}
         description={`${categoryName || query || t('search.all_products')} – Benim Olan`}

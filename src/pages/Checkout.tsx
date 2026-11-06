@@ -585,7 +585,7 @@ export function CheckoutPage() {
 
   if (productsStatus === 'loading')
     return (
-      <div className="min-h-screen bg-[#F8F8FA] pt-32 pb-20 px-4">
+      <div className="min-h-screen bg-[#F8F8FA] pt-8 pb-20 px-4">
         <div className="max-w-4xl mx-auto">
           <LoadingState />
         </div>
@@ -593,7 +593,7 @@ export function CheckoutPage() {
     );
   if (productsStatus === 'error')
     return (
-      <div className="min-h-screen bg-[#F8F8FA] pt-32 pb-20 px-4">
+      <div className="min-h-screen bg-[#F8F8FA] pt-8 pb-20 px-4">
         <div className="max-w-4xl mx-auto">
           <ErrorState message="Sepet ürünleri yüklenemedi." onRetry={loadProducts} />
         </div>
@@ -602,7 +602,7 @@ export function CheckoutPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#F8F8FA] pt-32 pb-20 px-4">
+      <div className="min-h-screen bg-[#F8F8FA] pt-8 pb-20 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-4 mb-8">
             <button

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   LayoutDashboard,
@@ -377,13 +378,10 @@ export function SellerDashboard() {
                       Cihaz Dağılımı
                     </h3>
                     <div className="space-y-10 relative z-10">
-                      {(
-                        analytics?.deviceBreakdown ?? [
-                          { name: 'Mobil', percentage: 58, color: '#F9423A' },
-                          { name: 'Masaüstü', percentage: 32, color: '#3B82F6' },
-                          { name: 'Tablet', percentage: 10, color: '#10B981' },
-                        ]
-                      ).map((device, i) => (
+                      {!analytics?.deviceBreakdown?.length && (
+                        <p className="text-sm text-white/50">Cihaz verisi henüz ölçülmüyor.</p>
+                      )}
+                      {(analytics?.deviceBreakdown ?? []).map((device, i) => (
                         <div key={device.name} className="space-y-4">
                           <div className="flex justify-between items-baseline text-[11px] font-black uppercase tracking-widest text-white/40">
                             <span>{device.name}</span>
@@ -409,17 +407,17 @@ export function SellerDashboard() {
                       className="absolute -bottom-10 -end-10 text-white/10 group-hover:rotate-12 transition-transform duration-700"
                     />
                     <p className="text-[11px] font-black uppercase tracking-[0.4em] opacity-60 mb-8 italic">
-                      Mevcut Bakiye
+                      Bakiye ve Ödemeler
                     </p>
-                    <h4 className="text-5xl font-display font-black tracking-tighter mb-4">
-                      £4,850.00
-                    </h4>
-                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest italic">
-                      Onaylandı & Ödemeye Hazır
+                    <p className="text-sm font-medium text-white/80 mb-8 relative z-10">
+                      Kazancınızı, komisyonları ve ödeme durumunu Finans sayfasında görün.
                     </p>
-                    <button className="w-full mt-auto py-5 bg-white text-brand-primary rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all">
-                      Ödeme Talep Et
-                    </button>
+                    <Link
+                      to="/seller/finance"
+                      className="block text-center w-full mt-auto py-5 bg-white text-brand-primary rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all relative z-10"
+                    >
+                      Finans&apos;a Git
+                    </Link>
                   </div>
                 </div>
               </div>

@@ -119,7 +119,7 @@ export function AdminDataDeletion() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F8FA] dark:bg-zinc-950 pt-24 pb-20 px-4">
+    <div className="min-h-screen bg-[#F8F8FA] dark:bg-zinc-950 pt-8 pb-20 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-8">
           <Shield className="w-6 h-6 text-accent" />

@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 
 export function TermsOfService() {
   return (
-    <div className="min-h-screen bg-[#F8F8FA] dark:bg-zinc-950 pt-32 pb-20 px-4">
+    <div className="min-h-screen bg-[#F8F8FA] dark:bg-zinc-950 pt-8 pb-20 px-4">
       <Helmet>
         <title>Kullanici Sozlesmesi | Mercora</title>
       </Helmet>

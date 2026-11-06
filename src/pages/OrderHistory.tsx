@@ -14,9 +14,9 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { getUserOrderSets } from '@/services/orderService';
+import { getOrdersByUser } from '@/services/orderService';
 import { ReorderButton } from '@/components/commerce/ReorderButton';
-import type { OrderSet, OrderSetStatus } from '@/types/order';
+import type { Order } from '@/types/order';
 import { cn } from '@/lib/utils';
 
 // ─── Constants ───────────────────────────────────────────────────────────
@@ -26,7 +26,7 @@ type FilterKey = 'all' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 interface FilterTab {
   key: FilterKey;
   label: string;
-  statuses: OrderSetStatus[];
+  statuses: string[];
 }
 
 const FILTER_TABS: FilterTab[] = [
@@ -37,7 +37,7 @@ const FILTER_TABS: FilterTab[] = [
   {
     key: 'cancelled',
     label: 'İptal',
-    statuses: ['cancelled', 'refunded', 'return_requested', 'return_rejected'] as OrderSetStatus[],
+    statuses: ['cancelled', 'refunded', 'return_requested', 'return_rejected'],
   },
 ];
 
@@ -168,7 +168,7 @@ function OrderHistorySkeleton() {
 
 // ─── Status Badge ────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: OrderSetStatus }) {
+function StatusBadge({ status }: { status: string }) {
   const style = STATUS_STYLES[status] || STATUS_STYLES.pending;
   const Icon = style.icon;
   return (
@@ -215,8 +215,8 @@ function formatPrice(amount: number, currency = 'TRY'): string {
 
 // ─── Order Card ──────────────────────────────────────────────────────────
 
-function OrderCard({ order }: { order: OrderSet }) {
-  const subOrderCount = order.subOrderIds?.length || 0;
+function OrderCard({ order }: { order: Order }) {
+  const itemCount = (order.items ?? []).reduce((s, i) => s + (i.quantity || 1), 0);
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-brand-primary/5 dark:border-zinc-800 p-5 mb-4 hover:shadow-lg transition-shadow">
@@ -224,7 +224,7 @@ function OrderCard({ order }: { order: OrderSet }) {
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 dark:text-zinc-500 mb-1">
-            Siparis #{order.id.slice(0, 8).toUpperCase()}
+            Sipariş #{order.id.slice(0, 8).toUpperCase()}
           </p>
           <p className="text-xs text-brand-primary/50 dark:text-zinc-500 flex items-center gap-1">
             <Clock size={11} />
@@ -241,9 +241,7 @@ function OrderCard({ order }: { order: OrderSet }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-bold text-brand-primary/70 dark:text-zinc-300">
-            {subOrderCount > 1
-              ? `${subOrderCount} farkli satcidan siparis`
-              : 'Tek satcidan siparis'}
+            {itemCount} ürün
           </p>
         </div>
       </div>
@@ -252,10 +250,7 @@ function OrderCard({ order }: { order: OrderSet }) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-display font-black text-brand-primary dark:text-white">
-            {formatPrice(order.totalAmount, order.currency)}
-          </p>
-          <p className="text-[10px] text-brand-primary/40 dark:text-zinc-500 font-bold">
-            {subOrderCount} alt siparis
+            {formatPrice(order.total)}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -277,7 +272,7 @@ function OrderCard({ order }: { order: OrderSet }) {
 export function OrderHistory() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<OrderSet[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [error, setError] = useState<string | null>(null);
@@ -291,11 +286,12 @@ export function OrderHistory() {
     setLoading(true);
     setError(null);
 
-    getUserOrderSets()
+    // Checkout writes buyer orders to `orders` (server/routes/checkout.ts), same as the profile page.
+    getOrdersByUser(user.id)
       .then(setOrders)
       .catch((err) => {
         console.error('[OrderHistory] Failed to load orders:', err);
-        setError('Siparisler yuklenirken bir hata olustu.');
+        setError('Siparişler yüklenirken bir hata oluştu.');
       })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps

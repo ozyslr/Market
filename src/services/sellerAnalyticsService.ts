@@ -71,7 +71,7 @@ function groupByDate(
     const orderDate = new Date(order.createdAt);
     if (orderDate < cutoff) continue;
     const key = orderDate.toISOString().slice(0, 10);
-    const sellerItems = order.items?.filter(i => i.sellerId === sellerId) ?? [];
+    const sellerItems = order.items?.filter((i) => i.sellerId === sellerId) ?? [];
     const revenue = sellerItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
     const entry = map.get(key);
     if (entry) {
@@ -83,88 +83,32 @@ function groupByDate(
   return Array.from(map.entries()).map(([date, data]) => ({ date, ...data }));
 }
 
-function buildMockData(sellerId: string, period: '7d' | '30d' | '90d' | '1y'): SellerAnalytics {
-  const days = period === '7d' ? 7 : period === '30d' ? 30 : period === '90d' ? 90 : 365;
-  const multiplier = period === '7d' ? 1 : period === '30d' ? 4 : period === '90d' ? 12 : 48;
-
-  const mockProducts = [
-    { productId: 'prod_1', name: 'Elite Bluetooth Kulaklik' },
-    { productId: 'prod_2', name: 'Akilli Saat Pro X' },
-    { productId: 'prod_3', name: 'Tasinabilir Batarya 10000mAh' },
-    { productId: 'prod_4', name: 'Kablosuz Mouse' },
-    { productId: 'prod_5', name: 'USB-C Hub 7-in-1' },
-  ];
-
-  const totalOrders = 24 * multiplier;
-  const totalRevenue = 45600 * multiplier;
-  const uniqueCustomers = 18 * multiplier;
-  const repeatCustomers = Math.floor(uniqueCustomers * 0.35);
-
-  const revenuePerDay = Math.round(totalRevenue / days);
-  const ordersPerDay = Math.round(totalOrders / days);
-
-  const revenueOverTime = Array.from({ length: days }, (_, i) => {
-    const d = new Date(Date.now() - (days - 1 - i) * 24 * 60 * 60 * 1000);
-    const variance = 0.5 + Math.random();
-    return {
-      date: d.toISOString().slice(0, 10),
-      revenue: Math.round(revenuePerDay * variance),
-      orders: Math.max(1, Math.round(ordersPerDay * variance)),
-    };
-  });
-
-  const topProducts = mockProducts.map((p, idx) => {
-    const rev = Math.round((totalRevenue / mockProducts.length) * (1.5 - idx * 0.2));
-    const sold = Math.round((totalOrders / mockProducts.length) * (1.5 - idx * 0.2));
-    return {
-      productId: p.productId,
-      id: p.productId,
-      name: p.name,
-      revenue: rev,
-      unitsSold: sold,
-      sales: sold,
-      price: Math.round(rev / Math.max(sold, 1)),
-      views: sold * 25,
-    };
-  }).sort((a, b) => b.revenue - a.revenue);
-
+/** No orders yet (or a read failed): all zeros. Sellers must never see invented sales. */
+function emptyAnalytics(days: number): SellerAnalytics {
+  const revenueOverTime = groupByDate([], '', days);
   return {
     overview: {
-      totalOrders,
-      totalRevenue,
-      averageOrderValue: Math.round(totalRevenue / totalOrders),
-      totalProducts: 47,
-      activeProducts: 38,
-      conversionRate: 3.2,
+      totalOrders: 0,
+      totalRevenue: 0,
+      averageOrderValue: 0,
+      totalProducts: 0,
+      activeProducts: 0,
+      conversionRate: 0,
     },
     revenueOverTime,
-    topProducts,
-    orderStatusBreakdown: [
-      { status: 'delivered', count: Math.round(totalOrders * 0.68) },
-      { status: 'processing', count: Math.round(totalOrders * 0.12) },
-      { status: 'shipped', count: Math.round(totalOrders * 0.08) },
-      { status: 'pending', count: Math.round(totalOrders * 0.07) },
-      { status: 'cancelled', count: Math.round(totalOrders * 0.05) },
-    ],
-    customerMetrics: {
-      uniqueCustomers,
-      repeatCustomers,
-      returnRate: 4.7,
-    },
-    weeklyRevenue: Math.round(totalRevenue / days * 7),
-    revenueTrend: 12.5,
-    totalOrders,
-    orderTrend: 8.3,
-    conversionRate: 3.2,
-    conversionTrend: -2.1,
-    totalViews: totalOrders * 15,
-    viewsTrend: 24.7,
-    dailyRevenue: revenueOverTime.map(d => ({ date: d.date, value: d.revenue })),
-    deviceBreakdown: [
-      { name: 'Mobil', percentage: 58, color: '#F9423A' },
-      { name: 'Masaüstü', percentage: 32, color: '#3B82F6' },
-      { name: 'Tablet', percentage: 10, color: '#10B981' },
-    ],
+    topProducts: [],
+    orderStatusBreakdown: [],
+    customerMetrics: { uniqueCustomers: 0, repeatCustomers: 0, returnRate: 0 },
+    weeklyRevenue: 0,
+    revenueTrend: 0,
+    totalOrders: 0,
+    orderTrend: 0,
+    conversionRate: 0,
+    conversionTrend: 0,
+    totalViews: 0,
+    viewsTrend: 0,
+    dailyRevenue: revenueOverTime.map((d) => ({ date: d.date, value: d.revenue })),
+    deviceBreakdown: [],
   };
 }
 
@@ -178,37 +122,38 @@ export async function getSellerAnalytics(
 
     // ─── Orders ──────────────────────────────────────────────────────────────────
     const ordersRef = collection(db, 'orders');
-    const ordersSnap = await getDocs(query(
-      ordersRef,
-      where('sellerIds', 'array-contains', sellerId),
-    ));
+    const ordersSnap = await getDocs(
+      query(ordersRef, where('sellerIds', 'array-contains', sellerId)),
+    );
 
     if (ordersSnap.empty) {
-      return buildMockData(sellerId, period);
+      return emptyAnalytics(days);
     }
 
-    const orders = ordersSnap.docs.map(d => ({
-      id: d.id,
-      ...(d.data() as Omit<Order, 'id'>),
-      createdAt: d.data().createdAt?.toDate?.()?.toISOString?.() ?? d.data().createdAt,
-    } as Order)).filter(o => new Date(o.createdAt) >= periodStart);
+    const orders = ordersSnap.docs
+      .map(
+        (d) =>
+          ({
+            id: d.id,
+            ...(d.data() as Omit<Order, 'id'>),
+            createdAt: d.data().createdAt?.toDate?.()?.toISOString?.() ?? d.data().createdAt,
+          }) as Order,
+      )
+      .filter((o) => new Date(o.createdAt) >= periodStart);
 
     // ─── Revenue & order calculations ────────────────────────────────────────────
-    const delivered = orders.filter(o => o.status === 'delivered');
+    const delivered = orders.filter((o) => o.status === 'delivered');
     const totalRevenue = delivered.reduce((sum, o) => {
-      const sellerItems = o.items?.filter(i => i.sellerId === sellerId) ?? [];
+      const sellerItems = o.items?.filter((i) => i.sellerId === sellerId) ?? [];
       return sum + sellerItems.reduce((s, i) => s + i.price * i.quantity, 0);
     }, 0);
     const totalOrders = delivered.length;
 
     // ─── Products ────────────────────────────────────────────────────────────────
     const productsRef = collection(db, 'products');
-    const productsSnap = await getDocs(query(
-      productsRef,
-      where('sellerId', '==', sellerId),
-    ));
+    const productsSnap = await getDocs(query(productsRef, where('sellerId', '==', sellerId)));
     const totalProducts = productsSnap.size;
-    const activeProducts = productsSnap.docs.filter(d => {
+    const activeProducts = productsSnap.docs.filter((d) => {
       const data = d.data();
       return data.status === 'active' || data.isActive === true || data.stock > 0;
     }).length;
@@ -216,7 +161,7 @@ export async function getSellerAnalytics(
     // ─── Top products by revenue ─────────────────────────────────────────────────
     const productMap = new Map<string, { name: string; revenue: number; unitsSold: number }>();
     for (const order of orders) {
-      const sellerItems = order.items?.filter(i => i.sellerId === sellerId) ?? [];
+      const sellerItems = order.items?.filter((i) => i.sellerId === sellerId) ?? [];
       for (const item of sellerItems) {
         const existing = productMap.get(item.productId);
         if (existing) {
@@ -238,7 +183,7 @@ export async function getSellerAnalytics(
         ...data,
         sales: data.unitsSold,
         price: Math.round(data.revenue / Math.max(data.unitsSold, 1)),
-        views: data.unitsSold * 25,
+        views: 0, // not tracked per product yet
       }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
@@ -248,8 +193,10 @@ export async function getSellerAnalytics(
     for (const order of orders) {
       statusMap.set(order.status, (statusMap.get(order.status) ?? 0) + 1);
     }
-    const orderStatusBreakdown = Array.from(statusMap.entries())
-      .map(([status, count]) => ({ status, count }));
+    const orderStatusBreakdown = Array.from(statusMap.entries()).map(([status, count]) => ({
+      status,
+      count,
+    }));
 
     // ─── Customer metrics ────────────────────────────────────────────────────────
     const customerSet = new Set<string>();
@@ -266,7 +213,9 @@ export async function getSellerAnalytics(
     for (const count of customerOrderCount.values()) {
       if (count > 1) repeatCount++;
     }
-    const returnedOrders = orders.filter(o => o.status === 'returned' || o.status === 'refunded').length;
+    const returnedOrders = orders.filter(
+      (o) => o.status === 'returned' || o.status === 'refunded',
+    ).length;
     const returnRate = totalOrders > 0 ? (returnedOrders / totalOrders) * 100 : 0;
 
     // ─── Revenue over time ───────────────────────────────────────────────────────
@@ -279,7 +228,7 @@ export async function getSellerAnalytics(
         averageOrderValue: totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0,
         totalProducts,
         activeProducts,
-        conversionRate: 3.2,
+        conversionRate: 0,
       },
       revenueOverTime,
       topProducts,
@@ -289,23 +238,22 @@ export async function getSellerAnalytics(
         repeatCustomers: repeatCount,
         returnRate: Math.round(returnRate * 10) / 10,
       },
-      weeklyRevenue: Math.round(totalRevenue / days * 7),
-      revenueTrend: 12.5,
+      weeklyRevenue: Math.round((totalRevenue / days) * 7),
+      // Views, conversion and trends are not measured yet: report 0, never invented numbers.
+      revenueTrend: 0,
       totalOrders,
-      orderTrend: 8.3,
-      conversionRate: 3.2,
-      conversionTrend: -2.1,
-      totalViews: totalOrders * 15,
-      viewsTrend: 24.7,
-      dailyRevenue: revenueOverTime.map(d => ({ date: d.date, value: d.revenue })),
-      deviceBreakdown: [
-        { name: 'Mobil', percentage: 58, color: '#F9423A' },
-        { name: 'Masaüstü', percentage: 32, color: '#3B82F6' },
-        { name: 'Tablet', percentage: 10, color: '#10B981' },
-      ],
+      orderTrend: 0,
+      conversionRate: 0,
+      conversionTrend: 0,
+      totalViews: 0,
+      viewsTrend: 0,
+      dailyRevenue: revenueOverTime.map((d) => ({ date: d.date, value: d.revenue })),
+      deviceBreakdown: [],
     };
   } catch (error) {
     handleFirestoreError(error, OperationType.GET, 'analytics');
-    return buildMockData(sellerId, period);
+    return emptyAnalytics(
+      period === '7d' ? 7 : period === '30d' ? 30 : period === '90d' ? 90 : 365,
+    );
   }
 }

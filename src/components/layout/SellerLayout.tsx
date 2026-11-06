@@ -23,6 +23,7 @@ import {
   Target,
   Key,
   MessageSquare,
+  Menu,
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -55,6 +56,7 @@ export default function SellerLayout() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [sellerStatus, setSellerStatus] = useState<KycStatus>('loading');
+  const [navOpen, setNavOpen] = useState(false); // phone drawer; the sidebar is always visible from lg up
 
   // Defense-in-depth: redirect non-seller users away
   if (user && user.role !== 'seller') {
@@ -171,10 +173,20 @@ export default function SellerLayout() {
 
   return (
     <div className="flex h-screen bg-zinc-950 text-white overflow-hidden">
+      {navOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/60 lg:hidden"
+          onClick={() => setNavOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <aside
+        id="seller-nav"
         role="navigation"
         aria-label="Satıcı paneli navigasyonu"
-        className="w-[240px] flex-shrink-0 flex flex-col bg-zinc-900 border-e border-zinc-800"
+        className={`fixed inset-y-0 start-0 z-40 w-[240px] flex-shrink-0 flex flex-col bg-zinc-900 border-e border-zinc-800 transition-transform lg:static lg:translate-x-0 ${
+          navOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'
+        }`}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
           <div className="flex items-center gap-2">
@@ -189,11 +201,12 @@ export default function SellerLayout() {
             <Home size={16} />
           </Link>
         </div>
-        <nav className="flex-1 py-4 space-y-1 px-3">
+        <nav className="flex-1 py-4 space-y-1 px-3 overflow-y-auto">
           {navItems.map(({ path, icon: Icon, label }) => (
             <NavLink
               key={path}
               to={path}
+              onClick={() => setNavOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                   isActive
@@ -221,7 +234,21 @@ export default function SellerLayout() {
           </button>
         </div>
       </aside>
-      <main id="seller-main-content" className="flex-1 overflow-auto" tabIndex={-1}>
+      <main id="seller-main-content" className="flex-1 min-w-0 overflow-auto" tabIndex={-1}>
+        <div className="lg:hidden sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-zinc-900 border-b border-zinc-800">
+          <button
+            type="button"
+            onClick={() => setNavOpen(true)}
+            aria-label="Menüyü aç"
+            aria-controls="seller-nav"
+            aria-expanded={navOpen}
+            className="p-1.5 -ms-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800"
+          >
+            <Menu size={20} />
+          </button>
+          <Store size={16} className="text-emerald-400" />
+          <span className="font-semibold text-sm">Satıcı Paneli</span>
+        </div>
         <Outlet />
       </main>
     </div>

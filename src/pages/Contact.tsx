@@ -1,15 +1,30 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import {
-  Mail, Phone, MapPin, Send, Loader2, CheckCircle2,
-  MessageCircle, HelpCircle, ChevronRight,
-  Instagram, Twitter, Facebook, Youtube,
+  Mail,
+  Phone,
+  MapPin,
+  Send,
+  Loader2,
+  CheckCircle2,
+  MessageCircle,
+  HelpCircle,
+  ChevronRight,
+  Instagram,
+  Twitter,
+  Facebook,
+  Youtube,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SEO } from '@/components/common/SEO';
 
 const contactInfo = [
-  { icon: Mail, label: 'E-posta', value: 'destek@benimolan.com', href: 'mailto:destek@benimolan.com' },
+  {
+    icon: Mail,
+    label: 'E-posta',
+    value: 'destek@benimolan.com',
+    href: 'mailto:destek@benimolan.com',
+  },
   { icon: Phone, label: 'Telefon', value: '+90 (850) 123 45 67', href: 'tel:+908501234567' },
   { icon: MapPin, label: 'Adres', value: 'Levent Mah. Büyükdere Cad. No:123, Şişli / İstanbul' },
 ];
@@ -33,14 +48,14 @@ export function Contact() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const set = (k: keyof typeof form, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const set = (k: keyof typeof form, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim() || !form.message.trim()) return;
     setSubmitting(true);
     // Simulate submission
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 1200));
     setSubmitting(false);
     setSubmitted(true);
     setForm({ name: '', email: '', subject: '', message: '' });
@@ -56,7 +71,7 @@ export function Contact() {
       />
 
       {/* Hero */}
-      <section className="relative pt-28 pb-16 px-6 overflow-hidden bg-brand-primary text-white">
+      <section className="relative pt-16 pb-16 px-6 overflow-hidden bg-brand-primary text-white">
         <div className="absolute top-0 start-0 w-full h-full opacity-10">
           <div className="absolute top-1/4 start-10 w-96 h-96 bg-accent rounded-full blur-[120px]" />
           <div className="absolute bottom-1/4 end-10 w-96 h-96 bg-blue-500 rounded-full blur-[120px]" />
@@ -87,8 +102,8 @@ export function Contact() {
             transition={{ delay: 0.2 }}
             className="text-lg text-white/60 max-w-2xl mx-auto font-medium"
           >
-            Sorularınız, önerileriniz veya iş birliği talepleriniz için
-            aşağıdaki formu kullanabilirsiniz.
+            Sorularınız, önerileriniz veya iş birliği talepleriniz için aşağıdaki formu
+            kullanabilirsiniz.
           </motion.p>
         </div>
       </section>
@@ -124,7 +139,9 @@ export function Contact() {
                         {item.value}
                       </a>
                     ) : (
-                      <p className="text-sm font-bold text-brand-primary dark:text-white">{item.value}</p>
+                      <p className="text-sm font-bold text-brand-primary dark:text-white">
+                        {item.value}
+                      </p>
                     )}
                   </div>
                 </motion.div>
@@ -162,7 +179,10 @@ export function Contact() {
                         className="flex items-center justify-between text-sm font-bold text-brand-primary dark:text-white hover:text-accent transition-colors group"
                       >
                         <span>{link.label}</span>
-                        <ChevronRight size={14} className="text-brand-primary/30 group-hover:text-accent group-hover:translate-x-1 transition-all" />
+                        <ChevronRight
+                          size={14}
+                          className="text-brand-primary/30 group-hover:text-accent group-hover:translate-x-1 transition-all"
+                        />
                       </Link>
                     </li>
                   ))}
@@ -206,7 +226,7 @@ export function Contact() {
                     <FormField label="Adınız *">
                       <input
                         value={form.name}
-                        onChange={e => set('name', e.target.value)}
+                        onChange={(e) => set('name', e.target.value)}
                         placeholder="Ad Soyad"
                         className={inputCls}
                         required
@@ -216,7 +236,7 @@ export function Contact() {
                       <input
                         type="email"
                         value={form.email}
-                        onChange={e => set('email', e.target.value)}
+                        onChange={(e) => set('email', e.target.value)}
                         placeholder="ornek@email.com"
                         className={inputCls}
                         required
@@ -227,7 +247,7 @@ export function Contact() {
                   <FormField label="Konu">
                     <input
                       value={form.subject}
-                      onChange={e => set('subject', e.target.value)}
+                      onChange={(e) => set('subject', e.target.value)}
                       placeholder="Mesajınızın konusu"
                       className={inputCls}
                     />
@@ -236,7 +256,7 @@ export function Contact() {
                   <FormField label="Mesajınız *">
                     <textarea
                       value={form.message}
-                      onChange={e => set('message', e.target.value)}
+                      onChange={(e) => set('message', e.target.value)}
                       placeholder="Mesajınızı buraya yazın..."
                       rows={6}
                       className={`${inputCls} resize-none`}
@@ -250,9 +270,13 @@ export function Contact() {
                     className="w-full py-4 bg-accent text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-accent/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-xl shadow-accent/20"
                   >
                     {submitting ? (
-                      <><Loader2 size={16} className="animate-spin" /> Gönderiliyor...</>
+                      <>
+                        <Loader2 size={16} className="animate-spin" /> Gönderiliyor...
+                      </>
                     ) : (
-                      <><Send size={16} /> Mesajı Gönder</>
+                      <>
+                        <Send size={16} /> Mesajı Gönder
+                      </>
                     )}
                   </button>
                 </form>

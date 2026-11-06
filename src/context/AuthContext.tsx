@@ -99,8 +99,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: fUser.email || '',
               photoURL: fUser.photoURL || '',
               role: (isOwner ? 'admin' : 'buyer') as UserRole,
-              country: 'UK', // Default
-              currency: 'GBP',
+              country: 'TR',
+              currency: 'TRY',
               spentTotal: 0,
               createdAt: now,
               lastLogin: now,

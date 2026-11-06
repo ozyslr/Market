@@ -444,7 +444,7 @@ export function UserProfilePage() {
   return (
     <div className="min-h-screen bg-brand-secondary/30 dark:bg-zinc-950">
       {/* Profile Header */}
-      <div className="bg-white dark:bg-zinc-900 border-b border-brand-primary/5 pt-24">
+      <div className="bg-white dark:bg-zinc-900 border-b border-brand-primary/5 pt-6">
         <div className="max-w-5xl mx-auto px-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-5 py-6">
             {/* Avatar */}
@@ -676,20 +676,19 @@ export function UserProfilePage() {
                   <div className="flex items-center gap-2 mb-3">
                     <TrendingUp size={13} className="text-accent" />
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">
-                      AI-Driven Insights
+                      Öne Çıkanlar
                     </span>
                   </div>
                   <h2 className="text-3xl font-display font-black tracking-tighter leading-tight uppercase italic mb-3">
-                    Curated
+                    Keşfetmeye
                     <br />
-                    Just for You
+                    Değer
                   </h2>
                   <p className="text-white/60 text-sm leading-relaxed mb-5 max-w-xs">
-                    Based on your browsing, we&apos;ve unlocked exclusive access to artisan
-                    collections.
+                    Benim Olan&apos;da şu sıralar öne çıkan ürünlere göz atın.
                   </p>
                   <Link
-                    to="/"
+                    to="/collection/featured"
                     className="inline-flex items-center gap-2 px-5 py-2 bg-accent text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all"
                   >
                     Keşfet <ArrowRight size={13} />

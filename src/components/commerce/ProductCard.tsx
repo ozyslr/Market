@@ -22,6 +22,12 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { trackEvent } from '@/services/analyticsService';
 
+// Turkish price parts: "12.999" + ",50". Kuruş via rounding (n % 1 drifts: 0.29 → 28).
+const tlInt = (n: number) => Math.floor(n).toLocaleString('tr-TR');
+const tlCents = (n: number) => String(Math.round(n * 100) % 100).padStart(2, '0');
+const tl = (n: number) =>
+  n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 interface ProductCardProps {
   product: Product;
   openInNewTab?: boolean;
@@ -207,19 +213,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                   <>
                     {product.oldPrice && (
                       <span className="text-[10px] text-gray-400 line-through leading-none mb-0.5">
-                        {product.oldPrice.toFixed(2)} TL
+                        {tl(product.oldPrice)} TL
                       </span>
                     )}
                     <div className="flex items-start text-brand-primary dark:text-white">
                       <span className="text-lg font-bold leading-none tracking-tight">
-                        {cur === 'TRY' ? Math.floor(display) : formatted.replace('€', '')}
+                        {cur === 'TRY' ? tlInt(display) : formatted.replace('€', '')}
                       </span>
                       <span className="text-[10px] font-bold mt-0.5 ms-0.5 leading-none">
-                        {cur === 'TRY'
-                          ? `,${Math.floor((display % 1) * 100)
-                              .toString()
-                              .padStart(2, '0')} TL`
-                          : '€'}
+                        {cur === 'TRY' ? `,${tlCents(display)} TL` : '€'}
                       </span>
                     </div>
                   </>
@@ -417,19 +419,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, openInNewTab 
                   <div className="mb-4">
                     {product.oldPrice && (
                       <span className="block text-xs text-gray-400 line-through mb-0.5">
-                        {product.oldPrice.toFixed(2)} TL
+                        {tl(product.oldPrice)} TL
                       </span>
                     )}
                     <div className="flex items-start text-[#E53935]">
                       <span className="text-2xl font-black leading-none tracking-tight">
-                        {Math.floor(product.price)}
+                        {tlInt(product.price)}
                       </span>
                       <span className="text-xs font-black mt-0.5 ms-0.5">
-                        ,
-                        {Math.floor((product.price % 1) * 100)
-                          .toString()
-                          .padStart(2, '0')}{' '}
-                        TL
+                        ,{tlCents(product.price)} TL
                       </span>
                     </div>
                   </div>

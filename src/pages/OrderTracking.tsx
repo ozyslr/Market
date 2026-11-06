@@ -679,7 +679,7 @@ export function OrderTracking() {
     );
 
     return (
-      <div className="min-h-screen bg-[#F8F8FA] dark:bg-zinc-950 pt-24 pb-20 px-4">
+      <div className="min-h-screen bg-[#F8F8FA] dark:bg-zinc-950 pt-8 pb-20 px-4">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Back */}
           <Link
@@ -885,7 +885,7 @@ export function OrderTracking() {
   const paymentMeta = PAYMENT_META[o.paymentMethod] || PAYMENT_META.stripe;
 
   return (
-    <div className="min-h-screen bg-[#F8F8FA] dark:bg-zinc-950 pt-24 pb-20 px-4">
+    <div className="min-h-screen bg-[#F8F8FA] dark:bg-zinc-950 pt-8 pb-20 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Back */}
         <Link
