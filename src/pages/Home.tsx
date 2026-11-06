@@ -110,10 +110,13 @@ const ProductRow = ({
   title,
   products,
   showViewAll = true,
+  viewAllTo = '/search',
 }: {
   title: string;
   products: Product[];
   showViewAll?: boolean;
+  /** Where "Tümünü Gör" leads: the full list behind this row. */
+  viewAllTo?: string;
 }) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -142,7 +145,7 @@ const ProductRow = ({
         </div>
         {showViewAll && (
           <Link
-            to="/search"
+            to={viewAllTo}
             className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 hover:text-accent transition-colors flex items-center gap-1"
           >
             {t('global.see_all')} <ChevronRight size={14} />
@@ -568,9 +571,9 @@ export function Home() {
                   />
                 </div>
               </div>
-              <button className="text-[#F9423A] text-sm font-bold xl:block">
+              <Link to="/collection/deals" className="text-[#F9423A] text-sm font-bold xl:block">
                 Tümünü Gör {'>'}
-              </button>
+              </Link>
             </div>
 
             <div className="relative group/flash">
@@ -612,22 +615,34 @@ export function Home() {
         {loading ? (
           <ProductGridSkeleton count={8} />
         ) : (
-          <ProductRow title="Popüler ürünlerden seçtik" products={popularProducts.slice(0, 20)} />
+          <ProductRow
+            title="Popüler ürünlerden seçtik"
+            products={popularProducts.slice(0, 20)}
+            viewAllTo="/collection/best-sellers"
+          />
         )}
 
         {/* Trending Now Section */}
-        <ProductRow title="Yükselenler" products={trendingProducts} />
+        <ProductRow
+          title="Yükselenler"
+          products={trendingProducts}
+          viewAllTo="/search?sortBy=rating"
+        />
 
         {/* Öne Çıkan Kampanyalar Section */}
         {featuredDealProducts.length > 0 && (
-          <ProductRow title="Kampanya Fırsatları" products={featuredDealProducts.slice(0, 20)} />
+          <ProductRow
+            title="Kampanya Fırsatları"
+            products={featuredDealProducts.slice(0, 20)}
+            viewAllTo="/collection/featured"
+          />
         )}
 
         {/* Banner Grid Sections */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[
             {
-              to: '/search?categoryId=fashion',
+              to: '/search?categoryId=moda',
               img: 'https://images.unsplash.com/photo-1491147334573-44cbb4602074?auto=format&fit=crop&q=80&w=800',
               title: t('hero.slide2.title'),
               subtitle: t('mega.best_sellers'),
@@ -695,7 +710,7 @@ export function Home() {
                 TEKNOLOJİ <span className="text-accent">GÜNLERİ</span> BAŞLADI
               </h3>
               <Link
-                to="/search"
+                to="/collection/flash-deals"
                 className="inline-flex items-center gap-3 px-6 py-3 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-105 transition-all"
               >
                 {t('global.see_all')} <ChevronRight size={14} />
@@ -712,14 +727,22 @@ export function Home() {
           </div>
         </section>
 
-        {/* Erkek Ayakkabı Swipable Section */}
-        <ProductRow title="Erkek Ayakkabı" products={fashionProducts.slice(0, 20)} />
+        {/* Moda Swipable Section */}
+        <ProductRow
+          title="Moda"
+          products={fashionProducts.slice(0, 20)}
+          viewAllTo="/search?categoryId=moda"
+        />
 
         {/* Electronics Spotlight Swipable Section */}
         {loading ? (
           <ProductGridSkeleton count={6} />
         ) : (
-          <ProductRow title="Elektronik Fırsatları" products={electronicsProducts.slice(0, 20)} />
+          <ProductRow
+            title="Elektronik Fırsatları"
+            products={electronicsProducts.slice(0, 20)}
+            viewAllTo="/search?categoryId=electronics"
+          />
         )}
 
         {/* Spotlight Promotion Banners */}
