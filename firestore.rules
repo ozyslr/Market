@@ -182,7 +182,32 @@ service cloud.firestore {
     // Anonymous guests must be able to write analytics events (isSignedIn, not isFullUser).
     match /events/{eventId} {
       allow create: if isSignedIn();
-      allow read: if isAdmin();
+      // Sellers read their own funnel events (seller analytics page).
+      allow read: if isAdmin() || (isSeller() && resource.data.sellerId == request.auth.token.sellerId);
+    }
+
+    // --- BUYER <-> SELLER CONVERSATIONS: only the two parties ---------------
+    match /conversations/{convId} {
+      function isParty(conv) {
+        return isFullUser() && (conv.buyerId == getUserId() || conv.sellerId == getUserId());
+      }
+      allow read: if isParty(resource.data);
+      allow create: if isFullUser()
+        && request.resource.data.buyerId == getUserId()
+        && request.resource.data.sellerId is string
+        && request.resource.data.keys().hasOnly(['buyerId', 'sellerId', 'productId', 'productTitle',
+             'lastMessage', 'lastMessageAt', 'unreadBuyer', 'unreadSeller']);
+      allow update: if isParty(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['lastMessage', 'lastMessageAt', 'unreadBuyer', 'unreadSeller', 'updatedAt']);
+      match /messages/{msgId} {
+        allow read: if isParty(get(/databases/$(database)/documents/conversations/$(convId)).data);
+        allow create: if isParty(get(/databases/$(database)/documents/conversations/$(convId)).data)
+          && request.resource.data.senderId == getUserId()
+          && request.resource.data.keys().hasOnly(['senderId', 'text', 'ts', 'read'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 4000;
+      }
     }
 
     // --- SELLER APPLICATIONS (KYC) -----------------------------------------

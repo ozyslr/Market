@@ -211,7 +211,18 @@ export function SellerPerformance() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Gauge */}
           <div className="lg:col-span-1 bg-white rounded-[2.5rem] p-8 border border-brand-primary/5 flex flex-col items-center justify-center">
-            <GaugeRing score={perf.overall} />
+            {perf.hasData ? (
+              <GaugeRing score={perf.overall} />
+            ) : (
+              <div className="text-center py-10">
+                <p className="text-lg font-display font-black text-brand-primary">
+                  Henüz değerlendirme yok
+                </p>
+                <p className="text-xs text-brand-primary/50 mt-2">
+                  Puanınız ilk siparişlerinizden sonra hesaplanır.
+                </p>
+              </div>
+            )}
             <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mt-4">
               Genel Performans
             </p>
@@ -469,7 +480,15 @@ export function SellerPerformance() {
             <Zap size={16} className="text-accent" /> İyileştirme Önerileri
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {perf.shipSpeedScore < 70 && (
+            {!perf.hasData && (
+              <div className="bg-brand-secondary border border-brand-primary/5 rounded-2xl p-4 md:col-span-2">
+                <p className="text-xs text-brand-primary/70">
+                  Ürünlerinizi yayınlayın ve ilk siparişleri hızlıca kargoya verin; öneriler
+                  siparişleriniz geldikçe burada görünecek.
+                </p>
+              </div>
+            )}
+            {perf.hasData && perf.shipSpeedScore < 70 && (
               <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
                 <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">
                   Kargo Hızı
@@ -499,7 +518,7 @@ export function SellerPerformance() {
                 </p>
               </div>
             )}
-            {perf.ratingScore < 70 && (
+            {perf.hasData && perf.ratingScore < 70 && (
               <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4">
                 <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-1">
                   Ürün Puanı

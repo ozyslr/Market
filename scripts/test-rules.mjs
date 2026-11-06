@@ -24,6 +24,8 @@ const write = (method, auth, path, data) => ({ auth, path: P + path, method, res
 
 const NOW = '2026-11-06T10:00:00Z';
 const priceWrite = (auth, data) => ({ ...write('create', auth, '/price_history/h1', data), time: NOW });
+const conv = { buyerId: 'b1', sellerId: 's1', productId: 'p1', productTitle: 'Kupa', unreadBuyer: 0, unreadSeller: 0 };
+const convMock = [{ function: 'get', args: [{ anyValue: {} }], result: { value: { data: conv } } }];
 const productOfS1 = [{ function: 'get', args: [{ anyValue: {} }], result: { value: { data: { sellerId: 's1' } } } }];
 
 const cases = [
@@ -83,6 +85,18 @@ const cases = [
   T('price history with backdated time', 'DENY', priceWrite(seller('s1'), { productId: 'p1', price: 10, recordedAt: '2020-01-01T00:00:00Z' }), null, productOfS1),
   T('price history extra field', 'DENY', priceWrite(seller('s1'), { productId: 'p1', price: 10, recordedAt: NOW, note: 'y' }), null, productOfS1),
   T('price history non-number price', 'DENY', priceWrite(seller('s1'), { productId: 'p1', price: '10', recordedAt: NOW }), null, productOfS1),
+
+  T('seller reads own funnel event', 'ALLOW', get(seller('s1'), '/events/e1'), { sellerId: 's1', event: 'kyc_submitted' }),
+  T('seller reads other seller event', 'DENY', get(seller('s2'), '/events/e1'), { sellerId: 's1', event: 'kyc_submitted' }),
+
+  T('buyer reads own conversation', 'ALLOW', get(user('b1'), '/conversations/c1'), conv),
+  T('seller reads own conversation', 'ALLOW', get(seller('s1'), '/conversations/c1'), conv),
+  T('stranger reads conversation', 'DENY', get(user('x'), '/conversations/c1'), conv),
+  T('buyer starts conversation', 'ALLOW', write('create', user('b1'), '/conversations/c2', { ...conv, lastMessage: '', lastMessageAt: NOW })),
+  T('start conversation as someone else', 'DENY', write('create', user('x'), '/conversations/c2', { ...conv, lastMessage: '' })),
+  T('party sends message', 'ALLOW', write('create', seller('s1'), '/conversations/c1/messages/m1', { senderId: 's1', text: 'Merhaba', ts: NOW, read: false }), null, convMock),
+  T('stranger sends message', 'DENY', write('create', user('x'), '/conversations/c1/messages/m1', { senderId: 'x', text: 'spam', ts: NOW, read: false }), null, convMock),
+  T('message in other name', 'DENY', write('create', user('b1'), '/conversations/c1/messages/m1', { senderId: 's1', text: 'sahte', ts: NOW, read: false }), null, convMock),
 ];
 
 const res = await fetch(

@@ -695,7 +695,7 @@ Yanıtı sadece JSON olarak ver: {"feedAlanı": "sistemAlanı"} formatında. Eş
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <FileUp size={22} className="text-emerald-400" /> Import Center
+          <FileUp size={22} className="text-emerald-400" /> Ürün İçe Aktarma
         </h1>
         <p className="text-zinc-400 text-sm mt-1">
           XML, CSV ve API aracılığıyla ürünleri toplu içe aktarın

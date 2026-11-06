@@ -67,6 +67,8 @@ export interface SellerPerformanceScore {
   responseRate: number;
   /** Level badge */
   level: 'bronze' | 'silver' | 'gold' | 'platinum';
+  /** False until the seller has orders: scores are 0 and the UI shows "not rated yet". */
+  hasData: boolean;
 }
 
 /**
@@ -76,28 +78,33 @@ export async function calcSellerPerformance(sellerId: string): Promise<SellerPer
   const orders = await getSellerOrders(sellerId);
   const totalOrders = orders.length;
   if (!totalOrders) {
+    // A new seller is not "100/100": no orders means not rated yet (also keeps them on the starter tier).
     return {
-      overall: 100,
-      ratingScore: 100,
-      shipSpeedScore: 100,
-      complianceScore: 100,
+      overall: 0,
+      ratingScore: 0,
+      shipSpeedScore: 0,
+      complianceScore: 0,
       returnRate: 0,
       cancelRate: 0,
-      responseRate: 100,
+      responseRate: 0,
       level: 'bronze',
+      hasData: false,
     };
   }
 
-  // Rating score — from product reviews
-  const ratingScore = Math.min(100, 75); // placeholder, uses product review avg * 20
-
-  // Ship speed — from fulfillment data
-  const delivered = orders.filter((o) => o.status === 'delivered');
-  const shipSpeedScore = delivered.length ? Math.min(100, 80 + Math.random() * 15) : 0;
+  // shortcut: fixed 75 until product review averages feed in (avg rating * 20); replace when reviews are wired.
+  const ratingScore = Math.min(100, 75);
 
   // Cancellation rate
   const cancelled = orders.filter((o) => o.status === 'cancelled').length;
   const cancelRate = (cancelled / totalOrders) * 100;
+
+  // Fulfilment: share of non-cancelled orders already shipped or delivered (was a random 80–95).
+  const open = totalOrders - cancelled;
+  const shippedCount = orders.filter(
+    (o) => o.status === 'shipped' || o.status === 'delivered',
+  ).length;
+  const shipSpeedScore = open > 0 ? (shippedCount / open) * 100 : 0;
 
   // Return rate
   const returned = 0; // placeholder — would need returnRequest collection
@@ -106,7 +113,7 @@ export async function calcSellerPerformance(sellerId: string): Promise<SellerPer
   // Compliance score
   const complianceScore = Math.max(0, 100 - cancelRate * 2 - returnRate * 3);
 
-  // Response rate (placeholder)
+  // shortcut: fixed 90 until message reply times are measured; replace once conversations track replies.
   const responseRate = 90;
 
   // Overall weighted score
@@ -130,6 +137,7 @@ export async function calcSellerPerformance(sellerId: string): Promise<SellerPer
     cancelRate: Math.round(cancelRate * 10) / 10,
     responseRate: Math.round(responseRate),
     level,
+    hasData: true,
   };
 }
 

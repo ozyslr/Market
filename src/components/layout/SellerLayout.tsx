@@ -32,14 +32,14 @@ import { useLanguage } from '../../context/LanguageContext';
 import { Seller } from '../../types';
 
 const navItems = [
-  { path: '/seller/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/seller/dashboard', icon: LayoutDashboard, label: 'Genel Bakış' },
   { path: '/seller/inventory', icon: Package, label: 'Ürünlerim' },
   { path: '/seller/orders', icon: ShoppingBag, label: 'Siparişler' },
   { path: '/seller/messages', icon: MessageSquare, label: 'Mesajlar' },
   { path: '/seller/analytics', icon: Activity, label: 'Analitik' },
   { path: '/seller/finance', icon: BarChart3, label: 'Finans' },
   { path: '/seller/settings', icon: Settings, label: 'Mağaza Ayarları' },
-  { path: '/seller/import', icon: FileUp, label: 'Import Center' },
+  { path: '/seller/import', icon: FileUp, label: 'Ürün İçe Aktarma' },
   { path: '/seller/pricing', icon: TrendingUp, label: 'Fiyatlandırma' },
   { path: '/seller/certificates', icon: ShieldCheck, label: 'Sertifikalar' },
   { path: '/seller/coupons', icon: Ticket, label: 'Kuponlarım' },
