@@ -7,6 +7,22 @@ on:
     branches: [main, master]
 
 jobs:
+  rules:
+    name: Firestore Rules Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      # Node built-ins only, so no npm install needed.
+      - run: npm run test:rules
+
   checks:
     name: Build, Test & Type Check
     runs-on: ubuntu-latest

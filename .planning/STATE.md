@@ -94,7 +94,8 @@ See .planning/PROJECT.md Key Decisions for full log.
 | 261104-wtk                         | Checkout post-payment error hotfix (stock/coupon non-blocking); FX → Frankfurter; Entegi subOrders index; P0 checkout findings      | 2026-11-04 | 2662882   |
 | 261105-d2x                         | Server-side checkout (quote, stripe/EFT/iyzico orders), saved-card token fix, TRY-only, seller ship/returns, rules for 16 colls     | 2026-11-05 | 702c8b1   |
 | 261105-s0f                         | Seller quick-add: single server CSV import (fixed columns/images/role), import-center rules, image compression, AI fill from photo  | 2026-11-05 | 485fddf   |
-| 261105-u2n                         | XML feed auto-import (server parse/upsert, hourly sync), demo showcase products unsellable, E2E CI runner fix                       | 2026-11-05 | (this)    |
+| 261105-u2n                         | XML feed auto-import (server parse/upsert, hourly sync), demo showcase products unsellable, E2E CI runner fix                       | 2026-11-05 | dc5e8b1   |
+| 261106-cle                         | Review should-fix: drop stale AI summary after product change (+test); rules tests in repo (`npm run test:rules`) + CI job          | 2026-11-06 | (this)    |
 
 ## Deferred Items
 

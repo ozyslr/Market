@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Sparkles, CheckCircle2, AlertCircle, Info, Loader2 } from 'lucide-react';
 import { generateProductInsights, ProductInsights } from '@/services/aiContentService';
 
@@ -14,16 +14,22 @@ export function AIProductInsights({ productTitle, description, specs }: AIProduc
   const [insights, setInsights] = useState<ProductInsights | null>(null);
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
 
+  const currentTitle = useRef(productTitle);
+
   // Another product: forget the previous summary.
   useEffect(() => {
+    currentTitle.current = productTitle;
     setInsights(null);
     setState('idle');
   }, [productTitle]);
 
   const generate = async () => {
+    const askedFor = productTitle;
     setState('loading');
     try {
       const result = await generateProductInsights(productTitle, description, specs);
+      // The user moved to another product while Gemini was answering: drop the old summary.
+      if (currentTitle.current !== askedFor) return;
       if (result) {
         setInsights(result);
         setState('idle');
@@ -31,7 +37,7 @@ export function AIProductInsights({ productTitle, description, specs }: AIProduc
         setState('error');
       }
     } catch {
-      setState('error');
+      if (currentTitle.current === askedFor) setState('error');
     }
   };
 
