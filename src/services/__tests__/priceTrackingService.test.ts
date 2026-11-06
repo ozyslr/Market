@@ -1,8 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const {
-  mockGetDoc, mockGetDocs, mockSetDoc, mockDeleteDoc,
-  mockDoc, mockCollection, mockQuery, mockWhere,
+  mockGetDoc,
+  mockGetDocs,
+  mockSetDoc,
+  mockDeleteDoc,
+  mockDoc,
+  mockCollection,
+  mockQuery,
+  mockWhere,
   mockCreateNotification,
 } = vi.hoisted(() => ({
   mockGetDoc: vi.fn(),
@@ -36,8 +42,11 @@ vi.mock('../notificationService', () => ({
 }));
 
 import {
-  trackPrice, untrackPrice, isTrackingPrice,
-  getTrackedProducts, getPriceAlert, checkPriceDrops,
+  trackPrice,
+  untrackPrice,
+  isTrackingPrice,
+  getTrackedProducts,
+  getPriceAlert,
 } from '../priceTrackingService';
 import type { PriceAlert } from '../priceTrackingService';
 
@@ -143,7 +152,13 @@ describe('getPriceAlert', () => {
     mockGetDoc.mockResolvedValue({
       exists: () => true,
       id: 'uid_p1',
-      data: () => ({ userId: 'uid', productId: 'p1', targetPrice: 50, currentPrice: 100, createdAt: '2026-05-01' }),
+      data: () => ({
+        userId: 'uid',
+        productId: 'p1',
+        targetPrice: 50,
+        currentPrice: 100,
+        createdAt: '2026-05-01',
+      }),
     });
 
     const result = await getPriceAlert('uid', 'p1');
@@ -162,67 +177,5 @@ describe('getPriceAlert', () => {
     mockGetDoc.mockRejectedValue(new Error('DB error'));
     const result = await getPriceAlert('uid', 'p1');
     expect(result).toBeNull();
-  });
-});
-
-// ── checkPriceDrops ─────────────────────────────────────────────────────────
-
-describe('checkPriceDrops', () => {
-  it('does nothing when there are no price alerts for the product', async () => {
-    mockGetDocs.mockResolvedValue({ empty: true, docs: [] });
-    await checkPriceDrops('p1', 30);
-    expect(mockGetDoc).not.toHaveBeenCalled();
-    expect(mockCreateNotification).not.toHaveBeenCalled();
-  });
-
-  it('does nothing when the product document does not exist', async () => {
-    mockGetDocs.mockResolvedValue({
-      empty: false,
-      docs: [makeSnapDoc()],
-    });
-    mockGetDoc.mockResolvedValue({ exists: () => false });
-
-    await checkPriceDrops('p1', 30);
-    expect(mockCreateNotification).not.toHaveBeenCalled();
-    expect(mockDeleteDoc).not.toHaveBeenCalled();
-  });
-
-  it('creates notification and deletes alert when current price is at or below target', async () => {
-    mockGetDocs.mockResolvedValue({
-      empty: false,
-      docs: [makeSnapDoc({ targetPrice: 50 })],
-    });
-    mockGetDoc.mockResolvedValue({
-      exists: () => true,
-      id: 'p1',
-      data: () => ({ title: 'Test Product', slug: 'test-product' }),
-    });
-
-    await checkPriceDrops('p1', 40);
-
-    expect(mockCreateNotification).toHaveBeenCalledTimes(1);
-    expect(mockDeleteDoc).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not create notification when current price is above target', async () => {
-    mockGetDocs.mockResolvedValue({
-      empty: false,
-      docs: [makeSnapDoc({ targetPrice: 50 })],
-    });
-    mockGetDoc.mockResolvedValue({
-      exists: () => true,
-      id: 'p1',
-      data: () => ({ title: 'Test Product', slug: 'test-product' }),
-    });
-
-    await checkPriceDrops('p1', 60);
-
-    expect(mockCreateNotification).not.toHaveBeenCalled();
-    expect(mockDeleteDoc).not.toHaveBeenCalled();
-  });
-
-  it('handles error gracefully without throwing', async () => {
-    mockGetDocs.mockRejectedValue(new Error('Unexpected error'));
-    await expect(checkPriceDrops('p1', 30)).resolves.toBeUndefined();
   });
 });

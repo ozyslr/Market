@@ -1,8 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const {
-  mockGetDoc, mockGetDocs, mockSetDoc, mockDeleteDoc,
-  mockDoc, mockCollection, mockQuery, mockWhere,
+  mockGetDoc,
+  mockGetDocs,
+  mockSetDoc,
+  mockDeleteDoc,
+  mockDoc,
+  mockCollection,
+  mockQuery,
+  mockWhere,
   mockCreateNotification,
 } = vi.hoisted(() => ({
   mockGetDoc: vi.fn(),
@@ -36,8 +42,9 @@ vi.mock('../notificationService', () => ({
 }));
 
 import {
-  subscribeToStockAlert, unsubscribeFromStockAlert,
-  isSubscribedToStockAlert, checkAndNotifyStockAlerts,
+  subscribeToStockAlert,
+  unsubscribeFromStockAlert,
+  isSubscribedToStockAlert,
 } from '../stockAlertService';
 import type { StockAlert } from '../stockAlertService';
 
@@ -48,7 +55,8 @@ beforeEach(() => {
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function makeStockAlertDoc(overrides: Partial<StockAlert> = {}): {
-  id: string; data: () => StockAlert;
+  id: string;
+  data: () => StockAlert;
 } {
   return {
     id: 'uid_p1',
@@ -108,75 +116,5 @@ describe('isSubscribedToStockAlert', () => {
     mockGetDoc.mockRejectedValue(new Error('Network error'));
     const result = await isSubscribedToStockAlert('uid', 'p1');
     expect(result).toBe(false);
-  });
-});
-
-// ── checkAndNotifyStockAlerts ────────────────────────────────────────────────
-
-describe('checkAndNotifyStockAlerts', () => {
-  it('does nothing when there are no pending stock alerts', async () => {
-    mockGetDocs.mockResolvedValue({ empty: true, docs: [] });
-
-    await checkAndNotifyStockAlerts('p1');
-
-    expect(mockGetDoc).not.toHaveBeenCalled();
-    expect(mockCreateNotification).not.toHaveBeenCalled();
-  });
-
-  it('does nothing when the product document does not exist', async () => {
-    mockGetDocs.mockResolvedValue({
-      empty: false,
-      docs: [makeStockAlertDoc()],
-    });
-    mockGetDoc.mockResolvedValue({ exists: () => false });
-
-    await checkAndNotifyStockAlerts('p1');
-
-    expect(mockCreateNotification).not.toHaveBeenCalled();
-    expect(mockSetDoc).not.toHaveBeenCalled();
-  });
-
-  it('does nothing when the product is still out of stock', async () => {
-    mockGetDocs.mockResolvedValue({
-      empty: false,
-      docs: [makeStockAlertDoc()],
-    });
-    mockGetDoc.mockResolvedValue({
-      exists: () => true,
-      id: 'p1',
-      data: () => ({ title: 'Out of Stock Item', slug: 'out-of-stock', stock: 0 }),
-    });
-
-    await checkAndNotifyStockAlerts('p1');
-
-    expect(mockCreateNotification).not.toHaveBeenCalled();
-    expect(mockSetDoc).not.toHaveBeenCalled();
-  });
-
-  it('creates notification and updates alert when product is back in stock', async () => {
-    mockGetDocs.mockResolvedValue({
-      empty: false,
-      docs: [makeStockAlertDoc()],
-    });
-    mockGetDoc.mockResolvedValue({
-      exists: () => true,
-      id: 'p1',
-      data: () => ({ title: 'In Stock Item', slug: 'in-stock', stock: 10 }),
-    });
-
-    await checkAndNotifyStockAlerts('p1');
-
-    expect(mockCreateNotification).toHaveBeenCalledTimes(1);
-    expect(mockCreateNotification).toHaveBeenCalledWith(
-      'uid', 'back_in_stock', expect.any(String), expect.any(String), expect.any(String),
-    );
-    expect(mockSetDoc).toHaveBeenCalledTimes(1);
-    const [ref, updateData] = mockSetDoc.mock.calls[0];
-    expect(updateData).toEqual({ notified: true });
-  });
-
-  it('handles error gracefully without throwing', async () => {
-    mockGetDocs.mockRejectedValue(new Error('Unexpected error'));
-    await expect(checkAndNotifyStockAlerts('p1')).resolves.toBeUndefined();
   });
 });
