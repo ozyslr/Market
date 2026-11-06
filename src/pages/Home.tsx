@@ -139,13 +139,16 @@ const ProductRow = ({
     }
   };
 
+  // An empty row would leave a lone title and a big gap on the page.
+  if (products.length === 0) return null;
+
   return (
     <section
       className={cn(
         'relative',
         tone
           ? 'space-y-4 rounded-[2rem] p-4 md:p-6 mx-4 md:mx-0 bg-gradient-to-br shadow-xl'
-          : 'space-y-6',
+          : 'space-y-3',
         tone === 'brand' && 'from-accent to-accent-dark shadow-accent/20',
         tone === 'deal' && 'from-[#F9423A] to-rose-700 shadow-red-500/20',
       )}
@@ -154,7 +157,7 @@ const ProductRow = ({
         <div className="flex items-center gap-3">
           <h2
             className={cn(
-              'text-xl md:text-2xl font-display font-black tracking-tight uppercase italic',
+              'text-lg md:text-xl font-display font-black tracking-tight uppercase italic',
               tone ? 'text-white' : 'text-brand-primary',
             )}
           >
@@ -196,7 +199,7 @@ const ProductRow = ({
           onScroll={handleScroll}
           className={cn(
             'flex gap-4 md:gap-6 overflow-x-auto no-scrollbar',
-            tone ? 'pb-1' : 'pb-8 px-4 md:px-0',
+            tone ? 'pb-1' : 'pb-2 px-4 md:px-0',
           )}
         >
           {products.map((product) => (
@@ -214,8 +217,8 @@ const ProductRow = ({
 // shortcut: tiers are judged from the 50 home products; the linked search lists the whole catalog.
 const DiscountTiles = ({ tiers }: { tiers: { pct: number }[] }) =>
   tiers.length === 0 ? null : (
-    <section className="space-y-4" aria-label="İndirimleri İncele">
-      <h2 className="flex items-center gap-2 px-4 md:px-0 text-xl md:text-2xl font-display font-black tracking-tight text-brand-primary uppercase italic">
+    <section className="space-y-3" aria-label="İndirimleri İncele">
+      <h2 className="flex items-center gap-2 px-4 md:px-0 text-lg md:text-xl font-display font-black tracking-tight text-brand-primary uppercase italic">
         <Tag size={20} className="text-accent" aria-hidden="true" /> İndirimleri İncele
       </h2>
       <div className="grid grid-cols-2 md:flex gap-3 md:gap-6 px-4 md:px-0">
@@ -223,14 +226,14 @@ const DiscountTiles = ({ tiers }: { tiers: { pct: number }[] }) =>
           <Link
             key={pct}
             to={`/search?minDiscount=${pct}`}
-            className="md:flex-1 [&:last-child:nth-child(odd)]:col-span-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent to-accent-dark p-4 md:p-6 text-white shadow-lg shadow-accent/20 hover:-translate-y-0.5 transition-transform"
+            className="md:flex-1 [&:last-child:nth-child(odd)]:col-span-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent to-accent-dark p-4 md:p-5 text-white shadow-lg shadow-accent/20 hover:-translate-y-0.5 transition-transform"
           >
             <Tag
               size={80}
               className="absolute -end-4 -bottom-4 rotate-12 text-white/10"
               aria-hidden="true"
             />
-            <span className="block font-display font-black italic text-4xl md:text-5xl leading-none">
+            <span className="block font-display font-black italic text-3xl md:text-4xl leading-none">
               %{pct}
             </span>
             <span className="block mt-1 text-sm md:text-base font-bold">ve üzeri indirim</span>
@@ -431,10 +434,14 @@ export function Home() {
     newArrivalsSection,
     products.filter((p) => p.newArrival),
   );
-  const electronicsProducts = products.filter((p) => p.categoryId === 'electronics' && p.featured);
-  const fashionProducts = products.filter(
-    (p) => p.categoryId === 'moda' || p.categoryId === 'fashion',
+  const electronicsProducts = products.filter((p) => p.categoryId === 'electronics');
+  const fashionProducts = products.filter((p) =>
+    ['moda', 'fashion', 'kadin', 'erkek'].includes(p.categoryId),
   );
+  const promoSection = sections.find((s) => s.id === 'promo_cards');
+  const promoCards = promoSection?.enabled
+    ? (promoSection.config.slides ?? []).filter((s) => s.enabled).slice(0, 3)
+    : [];
   const flashDealProducts = products.filter((p) => p.isFlashDeal);
   const trendingProducts = [...products].sort((a, b) => b.rating - a.rating).slice(0, 20);
   const featuredDealProducts =
@@ -633,13 +640,13 @@ export function Home() {
         </div>
       </section>
 
-      <section className="pt-8 pb-6 px-4 md:px-6">
-        <div className="max-w-[1700px] mx-auto space-y-12">
+      <section className="pt-6 pb-2 px-4 md:px-6">
+        <div className="max-w-[1700px] mx-auto">
           {/* Flash Deals Row */}
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-display font-black tracking-tighter text-brand-primary dark:text-white uppercase italic">
+                <h2 className="text-lg md:text-xl font-display font-black tracking-tighter text-brand-primary dark:text-white uppercase italic">
                   Günün Fırsatları
                 </h2>
                 <div className="hidden md:flex flex-col">
@@ -688,7 +695,7 @@ export function Home() {
       </section>
 
       <section
-        className="max-w-[1700px] mx-auto px-4 md:px-6 space-y-16 pb-20"
+        className="max-w-[1700px] mx-auto px-4 md:px-6 space-y-8 md:space-y-10 pt-6 pb-12"
         aria-label="Ürün listesi"
       >
         {forYouProducts.length >= 4 && (
@@ -739,7 +746,7 @@ export function Home() {
         )}
 
         {/* Banner Grid Sections */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             {
               to: '/search?categoryId=moda',
@@ -775,14 +782,14 @@ export function Home() {
                 referrerPolicy="no-referrer"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/60 via-brand-primary/20 to-transparent p-10 flex flex-col justify-center">
+              <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/60 via-brand-primary/20 to-transparent p-6 md:p-8 flex flex-col justify-center">
                 <span className="text-accent text-[8px] font-black uppercase tracking-[0.4em] mb-2 drop-shadow-lg">
                   {banner.subtitle}
                 </span>
-                <h3 className="text-white text-3xl font-display font-black uppercase italic leading-none drop-shadow-2xl">
+                <h3 className="text-white text-xl md:text-2xl font-display font-black uppercase italic leading-none drop-shadow-2xl">
                   {banner.title}
                 </h3>
-                <div className="mt-6 flex items-center gap-2 text-white/60 group-hover:text-white transition-colors">
+                <div className="mt-4 flex items-center gap-2 text-white/60 group-hover:text-white transition-colors">
                   <span className="text-[10px] font-black uppercase tracking-widest">
                     {t('hero.cta')}
                   </span>
@@ -797,35 +804,37 @@ export function Home() {
         </div>
 
         {/* Flaş İndirimler Grid */}
-        <section className="space-y-10">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-8 bg-red-500 rounded-full" />
-              <h2 className="text-2xl font-display font-black tracking-tighter text-brand-primary dark:text-white uppercase italic">
-                {t('admin.flash_deals')}
-              </h2>
-            </div>
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <h3 className="text-4xl font-display font-black text-brand-primary dark:text-white uppercase italic tracking-tight leading-none">
-                TEKNOLOJİ <span className="text-accent">GÜNLERİ</span> BAŞLADI
-              </h3>
-              <Link
-                to="/collection/flash-deals"
-                className="inline-flex items-center gap-3 px-6 py-3 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-105 transition-all"
-              >
-                {t('global.see_all')} <ChevronRight size={14} />
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {flashDealProducts.slice(0, 6).map((p) => (
-              <div key={p.id} className="relative">
-                <ProductCard product={p} />
+        {flashDealProducts.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-6 bg-red-500 rounded-full" />
+                <h2 className="text-lg md:text-xl font-display font-black tracking-tighter text-brand-primary dark:text-white uppercase italic">
+                  {t('admin.flash_deals')}
+                </h2>
               </div>
-            ))}
-          </div>
-        </section>
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <h3 className="text-2xl md:text-3xl font-display font-black text-brand-primary dark:text-white uppercase italic tracking-tight leading-none">
+                  TEKNOLOJİ <span className="text-accent">GÜNLERİ</span> BAŞLADI
+                </h3>
+                <Link
+                  to="/collection/flash-deals"
+                  className="inline-flex items-center gap-3 px-6 py-3 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-105 transition-all"
+                >
+                  {t('global.see_all')} <ChevronRight size={14} />
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+              {flashDealProducts.slice(0, 6).map((p) => (
+                <div key={p.id} className="relative">
+                  <ProductCard product={p} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Moda Swipable Section */}
         <ProductRow
@@ -845,67 +854,54 @@ export function Home() {
           />
         )}
 
-        {/* Spotlight Promotion Banners */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <section className="bg-accent-soft/30 dark:bg-zinc-800/20 rounded-[2.5rem] p-8 border border-accent-soft dark:border-zinc-800 relative group overflow-hidden">
-            <div className="relative z-10">
-              <span className="px-3 py-1 bg-white text-accent text-[9px] font-black uppercase tracking-[0.2em] rounded-full inline-block shadow-sm mb-4">
-                {(t('category.baby') ?? 'category.baby') !== 'category.baby'
-                  ? t('category.baby')
-                  : 'Anne Bebek'}
-              </span>
-              <h2 className="text-2xl font-display font-black text-brand-primary dark:text-white uppercase italic tracking-tighter mb-6 leading-tight">
-                {t('hero.deals_every_day') || 'YENİ SEZON BEBEK MODASI'}
-              </h2>
-              <button className="px-6 py-3 bg-accent text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-accent-dark transition-all shadow-lg">
-                {t('global.discover') || 'KEŞFET'}
-              </button>
-            </div>
-            <img
-              src="https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=300"
-              className="absolute -bottom-10 -end-10 w-48 rotate-12 group-hover:rotate-0 transition-transform duration-700 opacity-40 group-hover:opacity-100"
-              referrerPolicy="no-referrer"
-              alt=""
-              aria-hidden="true"
-              loading="lazy"
-            />
-          </section>
-          <section className="bg-brand-secondary/50 dark:bg-zinc-800/20 rounded-[2.5rem] p-8 border border-brand-primary/5 dark:border-zinc-800 relative group overflow-hidden">
-            <div className="relative z-10">
-              <span className="px-3 py-1 bg-white text-accent text-[9px] font-black uppercase tracking-[0.2em] rounded-full inline-block shadow-sm mb-4">
-                {(t('category.fashion') ?? 'category.fashion') !== 'category.fashion'
-                  ? t('category.fashion')
-                  : 'Moda'}
-              </span>
-              <h2 className="text-2xl font-display font-black text-brand-primary dark:text-white uppercase italic tracking-tighter mb-6 leading-tight">
-                {t('home.promo_fashion_title') || 'MODADA DÜNYA MARKALARI'}
-              </h2>
-              <button className="px-6 py-3 bg-brand-primary dark:bg-white text-white dark:text-zinc-900 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-accent transition-all shadow-lg">
-                {t('global.see_all') || 'GÖRÜNTÜLE'}
-              </button>
-            </div>
-          </section>
-          <section className="bg-brand-primary dark:bg-zinc-900 rounded-[2.5rem] p-8 relative group overflow-hidden text-white border dark:border-white/10">
-            <div className="relative z-10">
-              <span className="px-3 py-1 bg-white/10 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full inline-block mb-4">
-                {(t('category.sport') ?? 'category.sport') !== 'category.sport'
-                  ? t('category.sport')
-                  : 'Spor'}
-              </span>
-              <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter mb-6 leading-tight">
-                {t('home.promo_sport_title') || 'OUTDOOR MACERASI BAŞLASIN'}
-              </h2>
-              <button className="px-6 py-3 bg-white text-brand-primary dark:text-zinc-900 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-black hover:text-white transition-all shadow-lg">
-                {t('product.buy_now') || 'ALIŞVERİŞE BAŞLA'}
-              </button>
-            </div>
-          </section>
-        </div>
+        {/* Small banners: admin edits them under CMS > Ana Sayfa > Küçük Bannerlar */}
+        {promoCards.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {promoCards.map((card) => {
+              const en = lang !== 'tr';
+              return (
+                <Link
+                  key={card.id}
+                  to={
+                    card.ctaUrl ||
+                    (card.category ? `/search?categoryId=${card.category}` : '/search')
+                  }
+                  className="group relative flex min-h-[150px] md:min-h-[180px] flex-col justify-end overflow-hidden rounded-3xl bg-brand-primary p-5 md:p-6 text-white shadow-lg"
+                >
+                  {card.image && (
+                    <img
+                      src={card.image}
+                      alt=""
+                      aria-hidden="true"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
+                  <div className="relative">
+                    {card.subtitle && (
+                      <span className="mb-2 inline-block rounded-full bg-white/90 px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-accent">
+                        {(en && card.subtitleEn) || card.subtitle}
+                      </span>
+                    )}
+                    <h3 className="text-lg md:text-xl font-display font-black uppercase italic leading-tight">
+                      {(en && card.titleEn) || card.title}
+                    </h3>
+                    <span className="mt-3 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-brand-primary transition-colors group-hover:bg-accent group-hover:text-white">
+                      {(en && card.descEn) || card.desc || 'Keşfet'} <ArrowRight size={12} />
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
         {/* Brands/Stores Strip */}
         <section className="bg-white dark:bg-zinc-900 border border-brand-primary/5 dark:border-white/5 rounded-[2rem] p-6 md:p-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl md:text-2xl font-display font-black tracking-tighter text-brand-primary dark:text-white uppercase italic">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg md:text-xl font-display font-black tracking-tighter text-brand-primary dark:text-white uppercase italic">
               Öne Çıkan Markalar
             </h2>
             <button className="text-brand-primary/60 hover:text-[#F9423A] font-bold text-[10px] md:text-xs transition-colors uppercase tracking-widest hidden md:block">
@@ -980,13 +976,13 @@ export function Home() {
 
         {/* Son Gezilen */}
         {recentlyViewed.length > 0 && (
-          <section className="max-w-7xl mx-auto px-4 py-12">
-            <div className="flex items-center justify-between mb-8">
+          <section>
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-primary/30 mb-1">
                   Kişisel
                 </p>
-                <h2 className="text-2xl font-display font-black tracking-tighter text-brand-primary uppercase italic">
+                <h2 className="text-lg md:text-xl font-display font-black tracking-tighter text-brand-primary uppercase italic">
                   Son Gezilen
                 </h2>
               </div>
@@ -1016,7 +1012,7 @@ export function Home() {
                     {product.title}
                   </p>
                   <p className="text-sm font-black text-brand-primary">
-                    £{product.price.toFixed(2)}
+                    {product.price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
                   </p>
                 </Link>
               ))}

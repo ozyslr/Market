@@ -62,6 +62,51 @@ export const DEFAULT_SECTIONS: HomepageSection[] = [
     order: 4,
     config: { filter: 'newArrival', limit: 12 },
   },
+  {
+    // Small banners on the home page; reuses HeroSlide: subtitle = badge, desc = button text.
+    id: 'promo_cards',
+    type: 'promo_cards',
+    title: 'Küçük Bannerlar',
+    enabled: true,
+    order: 5,
+    config: {
+      slides: [
+        {
+          id: 'baby',
+          subtitle: 'Anne & Bebek',
+          title: 'Her Gün Yenilenen',
+          desc: 'Keşfet',
+          image:
+            'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=800',
+          category: 'baby',
+          color: 'accent',
+          enabled: true,
+        },
+        {
+          id: 'fashion',
+          subtitle: 'Moda Dünyası',
+          title: 'Yeni Sezon Fırsatları',
+          desc: 'Tümünü Gör',
+          image:
+            'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&q=80&w=800',
+          category: 'kadin',
+          color: 'accent',
+          enabled: true,
+        },
+        {
+          id: 'sport',
+          subtitle: 'Spor & Outdoor',
+          title: 'Macera Seni Bekliyor',
+          desc: 'Hemen Al',
+          image:
+            'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&q=80&w=800',
+          category: 'sport',
+          color: 'accent',
+          enabled: true,
+        },
+      ],
+    },
+  },
 ];
 
 export async function getHomepageSections(): Promise<HomepageSection[]> {
@@ -69,7 +114,9 @@ export async function getHomepageSections(): Promise<HomepageSection[]> {
     const q = query(collection(db, COL), orderBy('order'));
     const snap = await getDocs(q);
     if (snap.empty) return DEFAULT_SECTIONS;
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as HomepageSection);
+    const saved = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as HomepageSection);
+    // Sections added to the defaults later (e.g. promo_cards) show up until the admin saves them.
+    return [...saved, ...DEFAULT_SECTIONS.filter((d) => !saved.some((s) => s.id === d.id))];
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, COL);
     return DEFAULT_SECTIONS;

@@ -58,7 +58,7 @@ const STATUS_LABELS: Record<string, string> = {
   shipped: 'Kargoda',
   pending: 'Bekliyor',
   cancelled: 'Iptal',
-  refunded: 'Iade',
+  refunded: 'İade',
   returned: 'Geri Gonderildi',
   paid: 'Odendi',
 };
@@ -183,11 +183,11 @@ function ChartTooltip({ active, payload, label }: any) {
 // ── Funnel / Seller Journey Helpers ─────────────────────────────────────────────
 
 const MILESTONE_META: { event: FunnelEvent; label: string; icon: string }[] = [
-  { event: 'seller_first_login', label: 'Ilk Giris', icon: '🚀' },
-  { event: 'kyc_submitted', label: 'KYC Basvurusu', icon: '📋' },
-  { event: 'kyc_approved', label: 'KYC Onayi', icon: '✅' },
-  { event: 'first_product_created', label: 'Ilk Urun', icon: '📦' },
-  { event: 'first_product_published', label: 'Ilk Yayin', icon: '🎉' },
+  { event: 'seller_first_login', label: 'İlk Giriş', icon: '🚀' },
+  { event: 'kyc_submitted', label: 'KYC Başvurusu', icon: '📋' },
+  { event: 'kyc_approved', label: 'KYC Onayı', icon: '✅' },
+  { event: 'first_product_created', label: 'İlk Ürün', icon: '📦' },
+  { event: 'first_product_published', label: 'İlk Yayın', icon: '🎉' },
 ];
 
 function formatDuration(hours: number | null): string {
@@ -349,7 +349,7 @@ export default function SellerAnalyticsPage() {
               Analitik
             </h1>
             <p className="text-xs text-brand-primary/40 mt-1 font-bold uppercase tracking-widest">
-              Satis ve performans goruntuleme
+              Satış ve performans görüntüleme
             </p>
           </div>
 
@@ -405,9 +405,9 @@ export default function SellerAnalyticsPage() {
           /* ── Empty State ──────────────────────────────────────────────────── */
           <div className="bg-white rounded-2xl border border-brand-primary/5 p-16 text-center">
             <BarChart3 size={48} className="mx-auto mb-4 text-brand-primary/20" />
-            <h2 className="text-lg font-bold text-brand-primary mb-2">Henuz Veri Yok</h2>
+            <h2 className="text-lg font-bold text-brand-primary mb-2">Henüz Veri Yok</h2>
             <p className="text-sm text-brand-primary/40 max-w-md mx-auto leading-relaxed">
-              Henuz hic siparis bulunmuyor. Urun ekleyip satis yapmaya basladiktan sonra analitik
+              Henüz hiç sipariş bulunmuyor. Ürün ekleyip satış yapmaya başladıktan sonra analitik
               verileriniz burada goruntulenecek.
             </p>
           </div>
@@ -423,32 +423,29 @@ export default function SellerAnalyticsPage() {
               <KPICard
                 label="Toplam Gelir"
                 value={formatCurrency(data.overview.totalRevenue)}
-                subtext={`${data.overview.totalOrders} siparis`}
+                subtext={`${data.overview.totalOrders} sipariş`}
                 icon={DollarSign}
                 color="text-emerald-600"
                 bg="bg-emerald-100"
-                trend={{ value: 12, isPositive: true }}
               />
               <KPICard
-                label="Toplam Siparis"
+                label="Toplam Sipariş"
                 value={data.overview.totalOrders.toLocaleString('tr-TR')}
                 subtext={`Ort. ${formatCurrency(data.overview.averageOrderValue)}`}
                 icon={ShoppingCart}
                 color="text-blue-600"
                 bg="bg-blue-100"
-                trend={{ value: 8, isPositive: true }}
               />
               <KPICard
-                label="Donusum Orani"
+                label="Dönüşüm Oranı"
                 value={`%${data.overview.conversionRate}`}
-                subtext="Goruntuleme / Satis"
+                subtext="Görüntüleme / Satış"
                 icon={Activity}
                 color="text-purple-600"
                 bg="bg-purple-100"
-                trend={{ value: 2.1, isPositive: true }}
               />
               <KPICard
-                label="Aktif Urun"
+                label="Aktif Ürün"
                 value={`${data.overview.activeProducts} / ${data.overview.totalProducts}`}
                 subtext={`%${data.overview.totalProducts > 0 ? Math.round((data.overview.activeProducts / data.overview.totalProducts) * 100) : 0} stokta`}
                 icon={Package}
@@ -469,10 +466,10 @@ export default function SellerAnalyticsPage() {
                 >
                   <div className="text-3xl mb-3">🚀</div>
                   <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60 mb-2">
-                    Satici Yolculugu
+                    Satıcı Yolculuğu
                   </h2>
                   <p className="text-sm text-brand-primary/40 leading-relaxed">
-                    Henuz veri yok. Ilk urununu eklediginde burada yolculugunu gorebilirsin.
+                    Henüz veri yok. İlk ürününü eklediğinde burada yolculuğunu görebilirsin.
                   </p>
                 </motion.div>
               ) : (
@@ -484,7 +481,7 @@ export default function SellerAnalyticsPage() {
                 >
                   <div className="flex items-center justify-between mb-5">
                     <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60">
-                      Satici Yolculugu
+                      Satıcı Yolculuğu
                     </h2>
                     {/* Time-to-first-listing summary */}
                     {funnel.timestamps.seller_first_login &&
@@ -496,7 +493,7 @@ export default function SellerAnalyticsPage() {
                         const h = ms / (1000 * 60 * 60);
                         return (
                           <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
-                            Ilk Ilana Kadar: {formatDuration(h)}
+                            İlk İlana Kadar: {formatDuration(h)}
                           </span>
                         );
                       })()}
@@ -568,7 +565,7 @@ export default function SellerAnalyticsPage() {
               >
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60">
-                    Gelir Grafigi
+                    Gelir Grafiği
                   </h2>
                   <div className="flex items-center gap-4 text-[10px]">
                     <span className="flex items-center gap-1.5">
@@ -577,7 +574,7 @@ export default function SellerAnalyticsPage() {
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
-                      <span className="font-bold text-brand-primary/50">Siparis</span>
+                      <span className="font-bold text-brand-primary/50">Sipariş</span>
                     </span>
                   </div>
                 </div>
@@ -630,7 +627,7 @@ export default function SellerAnalyticsPage() {
                           yAxisId="right"
                           type="monotone"
                           dataKey="orders"
-                          name="Siparis"
+                          name="Sipariş"
                           stroke="#60A5FA"
                           strokeWidth={2}
                           dot={false}
@@ -656,7 +653,7 @@ export default function SellerAnalyticsPage() {
                 className="bg-white rounded-2xl border border-brand-primary/5 p-6"
               >
                 <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60 mb-4">
-                  Siparis Durumu
+                  Sipariş Durumu
                 </h2>
 
                 {data.orderStatusBreakdown.length > 0 ? (
@@ -691,7 +688,7 @@ export default function SellerAnalyticsPage() {
                                     {STATUS_LABELS[payload[0].name as string] || payload[0].name}
                                   </p>
                                   <p className="font-semibold text-zinc-600">
-                                    {payload[0].value} siparis
+                                    {payload[0].value} sipariş
                                   </p>
                                 </div>
                               ) : null
@@ -739,7 +736,7 @@ export default function SellerAnalyticsPage() {
               >
                 <div className="px-6 py-4 border-b border-brand-primary/5 flex items-center justify-between">
                   <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60">
-                    En Cok Satan Urunler
+                    En Çok Satan Ürünler
                   </h2>
                 </div>
 
@@ -748,7 +745,7 @@ export default function SellerAnalyticsPage() {
                     <table className="w-full text-start">
                       <thead>
                         <tr className="border-b border-brand-primary/5">
-                          {['Urun', 'Adet', 'Gelir'].map((h) => (
+                          {['Ürün', 'Adet', 'Gelir'].map((h) => (
                             <th
                               key={h}
                               className="px-5 py-3 text-[9px] font-black uppercase tracking-widest text-brand-primary/30"
@@ -789,7 +786,7 @@ export default function SellerAnalyticsPage() {
                   <div className="py-12 text-center">
                     <Package size={28} className="mx-auto mb-2 text-brand-primary/20" />
                     <p className="text-xs text-brand-primary/40 font-bold">
-                      Henuz satilan urun yok
+                      Henüz satılan ürün yok
                     </p>
                   </div>
                 )}
@@ -803,7 +800,7 @@ export default function SellerAnalyticsPage() {
                 className="bg-white rounded-2xl border border-brand-primary/5 p-6 space-y-6"
               >
                 <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-primary/60">
-                  Musteri Metrikleri
+                  Müşteri Metrikleri
                 </h2>
 
                 <div className="space-y-5">
@@ -814,7 +811,7 @@ export default function SellerAnalyticsPage() {
                       </div>
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-blue-600/50">
-                          Tekil Musteri
+                          Tekil Müşteri
                         </p>
                         <p className="text-lg font-black text-blue-700">
                           {data.customerMetrics.uniqueCustomers.toLocaleString('tr-TR')}
@@ -851,7 +848,7 @@ export default function SellerAnalyticsPage() {
                       </div>
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-orange-600/50">
-                          Iade Orani
+                          İade Oranı
                         </p>
                         <p className="text-lg font-black text-orange-700">
                           %{data.customerMetrics.returnRate}
@@ -864,7 +861,7 @@ export default function SellerAnalyticsPage() {
                 {/* Mini bar chart showing order status */}
                 <div className="pt-2">
                   <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-3">
-                    Siparis Dagilimi
+                    Sipariş Dağılımı
                   </p>
                   <div className="h-2 rounded-full bg-zinc-100 overflow-hidden flex">
                     {data.orderStatusBreakdown.slice(0, 5).map((entry) => {

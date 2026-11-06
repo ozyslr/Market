@@ -73,7 +73,7 @@ const SECTION_LABELS: Record<string, string> = {
   flash_deals: 'Flash Deals',
   product_row: 'Ürün Satırı',
   banner_grid: 'Banner Grid',
-  promo_cards: 'Promo Kartlar',
+  promo_cards: 'Küçük Bannerlar',
   brand_strip: 'Marka Şeridi',
 };
 
@@ -365,8 +365,15 @@ function HomepageSectionsEditor() {
             </div>
           )}
 
-          {section.type === 'hero' && (
+          {(section.type === 'hero' || section.type === 'promo_cards') && (
             <div>
+              {section.type === 'promo_cards' && (
+                <p className="text-[10px] text-brand-primary/50 mb-3">
+                  Ana sayfadaki küçük bannerlar (ilk 3 aktif kart). Alt Başlık = üstteki etiket,
+                  Açıklama = buton yazısı, Görsel URL = arka plan, Kategori Slug = tıklanınca açılan
+                  kategori (ör. baby, kadin, sport).
+                </p>
+              )}
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] text-brand-primary/40 font-bold">
                   {(section.config.slides || []).length} slayt
