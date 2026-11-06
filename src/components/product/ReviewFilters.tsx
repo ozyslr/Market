@@ -47,10 +47,13 @@ export function ReviewFilters({
     <div className="space-y-3 py-4 border-y border-brand-primary/5 dark:border-white/5">
       {/* Arama Barı */}
       <div className="relative mb-2">
-        <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-primary/30 dark:text-zinc-500" />
+        <Search
+          size={14}
+          className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-primary/30 dark:text-zinc-500"
+        />
         <input
           value={search}
-          onChange={e => onSearch(e.target.value)}
+          onChange={(e) => onSearch(e.target.value)}
           placeholder="Değerlendirmeler içinde ara..."
           className="w-full ps-9 pe-4 py-2 bg-brand-secondary/30 dark:bg-zinc-800/40 rounded-xl text-xs outline-none focus:ring-2 ring-accent/20 border border-brand-primary/5 dark:border-white/5 text-brand-primary dark:text-white"
         />
@@ -58,8 +61,10 @@ export function ReviewFilters({
 
       {/* Sıralama */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary/30 dark:text-zinc-500 w-12">Sırala:</span>
-        {(Object.keys(SORT_LABELS) as SortOption[]).map(s => (
+        <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary/30 dark:text-zinc-500 w-12">
+          Sırala:
+        </span>
+        {(Object.keys(SORT_LABELS) as SortOption[]).map((s) => (
           <button
             key={s}
             onClick={() => onSort(s)}
@@ -77,8 +82,10 @@ export function ReviewFilters({
 
       {/* Filtrele */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary/30 dark:text-zinc-500 w-12">Filtre:</span>
-        {(Object.keys(FILTER_LABELS) as FilterOption[]).map(f => (
+        <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary/30 dark:text-zinc-500 w-12">
+          Filtre:
+        </span>
+        {(Object.keys(FILTER_LABELS) as FilterOption[]).map((f) => (
           <button
             key={f}
             onClick={() => onFilter(f)}
@@ -92,7 +99,7 @@ export function ReviewFilters({
             {FILTER_LABELS[f]}
           </button>
         ))}
-        {[5, 4, 3, 2, 1].map(star => (
+        {[5, 4, 3, 2, 1].map((star) => (
           <button
             key={star}
             onClick={() => onStarFilter(starFilter === star ? null : star)}

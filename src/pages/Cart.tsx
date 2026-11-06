@@ -3,9 +3,7 @@ import {
   Trash2,
   Plus,
   Minus,
-  ShieldCheck,
   Truck,
-  HelpCircle,
   ChevronRight,
   Heart,
   Sparkles,
@@ -20,13 +18,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getProductsByIds, getProducts } from '@/services/productService';
 import { LoadingState, ErrorState } from '@/components/shared/DataStates';
-import { cn } from '@/lib/utils';
+import { cn, formatTL } from '@/lib/utils';
 import { ProductVariant } from '@/types';
 import type { Product } from '@/types';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
-import { useLocationStore } from '@/context/LocationContext';
 import { useAuth } from '@/context/AuthContext';
 import { useOneClickCheckout } from '@/hooks/useOneClickCheckout';
 import { OneClickSuccessModal } from '@/components/checkout/OneClickSuccessModal';
@@ -53,7 +50,6 @@ export function CartPage() {
     clearSuccess,
   } = useOneClickCheckout();
   const { items, addItem, removeItem, updateQuantity, clearCart } = useCart();
-  const { location } = useLocationStore();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading');
@@ -118,7 +114,7 @@ export function CartPage() {
   const handleOneClickOrder = () => {
     runOneClick(
       items.map((i) => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity })),
-      user?.currency || 'gbp',
+      user?.currency || 'try',
       clearCart,
     );
   };
@@ -169,8 +165,10 @@ export function CartPage() {
     (sum, p) => sum + (p.variant?.price ?? p.price) * p.quantity,
     0,
   );
-  const currentMarket = MARKETS[location.market] ?? MARKETS['UK'];
-  const totals = calculateTotal(subtotal, 12, currentMarket, true);
+  // Same rule as the server quote (checkoutQuote.ts): TR market, no shipping when every item ships free.
+  const shippingEstimate =
+    cartProducts.length === 0 || cartProducts.every((p) => p.freeShipping) ? 0 : 12;
+  const totals = calculateTotal(subtotal, shippingEstimate, MARKETS.TR, true);
 
   if (status === 'loading')
     return (
@@ -374,10 +372,10 @@ export function CartPage() {
                             return (
                               <div className="text-end">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/20 mb-1">
-                                  Unit Price: £{unitPrice.toFixed(2)}
+                                  Birim fiyat: {formatTL(unitPrice)}
                                 </p>
-                                <p className="text-2xl font-display font-black text-brand-primary">
-                                  £{(unitPrice * product.quantity).toFixed(2)}
+                                <p className="text-xl font-display font-black text-brand-primary">
+                                  {formatTL(unitPrice * product.quantity)}
                                 </p>
                               </div>
                             );
@@ -470,63 +468,47 @@ export function CartPage() {
               <div className="bg-white rounded-[3rem] p-10 border border-brand-primary/5 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 end-0 w-24 h-24 bg-accent/5 rounded-full -translate-y-4 translate-x-4 blur-xl" />
 
-                <h3 className="text-xl font-black uppercase tracking-widest mb-10 pb-6 border-b border-brand-primary/5">
-                  Artifact Summary
+                <h3 className="text-lg font-black uppercase tracking-widest mb-6 pb-4 border-b border-brand-primary/5">
+                  Sipariş Özeti
                 </h3>
 
-                <div className="space-y-6 mb-10">
+                <div className="space-y-4 mb-6">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-bold text-brand-primary/40 uppercase tracking-widest">
-                      Subtotal
+                      Ara Toplam
                     </span>
                     <span className="text-sm font-black text-brand-primary">
-                      £{subtotal.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2 group relative">
-                      <span className="text-xs font-bold text-brand-primary/40 uppercase tracking-widest text-nowrap underline decoration-accent/30 underline-offset-4 cursor-help">
-                        Global Tax (VAT)
-                      </span>
-                      <Info size={12} className="text-brand-primary/20" />
-                    </div>
-                    <span className="text-sm font-black text-brand-primary">
-                      £{totals.vat.toFixed(2)}
+                      {formatTL(subtotal)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-bold text-brand-primary/40 uppercase tracking-widest">
-                      Customs & Duties
+                      KDV
                     </span>
-                    <div className="flex items-center gap-1">
-                      <ShieldCheck size={14} className="text-green-500" />
-                      <span className="text-sm font-black text-green-500">Included</span>
-                    </div>
+                    <span className="text-sm font-black text-brand-primary">
+                      {formatTL(totals.vat)}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-bold text-brand-primary/40 uppercase tracking-widest">
-                      Shipping Factor
+                      Kargo
                     </span>
                     <span className="text-sm font-black text-brand-primary">
-                      £{totals.shipping.toFixed(2)}
+                      {totals.shipping === 0 ? 'Ücretsiz' : formatTL(totals.shipping)}
                     </span>
                   </div>
                 </div>
 
-                <div className="pt-8 mb-6 border-t border-brand-primary/5">
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/20 mb-1">
-                        Final Investment
-                      </p>
-                      <p className="text-4xl font-display font-black text-brand-primary tracking-tighter">
-                        £{totals.total.toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="text-end text-[10px] font-black uppercase tracking-widest text-accent">
-                      Free Returns
-                    </div>
-                  </div>
+                <div className="pt-6 mb-6 border-t border-brand-primary/5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary/40 mb-1">
+                    Toplam
+                  </p>
+                  <p className="text-3xl font-display font-black text-brand-primary tracking-tighter">
+                    {formatTL(totals.total)}
+                  </p>
+                  <p className="text-[10px] text-brand-primary/40 mt-1">
+                    Kesin tutar ödeme adımında hesaplanır.
+                  </p>
                 </div>
 
                 {checkoutError && (
@@ -587,11 +569,11 @@ export function CartPage() {
                   {isCheckingOut ? (
                     <span className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Authorizing...
+                      Yönlendiriliyor...
                     </span>
                   ) : (
                     <>
-                      Authorize Payment{' '}
+                      Alışverişi Tamamla{' '}
                       <ChevronRight
                         size={20}
                         className="group-hover:translate-x-2 transition-transform"
@@ -600,34 +582,8 @@ export function CartPage() {
                   )}
                 </button>
 
-                <div className="mt-8 pt-8 border-t border-brand-primary/5 grid grid-cols-2 gap-4">
-                  <div className="flex flex-col items-center gap-2 text-center p-4 bg-brand-secondary/30 rounded-2xl">
-                    <Lock size={16} className="text-brand-primary/40" />
-                    <span className="text-[8px] font-black uppercase tracking-widest text-brand-primary/40">
-                      Secured Bay
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2 text-center p-4 bg-brand-secondary/30 rounded-2xl">
-                    <Globe size={16} className="text-brand-primary/40" />
-                    <span className="text-[8px] font-black uppercase tracking-widest text-brand-primary/40">
-                      Cert. Export
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Dynamic Support Teaser */}
-              <div className="bg-white rounded-[2.5rem] p-8 border border-brand-primary/5 flex items-center gap-6 group hover:translate-x-2 transition-all cursor-pointer">
-                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center text-accent">
-                  <HelpCircle size={24} />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-widest text-brand-primary">
-                    Merchant Priority Support
-                  </h4>
-                  <p className="text-[10px] font-medium text-brand-primary/40 mt-1">
-                    Chat with a Global logistics specialist.
-                  </p>
+                <div className="mt-6 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-primary/40">
+                  <Lock size={14} /> Ödemeler 3D Secure ile korunur
                 </div>
               </div>
             </div>

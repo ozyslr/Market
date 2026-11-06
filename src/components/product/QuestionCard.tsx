@@ -29,7 +29,11 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
   const [submitting, setSubmitting] = useState(false);
   const [localAnswer, setLocalAnswer] = useState(
     question.answer
-      ? { text: question.answer, by: question.answeredBy || 'Satıcı', at: question.answeredAt || '' }
+      ? {
+          text: question.answer,
+          by: question.answeredBy || 'Satıcı',
+          at: question.answeredAt || '',
+        }
       : null,
   );
   const [answerHelpfulCount, setAnswerHelpfulCount] = useState(0);
@@ -41,7 +45,7 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
     try {
       const newCount = await voteQuestionHelpful(question.id, currentUserId);
       setHelpfulCount(newCount);
-      setHasVoted(v => !v);
+      setHasVoted((v) => !v);
     } finally {
       setVoting(false);
     }
@@ -71,7 +75,9 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
         <div className="flex items-start gap-2 min-w-0">
           <HelpCircle size={14} className="text-accent mt-0.5 shrink-0" />
           <div className="min-w-0">
-            <p className="text-sm font-bold text-brand-primary dark:text-white leading-relaxed break-words">{question.text}</p>
+            <p className="text-sm font-bold text-brand-primary dark:text-white leading-relaxed break-words">
+              {question.text}
+            </p>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className="text-[10px] text-brand-primary/30 dark:text-zinc-500 font-bold">
                 {question.userName} · {new Date(question.createdAt).toLocaleDateString('tr-TR')}
@@ -103,7 +109,9 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
       {localAnswer ? (
         <div className="ms-5 ps-3 border-s-4 border-green-400/50 mt-2 bg-green-50/40 dark:bg-green-950/20 rounded-r-xl py-2">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-xs font-bold text-brand-primary/70 dark:text-zinc-300 leading-relaxed">{localAnswer.text}</p>
+            <p className="text-xs font-bold text-brand-primary/70 dark:text-zinc-300 leading-relaxed">
+              {localAnswer.text}
+            </p>
           </div>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span className="inline-flex items-center gap-1 text-[10px] text-accent font-bold">
@@ -119,17 +127,20 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
               <button
                 onClick={() => {
                   if (answerHelpfulVoted === 'up') {
-                    setAnswerHelpfulCount(c => c - 1);
+                    setAnswerHelpfulCount((c) => c - 1);
                     setAnswerHelpfulVoted(null);
                   } else {
-                    if (answerHelpfulVoted === 'down') setAnswerHelpfulCount(c => Math.max(0, c - 1));
-                    setAnswerHelpfulCount(c => c + 1);
+                    if (answerHelpfulVoted === 'down')
+                      setAnswerHelpfulCount((c) => Math.max(0, c - 1));
+                    setAnswerHelpfulCount((c) => c + 1);
                     setAnswerHelpfulVoted('up');
                   }
                 }}
                 className={cn(
                   'flex items-center gap-0.5 text-[9px] font-black uppercase transition-colors p-0.5 rounded hover:bg-brand-secondary dark:hover:bg-zinc-800',
-                  answerHelpfulVoted === 'up' ? 'text-green-600' : 'text-brand-primary/20 dark:text-zinc-600',
+                  answerHelpfulVoted === 'up'
+                    ? 'text-green-600'
+                    : 'text-brand-primary/20 dark:text-zinc-600',
                 )}
                 title="Faydalı"
               >
@@ -140,20 +151,28 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
                   if (answerHelpfulVoted === 'down') {
                     setAnswerHelpfulVoted(null);
                   } else {
-                    if (answerHelpfulVoted === 'up') setAnswerHelpfulCount(c => Math.max(0, c - 1));
+                    if (answerHelpfulVoted === 'up')
+                      setAnswerHelpfulCount((c) => Math.max(0, c - 1));
                     setAnswerHelpfulVoted('down');
                   }
                 }}
                 className={cn(
                   'flex items-center gap-0.5 text-[9px] font-black uppercase transition-colors p-0.5 rounded hover:bg-brand-secondary dark:hover:bg-zinc-800',
-                  answerHelpfulVoted === 'down' ? 'text-red-500' : 'text-brand-primary/20 dark:text-zinc-600',
+                  answerHelpfulVoted === 'down'
+                    ? 'text-red-500'
+                    : 'text-brand-primary/20 dark:text-zinc-600',
                 )}
                 title="Faydalı Değil"
               >
-                <ThumbsDown size={10} fill={answerHelpfulVoted === 'down' ? 'currentColor' : 'none'} />
+                <ThumbsDown
+                  size={10}
+                  fill={answerHelpfulVoted === 'down' ? 'currentColor' : 'none'}
+                />
               </button>
               {answerHelpfulCount > 0 && (
-                <span className="text-[9px] font-bold text-brand-primary/30 dark:text-zinc-500">{answerHelpfulCount}</span>
+                <span className="text-[9px] font-bold text-brand-primary/30 dark:text-zinc-500">
+                  {answerHelpfulCount}
+                </span>
               )}
             </div>
           </div>
@@ -181,7 +200,7 @@ export function QuestionCard({ question, currentUserId, isSeller, onAnswer }: Pr
             <div className="ms-5 mt-2 flex gap-2">
               <input
                 value={answerText}
-                onChange={e => setAnswerText(e.target.value)}
+                onChange={(e) => setAnswerText(e.target.value)}
                 placeholder="Cevabınızı yazın..."
                 maxLength={1000}
                 className="flex-1 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-brand-primary/10 dark:border-white/10 rounded-xl text-xs outline-none focus:border-accent text-brand-primary dark:text-white"

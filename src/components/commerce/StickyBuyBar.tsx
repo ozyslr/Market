@@ -16,7 +16,7 @@ interface StickyBuyBarProps {
 export function StickyBuyBar({
   visible,
   price,
-  currency = 'gbp',
+  currency = 'try',
   productTitle,
   canAdd,
   onAddToCart,
@@ -40,7 +40,10 @@ export function StickyBuyBar({
           <div className="flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-[10px] text-brand-primary/40 font-bold truncate">{productTitle}</p>
-              <p className="text-lg font-black text-brand-primary">{symbol}{price.toFixed(2)}</p>
+              <p className="text-lg font-black text-brand-primary">
+                {symbol}
+                {price.toFixed(2)}
+              </p>
             </div>
             {onBuyNow && (
               <button
@@ -59,7 +62,7 @@ export function StickyBuyBar({
               aria-label={canAdd ? 'Sepete ekle' : 'Stokta yok'}
               className={cn(
                 'px-5 py-3 text-white text-[10px] font-black uppercase rounded-xl flex items-center gap-1.5 shrink-0 shadow-lg',
-                canAdd ? 'bg-accent shadow-accent/20' : 'bg-brand-primary/20 cursor-not-allowed'
+                canAdd ? 'bg-accent shadow-accent/20' : 'bg-brand-primary/20 cursor-not-allowed',
               )}
             >
               <ShoppingCart size={13} /> Sepete Ekle

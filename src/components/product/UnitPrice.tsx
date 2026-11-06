@@ -7,12 +7,7 @@ interface UnitPriceProps {
   currency?: string;
 }
 
-export function UnitPrice({
-  price,
-  unitAmount,
-  unitLabel,
-  currency = 'gbp',
-}: UnitPriceProps) {
+export function UnitPrice({ price, unitAmount, unitLabel, currency = 'try' }: UnitPriceProps) {
   const symbol = currency === 'gbp' ? '£' : currency === 'try' ? '₺' : currency;
   const unitPrice = price / unitAmount;
 

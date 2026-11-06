@@ -5,6 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Turkish lira price as shown on product cards: "1.299,00 TL". */
+export const formatTL = (n: number) =>
+  `${n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`;
+
 /** Discount in whole percent: from oldPrice when set (always current), else the stored value. */
 export function discountPercent(p: {
   price: number;

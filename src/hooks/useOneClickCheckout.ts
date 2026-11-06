@@ -38,7 +38,7 @@ export function useOneClickCheckout() {
   const runOneClick = useCallback(
     async (items: OneClickItem[], currency?: string, onSuccess?: () => void) => {
       if (!firebaseUser || !user || !canOneClick || items.length === 0) return;
-      const cur = currency || user.currency || 'gbp';
+      const cur = currency || user.currency || 'try';
       setLoading(true);
       setError(null);
       const result = await executeOneClickCheckout(firebaseUser, items, cur);
@@ -53,7 +53,7 @@ export function useOneClickCheckout() {
       }
       setLoading(false);
     },
-    [firebaseUser, user, canOneClick, navigate]
+    [firebaseUser, user, canOneClick, navigate],
   );
 
   return {

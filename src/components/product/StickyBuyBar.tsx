@@ -27,7 +27,7 @@ export function StickyBuyBar({
   visible,
   quantity,
   price,
-  currency = 'gbp',
+  currency = 'try',
   onAddToCart,
   onBuyNow,
   oneClickLoading = false,
@@ -35,11 +35,17 @@ export function StickyBuyBar({
   isFavorited = false,
   onToggleFavorite,
 }: StickyBuyBarProps) {
-  const hasVariants = (product.variantAttributes?.length ?? 0) > 0 && (product.variants?.length ?? 0) > 0;
+  const hasVariants =
+    (product.variantAttributes?.length ?? 0) > 0 && (product.variants?.length ?? 0) > 0;
   const stickyVariant = hasVariants
-    ? product.variants!.find(v => (product.variantAttributes ?? []).every(attr => v.attributes[attr] === selectedAttrs[attr]))
+    ? product.variants!.find((v) =>
+        (product.variantAttributes ?? []).every(
+          (attr) => v.attributes[attr] === selectedAttrs[attr],
+        ),
+      )
     : undefined;
-  const allSelected = !hasVariants || (product.variantAttributes ?? []).every(attr => selectedAttrs[attr]);
+  const allSelected =
+    !hasVariants || (product.variantAttributes ?? []).every((attr) => selectedAttrs[attr]);
   const canAdd = allSelected && (!hasVariants || !!stickyVariant);
 
   const CURRENCY_SYMBOLS: Record<string, string> = { gbp: '£', try: '₺', usd: '$', eur: '€' };
@@ -58,33 +64,45 @@ export function StickyBuyBar({
           aria-label="Hızlı satın al"
         >
           {/* Compact variant pills for mobile sticky bar */}
-          {hasVariants && product.variantAttributes!.map(attr => {
-            const uniqueValues = [...new Set(product.variants!.map(v => v.attributes[attr]).filter(Boolean))];
-            return (
-              <div key={attr} className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                <span className="text-[9px] font-black uppercase text-brand-primary/40 whitespace-nowrap">{attr}:</span>
-                {uniqueValues.map(val => (
-                  <button
-                    key={val}
-                    onClick={() => onVariantChange(attr, val)}
-                    disabled={!product.variants!.some(v => v.attributes[attr] === val && v.stock > 0)}
-                    className={cn(
-                      'px-2 py-0.5 text-[10px] font-bold rounded-lg border transition-all whitespace-nowrap',
-                      selectedAttrs[attr] === val
-                        ? 'border-accent bg-accent/10 text-accent'
-                        : 'border-brand-primary/10 text-brand-primary/60 hover:border-accent/40'
-                    )}
-                  >
-                    {val}
-                  </button>
-                ))}
-              </div>
-            );
-          })}
+          {hasVariants &&
+            product.variantAttributes!.map((attr) => {
+              const uniqueValues = [
+                ...new Set(product.variants!.map((v) => v.attributes[attr]).filter(Boolean)),
+              ];
+              return (
+                <div key={attr} className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                  <span className="text-[9px] font-black uppercase text-brand-primary/40 whitespace-nowrap">
+                    {attr}:
+                  </span>
+                  {uniqueValues.map((val) => (
+                    <button
+                      key={val}
+                      onClick={() => onVariantChange(attr, val)}
+                      disabled={
+                        !product.variants!.some((v) => v.attributes[attr] === val && v.stock > 0)
+                      }
+                      className={cn(
+                        'px-2 py-0.5 text-[10px] font-bold rounded-lg border transition-all whitespace-nowrap',
+                        selectedAttrs[attr] === val
+                          ? 'border-accent bg-accent/10 text-accent'
+                          : 'border-brand-primary/10 text-brand-primary/60 hover:border-accent/40',
+                      )}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
           <div className="flex items-center gap-2">
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-brand-primary/40 font-bold truncate">{product.title}</p>
-              <p className="text-lg font-black text-brand-primary">{symbol}{price.toFixed(2)}</p>
+              <p className="text-[10px] text-brand-primary/40 font-bold truncate">
+                {product.title}
+              </p>
+              <p className="text-lg font-black text-brand-primary">
+                {symbol}
+                {price.toFixed(2)}
+              </p>
             </div>
             {/* Quantity selector */}
             <div className="flex items-center gap-0 border border-gray-200 rounded-lg overflow-hidden shrink-0">
@@ -97,7 +115,9 @@ export function StickyBuyBar({
               >
                 <Minus size={12} />
               </button>
-              <span className="w-7 text-center font-bold text-sm text-gray-700 select-none">{quantity}</span>
+              <span className="w-7 text-center font-bold text-sm text-gray-700 select-none">
+                {quantity}
+              </span>
               <button
                 type="button"
                 onClick={() => onQuantityChange?.(quantity + 1)}
@@ -117,7 +137,7 @@ export function StickyBuyBar({
                   'w-9 h-9 flex items-center justify-center rounded-xl shrink-0 transition-all border',
                   isFavorited
                     ? 'text-red-500 border-red-200 bg-red-50'
-                    : 'text-brand-primary/30 border-brand-primary/10 hover:text-red-400 hover:border-red-200'
+                    : 'text-brand-primary/30 border-brand-primary/10 hover:text-red-400 hover:border-red-200',
                 )}
               >
                 <Heart size={16} fill={isFavorited ? 'currentColor' : 'none'} />
@@ -141,7 +161,7 @@ export function StickyBuyBar({
               aria-label={canAdd ? 'Sepete ekle' : 'Stokta yok'}
               className={cn(
                 'px-5 py-3 text-white text-[10px] font-black uppercase rounded-xl flex items-center gap-1.5 shrink-0 shadow-lg',
-                canAdd ? 'bg-accent shadow-accent/20' : 'bg-brand-primary/20 cursor-not-allowed'
+                canAdd ? 'bg-accent shadow-accent/20' : 'bg-brand-primary/20 cursor-not-allowed',
               )}
             >
               <ShoppingCart size={13} /> Sepete Ekle

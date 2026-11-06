@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Crosshair } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatTL } from '@/lib/utils';
 import {
   trackPrice,
   untrackPrice,
@@ -23,13 +23,15 @@ export function PriceTrackButton({ productId, currentPrice, userId }: Props) {
   useEffect(() => {
     if (!userId) return;
     const uid = userId;
-    isTrackingPrice(uid, productId).then(async (isTracked) => {
-      setTracking(isTracked);
-      if (isTracked) {
-        const alert = await getPriceAlert(uid, productId);
-        if (alert) setTargetPrice(alert.targetPrice);
-      }
-    }).catch(() => {});
+    isTrackingPrice(uid, productId)
+      .then(async (isTracked) => {
+        setTracking(isTracked);
+        if (isTracked) {
+          const alert = await getPriceAlert(uid, productId);
+          if (alert) setTargetPrice(alert.targetPrice);
+        }
+      })
+      .catch(() => {});
   }, [userId, productId]);
 
   // Recalculate default when price changes and not currently tracking
@@ -77,7 +79,7 @@ export function PriceTrackButton({ productId, currentPrice, userId }: Props) {
             'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50',
             tracking
               ? 'bg-accent/10 text-accent border border-accent/30'
-              : 'bg-brand-secondary/30 text-brand-primary/40 hover:text-accent border border-transparent'
+              : 'bg-brand-secondary/30 text-brand-primary/40 hover:text-accent border border-transparent',
           )}
         >
           <Crosshair size={13} fill={tracking ? 'currentColor' : 'none'} />
@@ -88,7 +90,7 @@ export function PriceTrackButton({ productId, currentPrice, userId }: Props) {
             onClick={() => setEditing(!editing)}
             className="px-3 py-2.5 rounded-xl text-[10px] font-bold text-brand-primary/40 hover:text-accent border border-transparent hover:border-accent/30 transition-all"
           >
-            Hedef: £{targetPrice.toFixed(2)}
+            Hedef: {formatTL(targetPrice)}
           </button>
         )}
       </div>
@@ -100,7 +102,7 @@ export function PriceTrackButton({ productId, currentPrice, userId }: Props) {
           </span>
           <div className="relative flex-1">
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-brand-primary/40">
-              £
+              ₺
             </span>
             <input
               type="number"

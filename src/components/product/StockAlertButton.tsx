@@ -20,7 +20,9 @@ export function StockAlertButton({ productId, stock, userId }: Props) {
 
   useEffect(() => {
     if (!userId) return;
-    isSubscribedToStockAlert(userId, productId).then(setSubscribed).catch(() => {});
+    isSubscribedToStockAlert(userId, productId)
+      .then(setSubscribed)
+      .catch(() => {});
   }, [userId, productId]);
 
   // Show "Tekrar stokta!" when subscribed and product is back in stock
@@ -56,7 +58,7 @@ export function StockAlertButton({ productId, stock, userId }: Props) {
         disabled={loading}
         className={cn(
           'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50',
-          'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'
+          'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100',
         )}
       >
         <CheckCircle2 size={13} />
@@ -82,7 +84,7 @@ export function StockAlertButton({ productId, stock, userId }: Props) {
         'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50',
         subscribed
           ? 'bg-accent/10 text-accent border border-accent/30'
-          : 'bg-brand-secondary/30 text-brand-primary/40 hover:text-accent border border-transparent'
+          : 'bg-brand-secondary/30 text-brand-primary/40 hover:text-accent border border-transparent',
       )}
     >
       {subscribed ? <BellOff size={13} /> : <Bell size={13} />}

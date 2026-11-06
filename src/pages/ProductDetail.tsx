@@ -12,7 +12,6 @@ import {
   Award,
   Sparkles,
   Zap,
-  Shield,
   AlertCircle,
   MessageSquare,
   TrendingUp,
@@ -25,13 +24,13 @@ import {
   Twitter,
 } from 'lucide-react';
 import { isGpsrCompliant, getHsCodeLabel, getHsCode } from '@/services/complianceService';
-import { cn } from '@/lib/utils';
+import { cn, formatTL } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { useLocationStore } from '@/context/LocationContext';
 import { calculateTotal, MARKETS } from '@/lib/taxEngine';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { SEO } from '@/components/common/SEO';
-import { ShieldCheck, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { ProductCarousel } from '@/components/commerce/ProductCarousel';
 import { getProductBySlug, getProductsByIds, getProducts } from '@/services/productService';
 import { getSellerById } from '@/services/userService';
@@ -122,6 +121,18 @@ const POPULAR_SEARCHES_BY_LANG: Record<string, string[]> = {
   ],
 };
 
+/** Category name for the breadcrumb: translated when a key exists, else a readable fallback. */
+const EXTRA_CATEGORY_NAMES: Record<string, string> = {
+  kadin: 'Kadın',
+  erkek: 'Erkek',
+  moda: 'Moda',
+};
+function categoryLabel(t: (k: string) => string, id: string): string {
+  const key = `category.${id}`;
+  const label = t(key);
+  return label && label !== key ? label : (EXTRA_CATEGORY_NAMES[id] ?? id);
+}
+
 export function ProductDetail() {
   const { t, lang } = useLanguage();
   const { selectedLocation, setIsLocationModalOpen, location } = useLocationStore();
@@ -136,7 +147,6 @@ export function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
 
   const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews' | 'qa'>('details');
-  const [viewers, setViewers] = useState(0);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [activeCoupons, setActiveCoupons] = useState<Coupon[]>([]);
   const [tracking, setTracking] = useState(false);
@@ -179,16 +189,6 @@ export function ProductDetail() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  useEffect(() => {
-    if (!product?.id) return;
-    // Initial random viewer count + periodic refresh every 15s
-    setViewers(Math.floor(Math.random() * 14) + 2);
-    const interval = setInterval(() => {
-      setViewers(Math.floor(Math.random() * 14) + 2);
-    }, 15_000);
-    return () => clearInterval(interval);
-  }, [product?.id]);
 
   useEffect(() => {
     if (!product?.id) return;
@@ -371,7 +371,7 @@ export function ProductDetail() {
       : undefined;
     runOneClick(
       [{ productId: product.id, variantId: selectedVariant?.id, quantity }],
-      product.currency ?? user?.currency ?? 'gbp',
+      product.currency ?? user?.currency ?? 'try',
     );
   };
 
@@ -393,10 +393,10 @@ export function ProductDetail() {
       <div className="min-h-screen bg-brand-secondary flex flex-col items-center justify-center p-12 text-center">
         <AlertCircle size={48} className="text-red-500 mb-6" />
         <h2 className="text-2xl font-black uppercase italic tracking-tighter text-brand-primary">
-          Artifact Not Found
+          Ürün bulunamadı
         </h2>
         <p className="text-brand-primary/40 text-xs font-bold uppercase tracking-widest mt-4">
-          The requested data node does not exist in the master matrix.
+          Aradığınız ürün kaldırılmış ya da adresi değişmiş olabilir.
         </p>
         <Link
           to="/"
@@ -450,7 +450,10 @@ export function ProductDetail() {
           }),
           breadcrumbSchema([
             { name: 'Ana Sayfa', url: '/' },
-            { name: product.categoryId, url: `/search?category=${product.categoryId}` },
+            {
+              name: categoryLabel(t, product.categoryId),
+              url: `/search?categoryId=${product.categoryId}`,
+            },
             { name: product.title, url: `/product/${product.slug}` },
           ]),
         ]}
@@ -463,10 +466,10 @@ export function ProductDetail() {
           </Link>
           <ChevronRight size={10} />
           <Link
-            to={`/search?category=${product.categoryId}`}
+            to={`/search?categoryId=${product.categoryId}`}
             className="hover:text-accent transition-colors uppercase"
           >
-            {product.categoryId}
+            {categoryLabel(t, product.categoryId)}
           </Link>
           <ChevronRight size={10} />
           <span className="text-brand-primary truncate">{product.title}</span>
@@ -623,7 +626,7 @@ export function ProductDetail() {
                     {product.oldPrice && (
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-base text-gray-400 line-through">
-                          £{product.oldPrice.toFixed(2)}
+                          {formatTL(product.oldPrice)}
                         </span>
                         {product.discountPercentage && product.discountPercentage > 0 && (
                           <span className="px-1.5 py-0.5 bg-[#FF6000] text-white text-[10px] font-bold rounded">
@@ -634,13 +637,10 @@ export function ProductDetail() {
                     )}
                     <div className="flex items-baseline gap-1">
                       <span className="text-[28px] font-bold text-brand-primary dark:text-white tracking-tight">
-                        £{Math.floor(product.price)}
+                        {Math.floor(product.price).toLocaleString('tr-TR')}
                       </span>
                       <span className="text-lg font-bold text-brand-primary dark:text-white">
-                        ,
-                        {Math.floor((product.price % 1) * 100)
-                          .toString()
-                          .padStart(2, '0')}
+                        ,{String(Math.round(product.price * 100) % 100).padStart(2, '0')} TL
                       </span>
                     </div>
                     {product.unitLabel && product.unitAmount && (
@@ -648,18 +648,18 @@ export function ProductDetail() {
                         price={cartPrice}
                         unitAmount={product.unitAmount}
                         unitLabel={product.unitLabel}
-                        currency={product.currency ?? 'gbp'}
+                        currency={product.currency ?? 'try'}
                       />
                     )}
-                    <p className="text-[10px] font-black uppercase text-green-600 tracking-widest flex items-center gap-1.5 mt-2">
-                      <Truck size={11} className="text-green-500" /> {t('badge.free_shipping')}
-                    </p>
+                    {product.freeShipping && (
+                      <p className="text-[10px] font-black uppercase text-green-600 tracking-widest flex items-center gap-1.5 mt-2">
+                        <Truck size={11} className="text-green-500" /> {t('badge.free_shipping')}
+                      </p>
+                    )}
                     <SocialProofBar
                       favoriteCount={product.favoriteCount}
                       cartAddCount={product.cartAddCount}
-                      viewerCount={viewers}
                       bestSellerRank={product.bestSeller ? 1 : undefined}
-                      reviewCount={product.reviewsCount}
                     />
                   </div>
 
@@ -740,7 +740,7 @@ export function ProductDetail() {
               <OtherSellers sellers={[]} />
 
               {/* Installment Table */}
-              <InstallmentTable price={cartPrice} currency={product.currency ?? 'gbp'} />
+              <InstallmentTable price={cartPrice} currency={product.currency ?? 'try'} />
 
               {/* Promotions Card */}
               {(campaigns.length > 0 || cartDiscount > 0 || activeCoupons.length > 0) && (
@@ -769,7 +769,7 @@ export function ProductDetail() {
                   {cartDiscount > 0 && (
                     <div className="p-2 bg-white/60 rounded-xl border border-green-100">
                       <p className="text-[9px] font-black text-green-700 uppercase">
-                        £{cartDiscount.toFixed(2)} tasarruf
+                        {formatTL(cartDiscount)} tasarruf
                       </p>
                     </div>
                   )}
@@ -946,7 +946,6 @@ export function ProductDetail() {
                 <DeliveryBox
                   locationLabel={selectedLocation}
                   onChangeLocation={() => setIsLocationModalOpen(true)}
-                  hasExpressShipping={product.isFlashDeal}
                   freeShipping={product.freeShipping}
                 />
               </div>
@@ -998,8 +997,8 @@ export function ProductDetail() {
                   exit={{ opacity: 0, y: -10 }}
                   className="prose prose-zinc dark:prose-invert max-w-none"
                 >
-                  <h2 className="text-2xl font-display font-black text-brand-primary uppercase italic mb-6">
-                    Artifact Intelligence
+                  <h2 className="text-lg md:text-xl font-display font-black text-brand-primary uppercase italic mb-4">
+                    {t('product.description')}
                   </h2>
                   <div className="text-brand-primary/70 leading-relaxed font-medium whitespace-pre-wrap">
                     {product.longDescription || product.description}
@@ -1017,24 +1016,24 @@ export function ProductDetail() {
                   </Suspense>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
                     {[
-                      { label: 'Origin', value: product.originCountry, icon: Globe },
-                      { label: 'Merchant', value: product.brand, icon: Award },
-                      { label: 'Protection', value: 'Escrow', icon: Shield },
-                      { label: 'Express', value: 'Priority', icon: Zap },
-                    ].map((f, i) => (
-                      <div
-                        key={i}
-                        className="p-6 bg-brand-secondary/30 rounded-3xl border border-brand-primary/5 text-center group hover:bg-white hover:shadow-xl transition-all"
-                      >
-                        <f.icon size={24} className="text-accent mx-auto mb-4" />
-                        <p className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest">
-                          {f.label}
-                        </p>
-                        <p className="text-xs font-black text-brand-primary uppercase mt-1">
-                          {f.value}
-                        </p>
-                      </div>
-                    ))}
+                      { label: 'Menşei', value: product.originCountry, icon: Globe },
+                      { label: 'Marka', value: product.brand, icon: Award },
+                    ]
+                      .filter((f) => f.value)
+                      .map((f, i) => (
+                        <div
+                          key={i}
+                          className="p-6 bg-brand-secondary/30 rounded-3xl border border-brand-primary/5 text-center group hover:bg-white hover:shadow-xl transition-all"
+                        >
+                          <f.icon size={24} className="text-accent mx-auto mb-4" />
+                          <p className="text-[10px] font-black uppercase text-brand-primary/40 tracking-widest">
+                            {f.label}
+                          </p>
+                          <p className="text-xs font-black text-brand-primary uppercase mt-1">
+                            {f.value}
+                          </p>
+                        </div>
+                      ))}
                   </div>
                 </motion.div>
               )}
@@ -1046,8 +1045,8 @@ export function ProductDetail() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                 >
-                  <h2 className="text-2xl font-display font-black text-brand-primary uppercase italic mb-8">
-                    Technical Mapping
+                  <h2 className="text-lg md:text-xl font-display font-black text-brand-primary uppercase italic mb-4">
+                    {t('product.specifications')}
                   </h2>
                   <div className="grid grid-cols-1 border border-brand-primary/5 rounded-3xl overflow-hidden shadow-sm">
                     {product.specifications ? (
@@ -1206,7 +1205,7 @@ export function ProductDetail() {
         visible={showStickyBar}
         quantity={quantity}
         price={cartPrice}
-        currency={product.currency ?? 'gbp'}
+        currency={product.currency ?? 'try'}
         onAddToCart={(variantId) => addItem(product.id, quantity, variantId)}
         onBuyNow={canOneClick ? handleBuyNow : undefined}
         oneClickLoading={oneClickLoading}

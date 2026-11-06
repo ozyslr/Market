@@ -22,8 +22,8 @@ export function VariantSwatches({
   selectedValue,
   onSelect,
 }: VariantSwatchesProps) {
-  const hasImages = options.some(o => o.image);
-  const hasColors = options.some(o => o.colorHex);
+  const hasImages = options.some((o) => o.image);
+  const hasColors = options.some((o) => o.colorHex);
   const isVisual = hasImages || hasColors;
 
   return (
@@ -35,7 +35,7 @@ export function VariantSwatches({
         )}
       </p>
       <div className="flex flex-wrap gap-2">
-        {options.map(option => (
+        {options.map((option) => (
           <button
             key={option.value}
             onClick={() => option.inStock && onSelect(option.value)}
@@ -54,7 +54,7 @@ export function VariantSwatches({
                   ? isVisual
                     ? 'border-brand-primary/10 hover:border-accent/40'
                     : 'border-brand-primary/10 text-brand-primary hover:border-accent/40'
-                  : 'border-brand-primary/5 text-brand-primary/20 cursor-not-allowed'
+                  : 'border-brand-primary/5 text-brand-primary/20 cursor-not-allowed',
             )}
           >
             {option.image ? (

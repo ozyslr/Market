@@ -585,7 +585,7 @@ const CategoryAwareFilters: React.FC<{
   return (
     <div className="mt-6 pt-6 border-t border-brand-primary/5">
       <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/40 mb-4">
-        Product Attributes
+        Ürün Özellikleri
       </h4>
       {filterAttributes.map((attr) => {
         const currentVal = searchParams.get(attr.key);

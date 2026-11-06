@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatTL } from '@/lib/utils';
 import { Product } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -7,7 +8,10 @@ interface FrequentlyBoughtTogetherProps {
   boughtTogether: Product[];
 }
 
-export function FrequentlyBoughtTogether({ product, boughtTogether }: FrequentlyBoughtTogetherProps) {
+export function FrequentlyBoughtTogether({
+  product,
+  boughtTogether,
+}: FrequentlyBoughtTogetherProps) {
   const { t } = useLanguage();
 
   if (!boughtTogether.length) return null;
@@ -54,7 +58,7 @@ export function FrequentlyBoughtTogether({ product, boughtTogether }: Frequently
             Toplam Fiyat
           </p>
           <p className="text-2xl md:text-3xl font-display font-black text-accent italic">
-            £{totalPrice.toFixed(2)}
+            {formatTL(totalPrice)}
           </p>
           <button className="mt-4 w-full xl:w-auto px-8 lg:px-12 py-4 lg:py-3 bg-brand-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-black transition-all">
             Listeyi Sepete Ekle

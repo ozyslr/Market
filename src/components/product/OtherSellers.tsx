@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatTL } from '@/lib/utils';
 import { ChevronDown, ChevronUp, ShoppingCart, Star } from 'lucide-react';
 
 interface OtherSeller {
@@ -24,33 +25,41 @@ export function OtherSellers({ sellers, onAddToCart }: OtherSellersProps) {
   return (
     <div className="bg-white rounded-2xl border border-brand-primary/5 shadow-sm overflow-hidden">
       <button
-        onClick={() => setExpanded(e => !e)}
+        onClick={() => setExpanded((e) => !e)}
         aria-label={expanded ? 'Diğer satıcıları gizle' : 'Diğer satıcıları göster'}
         aria-expanded={expanded}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-brand-secondary/30 transition-colors"
       >
         <div>
-          <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 text-start">Diğer Satıcılar</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-brand-primary/40 text-start">
+            Diğer Satıcılar
+          </p>
           <p className="text-xs font-bold text-brand-primary mt-0.5">{sellers.length} satıcı</p>
         </div>
-        {expanded ? <ChevronUp size={16} className="text-brand-primary/40" /> : <ChevronDown size={16} className="text-brand-primary/40" />}
+        {expanded ? (
+          <ChevronUp size={16} className="text-brand-primary/40" />
+        ) : (
+          <ChevronDown size={16} className="text-brand-primary/40" />
+        )}
       </button>
 
       {expanded && (
         <div className="divide-y divide-brand-primary/5">
-          {visible.map(seller => (
+          {visible.map((seller) => (
             <div key={seller.sellerId} className="flex items-center gap-3 px-4 py-3">
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-black text-brand-primary truncate">{seller.sellerName}</p>
+                <p className="text-xs font-black text-brand-primary truncate">
+                  {seller.sellerName}
+                </p>
                 <div className="flex items-center gap-1 mt-0.5">
                   <Star size={10} fill="#FBBF24" className="text-yellow-400" />
-                  <span className="text-[10px] text-brand-primary/50">{seller.rating.toFixed(1)}</span>
+                  <span className="text-[10px] text-brand-primary/50">
+                    {seller.rating.toFixed(1)}
+                  </span>
                 </div>
               </div>
               <div className="text-end shrink-0">
-                <p className="text-sm font-black text-brand-primary">
-                  {seller.currency === 'gbp' ? '£' : '₺'}{seller.price.toFixed(2)}
-                </p>
+                <p className="text-sm font-black text-brand-primary">{formatTL(seller.price)}</p>
                 {onAddToCart && (
                   <button
                     onClick={() => onAddToCart(seller.sellerId)}

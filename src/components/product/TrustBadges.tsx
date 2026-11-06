@@ -3,9 +3,9 @@ import { ShieldCheck, RotateCcw, Lock, MessageSquare } from 'lucide-react';
 
 const BADGES = [
   { icon: ShieldCheck, label: 'Güvenli Ödeme', color: 'text-green-600' },
-  { icon: RotateCcw, label: 'Ücretsiz İade', color: 'text-blue-600' },
-  { icon: Lock, label: 'Escrow Korumalı', color: 'text-purple-600' },
-  { icon: MessageSquare, label: '7/24 Destek', color: 'text-orange-500' },
+  { icon: RotateCcw, label: '14 Gün Cayma Hakkı', color: 'text-blue-600' },
+  { icon: Lock, label: '3D Secure Ödeme', color: 'text-purple-600' },
+  { icon: MessageSquare, label: 'Satıcıya Soru Sor', color: 'text-orange-500' },
 ];
 
 export function TrustBadges() {
@@ -18,9 +18,7 @@ export function TrustBadges() {
             className="flex items-center gap-2 px-2 py-2 rounded-lg bg-brand-secondary/20"
           >
             <Icon size={16} className={`${color} shrink-0`} />
-            <span className="text-[10px] font-black text-brand-primary leading-tight">
-              {label}
-            </span>
+            <span className="text-[10px] font-black text-brand-primary leading-tight">{label}</span>
           </div>
         ))}
       </div>
